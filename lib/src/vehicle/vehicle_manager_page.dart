@@ -1,251 +1,125 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:my_data_app/src/vehicle/model/vehicle_model.dart';
+import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
+import 'package:my_data_app/src/vehicle/cubit/vehicle_state.dart';
 
-// Models
-class Vehicle {
-  final String id;
-  final String name;
-  final String brand;
-  final String model;
-  final String year;
-  final String registrationNumber;
-  final String? vinNumber;
-  final String? color;
-  final DateTime purchaseDate;
-  final double? purchasePrice;
-  final List<VehicleRecord> records;
-
-  Vehicle({
-    required this.id,
-    required this.name,
-    required this.brand,
-    required this.model,
-    required this.year,
-    required this.registrationNumber,
-    this.vinNumber,
-    this.color,
-    required this.purchaseDate,
-    this.purchasePrice,
-    this.records = const [],
-  });
-
-  Vehicle copyWith({
-    String? id,
-    String? name,
-    String? brand,
-    String? model,
-    String? year,
-    String? registrationNumber,
-    String? vinNumber,
-    String? color,
-    DateTime? purchaseDate,
-    double? purchasePrice,
-    List<VehicleRecord>? records,
-  }) {
-    return Vehicle(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      brand: brand ?? this.brand,
-      model: model ?? this.model,
-      year: year ?? this.year,
-      registrationNumber: registrationNumber ?? this.registrationNumber,
-      vinNumber: vinNumber ?? this.vinNumber,
-      color: color ?? this.color,
-      purchaseDate: purchaseDate ?? this.purchaseDate,
-      purchasePrice: purchasePrice ?? this.purchasePrice,
-      records: records ?? this.records,
-    );
-  }
-}
-
-enum RecordType { fuel, service, purchase, importantDate, note }
-
-class VehicleRecord {
-  final String id;
-  final RecordType type;
-  final DateTime date;
-  final String title;
-  final String? description;
-  final double? amount;
-  final double? odometer;
-  final String? location;
-  final bool isImportant;
-
-  VehicleRecord({
-    required this.id,
-    required this.type,
-    required this.date,
-    required this.title,
-    this.description,
-    this.amount,
-    this.odometer,
-    this.location,
-    this.isImportant = false,
-  });
-}
+export 'package:my_data_app/src/vehicle/model/vehicle_model.dart';
 
 // Vehicle List Page
-class VehicleListPage extends StatefulWidget {
+class VehicleListPage extends StatelessWidget {
   const VehicleListPage({Key? key}) : super(key: key);
 
   @override
-  State<VehicleListPage> createState() => _VehicleListPageState();
-}
-
-class _VehicleListPageState extends State<VehicleListPage> {
-  List<Vehicle> vehicles = [
-    Vehicle(
-      id: '1',
-      name: 'My Honda',
-      brand: 'Honda',
-      model: 'Civic',
-      year: '2020',
-      registrationNumber: 'ABC-1234',
-      color: 'Silver',
-      purchaseDate: DateTime(2020, 3, 15),
-      purchasePrice: 25000,
-      records: [
-        VehicleRecord(
-          id: '1',
-          type: RecordType.fuel,
-          date: DateTime.now().subtract(const Duration(days: 2)),
-          title: 'Gas Fill-up',
-          amount: 45.50,
-          odometer: 45230,
-          location: 'Shell Station',
-        ),
-        VehicleRecord(
-          id: '2',
-          type: RecordType.service,
-          date: DateTime.now().subtract(const Duration(days: 30)),
-          title: 'Oil Change',
-          description: 'Regular maintenance - oil and filter change',
-          amount: 75.00,
-          odometer: 44800,
-        ),
-      ],
-    ),
-  ];
-
-  void _addVehicle(Vehicle vehicle) {
-    setState(() {
-      vehicles.add(vehicle);
-    });
-  }
-
-  void _updateVehicle(Vehicle vehicle) {
-    setState(() {
-      final index = vehicles.indexWhere((v) => v.id == vehicle.id);
-      if (index != -1) {
-        vehicles[index] = vehicle;
-      }
-    });
-  }
-
-  void _deleteVehicle(String vehicleId) {
-    setState(() {
-      vehicles.removeWhere((v) => v.id == vehicleId);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Vehicles'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: vehicles.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.directions_car_outlined,
-                      size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No vehicles added yet',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+    return BlocBuilder<VehicleCubit, VehicleState>(
+      builder: (context, state) {
+        final cubit = context.read<VehicleCubit>();
+        final vehicles = state.vehicles;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('My Vehicles'),
+            centerTitle: true,
+            elevation: 0,
+          ),
+          body: vehicles.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car_outlined,
+                          size: 80, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No vehicles added yet',
+                        style:
+                            TextStyle(fontSize: 16, color: Colors.grey[600]),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap the + button to add your first vehicle',
+                        style:
+                            TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the + button to add your first vehicle',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: vehicles.length,
-              itemBuilder: (context, index) {
-                final vehicle = vehicles[index];
-                return VehicleCard(
-                  vehicle: vehicle,
-                  onTap: () async {
-                    final updatedVehicle = await Navigator.push<Vehicle>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            VehicleDetailsPage(vehicle: vehicle),
-                      ),
-                    );
-                    if (updatedVehicle != null) {
-                      _updateVehicle(updatedVehicle);
-                    }
-                  },
-                  onEdit: () async {
-                    final editedVehicle = await Navigator.push<Vehicle>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            AddVehiclePage(vehicle: vehicle),
-                      ),
-                    );
-                    if (editedVehicle != null) {
-                      _updateVehicle(editedVehicle);
-                    }
-                  },
-                  onDelete: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Vehicle'),
-                        content: Text('Are you sure you want to delete "${vehicle.name}"? All associated records will also be deleted.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: vehicles.length,
+                  itemBuilder: (context, index) {
+                    final vehicle = vehicles[index];
+                    return VehicleCard(
+                      vehicle: vehicle,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                VehicleDetailsPage(vehicleId: vehicle.id),
                           ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: TextButton.styleFrom(foregroundColor: Colors.red),
-                            child: const Text('Delete'),
+                        );
+                      },
+                      onEdit: () async {
+                        final editedVehicle = await Navigator.push<Vehicle>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                AddVehiclePage(vehicle: vehicle),
                           ),
-                        ],
-                      ),
+                        );
+                        if (editedVehicle != null) {
+                          cubit.updateVehicle(editedVehicle);
+                        }
+                      },
+                      onDelete: () async {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Vehicle'),
+                            content: Text(
+                                'Are you sure you want to delete "${vehicle.name}"? All associated records will also be deleted.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          cubit.deleteVehicle(vehicle.id);
+                        }
+                      },
                     );
-                    if (confirmed == true) {
-                      _deleteVehicle(vehicle.id);
-                    }
                   },
-                );
-              },
-            ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newVehicle = await Navigator.push<Vehicle>(
-            context,
-            MaterialPageRoute(builder: (context) => const AddVehiclePage()),
-          );
-          if (newVehicle != null) {
-            _addVehicle(newVehicle);
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Vehicle'),
-      ),
+                ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () async {
+              final newVehicle = await Navigator.push<Vehicle>(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const AddVehiclePage()),
+              );
+              if (newVehicle != null) {
+                cubit.addVehicle(newVehicle);
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Vehicle'),
+          ),
+        );
+      },
     );
   }
 }
@@ -438,7 +312,8 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
   void _saveVehicle() {
     if (_formKey.currentState!.validate()) {
       final vehicle = Vehicle(
-        id: widget.vehicle?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.vehicle?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         brand: _brandController.text,
         model: _modelController.text,
@@ -446,7 +321,8 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
         registrationNumber: _registrationController.text,
         vinNumber:
             _vinController.text.isEmpty ? null : _vinController.text,
-        color: _colorController.text.isEmpty ? null : _colorController.text,
+        color:
+            _colorController.text.isEmpty ? null : _colorController.text,
         purchaseDate: _purchaseDate,
         purchasePrice: _priceController.text.isEmpty
             ? null
@@ -565,7 +441,8 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Purchase Date'),
-              subtitle: Text(DateFormat('MMM dd, yyyy').format(_purchaseDate)),
+              subtitle:
+                  Text(DateFormat('MMM dd, yyyy').format(_purchaseDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
@@ -596,7 +473,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Vehicle' : 'Save Vehicle', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                  _isEditing ? 'Update Vehicle' : 'Save Vehicle',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -607,9 +486,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
 
 // Vehicle Details Page
 class VehicleDetailsPage extends StatefulWidget {
-  final Vehicle vehicle;
+  final String vehicleId;
 
-  const VehicleDetailsPage({Key? key, required this.vehicle})
+  const VehicleDetailsPage({Key? key, required this.vehicleId})
       : super(key: key);
 
   @override
@@ -617,47 +496,12 @@ class VehicleDetailsPage extends StatefulWidget {
 }
 
 class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
-  late Vehicle vehicle;
   RecordType? filterType;
   DateTime? filterFromDate;
   DateTime? filterToDate;
 
-  @override
-  void initState() {
-    super.initState();
-    vehicle = widget.vehicle;
-  }
-
-  void _addRecord(VehicleRecord record) {
-    setState(() {
-      final updatedRecords = List<VehicleRecord>.from(vehicle.records)
-        ..add(record);
-      vehicle = vehicle.copyWith(records: updatedRecords);
-    });
-  }
-
-  void _updateRecord(VehicleRecord record) {
-    setState(() {
-      final updatedRecords = List<VehicleRecord>.from(vehicle.records);
-      final index = updatedRecords.indexWhere((r) => r.id == record.id);
-      if (index != -1) {
-        updatedRecords[index] = record;
-      }
-      vehicle = vehicle.copyWith(records: updatedRecords);
-    });
-  }
-
-  void _deleteRecord(String recordId) {
-    setState(() {
-      final updatedRecords = vehicle.records
-          .where((r) => r.id != recordId)
-          .toList();
-      vehicle = vehicle.copyWith(records: updatedRecords);
-    });
-  }
-
-  List<VehicleRecord> _getFilteredRecords() {
-    var records = vehicle.records;
+  List<VehicleRecord> _getFilteredRecords(Vehicle vehicle) {
+    var records = vehicle.records.toList();
 
     if (filterType != null) {
       records = records.where((r) => r.type == filterType).toList();
@@ -711,154 +555,174 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredRecords = _getFilteredRecords();
-    final hasActiveFilters =
-        filterType != null || filterFromDate != null || filterToDate != null;
+    return BlocBuilder<VehicleCubit, VehicleState>(
+      builder: (context, state) {
+        final cubit = context.read<VehicleCubit>();
+        final vehicle = cubit.getVehicleById(widget.vehicleId);
 
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, vehicle);
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(vehicle.name),
-          elevation: 0,
-          actions: [
-            IconButton(
-              icon: Badge(
-                isLabelVisible: hasActiveFilters,
-                child: const Icon(Icons.filter_list),
+        if (vehicle == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Vehicle')),
+            body: const Center(child: Text('Vehicle not found')),
+          );
+        }
+
+        final filteredRecords = _getFilteredRecords(vehicle);
+        final hasActiveFilters = filterType != null ||
+            filterFromDate != null ||
+            filterToDate != null;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(vehicle.name),
+            elevation: 0,
+            actions: [
+              IconButton(
+                icon: Badge(
+                  isLabelVisible: hasActiveFilters,
+                  child: const Icon(Icons.filter_list),
+                ),
+                onPressed: _showFilterDialog,
               ),
-              onPressed: _showFilterDialog,
-            ),
-          ],
-        ),
-        body: Column(
-          children: [
-            // Vehicle Info Header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              color: Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${vehicle.brand} ${vehicle.model}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+            ],
+          ),
+          body: Column(
+            children: [
+              // Vehicle Info Header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${vehicle.brand} ${vehicle.model}',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Year: ${vehicle.year} • ${vehicle.registrationNumber}',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                  ),
-                  if (vehicle.color != null) ...[
                     const SizedBox(height: 4),
                     Text(
-                      'Color: ${vehicle.color}',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      'Year: ${vehicle.year} • ${vehicle.registrationNumber}',
+                      style:
+                          TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
-                  ],
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-
-            // Statistics
-            Container(
-              padding: const EdgeInsets.all(16),
-              color: Colors.white,
-              child: _StatisticsRow(vehicle: vehicle, records: filteredRecords),
-            ),
-            const Divider(height: 1),
-
-            // Records List
-            Expanded(
-              child: filteredRecords.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.inbox_outlined,
-                              size: 64, color: Colors.grey[400]),
-                          const SizedBox(height: 16),
-                          Text(
-                            hasActiveFilters
-                                ? 'No records match your filters'
-                                : 'No records yet',
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.grey[600]),
-                          ),
-                        ],
+                    if (vehicle.color != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Color: ${vehicle.color}',
+                        style:
+                            TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: filteredRecords.length,
-                      itemBuilder: (context, index) {
-                        final record = filteredRecords[index];
-                        return RecordCard(
-                          record: record,
-                          onEdit: () async {
-                            final editedRecord = await Navigator.push<VehicleRecord>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddRecordPage(record: record),
-                              ),
-                            );
-                            if (editedRecord != null) {
-                              _updateRecord(editedRecord);
-                            }
-                          },
-                          onDelete: () async {
-                            final confirmed = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Record'),
-                                content: Text('Are you sure you want to delete "${record.title}"?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirmed == true) {
-                              _deleteRecord(record.id);
-                            }
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () async {
-            final newRecord = await Navigator.push<VehicleRecord>(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddRecordPage(),
+                    ],
+                  ],
+                ),
               ),
-            );
-            if (newRecord != null) {
-              _addRecord(newRecord);
-            }
-          },
-          icon: const Icon(Icons.add),
-          label: const Text('Add Record'),
-        ),
-      ),
+              const Divider(height: 1),
+
+              // Statistics
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: _StatisticsRow(
+                    vehicle: vehicle, records: filteredRecords),
+              ),
+              const Divider(height: 1),
+
+              // Records List
+              Expanded(
+                child: filteredRecords.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox_outlined,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              hasActiveFilters
+                                  ? 'No records match your filters'
+                                  : 'No records yet',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredRecords.length,
+                        itemBuilder: (context, index) {
+                          final record = filteredRecords[index];
+                          return RecordCard(
+                            record: record,
+                            onEdit: () async {
+                              final editedRecord =
+                                  await Navigator.push<VehicleRecord>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddRecordPage(record: record),
+                                ),
+                              );
+                              if (editedRecord != null) {
+                                cubit.updateRecord(
+                                    widget.vehicleId, editedRecord);
+                              }
+                            },
+                            onDelete: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Record'),
+                                  content: Text(
+                                      'Are you sure you want to delete "${record.title}"?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(
+                                          foregroundColor: Colors.red),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true) {
+                                cubit.deleteRecord(
+                                    widget.vehicleId, record.id);
+                              }
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () async {
+              final newRecord = await Navigator.push<VehicleRecord>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddRecordPage(),
+                ),
+              );
+              if (newRecord != null) {
+                cubit.addRecord(widget.vehicleId, newRecord);
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Record'),
+          ),
+        );
+      },
     );
   }
 }
@@ -950,7 +814,11 @@ class RecordCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const RecordCard({Key? key, required this.record, required this.onEdit, required this.onDelete})
+  const RecordCard(
+      {Key? key,
+      required this.record,
+      required this.onEdit,
+      required this.onDelete})
       : super(key: key);
 
   IconData _getIcon() {
@@ -1036,12 +904,14 @@ class RecordCard extends StatelessWidget {
                             ),
                           ),
                           if (record.isImportant)
-                            Icon(Icons.star, color: Colors.amber[700], size: 18),
+                            Icon(Icons.star,
+                                color: Colors.amber[700], size: 18),
                         ],
                       ),
                       Text(
                         DateFormat('MMM dd, yyyy').format(record.date),
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1183,7 +1053,8 @@ class _AddRecordPageState extends State<AddRecordPage> {
   void _saveRecord() {
     if (_formKey.currentState!.validate()) {
       final record = VehicleRecord(
-        id: widget.record?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.record?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         type: _selectedType,
         date: _selectedDate,
         title: _titleController.text,
@@ -1264,14 +1135,16 @@ class _AddRecordPageState extends State<AddRecordPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Date'),
-              subtitle: Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
+              subtitle:
+                  Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _selectedDate,
                   firstDate: DateTime(2000),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  lastDate:
+                      DateTime.now().add(const Duration(days: 365)),
                 );
                 if (date != null) {
                   setState(() => _selectedDate = date);
@@ -1325,7 +1198,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Record' : 'Save Record', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                  _isEditing ? 'Update Record' : 'Save Record',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -1415,10 +1290,11 @@ class _FilterDialogState extends State<FilterDialog> {
                     label: Text(_getTypeLabel(type)),
                     selected: _selectedType == type,
                     onSelected: (selected) {
-                      setState(() => _selectedType = selected ? type : null);
+                      setState(
+                          () => _selectedType = selected ? type : null);
                     },
                   );
-                }).toList(),
+                }),
               ],
             ),
             const SizedBox(height: 16),
@@ -1436,7 +1312,8 @@ class _FilterDialogState extends State<FilterDialog> {
               trailing: _fromDate != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () => setState(() => _fromDate = null),
+                      onPressed: () =>
+                          setState(() => _fromDate = null),
                     )
                   : null,
               onTap: () async {
@@ -1460,7 +1337,8 @@ class _FilterDialogState extends State<FilterDialog> {
               trailing: _toDate != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () => setState(() => _toDate = null),
+                      onPressed: () =>
+                          setState(() => _toDate = null),
                     )
                   : null,
               onTap: () async {

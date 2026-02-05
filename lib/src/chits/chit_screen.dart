@@ -1,382 +1,173 @@
 import 'package:flutter/material.dart';
-
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:my_data_app/src/chits/model/chit_model.dart';
+import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
+import 'package:my_data_app/src/chits/cubit/chit_state.dart';
 
-// Models
-enum ChitStatus { active, completed, upcoming }
-
-class ChitFund {
-  final String id;
-  final String name;
-  final double totalAmount;
-  final int totalMembers;
-  final int durationMonths;
-  final double monthlyContribution;
-  final DateTime startDate;
-  final DateTime? endDate;
-  final ChitStatus status;
-  final List<Member> members;
-  final List<Auction> auctions;
-  final String? description;
-
-  ChitFund({
-    required this.id,
-    required this.name,
-    required this.totalAmount,
-    required this.totalMembers,
-    required this.durationMonths,
-    required this.monthlyContribution,
-    required this.startDate,
-    this.endDate,
-    required this.status,
-    this.members = const [],
-    this.auctions = const [],
-    this.description,
-  });
-
-  ChitFund copyWith({
-    String? id,
-    String? name,
-    double? totalAmount,
-    int? totalMembers,
-    int? durationMonths,
-    double? monthlyContribution,
-    DateTime? startDate,
-    DateTime? endDate,
-    ChitStatus? status,
-    List<Member>? members,
-    List<Auction>? auctions,
-    String? description,
-  }) {
-    return ChitFund(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      totalAmount: totalAmount ?? this.totalAmount,
-      totalMembers: totalMembers ?? this.totalMembers,
-      durationMonths: durationMonths ?? this.durationMonths,
-      monthlyContribution: monthlyContribution ?? this.monthlyContribution,
-      startDate: startDate ?? this.startDate,
-      endDate: endDate ?? this.endDate,
-      status: status ?? this.status,
-      members: members ?? this.members,
-      auctions: auctions ?? this.auctions,
-      description: description ?? this.description,
-    );
-  }
-}
-
-class Member {
-  final String id;
-  final String name;
-  final String? phone;
-  final String? email;
-  final bool isOrganizer;
-  final List<Payment> payments;
-  final DateTime joinedDate;
-
-  Member({
-    required this.id,
-    required this.name,
-    this.phone,
-    this.email,
-    this.isOrganizer = false,
-    this.payments = const [],
-    required this.joinedDate,
-  });
-
-  Member copyWith({
-    String? id,
-    String? name,
-    String? phone,
-    String? email,
-    bool? isOrganizer,
-    List<Payment>? payments,
-    DateTime? joinedDate,
-  }) {
-    return Member(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      email: email ?? this.email,
-      isOrganizer: isOrganizer ?? this.isOrganizer,
-      payments: payments ?? this.payments,
-      joinedDate: joinedDate ?? this.joinedDate,
-    );
-  }
-}
-
-class Payment {
-  final String id;
-  final String memberId;
-  final int monthNumber;
-  final double amount;
-  final DateTime dueDate;
-  final DateTime? paidDate;
-  final bool isPaid;
-  final String? notes;
-
-  Payment({
-    required this.id,
-    required this.memberId,
-    required this.monthNumber,
-    required this.amount,
-    required this.dueDate,
-    this.paidDate,
-    this.isPaid = false,
-    this.notes,
-  });
-}
-
-class Auction {
-  final String id;
-  final int monthNumber;
-  final DateTime auctionDate;
-  final String winnerId;
-  final String winnerName;
-  final double bidAmount;
-  final double discountAmount;
-  final double amountReceived;
-  final String? notes;
-
-  Auction({
-    required this.id,
-    required this.monthNumber,
-    required this.auctionDate,
-    required this.winnerId,
-    required this.winnerName,
-    required this.bidAmount,
-    required this.discountAmount,
-    required this.amountReceived,
-    this.notes,
-  });
-}
+export 'package:my_data_app/src/chits/model/chit_model.dart';
 
 // Chit Fund List Page
-class ChitFundListPage extends StatefulWidget {
+class ChitFundListPage extends StatelessWidget {
   const ChitFundListPage({Key? key}) : super(key: key);
 
   @override
-  State<ChitFundListPage> createState() => _ChitFundListPageState();
-}
-
-class _ChitFundListPageState extends State<ChitFundListPage> {
-  List<ChitFund> chitFunds = [
-    ChitFund(
-      id: '1',
-      name: 'Family Chit Group',
-      totalAmount: 100000,
-      totalMembers: 20,
-      durationMonths: 20,
-      monthlyContribution: 5000,
-      startDate: DateTime(2024, 1, 1),
-      status: ChitStatus.active,
-      description: 'Monthly family chit fund group',
-      members: [
-        Member(
-          id: '1',
-          name: 'John Doe',
-          phone: '+1234567890',
-          isOrganizer: true,
-          joinedDate: DateTime(2024, 1, 1),
-        ),
-        Member(
-          id: '2',
-          name: 'Jane Smith',
-          phone: '+1234567891',
-          joinedDate: DateTime(2024, 1, 1),
-        ),
-      ],
-      auctions: [
-        Auction(
-          id: '1',
-          monthNumber: 1,
-          auctionDate: DateTime(2024, 1, 15),
-          winnerId: '1',
-          winnerName: 'John Doe',
-          bidAmount: 8000,
-          discountAmount: 2000,
-          amountReceived: 98000,
-        ),
-      ],
-    ),
-  ];
-
-  void _addChitFund(ChitFund chitFund) {
-    setState(() {
-      chitFunds.add(chitFund);
-    });
-  }
-
-  void _updateChitFund(ChitFund chitFund) {
-    setState(() {
-      final index = chitFunds.indexWhere((c) => c.id == chitFund.id);
-      if (index != -1) {
-        chitFunds[index] = chitFund;
-      }
-    });
-  }
-
-  void _deleteChitFund(String chitFundId) {
-    setState(() {
-      chitFunds.removeWhere((c) => c.id == chitFundId);
-    });
-  }
-
-  List<ChitFund> _getChitFundsByStatus(ChitStatus status) {
-    return chitFunds.where((c) => c.status == status).toList();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final activeChits = _getChitFundsByStatus(ChitStatus.active);
-    final completedChits = _getChitFundsByStatus(ChitStatus.completed);
-    final upcomingChits = _getChitFundsByStatus(ChitStatus.upcoming);
+    return BlocBuilder<ChitCubit, ChitState>(
+      builder: (context, state) {
+        final cubit = context.read<ChitCubit>();
+        final chitFunds = state.chitFunds;
+        final activeChits = cubit.getByStatus(ChitStatus.active);
+        final completedChits = cubit.getByStatus(ChitStatus.completed);
+        final upcomingChits = cubit.getByStatus(ChitStatus.upcoming);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chit Fund Manager'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // Summary Cards
-          Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SummaryCard(
-                    title: 'Active',
-                    count: activeChits.length,
-                    color: Colors.green,
-                    icon: Icons.play_circle_outline,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _SummaryCard(
-                    title: 'Upcoming',
-                    count: upcomingChits.length,
-                    color: Colors.orange,
-                    icon: Icons.schedule,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _SummaryCard(
-                    title: 'Completed',
-                    count: completedChits.length,
-                    color: Colors.blue,
-                    icon: Icons.check_circle_outline,
-                  ),
-                ),
-              ],
-            ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Chit Fund Manager'),
+            centerTitle: true,
+            elevation: 0,
           ),
-          const Divider(height: 1),
-
-          // Chit Funds List
-          Expanded(
-            child: chitFunds.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.group_work_outlined,
-                            size: 80, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No chit funds yet',
-                          style:
-                              TextStyle(fontSize: 16, color: Colors.grey[600]),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tap the + button to create your first chit group',
-                          style:
-                              TextStyle(fontSize: 14, color: Colors.grey[500]),
-                        ),
-                      ],
+          body: Column(
+            children: [
+              // Summary Cards
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.white,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Active',
+                        count: activeChits.length,
+                        color: Colors.green,
+                        icon: Icons.play_circle_outline,
+                      ),
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: chitFunds.length,
-                    itemBuilder: (context, index) {
-                      final chitFund = chitFunds[index];
-                      return ChitFundCard(
-                        chitFund: chitFund,
-                        onTap: () async {
-                          final updatedChitFund =
-                              await Navigator.push<ChitFund>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ChitFundDetailsPage(chitFund: chitFund),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Upcoming',
+                        count: upcomingChits.length,
+                        color: Colors.orange,
+                        icon: Icons.schedule,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _SummaryCard(
+                        title: 'Completed',
+                        count: completedChits.length,
+                        color: Colors.blue,
+                        icon: Icons.check_circle_outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Chit Funds List
+              Expanded(
+                child: chitFunds.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.group_work_outlined,
+                                size: 80, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No chit funds yet',
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600]),
                             ),
-                          );
-                          if (updatedChitFund != null) {
-                            _updateChitFund(updatedChitFund);
-                          }
-                        },
-                        onEdit: () async {
-                          final editedChitFund =
-                              await Navigator.push<ChitFund>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  AddChitFundPage(chitFund: chitFund),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tap the + button to create your first chit group',
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[500]),
                             ),
-                          );
-                          if (editedChitFund != null) {
-                            _updateChitFund(editedChitFund);
-                          }
-                        },
-                        onDelete: () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Chit Group'),
-                              content: Text('Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: chitFunds.length,
+                        itemBuilder: (context, index) {
+                          final chitFund = chitFunds[index];
+                          return ChitFundCard(
+                            chitFund: chitFund,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChitFundDetailsPage(
+                                      chitFundId: chitFund.id),
                                 ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                  child: const Text('Delete'),
+                              );
+                            },
+                            onEdit: () async {
+                              final editedChitFund =
+                                  await Navigator.push<ChitFund>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddChitFundPage(
+                                      chitFund: chitFund),
                                 ),
-                              ],
-                            ),
+                              );
+                              if (editedChitFund != null) {
+                                cubit.updateChitFund(editedChitFund);
+                              }
+                            },
+                            onDelete: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Chit Group'),
+                                  content: Text(
+                                      'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(
+                                          foregroundColor: Colors.red),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirmed == true) {
+                                cubit.deleteChitFund(chitFund.id);
+                              }
+                            },
                           );
-                          if (confirmed == true) {
-                            _deleteChitFund(chitFund.id);
-                          }
                         },
-                      );
-                    },
-                  ),
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newChitFund = await Navigator.push<ChitFund>(
-            context,
-            MaterialPageRoute(builder: (context) => const AddChitFundPage()),
-          );
-          if (newChitFund != null) {
-            _addChitFund(newChitFund);
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Create Chit Group'),
-      ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () async {
+              final newChitFund = await Navigator.push<ChitFund>(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const AddChitFundPage()),
+              );
+              if (newChitFund != null) {
+                cubit.addChitFund(newChitFund);
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Create Chit Group'),
+          ),
+        );
+      },
     );
   }
 }
@@ -562,7 +353,8 @@ class ChitFundCard extends StatelessWidget {
                     child: _InfoItem(
                       icon: Icons.people,
                       label: 'Members',
-                      value: '${chitFund.members.length}/${chitFund.totalMembers}',
+                      value:
+                          '${chitFund.members.length}/${chitFund.totalMembers}',
                     ),
                   ),
                   Expanded(
@@ -732,7 +524,8 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       final durationMonths = int.parse(_durationController.text);
 
       final chitFund = ChitFund(
-        id: widget.chitFund?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.chitFund?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         totalAmount: totalAmount,
         totalMembers: totalMembers,
@@ -875,7 +668,8 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Start Date'),
-              subtitle: Text(DateFormat('MMM dd, yyyy').format(_startDate)),
+              subtitle:
+                  Text(DateFormat('MMM dd, yyyy').format(_startDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
@@ -904,15 +698,16 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                   setState(() => _selectedStatus = value!);
                 },
               );
-            }).toList(),
+            }),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _saveChitFund,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child:
-                  Text(_isEditing ? 'Update Chit Group' : 'Create Chit Group', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                  _isEditing ? 'Update Chit Group' : 'Create Chit Group',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -934,9 +729,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
 
 // Chit Fund Details Page
 class ChitFundDetailsPage extends StatefulWidget {
-  final ChitFund chitFund;
+  final String chitFundId;
 
-  const ChitFundDetailsPage({Key? key, required this.chitFund})
+  const ChitFundDetailsPage({Key? key, required this.chitFundId})
       : super(key: key);
 
   @override
@@ -945,13 +740,11 @@ class ChitFundDetailsPage extends StatefulWidget {
 
 class _ChitFundDetailsPageState extends State<ChitFundDetailsPage>
     with SingleTickerProviderStateMixin {
-  late ChitFund chitFund;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    chitFund = widget.chitFund;
     _tabController = TabController(length: 3, vsync: this);
   }
 
@@ -961,80 +754,61 @@ class _ChitFundDetailsPageState extends State<ChitFundDetailsPage>
     super.dispose();
   }
 
-  void _addMember(Member member) {
-    setState(() {
-      final updatedMembers = List<Member>.from(chitFund.members)..add(member);
-      chitFund = chitFund.copyWith(members: updatedMembers);
-    });
-  }
-
-  void _updateMember(Member member) {
-    setState(() {
-      final updatedMembers = List<Member>.from(chitFund.members);
-      final index = updatedMembers.indexWhere((m) => m.id == member.id);
-      if (index != -1) {
-        updatedMembers[index] = member;
-      }
-      chitFund = chitFund.copyWith(members: updatedMembers);
-    });
-  }
-
-  void _addAuction(Auction auction) {
-    setState(() {
-      final updatedAuctions = List<Auction>.from(chitFund.auctions)
-        ..add(auction);
-      chitFund = chitFund.copyWith(auctions: updatedAuctions);
-    });
-  }
-
-  void _updateAuction(Auction auction) {
-    setState(() {
-      final updatedAuctions = List<Auction>.from(chitFund.auctions);
-      final index = updatedAuctions.indexWhere((a) => a.id == auction.id);
-      if (index != -1) {
-        updatedAuctions[index] = auction;
-      }
-      chitFund = chitFund.copyWith(auctions: updatedAuctions);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pop(context, chitFund);
-        return false;
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(chitFund.name),
-          elevation: 0,
-          bottom: TabBar(
+    return BlocBuilder<ChitCubit, ChitState>(
+      builder: (context, state) {
+        final cubit = context.read<ChitCubit>();
+        final chitFund = cubit.getChitFundById(widget.chitFundId);
+
+        if (chitFund == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Chit Fund')),
+            body: const Center(child: Text('Chit fund not found')),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(chitFund.name),
+            elevation: 0,
+            bottom: TabBar(
+              controller: _tabController,
+              tabs: const [
+                Tab(
+                    text: 'Overview',
+                    icon: Icon(Icons.dashboard, size: 20)),
+                Tab(
+                    text: 'Members',
+                    icon: Icon(Icons.people, size: 20)),
+                Tab(
+                    text: 'Auctions',
+                    icon: Icon(Icons.gavel, size: 20)),
+              ],
+            ),
+          ),
+          body: TabBarView(
             controller: _tabController,
-            tabs: const [
-              Tab(text: 'Overview', icon: Icon(Icons.dashboard, size: 20)),
-              Tab(text: 'Members', icon: Icon(Icons.people, size: 20)),
-              Tab(text: 'Auctions', icon: Icon(Icons.gavel, size: 20)),
+            children: [
+              _OverviewTab(chitFund: chitFund),
+              _MembersTab(
+                chitFund: chitFund,
+                onAddMember: (member) =>
+                    cubit.addMember(widget.chitFundId, member),
+                onUpdateMember: (member) =>
+                    cubit.updateMember(widget.chitFundId, member),
+              ),
+              _AuctionsTab(
+                chitFund: chitFund,
+                onAddAuction: (auction) =>
+                    cubit.addAuction(widget.chitFundId, auction),
+                onUpdateAuction: (auction) =>
+                    cubit.updateAuction(widget.chitFundId, auction),
+              ),
             ],
           ),
-        ),
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            _OverviewTab(chitFund: chitFund),
-            _MembersTab(
-              chitFund: chitFund,
-              onAddMember: (member) => _addMember(member),
-              onUpdateMember: (member) => _updateMember(member),
-            ),
-            _AuctionsTab(
-              chitFund: chitFund,
-              onAddAuction: (auction) => _addAuction(auction),
-              onUpdateAuction: (auction) => _updateAuction(auction),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -1062,7 +836,8 @@ class _OverviewTab extends StatelessWidget {
               children: [
                 const Text(
                   'Chit Details',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 _DetailRow(
@@ -1072,7 +847,8 @@ class _OverviewTab extends StatelessWidget {
                 ),
                 _DetailRow(
                   label: 'Monthly Contribution',
-                  value: '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
+                  value:
+                      '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
                   icon: Icons.payment,
                 ),
                 _DetailRow(
@@ -1087,7 +863,8 @@ class _OverviewTab extends StatelessWidget {
                 ),
                 _DetailRow(
                   label: 'Start Date',
-                  value: DateFormat('MMM dd, yyyy').format(chitFund.startDate),
+                  value: DateFormat('MMM dd, yyyy')
+                      .format(chitFund.startDate),
                   icon: Icons.date_range,
                 ),
                 if (chitFund.description != null) ...[
@@ -1095,7 +872,8 @@ class _OverviewTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     chitFund.description!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style:
+                        TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
                 ],
               ],
@@ -1111,7 +889,8 @@ class _OverviewTab extends StatelessWidget {
               children: [
                 const Text(
                   'Progress',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style:
+                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -1140,8 +919,8 @@ class _OverviewTab extends StatelessWidget {
                     value: progress,
                     minHeight: 20,
                     backgroundColor: Colors.grey[200],
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.green),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1190,7 +969,8 @@ class _DetailRow extends StatelessWidget {
           ),
           Text(
             value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style:
+                const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -1249,7 +1029,10 @@ class _MembersTab extends StatelessWidget {
   final Function(Member) onAddMember;
   final Function(Member) onUpdateMember;
 
-  const _MembersTab({required this.chitFund, required this.onAddMember, required this.onUpdateMember});
+  const _MembersTab(
+      {required this.chitFund,
+      required this.onAddMember,
+      required this.onUpdateMember});
 
   @override
   Widget build(BuildContext context) {
@@ -1302,7 +1085,8 @@ class _MembersTab extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         'No members added yet',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1315,10 +1099,12 @@ class _MembersTab extends StatelessWidget {
                     return MemberCard(
                       member: member,
                       onEdit: () async {
-                        final editedMember = await Navigator.push<Member>(
+                        final editedMember =
+                            await Navigator.push<Member>(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddMemberPage(member: member),
+                            builder: (context) =>
+                                AddMemberPage(member: member),
                           ),
                         );
                         if (editedMember != null) {
@@ -1338,7 +1124,8 @@ class MemberCard extends StatelessWidget {
   final Member member;
   final VoidCallback? onEdit;
 
-  const MemberCard({Key? key, required this.member, this.onEdit}) : super(key: key);
+  const MemberCard({Key? key, required this.member, this.onEdit})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1364,7 +1151,8 @@ class MemberCard extends StatelessWidget {
             if (member.isOrganizer) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.amber[100],
                   borderRadius: BorderRadius.circular(4),
@@ -1385,9 +1173,11 @@ class MemberCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (member.phone != null)
-              Text('📱 ${member.phone}', style: const TextStyle(fontSize: 12)),
+              Text('📱 ${member.phone}',
+                  style: const TextStyle(fontSize: 12)),
             if (member.email != null)
-              Text('✉️ ${member.email}', style: const TextStyle(fontSize: 12)),
+              Text('✉️ ${member.email}',
+                  style: const TextStyle(fontSize: 12)),
           ],
         ),
         trailing: onEdit != null
@@ -1443,10 +1233,15 @@ class _AddMemberPageState extends State<AddMemberPage> {
   void _saveMember() {
     if (_formKey.currentState!.validate()) {
       final member = Member(
-        id: widget.member?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.member?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
-        phone: _phoneController.text.isEmpty ? null : _phoneController.text,
-        email: _emailController.text.isEmpty ? null : _emailController.text,
+        phone: _phoneController.text.isEmpty
+            ? null
+            : _phoneController.text,
+        email: _emailController.text.isEmpty
+            ? null
+            : _emailController.text,
         isOrganizer: _isOrganizer,
         joinedDate: widget.member?.joinedDate ?? DateTime.now(),
         payments: widget.member?.payments ?? [],
@@ -1503,7 +1298,8 @@ class _AddMemberPageState extends State<AddMemberPage> {
               title: const Text('Organizer'),
               subtitle: const Text('Mark as group organizer'),
               value: _isOrganizer,
-              onChanged: (value) => setState(() => _isOrganizer = value),
+              onChanged: (value) =>
+                  setState(() => _isOrganizer = value),
             ),
             const SizedBox(height: 32),
             ElevatedButton(
@@ -1511,7 +1307,9 @@ class _AddMemberPageState extends State<AddMemberPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Member' : 'Add Member', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                  _isEditing ? 'Update Member' : 'Add Member',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
@@ -1526,7 +1324,10 @@ class _AuctionsTab extends StatelessWidget {
   final Function(Auction) onAddAuction;
   final Function(Auction) onUpdateAuction;
 
-  const _AuctionsTab({required this.chitFund, required this.onAddAuction, required this.onUpdateAuction});
+  const _AuctionsTab(
+      {required this.chitFund,
+      required this.onAddAuction,
+      required this.onUpdateAuction});
 
   @override
   Widget build(BuildContext context) {
@@ -1550,7 +1351,8 @@ class _AuctionsTab extends StatelessWidget {
                   final auction = await Navigator.push<Auction>(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => AddAuctionPage(chitFund: chitFund),
+                      builder: (context) =>
+                          AddAuctionPage(chitFund: chitFund),
                     ),
                   );
                   if (auction != null) {
@@ -1574,11 +1376,13 @@ class _AuctionsTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.gavel, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.gavel,
+                          size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No auctions recorded yet',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1591,7 +1395,8 @@ class _AuctionsTab extends StatelessWidget {
                     return AuctionCard(
                       auction: auction,
                       onEdit: () async {
-                        final editedAuction = await Navigator.push<Auction>(
+                        final editedAuction =
+                            await Navigator.push<Auction>(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AddAuctionPage(
@@ -1617,7 +1422,8 @@ class AuctionCard extends StatelessWidget {
   final Auction auction;
   final VoidCallback? onEdit;
 
-  const AuctionCard({Key? key, required this.auction, this.onEdit}) : super(key: key);
+  const AuctionCard({Key? key, required this.auction, this.onEdit})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1652,8 +1458,10 @@ class AuctionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        DateFormat('MMM dd, yyyy').format(auction.auctionDate),
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        DateFormat('MMM dd, yyyy')
+                            .format(auction.auctionDate),
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1693,7 +1501,8 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Bid Amount:',
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[700])),
                       Text(
                         '₹${auction.bidAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -1707,7 +1516,8 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Discount:',
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(
+                              fontSize: 13, color: Colors.grey[700])),
                       Text(
                         '₹${auction.discountAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -1761,7 +1571,9 @@ class AddAuctionPage extends StatefulWidget {
   final ChitFund chitFund;
   final Auction? auction;
 
-  const AddAuctionPage({Key? key, required this.chitFund, this.auction}) : super(key: key);
+  const AddAuctionPage(
+      {Key? key, required this.chitFund, this.auction})
+      : super(key: key);
 
   @override
   State<AddAuctionPage> createState() => _AddAuctionPageState();
@@ -1787,9 +1599,10 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       _auctionDate = widget.auction!.auctionDate;
       _monthNumber = widget.auction!.monthNumber;
       _selectedWinner = widget.chitFund.members
-          .where((m) => m.id == widget.auction!.winnerId)
-          .isNotEmpty
-          ? widget.chitFund.members.firstWhere((m) => m.id == widget.auction!.winnerId)
+              .where((m) => m.id == widget.auction!.winnerId)
+              .isNotEmpty
+          ? widget.chitFund.members
+              .firstWhere((m) => m.id == widget.auction!.winnerId)
           : null;
     } else {
       _monthNumber = widget.chitFund.auctions.length + 1;
@@ -1804,13 +1617,14 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
   }
 
   double _calculateAmountReceived() {
-    final bidAmount = double.tryParse(_bidAmountController.text) ?? 0;
-    final discount = widget.chitFund.totalAmount - bidAmount;
+    final bidAmount =
+        double.tryParse(_bidAmountController.text) ?? 0;
     return bidAmount;
   }
 
   double _calculateDiscount() {
-    final bidAmount = double.tryParse(_bidAmountController.text) ?? 0;
+    final bidAmount =
+        double.tryParse(_bidAmountController.text) ?? 0;
     return widget.chitFund.totalAmount - bidAmount;
   }
 
@@ -1827,7 +1641,8 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       final discount = widget.chitFund.totalAmount - bidAmount;
 
       final auction = Auction(
-        id: widget.auction?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.auction?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         monthNumber: _monthNumber,
         auctionDate: _auctionDate,
         winnerId: _selectedWinner!.id,
@@ -1835,7 +1650,9 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
         bidAmount: bidAmount,
         discountAmount: discount,
         amountReceived: bidAmount,
-        notes: _notesController.text.isEmpty ? null : _notesController.text,
+        notes: _notesController.text.isEmpty
+            ? null
+            : _notesController.text,
       );
 
       Navigator.pop(context, auction);
@@ -1873,7 +1690,8 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     const SizedBox(height: 8),
                     Text(
                       'Total Chit Amount: ₹${widget.chitFund.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -1883,14 +1701,16 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Auction Date'),
-              subtitle: Text(DateFormat('MMM dd, yyyy').format(_auctionDate)),
+              subtitle: Text(
+                  DateFormat('MMM dd, yyyy').format(_auctionDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _auctionDate,
                   firstDate: widget.chitFund.startDate,
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                  lastDate:
+                      DateTime.now().add(const Duration(days: 365)),
                 );
                 if (date != null) {
                   setState(() => _auctionDate = date);
@@ -1911,8 +1731,10 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                   child: Text(member.name),
                 );
               }).toList(),
-              onChanged: (value) => setState(() => _selectedWinner = value),
-              validator: (value) => value == null ? 'Required' : null,
+              onChanged: (value) =>
+                  setState(() => _selectedWinner = value),
+              validator: (value) =>
+                  value == null ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -1950,7 +1772,8 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Discount:',
-                            style: TextStyle(fontWeight: FontWeight.w500)),
+                            style:
+                                TextStyle(fontWeight: FontWeight.w500)),
                         Text(
                           '₹${discount.toStringAsFixed(0)}',
                           style: const TextStyle(
@@ -1966,7 +1789,8 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Amount Received:',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold)),
                         Text(
                           '₹${amountReceived.toStringAsFixed(0)}',
                           style: TextStyle(
@@ -1997,7 +1821,9 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Auction' : 'Save Auction', style: const TextStyle(fontSize: 16)),
+              child: Text(
+                  _isEditing ? 'Update Auction' : 'Save Auction',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),

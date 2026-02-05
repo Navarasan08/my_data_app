@@ -1,373 +1,232 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/reminder/model/bill_model.dart';
+import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
+import 'package:my_data_app/src/reminder/cubit/bill_state.dart';
 
-class BillTaskPage extends StatefulWidget {
+class BillTaskPage extends StatelessWidget {
   const BillTaskPage({Key? key}) : super(key: key);
 
   @override
-  State<BillTaskPage> createState() => _BillTaskPageState();
-}
-
-class _BillTaskPageState extends State<BillTaskPage> {
-  DateTime selectedDate = DateTime.now();
-  List<BillTask> tasks = [
-    BillTask(
-      id: '1',
-      title: 'Electricity Bill',
-      description: 'Monthly electricity payment',
-      amount: 120.50,
-      recurrence: RecurrenceType.monthly,
-      createdDate: DateTime(2024, 1, 5),
-    ),
-    BillTask(
-      id: '2',
-      title: 'Gym Membership',
-      description: 'Weekly gym payment',
-      amount: 25.00,
-      recurrence: RecurrenceType.weekly,
-      createdDate: DateTime(2024, 1, 1), // Monday
-    ),
-    BillTask(
-      id: '3',
-      title: 'Take Vitamins',
-      description: 'Daily health routine',
-      recurrence: RecurrenceType.daily,
-      createdDate: DateTime.now(),
-    ),
-  ];
-
-  void _changeMonth(int monthDelta) {
-    setState(() {
-      selectedDate = DateTime(
-        selectedDate.year,
-        selectedDate.month + monthDelta,
-        1,
-      );
-    });
-  }
-
-  void _toggleTaskCompletion(BillTask task, DateTime date) {
-    setState(() {
-      final taskIndex = tasks.indexWhere((t) => t.id == task.id);
-      if (taskIndex != -1) {
-        final updatedOccurrences = List<DateTime>.from(task.completedOccurrences);
-        
-        if (task.isCompletedForDate(date)) {
-          updatedOccurrences.removeWhere((d) =>
-              d.year == date.year && d.month == date.month && d.day == date.day);
-        } else {
-          updatedOccurrences.add(date);
-        }
-        
-        tasks[taskIndex] = task.copyWith(completedOccurrences: updatedOccurrences);
-      }
-    });
-  }
-
-  void _addTask(BillTask task) {
-    setState(() {
-      tasks.add(task);
-    });
-  }
-
-  void _updateTask(BillTask updatedTask) {
-    setState(() {
-      final index = tasks.indexWhere((t) => t.id == updatedTask.id);
-      if (index != -1) {
-        tasks[index] = updatedTask.copyWith(
-          completedOccurrences: tasks[index].completedOccurrences,
-        );
-      }
-    });
-  }
-
-  void _deleteTask(String taskId) {
-    setState(() {
-      tasks.removeWhere((task) => task.id == taskId);
-    });
-  }
-
-  List<BillTask> _getTasksForSelectedMonth() {
-    return tasks.where((task) {
-      // Get all days in selected month
-      final daysInMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
-      
-      for (int day = 1; day <= daysInMonth; day++) {
-        final date = DateTime(selectedDate.year, selectedDate.month, day);
-        if (task.isDueForDate(date)) {
-          return true;
-        }
-      }
-      return false;
-    }).toList();
-  }
-
-  Map<String, dynamic> _getMonthStatistics() {
-    final tasksForMonth = _getTasksForSelectedMonth();
-    final now = DateTime.now();
-    
-    int totalOccurrences = 0;
-    int completedOccurrences = 0;
-    int missedOccurrences = 0;
-    int pendingOccurrences = 0;
-    double totalAmount = 0;
-    double paidAmount = 0;
-    double missedAmount = 0;
-    double pendingAmount = 0;
-
-    for (var task in tasksForMonth) {
-      final daysInMonth = DateTime(selectedDate.year, selectedDate.month + 1, 0).day;
-      
-      for (int day = 1; day <= daysInMonth; day++) {
-        final date = DateTime(selectedDate.year, selectedDate.month, day);
-        if (task.isDueForDate(date)) {
-          totalOccurrences++;
-          
-          if (task.isCompletedForDate(date)) {
-            completedOccurrences++;
-            if (task.amount != null) {
-              paidAmount += task.amount!;
-            }
-          } else {
-            // Check if date is in the past (missed) or future (pending)
-            final dateOnly = DateTime(date.year, date.month, date.day);
-            final nowOnly = DateTime(now.year, now.month, now.day);
-            
-            if (dateOnly.isBefore(nowOnly)) {
-              missedOccurrences++;
-              if (task.amount != null) {
-                missedAmount += task.amount!;
-              }
-            } else {
-              pendingOccurrences++;
-              if (task.amount != null) {
-                pendingAmount += task.amount!;
-              }
-            }
-          }
-          
-          if (task.amount != null) {
-            totalAmount += task.amount!;
-          }
-        }
-      }
-    }
-
-    return {
-      'total': totalOccurrences,
-      'completed': completedOccurrences,
-      'missed': missedOccurrences,
-      'pending': pendingOccurrences,
-      'totalAmount': totalAmount,
-      'paidAmount': paidAmount,
-      'missedAmount': missedAmount,
-      'pendingAmount': pendingAmount,
-    };
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final monthYear = DateFormat('MMMM yyyy').format(selectedDate);
-    final tasksForMonth = _getTasksForSelectedMonth();
-    final stats = _getMonthStatistics();
+    return BlocBuilder<BillCubit, BillState>(
+      builder: (context, state) {
+        final cubit = context.read<BillCubit>();
+        final monthYear = DateFormat('MMMM yyyy').format(state.selectedDate);
+        final tasksForMonth = cubit.tasksForSelectedMonth;
+        final stats = cubit.monthStatistics;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Bills & Tasks'),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          // Month Selector
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.chevron_left),
-                  onPressed: () => _changeMonth(-1),
-                ),
-                Text(
-                  monthYear,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.chevron_right),
-                  onPressed: () => _changeMonth(1),
-                ),
-              ],
-            ),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Bills & Tasks'),
+            centerTitle: true,
+            elevation: 0,
           ),
-          const Divider(height: 1),
-          
-          // Statistics Overview Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: Colors.white,
-            child: Column(
-              children: [
-                Row(
+          body: Column(
+            children: [
+              // Month Selector
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.cancel_outlined,
-                        label: 'Missed',
-                        count: stats['missed'],
-                        amount: stats['missedAmount'],
-                        color: Colors.red,
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () => cubit.changeMonth(-1),
+                    ),
+                    Text(
+                      monthYear,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.pending_outlined,
-                        label: 'Pending',
-                        count: stats['pending'],
-                        amount: stats['pendingAmount'],
-                        color: Colors.orange,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _StatCard(
-                        icon: Icons.check_circle_outline,
-                        label: 'Completed',
-                        count: stats['completed'],
-                        amount: null,
-                        color: Colors.green,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () => cubit.changeMonth(1),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
+              ),
+              const Divider(height: 1),
+
+              // Statistics Overview Bar
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.cancel_outlined,
+                            label: 'Missed',
+                            count: stats['missed'],
+                            amount: stats['missedAmount'],
+                            color: Colors.red,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.pending_outlined,
+                            label: 'Pending',
+                            count: stats['pending'],
+                            amount: stats['pendingAmount'],
+                            color: Colors.orange,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _StatCard(
+                            icon: Icons.check_circle_outline,
+                            label: 'Completed',
+                            count: stats['completed'],
+                            amount: null,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Icon(Icons.receipt_long, color: Colors.blue[700], size: 18),
-                          const SizedBox(width: 6),
+                          Row(
+                            children: [
+                              Icon(Icons.receipt_long,
+                                  color: Colors.blue[700], size: 18),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Total Amount',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.blue[900],
+                                ),
+                              ),
+                            ],
+                          ),
                           Text(
-                            'Total Amount',
+                            '\$${stats['paidAmount'].toStringAsFixed(2)} / \$${stats['totalAmount'].toStringAsFixed(2)}',
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                               color: Colors.blue[900],
                             ),
                           ),
                         ],
                       ),
-                      Text(
-                        '\$${stats['paidAmount'].toStringAsFixed(2)} / \$${stats['totalAmount'].toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[900],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          
-          // Tasks List
-          Expanded(
-            child: tasksForMonth.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No bills or tasks for this month',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
                     ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: tasksForMonth.length,
-                    itemBuilder: (context, index) {
-                      final task = tasksForMonth[index];
-                      return TaskCard(
-                        task: task,
-                        selectedMonth: selectedDate,
-                        onToggle: (date) => _toggleTaskCompletion(task, date),
-                        onEdit: () async {
-                          final editedTask = await Navigator.push<BillTask>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => AddTaskPage(task: task),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              // Tasks List
+              Expanded(
+                child: tasksForMonth.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox_outlined,
+                                size: 64, color: Colors.grey[400]),
+                            const SizedBox(height: 16),
+                            Text(
+                              'No bills or tasks for this month',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                              ),
                             ),
-                          );
-                          if (editedTask != null) {
-                            _updateTask(editedTask);
-                          }
-                        },
-                        onDelete: () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Task'),
-                              content: Text('Are you sure you want to delete "${task.title}"?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: tasksForMonth.length,
+                        itemBuilder: (context, index) {
+                          final task = tasksForMonth[index];
+                          return TaskCard(
+                            task: task,
+                            selectedMonth: state.selectedDate,
+                            onToggle: (date) =>
+                                cubit.toggleCompletion(task.id, date),
+                            onEdit: () async {
+                              final editedTask =
+                                  await Navigator.push<BillTask>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AddTaskPage(task: task),
                                 ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  style: TextButton.styleFrom(foregroundColor: Colors.red),
-                                  child: const Text('Delete'),
+                              );
+                              if (editedTask != null) {
+                                cubit.updateTask(editedTask);
+                              }
+                            },
+                            onDelete: () async {
+                              final confirmed = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Task'),
+                                  content: Text(
+                                      'Are you sure you want to delete "${task.title}"?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: TextButton.styleFrom(
+                                          foregroundColor: Colors.red),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                              if (confirmed == true) {
+                                cubit.deleteTask(task.id);
+                              }
+                            },
                           );
-                          if (confirmed == true) {
-                            _deleteTask(task.id);
-                          }
                         },
-                      );
-                    },
-                  ),
+                      ),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final newTask = await Navigator.push<BillTask>(
-            context,
-            MaterialPageRoute(builder: (context) => const AddTaskPage()),
-          );
-          if (newTask != null) {
-            _addTask(newTask);
-          }
-        },
-        icon: const Icon(Icons.add),
-        label: const Text('Add Bill/Task'),
-      ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () async {
+              final newTask = await Navigator.push<BillTask>(
+                context,
+                MaterialPageRoute(builder: (context) => const AddTaskPage()),
+              );
+              if (newTask != null) {
+                cubit.addTask(newTask);
+              }
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Bill/Task'),
+          ),
+        );
+      },
     );
   }
 }
@@ -472,7 +331,8 @@ class TaskCard extends StatelessWidget {
   }
 
   List<DateTime> _getDueDatesInMonth() {
-    final daysInMonth = DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+    final daysInMonth =
+        DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
     final dueDates = <DateTime>[];
 
     for (int day = 1; day <= daysInMonth; day++) {
@@ -487,7 +347,8 @@ class TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dueDates = _getDueDatesInMonth();
-    final completedCount = dueDates.where((date) => task.isCompletedForDate(date)).length;
+    final completedCount =
+        dueDates.where((date) => task.isCompletedForDate(date)).length;
     final totalCount = dueDates.length;
 
     return Card(
@@ -574,12 +435,13 @@ class TaskCard extends StatelessWidget {
               children: dueDates.map((date) {
                 final isCompleted = task.isCompletedForDate(date);
                 final isPast = date.isBefore(DateTime.now()) && !isCompleted;
-                
+
                 return InkWell(
                   onTap: () => onToggle(date),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: isCompleted
                           ? Colors.green[100]
@@ -599,7 +461,9 @@ class TaskCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          isCompleted ? Icons.check_circle : Icons.circle_outlined,
+                          isCompleted
+                              ? Icons.check_circle
+                              : Icons.circle_outlined,
                           size: 16,
                           color: isCompleted
                               ? Colors.green[700]
@@ -679,7 +543,9 @@ class _AddTaskPageState extends State<AddTaskPage> {
     if (_formKey.currentState!.validate()) {
       if (_selectedRecurrence == RecurrenceType.custom && _customDays.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select at least one day for custom recurrence')),
+          const SnackBar(
+              content: Text(
+                  'Please select at least one day for custom recurrence')),
         );
         return;
       }
@@ -687,10 +553,15 @@ class _AddTaskPageState extends State<AddTaskPage> {
       final task = BillTask(
         id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text,
-        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
-        amount: _amountController.text.isEmpty ? null : double.tryParse(_amountController.text),
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
+        amount: _amountController.text.isEmpty
+            ? null
+            : double.tryParse(_amountController.text),
         recurrence: _selectedRecurrence,
-        customDays: _selectedRecurrence == RecurrenceType.custom ? _customDays : null,
+        customDays:
+            _selectedRecurrence == RecurrenceType.custom ? _customDays : null,
         createdDate: _selectedDate,
       );
 
@@ -761,7 +632,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                   });
                 },
               );
-            }).toList(),
+            }),
             if (_selectedRecurrence == RecurrenceType.weekly ||
                 _selectedRecurrence == RecurrenceType.monthly) ...[
               const SizedBox(height: 16),
@@ -828,7 +699,8 @@ class _AddTaskPageState extends State<AddTaskPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Task' : 'Save Task', style: const TextStyle(fontSize: 16)),
+              child: Text(_isEditing ? 'Update Task' : 'Save Task',
+                  style: const TextStyle(fontSize: 16)),
             ),
           ],
         ),
