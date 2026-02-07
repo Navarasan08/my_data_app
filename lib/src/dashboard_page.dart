@@ -1,17 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
-import 'package:my_data_app/src/reminder/cubit/bill_state.dart';
 import 'package:my_data_app/src/reminder/reminder_page.dart';
 import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
-import 'package:my_data_app/src/vehicle/cubit/vehicle_state.dart';
 import 'package:my_data_app/src/vehicle/vehicle_manager_page.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
-import 'package:my_data_app/src/chits/cubit/chit_state.dart';
 import 'package:my_data_app/src/chits/chit_screen.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthCubit>().signOut();
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,6 +115,19 @@ class DashboardPage extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => _showLogoutDialog(context),
+                          icon: const Icon(
+                            Icons.logout_rounded,
+                            color: Colors.white,
+                            size: 22,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor:
+                                Colors.white.withValues(alpha: 0.2),
                           ),
                         ),
                       ],

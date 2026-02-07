@@ -1,30 +1,34 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:my_data_app/main.dart';
+import 'package:my_data_app/src/dashboard_page.dart';
+import 'package:my_data_app/src/reminder/repository/bill_repository.dart';
+import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
+import 'package:my_data_app/src/vehicle/repository/vehicle_repository.dart';
+import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
+import 'package:my_data_app/src/chits/repository/chit_repository.dart';
+import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('DashboardPage smoke test', (WidgetTester tester) async {
+    final billRepository = InMemoryBillRepository();
+    final vehicleRepository = InMemoryVehicleRepository();
+    final chitRepository = InMemoryChitRepository();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => BillCubit(billRepository)),
+          BlocProvider(create: (_) => VehicleCubit(vehicleRepository)),
+          BlocProvider(create: (_) => ChitCubit(chitRepository)),
+        ],
+        child: const MaterialApp(
+          home: DashboardPage(),
+        ),
+      ),
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('My Assistant'), findsOneWidget);
   });
 }

@@ -22,6 +22,34 @@ class VehicleRecord {
     this.location,
     this.isImportant = false,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'type': type.index,
+      'date': date.toIso8601String(),
+      'title': title,
+      'description': description,
+      'amount': amount,
+      'odometer': odometer,
+      'location': location,
+      'isImportant': isImportant,
+    };
+  }
+
+  factory VehicleRecord.fromJson(Map<String, dynamic> json) {
+    return VehicleRecord(
+      id: json['id'] as String,
+      type: RecordType.values[json['type'] as int],
+      date: DateTime.parse(json['date'] as String),
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      amount: (json['amount'] as num?)?.toDouble(),
+      odometer: (json['odometer'] as num?)?.toDouble(),
+      location: json['location'] as String?,
+      isImportant: json['isImportant'] as bool? ?? false,
+    );
+  }
 }
 
 class Vehicle {
@@ -76,6 +104,41 @@ class Vehicle {
       purchaseDate: purchaseDate ?? this.purchaseDate,
       purchasePrice: purchasePrice ?? this.purchasePrice,
       records: records ?? this.records,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'brand': brand,
+      'model': model,
+      'year': year,
+      'registrationNumber': registrationNumber,
+      'vinNumber': vinNumber,
+      'color': color,
+      'purchaseDate': purchaseDate.toIso8601String(),
+      'purchasePrice': purchasePrice,
+      'records': records.map((r) => r.toJson()).toList(),
+    };
+  }
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) {
+    return Vehicle(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      brand: json['brand'] as String,
+      model: json['model'] as String,
+      year: json['year'] as String,
+      registrationNumber: json['registrationNumber'] as String,
+      vinNumber: json['vinNumber'] as String?,
+      color: json['color'] as String?,
+      purchaseDate: DateTime.parse(json['purchaseDate'] as String),
+      purchasePrice: (json['purchasePrice'] as num?)?.toDouble(),
+      records: (json['records'] as List<dynamic>?)
+              ?.map((r) => VehicleRecord.fromJson(r as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }

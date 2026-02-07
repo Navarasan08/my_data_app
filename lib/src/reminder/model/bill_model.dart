@@ -62,4 +62,34 @@ class BillTask {
         return customDays?.contains(date.day) ?? false;
     }
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'description': description,
+      'amount': amount,
+      'recurrence': recurrence.index,
+      'customDays': customDays,
+      'createdDate': createdDate.toIso8601String(),
+      'completedOccurrences':
+          completedOccurrences.map((d) => d.toIso8601String()).toList(),
+    };
+  }
+
+  factory BillTask.fromJson(Map<String, dynamic> json) {
+    return BillTask(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      description: json['description'] as String?,
+      amount: (json['amount'] as num?)?.toDouble(),
+      recurrence: RecurrenceType.values[json['recurrence'] as int],
+      customDays: (json['customDays'] as List<dynamic>?)?.cast<int>(),
+      createdDate: DateTime.parse(json['createdDate'] as String),
+      completedOccurrences: (json['completedOccurrences'] as List<dynamic>?)
+              ?.map((d) => DateTime.parse(d as String))
+              .toList() ??
+          [],
+    );
+  }
 }
