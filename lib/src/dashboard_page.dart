@@ -7,6 +7,10 @@ import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
 import 'package:my_data_app/src/vehicle/vehicle_manager_page.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
 import 'package:my_data_app/src/chits/chit_screen.dart';
+import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
+import 'package:my_data_app/src/checklist/checklist_page.dart';
+import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
+import 'package:my_data_app/src/periods/period_page.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -39,6 +43,8 @@ class DashboardPage extends StatelessWidget {
     final billState = context.watch<BillCubit>().state;
     final vehicleState = context.watch<VehicleCubit>().state;
     final chitState = context.watch<ChitCubit>().state;
+    final checklistState = context.watch<ChecklistCubit>().state;
+    final periodState = context.watch<PeriodCubit>().state;
 
     final hour = DateTime.now().hour;
     final greeting = hour < 12
@@ -106,7 +112,7 @@ class DashboardPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '3 Features',
+                                '5 Features',
                                 style: TextStyle(
                                   color:
                                       Colors.white.withValues(alpha: 0.9),
@@ -153,7 +159,7 @@ class DashboardPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Manage your bills, vehicles & chit funds',
+                      'Manage bills, vehicles, chits, lists & more',
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.white.withValues(alpha: 0.7),
@@ -202,10 +208,14 @@ class DashboardPage extends StatelessWidget {
                       Colors.deepOrange[400]!
                     ],
                     onTap: () {
+                      final billCubit = context.read<BillCubit>();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const BillTaskPage(),
+                          builder: (_) => BlocProvider.value(
+                            value: billCubit,
+                            child: const BillTaskPage(),
+                          ),
                         ),
                       );
                     },
@@ -221,11 +231,14 @@ class DashboardPage extends StatelessWidget {
                       Colors.indigo[400]!
                     ],
                     onTap: () {
+                      final vehicleCubit = context.read<VehicleCubit>();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const VehicleListPage(),
+                          builder: (_) => BlocProvider.value(
+                            value: vehicleCubit,
+                            child: const VehicleListPage(),
+                          ),
                         ),
                       );
                     },
@@ -241,11 +254,62 @@ class DashboardPage extends StatelessWidget {
                       Colors.deepPurple[400]!
                     ],
                     onTap: () {
+                      final chitCubit = context.read<ChitCubit>();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const ChitFundListPage(),
+                          builder: (_) => BlocProvider.value(
+                            value: chitCubit,
+                            child: const ChitFundListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _FeatureCard(
+                    icon: Icons.checklist_rounded,
+                    title: 'Checklists',
+                    subtitle: 'Track tasks with target dates',
+                    count: checklistState.checklists.length,
+                    countLabel: 'lists',
+                    gradient: [
+                      Colors.teal[400]!,
+                      Colors.green[600]!,
+                    ],
+                    onTap: () {
+                      final checklistCubit =
+                          context.read<ChecklistCubit>();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: checklistCubit,
+                            child: const ChecklistListPage(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _FeatureCard(
+                    icon: Icons.favorite_rounded,
+                    title: 'Period Tracker',
+                    subtitle: 'Track cycles & predictions',
+                    count: periodState.entries.length,
+                    countLabel: 'logs',
+                    gradient: [
+                      Colors.pink[300]!,
+                      Colors.pink[600]!,
+                    ],
+                    onTap: () {
+                      final periodCubit =
+                          context.read<PeriodCubit>();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: periodCubit,
+                            child: const PeriodTrackerPage(),
+                          ),
                         ),
                       );
                     },

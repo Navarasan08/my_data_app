@@ -57,8 +57,10 @@ class VehicleListPage extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                VehicleDetailsPage(vehicleId: vehicle.id),
+                            builder: (_) => BlocProvider.value(
+                              value: cubit,
+                              child: VehicleDetailsPage(vehicleId: vehicle.id),
+                            ),
                           ),
                         );
                       },

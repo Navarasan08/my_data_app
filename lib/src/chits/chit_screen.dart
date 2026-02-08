@@ -101,8 +101,11 @@ class ChitFundListPage extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => ChitFundDetailsPage(
-                                      chitFundId: chitFund.id),
+                                  builder: (_) => BlocProvider.value(
+                                    value: cubit,
+                                    child: ChitFundDetailsPage(
+                                        chitFundId: chitFund.id),
+                                  ),
                                 ),
                               );
                             },

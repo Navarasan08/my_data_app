@@ -6,6 +6,10 @@ import 'package:my_data_app/src/vehicle/repository/vehicle_repository.dart';
 import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
 import 'package:my_data_app/src/chits/repository/chit_repository.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
+import 'package:my_data_app/src/checklist/repository/checklist_repository.dart';
+import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
+import 'package:my_data_app/src/periods/repository/period_repository.dart';
+import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
 class AuthenticatedShell extends StatefulWidget {
@@ -21,6 +25,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreBillRepository _billRepo;
   late final FirestoreVehicleRepository _vehicleRepo;
   late final FirestoreChitRepository _chitRepo;
+  late final FirestoreChecklistRepository _checklistRepo;
+  late final FirestorePeriodRepository _periodRepo;
   bool _initialized = false;
 
   @override
@@ -29,6 +35,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _billRepo = FirestoreBillRepository(uid: widget.uid);
     _vehicleRepo = FirestoreVehicleRepository(uid: widget.uid);
     _chitRepo = FirestoreChitRepository(uid: widget.uid);
+    _checklistRepo = FirestoreChecklistRepository(uid: widget.uid);
+    _periodRepo = FirestorePeriodRepository(uid: widget.uid);
     _initRepos();
   }
 
@@ -37,6 +45,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _billRepo.init(),
       _vehicleRepo.init(),
       _chitRepo.init(),
+      _checklistRepo.init(),
+      _periodRepo.init(),
     ]);
     if (mounted) setState(() => _initialized = true);
   }
@@ -54,6 +64,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => BillCubit(_billRepo)),
         BlocProvider(create: (_) => VehicleCubit(_vehicleRepo)),
         BlocProvider(create: (_) => ChitCubit(_chitRepo)),
+        BlocProvider(create: (_) => ChecklistCubit(_checklistRepo)),
+        BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
       ],
       child: const DashboardPage(),
     );
