@@ -10,6 +10,7 @@ class VehicleRecord {
   final double? odometer;
   final String? location;
   final bool isImportant;
+  final DateTime? nextServiceDate;
 
   VehicleRecord({
     required this.id,
@@ -21,6 +22,7 @@ class VehicleRecord {
     this.odometer,
     this.location,
     this.isImportant = false,
+    this.nextServiceDate,
   });
 
   Map<String, dynamic> toJson() {
@@ -34,6 +36,7 @@ class VehicleRecord {
       'odometer': odometer,
       'location': location,
       'isImportant': isImportant,
+      'nextServiceDate': nextServiceDate?.toIso8601String(),
     };
   }
 
@@ -48,6 +51,9 @@ class VehicleRecord {
       odometer: (json['odometer'] as num?)?.toDouble(),
       location: json['location'] as String?,
       isImportant: json['isImportant'] as bool? ?? false,
+      nextServiceDate: json['nextServiceDate'] != null
+          ? DateTime.parse(json['nextServiceDate'] as String)
+          : null,
     );
   }
 }
@@ -78,6 +84,30 @@ class Vehicle {
     this.purchasePrice,
     this.records = const [],
   });
+
+  /// Returns the nearest upcoming next-service-date from all service records,
+  /// or null if none is set.
+  DateTime? get nextServiceDate {
+    DateTime? nearest;
+    for (final r in records) {
+      if (r.type == RecordType.service && r.nextServiceDate != null) {
+        if (nearest == null || r.nextServiceDate!.isAfter(nearest)) {
+          nearest = r.nextServiceDate;
+        }
+      }
+    }
+    return nearest;
+  }
+
+  /// Days left until the next service. Negative means overdue.
+  int? get daysLeftForService {
+    final nsd = nextServiceDate;
+    if (nsd == null) return null;
+    final now = DateTime.now();
+    return DateTime(nsd.year, nsd.month, nsd.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+  }
 
   Vehicle copyWith({
     String? id,

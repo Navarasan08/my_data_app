@@ -40,6 +40,17 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> refreshUser() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      await user.reload();
+      final refreshed = _auth.currentUser;
+      if (refreshed != null) {
+        emit(AuthState(status: AuthStatus.authenticated, user: refreshed));
+      }
+    }
+  }
+
   Future<void> signOut() async {
     await _auth.signOut();
   }

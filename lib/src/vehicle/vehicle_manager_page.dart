@@ -201,6 +201,10 @@ class VehicleCard extends StatelessWidget {
                   ),
                 ],
               ),
+              if (vehicle.daysLeftForService != null) ...[
+                const SizedBox(height: 10),
+                _ServiceDueBadge(daysLeft: vehicle.daysLeftForService!),
+              ],
               const SizedBox(height: 12),
               Divider(color: Colors.grey[300]),
               const SizedBox(height: 8),
@@ -251,6 +255,70 @@ class _InfoChip extends StatelessWidget {
           Text(
             label,
             style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServiceDueBadge extends StatelessWidget {
+  final int daysLeft;
+
+  const _ServiceDueBadge({required this.daysLeft});
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bgColor;
+    final Color textColor;
+    final String label;
+    final IconData icon;
+
+    if (daysLeft < 0) {
+      bgColor = Colors.red[50]!;
+      textColor = Colors.red[700]!;
+      label = 'Service overdue by ${-daysLeft} days';
+      icon = Icons.warning_rounded;
+    } else if (daysLeft == 0) {
+      bgColor = Colors.orange[50]!;
+      textColor = Colors.orange[800]!;
+      label = 'Service due today';
+      icon = Icons.build_rounded;
+    } else if (daysLeft <= 7) {
+      bgColor = Colors.orange[50]!;
+      textColor = Colors.orange[800]!;
+      label = '$daysLeft days left for service';
+      icon = Icons.schedule_rounded;
+    } else if (daysLeft <= 30) {
+      bgColor = Colors.amber[50]!;
+      textColor = Colors.amber[900]!;
+      label = '$daysLeft days left for service';
+      icon = Icons.schedule_rounded;
+    } else {
+      bgColor = Colors.green[50]!;
+      textColor = Colors.green[700]!;
+      label = '$daysLeft days left for service';
+      icon = Icons.check_circle_outline_rounded;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: textColor),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
           ),
         ],
       ),
@@ -619,6 +687,11 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                             TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
+                    if (vehicle.daysLeftForService != null) ...[
+                      const SizedBox(height: 10),
+                      _ServiceDueBadge(
+                          daysLeft: vehicle.daysLeftForService!),
+                    ],
                   ],
                 ),
               ),
@@ -965,6 +1038,12 @@ class RecordCard extends StatelessWidget {
                     icon: Icons.location_on,
                     label: record.location!,
                   ),
+                if (record.nextServiceDate != null)
+                  _DetailChip(
+                    icon: Icons.event_available,
+                    label:
+                        'Next: ${DateFormat('MMM dd, yyyy').format(record.nextServiceDate!)}',
+                  ),
               ],
             ),
           ],
@@ -1024,6 +1103,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
   RecordType _selectedType = RecordType.fuel;
   DateTime _selectedDate = DateTime.now();
   bool _isImportant = false;
+  DateTime? _nextServiceDate;
 
   bool get _isEditing => widget.record != null;
 
@@ -1039,6 +1119,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
       _selectedType = widget.record!.type;
       _selectedDate = widget.record!.date;
       _isImportant = widget.record!.isImportant;
+      _nextServiceDate = widget.record!.nextServiceDate;
     }
   }
 
@@ -1073,6 +1154,8 @@ class _AddRecordPageState extends State<AddRecordPage> {
             ? null
             : _locationController.text,
         isImportant: _isImportant,
+        nextServiceDate:
+            _selectedType == RecordType.service ? _nextServiceDate : null,
       );
       Navigator.pop(context, record);
     }
@@ -1186,6 +1269,47 @@ class _AddRecordPageState extends State<AddRecordPage> {
                 prefixIcon: Icon(Icons.location_on),
               ),
             ),
+            if (_selectedType == RecordType.service) ...[
+              const SizedBox(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(Icons.event_available,
+                    color: _nextServiceDate != null
+                        ? Colors.blue[700]
+                        : Colors.grey),
+                title: const Text('Next Service Date'),
+                subtitle: Text(
+                  _nextServiceDate != null
+                      ? DateFormat('MMM dd, yyyy').format(_nextServiceDate!)
+                      : 'Not set (tap to pick)',
+                  style: TextStyle(
+                    color: _nextServiceDate != null
+                        ? Colors.blue[700]
+                        : Colors.grey[500],
+                  ),
+                ),
+                trailing: _nextServiceDate != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () =>
+                            setState(() => _nextServiceDate = null),
+                      )
+                    : const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate:
+                        _nextServiceDate ?? DateTime.now().add(const Duration(days: 90)),
+                    firstDate: DateTime.now(),
+                    lastDate:
+                        DateTime.now().add(const Duration(days: 365 * 5)),
+                  );
+                  if (date != null) {
+                    setState(() => _nextServiceDate = date);
+                  }
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
