@@ -382,7 +382,7 @@ class DashboardPage extends StatelessWidget {
                     ),
                   ],
 
-                  // Features title
+                  // Features title test
                   SliverToBoxAdapter(
                     child: Padding(
                       padding:
