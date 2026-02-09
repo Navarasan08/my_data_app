@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       create: (_) => AuthCubit(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'My Assistant',
+        title: 'STATS',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           useMaterial3: true,
