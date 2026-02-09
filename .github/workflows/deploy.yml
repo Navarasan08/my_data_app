@@ -25,7 +25,9 @@ jobs:
           channel: stable
 
       - run: flutter pub get
-      - run: flutter build web --release --base-href /my_data_app/
+      - run: flutter build web --release --base-href /
+
+      - run: echo "statbook.com" > build/web/CNAME
 
       - uses: actions/upload-pages-artifact@v3
         with:
