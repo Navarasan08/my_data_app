@@ -14,6 +14,8 @@ import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/checklist/checklist_page.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/period_page.dart';
+import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
+import 'package:my_data_app/src/home/home_record_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -203,6 +205,7 @@ class DashboardPage extends StatelessWidget {
     final chitState = context.watch<ChitCubit>().state;
     final checklistState = context.watch<ChecklistCubit>().state;
     final periodState = context.watch<PeriodCubit>().state;
+    final homeRecordState = context.watch<HomeRecordCubit>().state;
 
     final periodCubit = context.read<PeriodCubit>();
 
@@ -329,14 +332,26 @@ class DashboardPage extends StatelessWidget {
 
             // Scrollable content
             Expanded(
-              child: CustomScrollView(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth;
+                  final isWide = width > 600;
+                  final isExtraWide = width > 900;
+                  final gridCols = isExtraWide ? 4 : isWide ? 3 : 2;
+                  final contentMaxWidth = isExtraWide ? 1200.0 : double.infinity;
+                  final hPad = isWide ? 32.0 : 20.0;
+
+                  return CustomScrollView(
                 slivers: [
                   // Upcoming section
                   if (upcomingItems.isNotEmpty) ...[
                     SliverToBoxAdapter(
-                      child: Padding(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                          child: Padding(
                         padding:
-                            const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                            EdgeInsets.fromLTRB(hPad + 4, 20, hPad + 4, 12),
                         child: Row(
                           children: [
                             Text(
@@ -367,26 +382,35 @@ class DashboardPage extends StatelessWidget {
                             ),
                           ],
                         ),
+                          ),
+                        ),
                       ),
                     ),
-                    SliverPadding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 20),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _UpcomingItemTile(
-                              item: upcomingItems[index]),
-                          childCount: upcomingItems.length,
+                    SliverToBoxAdapter(
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(horizontal: hPad),
+                            child: Column(
+                              children: upcomingItems
+                                  .map((item) => _UpcomingItemTile(item: item))
+                                  .toList(),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ],
 
-                  // Features title test
+                  // Features title
                   SliverToBoxAdapter(
-                    child: Padding(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                        child: Padding(
                       padding:
-                          const EdgeInsets.fromLTRB(24, 20, 24, 12),
+                          EdgeInsets.fromLTRB(hPad + 4, 20, hPad + 4, 12),
                       child: Text(
                         'Features',
                         style: TextStyle(
@@ -395,22 +419,27 @@ class DashboardPage extends StatelessWidget {
                           color: Colors.grey[800],
                         ),
                       ),
+                        ),
+                      ),
                     ),
                   ),
 
                   // Grid of feature cards
-                  SliverPadding(
+                  SliverToBoxAdapter(
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
+                        child: Padding(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 20),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 16,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: 0.85,
-                      ),
-                      delegate: SliverChildListDelegate([
+                        EdgeInsets.symmetric(horizontal: hPad),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: gridCols,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: isExtraWide ? 1.0 : isWide ? 0.9 : 0.85,
+                      children: [
                         _FeatureCard(
                           icon: Icons.receipt_long_rounded,
                           title: 'Bills & Tasks',
@@ -538,7 +567,35 @@ class DashboardPage extends StatelessWidget {
                             );
                           },
                         ),
-                      ]),
+                        _FeatureCard(
+                          icon: Icons.home_rounded,
+                          title: 'Home Records',
+                          subtitle:
+                              'Track home purchases & expenses',
+                          count: homeRecordState.records.length,
+                          countLabel: 'records',
+                          gradient: [
+                            Colors.green[400]!,
+                            Colors.green[700]!,
+                          ],
+                          onTap: () {
+                            final homeRecordCubit =
+                                context.read<HomeRecordCubit>();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => BlocProvider.value(
+                                  value: homeRecordCubit,
+                                  child: const HomeRecordPage(),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                        ),
+                      ),
                     ),
                   ),
 
@@ -546,6 +603,8 @@ class DashboardPage extends StatelessWidget {
                     child: SizedBox(height: 32),
                   ),
                 ],
+                  );
+                },
               ),
             ),
           ],
