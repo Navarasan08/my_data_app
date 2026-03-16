@@ -68,4 +68,21 @@ class ScheduleCubit extends Cubit<ScheduleState> {
 
   int get pendingCount =>
       state.entries.where((e) => !e.isCompleted).length;
+
+  /// All entries sorted by date (nearest first)
+  List<ScheduleEntry> get allSorted =>
+      List<ScheduleEntry>.from(state.entries)
+        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+
+  /// Group entries by month-year key, sorted
+  Map<String, List<ScheduleEntry>> get groupedByMonth {
+    final sorted = allSorted;
+    final map = <String, List<ScheduleEntry>>{};
+    for (final e in sorted) {
+      final key =
+          '${e.dateTime.year}-${e.dateTime.month.toString().padLeft(2, '0')}';
+      (map[key] ??= []).add(e);
+    }
+    return map;
+  }
 }

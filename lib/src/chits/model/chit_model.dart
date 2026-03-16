@@ -1,6 +1,8 @@
 enum ChitStatus { active, completed, upcoming }
+enum ChitRole { owner, participant }
 
 class ChitFund {
+  final ChitRole role;
   final String id;
   final String name;
   final double totalAmount;
@@ -14,9 +16,16 @@ class ChitFund {
   final List<Auction> auctions;
   final String? description;
 
+  // Participant-only fields
+  final int? myMonthNumber; // which month I won the auction
+  final double? myAuctionAmount; // amount I received
+  final String? organizerName; // who runs this chit
+  final String? organizerPhone;
+
   ChitFund({
     required this.id,
     required this.name,
+    this.role = ChitRole.owner,
     required this.totalAmount,
     required this.totalMembers,
     required this.durationMonths,
@@ -27,11 +36,52 @@ class ChitFund {
     this.members = const [],
     this.auctions = const [],
     this.description,
+    this.myMonthNumber,
+    this.myAuctionAmount,
+    this.organizerName,
+    this.organizerPhone,
   });
+
+  // Participant computed helpers
+  double get myTotalPaid {
+    if (role != ChitRole.participant || members.isEmpty) return 0;
+    return members.first.payments
+        .where((p) => p.isPaid)
+        .fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  double get myTotalPending {
+    if (role != ChitRole.participant || members.isEmpty) return 0;
+    return members.first.payments
+        .where((p) => !p.isPaid)
+        .fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  int get myPaidCount {
+    if (role != ChitRole.participant || members.isEmpty) return 0;
+    return members.first.payments.where((p) => p.isPaid).length;
+  }
+
+  Payment? get myNextPayment {
+    if (role != ChitRole.participant || members.isEmpty) return null;
+    final pending = members.first.payments
+        .where((p) => !p.isPaid)
+        .toList()
+      ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
+    return pending.isNotEmpty ? pending.first : null;
+  }
+
+  int get currentMonth {
+    final now = DateTime.now();
+    final diff = DateTime(now.year, now.month)
+        .difference(DateTime(startDate.year, startDate.month));
+    return (diff.inDays / 30).floor() + 1;
+  }
 
   ChitFund copyWith({
     String? id,
     String? name,
+    ChitRole? role,
     double? totalAmount,
     int? totalMembers,
     int? durationMonths,
@@ -42,10 +92,15 @@ class ChitFund {
     List<Member>? members,
     List<Auction>? auctions,
     String? description,
+    int? myMonthNumber,
+    double? myAuctionAmount,
+    String? organizerName,
+    String? organizerPhone,
   }) {
     return ChitFund(
       id: id ?? this.id,
       name: name ?? this.name,
+      role: role ?? this.role,
       totalAmount: totalAmount ?? this.totalAmount,
       totalMembers: totalMembers ?? this.totalMembers,
       durationMonths: durationMonths ?? this.durationMonths,
@@ -56,6 +111,10 @@ class ChitFund {
       members: members ?? this.members,
       auctions: auctions ?? this.auctions,
       description: description ?? this.description,
+      myMonthNumber: myMonthNumber ?? this.myMonthNumber,
+      myAuctionAmount: myAuctionAmount ?? this.myAuctionAmount,
+      organizerName: organizerName ?? this.organizerName,
+      organizerPhone: organizerPhone ?? this.organizerPhone,
     );
   }
 
@@ -63,6 +122,7 @@ class ChitFund {
     return {
       'id': id,
       'name': name,
+      'role': role.index,
       'totalAmount': totalAmount,
       'totalMembers': totalMembers,
       'durationMonths': durationMonths,
@@ -73,6 +133,10 @@ class ChitFund {
       'members': members.map((m) => m.toJson()).toList(),
       'auctions': auctions.map((a) => a.toJson()).toList(),
       'description': description,
+      'myMonthNumber': myMonthNumber,
+      'myAuctionAmount': myAuctionAmount,
+      'organizerName': organizerName,
+      'organizerPhone': organizerPhone,
     };
   }
 
@@ -80,6 +144,9 @@ class ChitFund {
     return ChitFund(
       id: json['id'] as String,
       name: json['name'] as String,
+      role: json['role'] != null
+          ? ChitRole.values[(json['role'] as int).clamp(0, 1)]
+          : ChitRole.owner,
       totalAmount: (json['totalAmount'] as num).toDouble(),
       totalMembers: json['totalMembers'] as int,
       durationMonths: json['durationMonths'] as int,
@@ -98,6 +165,10 @@ class ChitFund {
               .toList() ??
           [],
       description: json['description'] as String?,
+      myMonthNumber: json['myMonthNumber'] as int?,
+      myAuctionAmount: (json['myAuctionAmount'] as num?)?.toDouble(),
+      organizerName: json['organizerName'] as String?,
+      organizerPhone: json['organizerPhone'] as String?,
     );
   }
 }

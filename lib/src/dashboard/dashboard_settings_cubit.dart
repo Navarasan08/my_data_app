@@ -118,6 +118,20 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.deepOrange, Colors.red],
           order: 7,
         ),
+        FeatureItem(
+          id: 'loans',
+          title: 'Loans',
+          icon: Icons.account_balance_rounded,
+          gradient: [Colors.blueGrey, Colors.indigo],
+          order: 8,
+        ),
+        FeatureItem(
+          id: 'goals',
+          title: 'Goal Tracker',
+          icon: Icons.track_changes_rounded,
+          gradient: [Colors.teal, Colors.green],
+          order: 9,
+        ),
       ];
 
   Future<void> load() async {

@@ -13,161 +13,217 @@ class ChitFundListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ChitCubit, ChitState>(
-      builder: (context, state) {
-        final cubit = context.read<ChitCubit>();
-        final chitFunds = state.chitFunds;
-        final activeChits = cubit.getByStatus(ChitStatus.active);
-        final completedChits = cubit.getByStatus(ChitStatus.completed);
-        final upcomingChits = cubit.getByStatus(ChitStatus.upcoming);
+    return DefaultTabController(
+      length: 2,
+      child: BlocBuilder<ChitCubit, ChitState>(
+        builder: (context, state) {
+          final cubit = context.read<ChitCubit>();
+          final ownerChits = cubit.getByRole(ChitRole.owner);
+          final participantChits = cubit.getByRole(ChitRole.participant);
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Chit Fund Manager'),
-            centerTitle: true,
-            elevation: 0,
-          ),
-          body: Column(
-            children: [
-              // Summary Cards
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Active',
-                        count: activeChits.length,
-                        color: Colors.green,
-                        icon: Icons.play_circle_outline,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Upcoming',
-                        count: upcomingChits.length,
-                        color: Colors.orange,
-                        icon: Icons.schedule,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Completed',
-                        count: completedChits.length,
-                        color: Colors.blue,
-                        icon: Icons.check_circle_outline,
-                      ),
-                    ),
-                  ],
-                ),
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Chit Fund Manager'),
+              centerTitle: true,
+              elevation: 0,
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'My Chits', icon: Icon(Icons.star_rounded, size: 20)),
+                  Tab(text: 'Participating', icon: Icon(Icons.group_work_rounded, size: 20)),
+                ],
               ),
-              const Divider(height: 1),
-
-              // Chit Funds List
-              Expanded(
-                child: chitFunds.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.group_work_outlined,
-                                size: 80, color: Colors.grey[400]),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No chit funds yet',
-                              style: TextStyle(
-                                  fontSize: 16, color: Colors.grey[600]),
+            ),
+            body: TabBarView(
+              children: [
+                // Owner tab
+                _ChitListView(
+                  chitFunds: ownerChits,
+                  emptyMessage: 'No chit groups created yet',
+                  emptySubMessage: 'Tap the + button to create your first chit group',
+                  itemBuilder: (chitFund) => ChitFundCard(
+                    chitFund: chitFund,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: ChitFundDetailsPage(chitFundId: chitFund.id),
+                          ),
+                        ),
+                      );
+                    },
+                    onEdit: () async {
+                      final editedChitFund = await Navigator.push<ChitFund>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddChitFundPage(chitFund: chitFund),
+                        ),
+                      );
+                      if (editedChitFund != null) {
+                        cubit.updateChitFund(editedChitFund);
+                      }
+                    },
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Chit Group'),
+                          content: Text(
+                              'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap the + button to create your first chit group',
-                              style: TextStyle(
-                                  fontSize: 14, color: Colors.grey[500]),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Delete'),
                             ),
                           ],
                         ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: chitFunds.length,
-                        itemBuilder: (context, index) {
-                          final chitFund = chitFunds[index];
-                          return ChitFundCard(
-                            chitFund: chitFund,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => BlocProvider.value(
-                                    value: cubit,
-                                    child: ChitFundDetailsPage(
-                                        chitFundId: chitFund.id),
-                                  ),
-                                ),
-                              );
-                            },
-                            onEdit: () async {
-                              final editedChitFund =
-                                  await Navigator.push<ChitFund>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => AddChitFundPage(
-                                      chitFund: chitFund),
-                                ),
-                              );
-                              if (editedChitFund != null) {
-                                cubit.updateChitFund(editedChitFund);
-                              }
-                            },
-                            onDelete: () async {
-                              final confirmed = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Delete Chit Group'),
-                                  content: Text(
-                                      'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      style: TextButton.styleFrom(
-                                          foregroundColor: Colors.red),
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirmed == true) {
-                                cubit.deleteChitFund(chitFund.id);
-                              }
-                            },
-                          );
-                        },
+                      );
+                      if (confirmed == true) {
+                        cubit.deleteChitFund(chitFund.id);
+                      }
+                    },
+                  ),
+                ),
+                // Participant tab
+                _ChitListView(
+                  chitFunds: participantChits,
+                  emptyMessage: 'Not participating in any chit funds',
+                  emptySubMessage: 'Tap the + button to join a chit fund',
+                  itemBuilder: (chitFund) => _ParticipantChitCard(
+                    chitFund: chitFund,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: ParticipantChitDetailPage(chitFundId: chitFund.id),
+                          ),
+                        ),
+                      );
+                    },
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Remove Chit Fund'),
+                          content: Text(
+                              'Are you sure you want to remove "${chitFund.name}" from your list?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        cubit.deleteChitFund(chitFund.id);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _showAddOptions(context, cubit),
+              child: const Icon(Icons.add),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showAddOptions(BuildContext context, ChitCubit cubit) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Add Chit Fund',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurple.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.star_rounded, color: Colors.deepPurple),
+                  ),
+                  title: const Text('Create Chit Group (as Owner)'),
+                  subtitle: const Text('Start and manage your own chit fund'),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    final newChitFund = await Navigator.push<ChitFund>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddChitFundPage(initialRole: ChitRole.owner),
                       ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () async {
-              final newChitFund = await Navigator.push<ChitFund>(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const AddChitFundPage()),
-              );
-              if (newChitFund != null) {
-                cubit.addChitFund(newChitFund);
-              }
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Create Chit Group'),
+                    );
+                    if (newChitFund != null) {
+                      cubit.addChitFund(newChitFund);
+                    }
+                  },
+                ),
+                const Divider(indent: 16, endIndent: 16),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.group_work_rounded, color: Colors.teal),
+                  ),
+                  title: const Text('Join Chit Fund (as Participant)'),
+                  subtitle: const Text('Track a chit fund you are participating in'),
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    final newChitFund = await Navigator.push<ChitFund>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddChitFundPage(initialRole: ChitRole.participant),
+                      ),
+                    );
+                    if (newChitFund != null) {
+                      cubit.addChitFund(newChitFund);
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -175,51 +231,195 @@ class ChitFundListPage extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String title;
-  final int count;
-  final Color color;
-  final IconData icon;
+class _ChitListView extends StatelessWidget {
+  final List<ChitFund> chitFunds;
+  final String emptyMessage;
+  final String emptySubMessage;
+  final Widget Function(ChitFund) itemBuilder;
 
-  const _SummaryCard({
-    required this.title,
-    required this.count,
-    required this.color,
-    required this.icon,
+  const _ChitListView({
+    required this.chitFunds,
+    required this.emptyMessage,
+    required this.emptySubMessage,
+    required this.itemBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (chitFunds.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.group_work_outlined, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              emptyMessage,
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              emptySubMessage,
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: chitFunds.length,
+      itemBuilder: (context, index) => itemBuilder(chitFunds[index]),
+    );
+  }
+}
+
+class _ParticipantChitCard extends StatelessWidget {
+  final ChitFund chitFund;
+  final VoidCallback onTap;
+  final VoidCallback onDelete;
+
+  const _ParticipantChitCard({
+    required this.chitFund,
+    required this.onTap,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Color statusColor;
+    switch (chitFund.status) {
+      case ChitStatus.active:
+        statusColor = Colors.green;
+        break;
+      case ChitStatus.completed:
+        statusColor = Colors.blue;
+        break;
+      case ChitStatus.upcoming:
+        statusColor = Colors.orange;
+        break;
+    }
+
+    final nextPayment = chitFund.myNextPayment;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: Colors.grey[300]!),
       ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            count.toString(),
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.group_work_rounded, size: 22, color: Colors.deepPurple),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      chitFund.name,
+                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (chitFund.organizerName != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'By ${chitFund.organizerName}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      ),
+                    ],
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: statusColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            _getStatusText(chitFund.status),
+                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${chitFund.myPaidCount}/${chitFund.durationMonths} paid',
+                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Monthly: ₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (nextPayment != null) ...[
+                    Text(
+                      'Due ${DateFormat('MMM dd').format(nextPayment.dueDate)}',
+                      style: TextStyle(fontSize: 11, color: Colors.orange[700], fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '₹${nextPayment.amount.toStringAsFixed(0)}',
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.orange[800]),
+                    ),
+                  ] else
+                    Text(
+                      'All paid',
+                      style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.w600),
+                    ),
+                ],
+              ),
+            ],
           ),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
+  }
+
+  String _getStatusText(ChitStatus status) {
+    switch (status) {
+      case ChitStatus.active:
+        return 'Active';
+      case ChitStatus.completed:
+        return 'Completed';
+      case ChitStatus.upcoming:
+        return 'Upcoming';
+    }
   }
 }
 
@@ -263,8 +463,7 @@ class ChitFundCard extends StatelessWidget {
         break;
     }
 
-    final memberProgress =
-        chitFund.members.length / chitFund.totalMembers;
+    final memberProgress = chitFund.members.length / chitFund.totalMembers;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -288,8 +487,7 @@ class ChitFundCard extends StatelessWidget {
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.group_work_rounded,
-                        size: 22, color: statusColor),
+                    child: Icon(Icons.group_work_rounded, size: 22, color: statusColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -309,13 +507,10 @@ class ChitFundCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: statusColor
-                                    .withValues(alpha: 0.1),
-                                borderRadius:
-                                    BorderRadius.circular(4),
+                                color: statusColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 _getStatusText(),
@@ -349,8 +544,7 @@ class ChitFundCard extends StatelessWidget {
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(Icons.delete_outline_rounded,
-                          size: 16, color: Colors.red[300]),
+                      child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
                     ),
                   ),
                 ],
@@ -359,8 +553,7 @@ class ChitFundCard extends StatelessWidget {
               // Members progress
               Row(
                 children: [
-                  Icon(Icons.people_outline_rounded,
-                      size: 14, color: Colors.grey[400]),
+                  Icon(Icons.people_outline_rounded, size: 14, color: Colors.grey[400]),
                   const SizedBox(width: 6),
                   Text(
                     '${chitFund.members.length}/${chitFund.totalMembers} members',
@@ -377,8 +570,7 @@ class ChitFundCard extends StatelessWidget {
                         value: memberProgress.clamp(0.0, 1.0),
                         minHeight: 4,
                         backgroundColor: Colors.grey[200],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            statusColor),
+                        valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                       ),
                     ),
                   ),
@@ -401,11 +593,347 @@ class ChitFundCard extends StatelessWidget {
   }
 }
 
+// Participant Chit Detail Page
+class ParticipantChitDetailPage extends StatelessWidget {
+  final String chitFundId;
+
+  const ParticipantChitDetailPage({Key? key, required this.chitFundId}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<ChitCubit, ChitState>(
+      builder: (context, state) {
+        final cubit = context.read<ChitCubit>();
+        final chitFund = cubit.getChitFundById(chitFundId);
+
+        if (chitFund == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Chit Fund')),
+            body: const Center(child: Text('Chit fund not found')),
+          );
+        }
+
+        final payments = chitFund.members.isNotEmpty ? chitFund.members.first.payments : <Payment>[];
+        final paidCount = payments.where((p) => p.isPaid).length;
+        final pendingCount = payments.where((p) => !p.isPaid).length;
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(chitFund.name),
+            elevation: 0,
+          ),
+          body: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              // Summary card
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Chit Details',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      _DetailRow(
+                        label: 'Total Amount',
+                        value: '₹${chitFund.totalAmount.toStringAsFixed(0)}',
+                        icon: Icons.currency_rupee,
+                      ),
+                      _DetailRow(
+                        label: 'Monthly Contribution',
+                        value: '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
+                        icon: Icons.payment,
+                      ),
+                      _DetailRow(
+                        label: 'Duration',
+                        value: '${chitFund.durationMonths} Months',
+                        icon: Icons.calendar_month,
+                      ),
+                      _DetailRow(
+                        label: 'Status',
+                        value: _getStatusText(chitFund.status),
+                        icon: Icons.info_outline,
+                      ),
+                      if (chitFund.organizerName != null)
+                        _DetailRow(
+                          label: 'Organizer',
+                          value: chitFund.organizerName!,
+                          icon: Icons.person,
+                        ),
+                      if (chitFund.organizerPhone != null)
+                        _DetailRow(
+                          label: 'Organizer Phone',
+                          value: chitFund.organizerPhone!,
+                          icon: Icons.phone,
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Stats row
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Paid',
+                      value: paidCount.toString(),
+                      color: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Pending',
+                      value: pendingCount.toString(),
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Paid ₹',
+                      value: _formatCompact(chitFund.myTotalPaid),
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _StatCard(
+                      title: 'Pending ₹',
+                      value: _formatCompact(chitFund.myTotalPending),
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Auction win info
+              if (chitFund.myMonthNumber != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.amber[50],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.amber[300]!),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.emoji_events_rounded, color: Colors.amber[800], size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Won auction in month ${chitFund.myMonthNumber} — received ₹${chitFund.myAuctionAmount?.toStringAsFixed(0) ?? '0'}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.amber[900],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Payment timeline
+              const Text(
+                'Payment Timeline',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              if (payments.isEmpty)
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'No payments recorded',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                    ),
+                  ),
+                )
+              else
+                ...payments.map((payment) {
+                  return _PaymentTimelineItem(
+                    payment: payment,
+                    onToggle: () => cubit.togglePayment(chitFundId, payment.id),
+                  );
+                }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  String _getStatusText(ChitStatus status) {
+    switch (status) {
+      case ChitStatus.active:
+        return 'Active';
+      case ChitStatus.completed:
+        return 'Completed';
+      case ChitStatus.upcoming:
+        return 'Upcoming';
+    }
+  }
+
+  String _formatCompact(double amount) {
+    if (amount >= 100000) {
+      return '${(amount / 100000).toStringAsFixed(1)}L';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
+  }
+}
+
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final Color color;
+
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentTimelineItem extends StatelessWidget {
+  final Payment payment;
+  final VoidCallback onToggle;
+
+  const _PaymentTimelineItem({
+    required this.payment,
+    required this.onToggle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPaid = payment.isPaid;
+    final color = isPaid ? Colors.green : Colors.orange;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '${payment.monthNumber}',
+                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 14),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Month ${payment.monthNumber}',
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '₹${payment.amount.toStringAsFixed(0)} - Due ${DateFormat('MMM dd, yyyy').format(payment.dueDate)}',
+                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isPaid ? Colors.green[50] : Colors.orange[50],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              isPaid ? 'Paid' : 'Pending',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isPaid ? Colors.green[700] : Colors.orange[700],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          InkWell(
+            onTap: onToggle,
+            borderRadius: BorderRadius.circular(8),
+            child: Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                isPaid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                size: 22,
+                color: isPaid ? Colors.green : Colors.grey[400],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 // Add Chit Fund Page
 class AddChitFundPage extends StatefulWidget {
   final ChitFund? chitFund;
+  final ChitRole initialRole;
 
-  const AddChitFundPage({Key? key, this.chitFund}) : super(key: key);
+  const AddChitFundPage({Key? key, this.chitFund, this.initialRole = ChitRole.owner}) : super(key: key);
 
   @override
   State<AddChitFundPage> createState() => _AddChitFundPageState();
@@ -418,15 +946,21 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
   final _membersController = TextEditingController();
   final _durationController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _organizerNameController = TextEditingController();
+  final _organizerPhoneController = TextEditingController();
+  final _auctionMonthController = TextEditingController();
+  final _amountReceivedController = TextEditingController();
 
   DateTime _startDate = DateTime.now();
   ChitStatus _selectedStatus = ChitStatus.upcoming;
+  late ChitRole _role;
 
   bool get _isEditing => widget.chitFund != null;
 
   @override
   void initState() {
     super.initState();
+    _role = widget.chitFund?.role ?? widget.initialRole;
     if (widget.chitFund != null) {
       _nameController.text = widget.chitFund!.name;
       _totalAmountController.text = widget.chitFund!.totalAmount.toString();
@@ -435,6 +969,14 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       _descriptionController.text = widget.chitFund!.description ?? '';
       _startDate = widget.chitFund!.startDate;
       _selectedStatus = widget.chitFund!.status;
+      _organizerNameController.text = widget.chitFund!.organizerName ?? '';
+      _organizerPhoneController.text = widget.chitFund!.organizerPhone ?? '';
+      if (widget.chitFund!.myMonthNumber != null) {
+        _auctionMonthController.text = widget.chitFund!.myMonthNumber.toString();
+      }
+      if (widget.chitFund!.myAuctionAmount != null) {
+        _amountReceivedController.text = widget.chitFund!.myAuctionAmount.toString();
+      }
     }
   }
 
@@ -445,37 +987,83 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
     _membersController.dispose();
     _durationController.dispose();
     _descriptionController.dispose();
+    _organizerNameController.dispose();
+    _organizerPhoneController.dispose();
+    _auctionMonthController.dispose();
+    _amountReceivedController.dispose();
     super.dispose();
   }
 
   double _calculateMonthlyContribution() {
-    final totalAmount =
-        double.tryParse(_totalAmountController.text) ?? 0;
-    final members = int.tryParse(_membersController.text) ?? 1;
+    final totalAmount = double.tryParse(_totalAmountController.text) ?? 0;
+    final members = _role == ChitRole.participant
+        ? 1
+        : (int.tryParse(_membersController.text) ?? 1);
     return members > 0 ? totalAmount / members : 0;
+  }
+
+  List<Payment> _generatePayments(int durationMonths, double monthlyAmount, DateTime startDate) {
+    final payments = <Payment>[];
+    for (int i = 1; i <= durationMonths; i++) {
+      final dueDate = DateTime(startDate.year, startDate.month + i, startDate.day);
+      payments.add(Payment(
+        id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+        memberId: 'self',
+        monthNumber: i,
+        amount: monthlyAmount,
+        dueDate: dueDate,
+      ));
+    }
+    return payments;
   }
 
   void _saveChitFund() {
     if (_formKey.currentState!.validate()) {
       final totalAmount = double.parse(_totalAmountController.text);
-      final totalMembers = int.parse(_membersController.text);
+      final totalMembers = _role == ChitRole.participant
+          ? 1
+          : int.parse(_membersController.text);
       final durationMonths = int.parse(_durationController.text);
+      final monthlyContribution = totalAmount / (totalMembers > 0 ? totalMembers : 1);
+
+      List<Member> members = widget.chitFund?.members ?? [];
+      if (_role == ChitRole.participant && members.isEmpty) {
+        final payments = _generatePayments(durationMonths, monthlyContribution, _startDate);
+        members = [
+          Member(
+            id: 'self',
+            name: 'Me',
+            joinedDate: DateTime.now(),
+            payments: payments,
+          ),
+        ];
+      }
 
       final chitFund = ChitFund(
-        id: widget.chitFund?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.chitFund?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
+        role: _role,
         totalAmount: totalAmount,
         totalMembers: totalMembers,
         durationMonths: durationMonths,
-        monthlyContribution: totalAmount / totalMembers,
+        monthlyContribution: monthlyContribution,
         startDate: _startDate,
         status: _selectedStatus,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        members: widget.chitFund?.members ?? [],
+        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        members: members,
         auctions: widget.chitFund?.auctions ?? [],
+        organizerName: _role == ChitRole.participant && _organizerNameController.text.isNotEmpty
+            ? _organizerNameController.text
+            : widget.chitFund?.organizerName,
+        organizerPhone: _role == ChitRole.participant && _organizerPhoneController.text.isNotEmpty
+            ? _organizerPhoneController.text
+            : widget.chitFund?.organizerPhone,
+        myMonthNumber: _role == ChitRole.participant && _auctionMonthController.text.isNotEmpty
+            ? int.tryParse(_auctionMonthController.text)
+            : widget.chitFund?.myMonthNumber,
+        myAuctionAmount: _role == ChitRole.participant && _amountReceivedController.text.isNotEmpty
+            ? double.tryParse(_amountReceivedController.text)
+            : widget.chitFund?.myAuctionAmount,
       );
 
       Navigator.pop(context, chitFund);
@@ -496,6 +1084,27 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Role selector
+            SegmentedButton<ChitRole>(
+              segments: const [
+                ButtonSegment(
+                  value: ChitRole.owner,
+                  label: Text('Owner'),
+                  icon: Icon(Icons.star_rounded),
+                ),
+                ButtonSegment(
+                  value: ChitRole.participant,
+                  label: Text('Participant'),
+                  icon: Icon(Icons.group_work_rounded),
+                ),
+              ],
+              selected: {_role},
+              onSelectionChanged: (selected) {
+                setState(() => _role = selected.first);
+              },
+            ),
+            const SizedBox(height: 16),
+
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
@@ -504,8 +1113,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.group_work),
               ),
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Required' : null,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -527,25 +1135,26 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: _membersController,
-                    decoration: const InputDecoration(
-                      labelText: 'Total Members *',
-                      hintText: '20',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.people),
+                if (_role == ChitRole.owner)
+                  Expanded(
+                    child: TextFormField(
+                      controller: _membersController,
+                      decoration: const InputDecoration(
+                        labelText: 'Total Members *',
+                        hintText: '20',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.people),
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
+                      validator: (value) {
+                        if (value?.isEmpty ?? true) return 'Required';
+                        if (int.tryParse(value!) == null) return 'Invalid';
+                        return null;
+                      },
                     ),
-                    keyboardType: TextInputType.number,
-                    onChanged: (_) => setState(() {}),
-                    validator: (value) {
-                      if (value?.isEmpty ?? true) return 'Required';
-                      if (int.tryParse(value!) == null) return 'Invalid';
-                      return null;
-                    },
                   ),
-                ),
-                const SizedBox(width: 12),
+                if (_role == ChitRole.owner) const SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     controller: _durationController,
@@ -592,6 +1201,62 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                 ),
               ),
             const SizedBox(height: 16),
+
+            // Participant-specific fields
+            if (_role == ChitRole.participant) ...[
+              TextFormField(
+                controller: _organizerNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Organizer Name',
+                  hintText: 'e.g., Ramesh Kumar',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _organizerPhoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Organizer Phone',
+                  hintText: 'e.g., 9876543210',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.phone),
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _auctionMonthController,
+                      decoration: const InputDecoration(
+                        labelText: 'My Auction Month',
+                        hintText: 'e.g., 5',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.emoji_events),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _amountReceivedController,
+                      decoration: const InputDecoration(
+                        labelText: 'Amount Received',
+                        hintText: 'e.g., 90000',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.currency_rupee),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+
             TextFormField(
               controller: _descriptionController,
               decoration: const InputDecoration(
@@ -606,8 +1271,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Start Date'),
-              subtitle:
-                  Text(DateFormat('MMM dd, yyyy').format(_startDate)),
+              subtitle: Text(DateFormat('MMM dd, yyyy').format(_startDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
@@ -669,8 +1333,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
 class ChitFundDetailsPage extends StatefulWidget {
   final String chitFundId;
 
-  const ChitFundDetailsPage({Key? key, required this.chitFundId})
-      : super(key: key);
+  const ChitFundDetailsPage({Key? key, required this.chitFundId}) : super(key: key);
 
   @override
   State<ChitFundDetailsPage> createState() => _ChitFundDetailsPageState();
@@ -713,15 +1376,9 @@ class _ChitFundDetailsPageState extends State<ChitFundDetailsPage>
             bottom: TabBar(
               controller: _tabController,
               tabs: const [
-                Tab(
-                    text: 'Overview',
-                    icon: Icon(Icons.dashboard, size: 20)),
-                Tab(
-                    text: 'Members',
-                    icon: Icon(Icons.people, size: 20)),
-                Tab(
-                    text: 'Auctions',
-                    icon: Icon(Icons.gavel, size: 20)),
+                Tab(text: 'Overview', icon: Icon(Icons.dashboard, size: 20)),
+                Tab(text: 'Members', icon: Icon(Icons.people, size: 20)),
+                Tab(text: 'Auctions', icon: Icon(Icons.gavel, size: 20)),
               ],
             ),
           ),
@@ -731,17 +1388,13 @@ class _ChitFundDetailsPageState extends State<ChitFundDetailsPage>
               _OverviewTab(chitFund: chitFund),
               _MembersTab(
                 chitFund: chitFund,
-                onAddMember: (member) =>
-                    cubit.addMember(widget.chitFundId, member),
-                onUpdateMember: (member) =>
-                    cubit.updateMember(widget.chitFundId, member),
+                onAddMember: (member) => cubit.addMember(widget.chitFundId, member),
+                onUpdateMember: (member) => cubit.updateMember(widget.chitFundId, member),
               ),
               _AuctionsTab(
                 chitFund: chitFund,
-                onAddAuction: (auction) =>
-                    cubit.addAuction(widget.chitFundId, auction),
-                onUpdateAuction: (auction) =>
-                    cubit.updateAuction(widget.chitFundId, auction),
+                onAddAuction: (auction) => cubit.addAuction(widget.chitFundId, auction),
+                onUpdateAuction: (auction) => cubit.updateAuction(widget.chitFundId, auction),
               ),
             ],
           ),
@@ -774,8 +1427,7 @@ class _OverviewTab extends StatelessWidget {
               children: [
                 const Text(
                   'Chit Details',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 _DetailRow(
@@ -785,8 +1437,7 @@ class _OverviewTab extends StatelessWidget {
                 ),
                 _DetailRow(
                   label: 'Monthly Contribution',
-                  value:
-                      '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
+                  value: '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
                   icon: Icons.payment,
                 ),
                 _DetailRow(
@@ -801,8 +1452,7 @@ class _OverviewTab extends StatelessWidget {
                 ),
                 _DetailRow(
                   label: 'Start Date',
-                  value: DateFormat('MMM dd, yyyy')
-                      .format(chitFund.startDate),
+                  value: DateFormat('MMM dd, yyyy').format(chitFund.startDate),
                   icon: Icons.date_range,
                 ),
                 if (chitFund.description != null) ...[
@@ -810,8 +1460,7 @@ class _OverviewTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     chitFund.description!,
-                    style:
-                        TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
                   ),
                 ],
               ],
@@ -827,8 +1476,7 @@ class _OverviewTab extends StatelessWidget {
               children: [
                 const Text(
                   'Progress',
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -857,8 +1505,7 @@ class _OverviewTab extends StatelessWidget {
                     value: progress,
                     minHeight: 20,
                     backgroundColor: Colors.grey[200],
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -907,8 +1554,7 @@ class _DetailRow extends StatelessWidget {
           ),
           Text(
             value,
-            style:
-                const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -932,9 +1578,9 @@ class _ProgressCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -1004,8 +1650,7 @@ class _MembersTab extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Member'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ],
@@ -1018,13 +1663,11 @@ class _MembersTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.people_outline,
-                          size: 64, color: Colors.grey[400]),
+                      Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No members added yet',
-                        style: TextStyle(
-                            fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1037,12 +1680,10 @@ class _MembersTab extends StatelessWidget {
                     return MemberCard(
                       member: member,
                       onEdit: () async {
-                        final editedMember =
-                            await Navigator.push<Member>(
+                        final editedMember = await Navigator.push<Member>(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                AddMemberPage(member: member),
+                            builder: (context) => AddMemberPage(member: member),
                           ),
                         );
                         if (editedMember != null) {
@@ -1062,8 +1703,7 @@ class MemberCard extends StatelessWidget {
   final Member member;
   final VoidCallback? onEdit;
 
-  const MemberCard({Key? key, required this.member, this.onEdit})
-      : super(key: key);
+  const MemberCard({Key? key, required this.member, this.onEdit}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1089,8 +1729,7 @@ class MemberCard extends StatelessWidget {
             if (member.isOrganizer) ...[
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.amber[100],
                   borderRadius: BorderRadius.circular(4),
@@ -1111,11 +1750,9 @@ class MemberCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (member.phone != null)
-              Text('📱 ${member.phone}',
-                  style: const TextStyle(fontSize: 12)),
+              Text('Phone: ${member.phone}', style: const TextStyle(fontSize: 12)),
             if (member.email != null)
-              Text('✉️ ${member.email}',
-                  style: const TextStyle(fontSize: 12)),
+              Text('Email: ${member.email}', style: const TextStyle(fontSize: 12)),
           ],
         ),
         trailing: onEdit != null
@@ -1171,15 +1808,10 @@ class _AddMemberPageState extends State<AddMemberPage> {
   void _saveMember() {
     if (_formKey.currentState!.validate()) {
       final member = Member(
-        id: widget.member?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.member?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
-        phone: _phoneController.text.isEmpty
-            ? null
-            : _phoneController.text,
-        email: _emailController.text.isEmpty
-            ? null
-            : _emailController.text,
+        phone: _phoneController.text.isEmpty ? null : _phoneController.text,
+        email: _emailController.text.isEmpty ? null : _emailController.text,
         isOrganizer: _isOrganizer,
         joinedDate: widget.member?.joinedDate ?? DateTime.now(),
         payments: widget.member?.payments ?? [],
@@ -1207,8 +1839,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.person),
               ),
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Required' : null,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -1236,8 +1867,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
               title: const Text('Organizer'),
               subtitle: const Text('Mark as group organizer'),
               value: _isOrganizer,
-              onChanged: (value) =>
-                  setState(() => _isOrganizer = value),
+              onChanged: (value) => setState(() => _isOrganizer = value),
             ),
             const SizedBox(height: 32),
             ElevatedButton(
@@ -1289,8 +1919,7 @@ class _AuctionsTab extends StatelessWidget {
                   final auction = await Navigator.push<Auction>(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          AddAuctionPage(chitFund: chitFund),
+                      builder: (context) => AddAuctionPage(chitFund: chitFund),
                     ),
                   );
                   if (auction != null) {
@@ -1300,8 +1929,7 @@ class _AuctionsTab extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Auction'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ],
@@ -1314,13 +1942,11 @@ class _AuctionsTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.gavel,
-                          size: 64, color: Colors.grey[400]),
+                      Icon(Icons.gavel, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
                         'No auctions recorded yet',
-                        style: TextStyle(
-                            fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1333,8 +1959,7 @@ class _AuctionsTab extends StatelessWidget {
                     return AuctionCard(
                       auction: auction,
                       onEdit: () async {
-                        final editedAuction =
-                            await Navigator.push<Auction>(
+                        final editedAuction = await Navigator.push<Auction>(
                           context,
                           MaterialPageRoute(
                             builder: (context) => AddAuctionPage(
@@ -1360,8 +1985,7 @@ class AuctionCard extends StatelessWidget {
   final Auction auction;
   final VoidCallback? onEdit;
 
-  const AuctionCard({Key? key, required this.auction, this.onEdit})
-      : super(key: key);
+  const AuctionCard({Key? key, required this.auction, this.onEdit}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -1380,8 +2004,7 @@ class AuctionCard extends StatelessWidget {
                     color: Colors.deepPurple[50],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.gavel,
-                      color: Colors.deepPurple[700], size: 24),
+                  child: Icon(Icons.gavel, color: Colors.deepPurple[700], size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1396,10 +2019,8 @@ class AuctionCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        DateFormat('MMM dd, yyyy')
-                            .format(auction.auctionDate),
-                        style: TextStyle(
-                            fontSize: 13, color: Colors.grey[600]),
+                        DateFormat('MMM dd, yyyy').format(auction.auctionDate),
+                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
                       ),
                     ],
                   ),
@@ -1439,8 +2060,7 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Bid Amount:',
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
                       Text(
                         '₹${auction.bidAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -1454,8 +2074,7 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Discount:',
-                          style: TextStyle(
-                              fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
                       Text(
                         '₹${auction.discountAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -1509,9 +2128,7 @@ class AddAuctionPage extends StatefulWidget {
   final ChitFund chitFund;
   final Auction? auction;
 
-  const AddAuctionPage(
-      {Key? key, required this.chitFund, this.auction})
-      : super(key: key);
+  const AddAuctionPage({Key? key, required this.chitFund, this.auction}) : super(key: key);
 
   @override
   State<AddAuctionPage> createState() => _AddAuctionPageState();
@@ -1539,8 +2156,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       _selectedWinner = widget.chitFund.members
               .where((m) => m.id == widget.auction!.winnerId)
               .isNotEmpty
-          ? widget.chitFund.members
-              .firstWhere((m) => m.id == widget.auction!.winnerId)
+          ? widget.chitFund.members.firstWhere((m) => m.id == widget.auction!.winnerId)
           : null;
     } else {
       _monthNumber = widget.chitFund.auctions.length + 1;
@@ -1555,14 +2171,12 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
   }
 
   double _calculateAmountReceived() {
-    final bidAmount =
-        double.tryParse(_bidAmountController.text) ?? 0;
+    final bidAmount = double.tryParse(_bidAmountController.text) ?? 0;
     return bidAmount;
   }
 
   double _calculateDiscount() {
-    final bidAmount =
-        double.tryParse(_bidAmountController.text) ?? 0;
+    final bidAmount = double.tryParse(_bidAmountController.text) ?? 0;
     return widget.chitFund.totalAmount - bidAmount;
   }
 
@@ -1579,8 +2193,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       final discount = widget.chitFund.totalAmount - bidAmount;
 
       final auction = Auction(
-        id: widget.auction?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
+        id: widget.auction?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
         monthNumber: _monthNumber,
         auctionDate: _auctionDate,
         winnerId: _selectedWinner!.id,
@@ -1588,9 +2201,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
         bidAmount: bidAmount,
         discountAmount: discount,
         amountReceived: bidAmount,
-        notes: _notesController.text.isEmpty
-            ? null
-            : _notesController.text,
+        notes: _notesController.text.isEmpty ? null : _notesController.text,
       );
 
       Navigator.pop(context, auction);
@@ -1628,8 +2239,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     const SizedBox(height: 8),
                     Text(
                       'Total Chit Amount: ₹${widget.chitFund.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                          fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                   ],
                 ),
@@ -1639,16 +2249,14 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Auction Date'),
-              subtitle: Text(
-                  DateFormat('MMM dd, yyyy').format(_auctionDate)),
+              subtitle: Text(DateFormat('MMM dd, yyyy').format(_auctionDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _auctionDate,
                   firstDate: widget.chitFund.startDate,
-                  lastDate:
-                      DateTime.now().add(const Duration(days: 365)),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
                 );
                 if (date != null) {
                   setState(() => _auctionDate = date);
@@ -1669,10 +2277,8 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                   child: Text(member.name),
                 );
               }).toList(),
-              onChanged: (value) =>
-                  setState(() => _selectedWinner = value),
-              validator: (value) =>
-                  value == null ? 'Required' : null,
+              onChanged: (value) => setState(() => _selectedWinner = value),
+              validator: (value) => value == null ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -1710,8 +2316,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Discount:',
-                            style:
-                                TextStyle(fontWeight: FontWeight.w500)),
+                            style: TextStyle(fontWeight: FontWeight.w500)),
                         Text(
                           '₹${discount.toStringAsFixed(0)}',
                           style: const TextStyle(
@@ -1727,8 +2332,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text('Amount Received:',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold)),
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         Text(
                           '₹${amountReceived.toStringAsFixed(0)}',
                           style: TextStyle(

@@ -386,7 +386,7 @@ class _RecordCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.green[700],
+                  color: Colors.red,
                 ),
               ),
               const SizedBox(width: 8),

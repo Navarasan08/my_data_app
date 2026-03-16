@@ -65,6 +65,34 @@ class ChitCubit extends Cubit<ChitState> {
     return state.chitFunds.where((c) => c.status == status).toList();
   }
 
+  List<ChitFund> getByRole(ChitRole role) {
+    return state.chitFunds.where((c) => c.role == role).toList();
+  }
+
+  void togglePayment(String chitFundId, String paymentId) {
+    final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
+    if (chitFund.members.isEmpty) return;
+    final member = chitFund.members.first;
+    final payments = List<Payment>.from(member.payments);
+    final idx = payments.indexWhere((p) => p.id == paymentId);
+    if (idx == -1) return;
+    final p = payments[idx];
+    payments[idx] = Payment(
+      id: p.id,
+      memberId: p.memberId,
+      monthNumber: p.monthNumber,
+      amount: p.amount,
+      dueDate: p.dueDate,
+      paidDate: p.isPaid ? null : DateTime.now(),
+      isPaid: !p.isPaid,
+      notes: p.notes,
+    );
+    final updatedMember = member.copyWith(payments: payments);
+    _repository.update(
+        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
+    emit(state.copyWith(chitFunds: _repository.getAll()));
+  }
+
   ChitFund? getChitFundById(String chitFundId) {
     final matches = state.chitFunds.where((c) => c.id == chitFundId);
     return matches.isNotEmpty ? matches.first : null;

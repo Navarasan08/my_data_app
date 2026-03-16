@@ -8,13 +8,37 @@ import 'package:my_data_app/src/schedule/cubit/schedule_state.dart';
 class SchedulePage extends StatelessWidget {
   const SchedulePage({Key? key}) : super(key: key);
 
+  String _daysLeftLabel(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final diff = target.difference(today).inDays;
+    if (diff < 0) return '${-diff}d ago';
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    if (diff <= 7) return 'In $diff days';
+    return 'In $diff days';
+  }
+
+  Color _daysLeftColor(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final diff = target.difference(today).inDays;
+    if (diff < 0) return Colors.red;
+    if (diff == 0) return Colors.orange;
+    if (diff <= 3) return Colors.amber[700]!;
+    return Colors.green;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ScheduleCubit, ScheduleState>(
       builder: (context, state) {
         final cubit = context.read<ScheduleCubit>();
-        final dayEntries = cubit.entriesForSelectedDate;
-        final sel = state.selectedDate;
+        final grouped = cubit.groupedByMonth;
+        final total = state.entries.length;
+        final pending = cubit.pendingCount;
 
         return Scaffold(
           appBar: AppBar(
@@ -22,124 +46,192 @@ class SchedulePage extends StatelessWidget {
             centerTitle: true,
             elevation: 0,
           ),
-          body: Column(
-            children: [
-              // Week strip
-              _WeekStrip(
-                selectedDate: sel,
-                onDateSelected: (d) => cubit.changeDate(d),
-              ),
-              // Date label + count
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
-                child: Row(
+          body: state.entries.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_available_rounded,
+                          size: 48, color: Colors.grey[300]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No schedules yet',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[500],
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
                   children: [
-                    Text(
-                      DateFormat('EEEE, MMM d').format(sel),
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${dayEntries.length} event${dayEntries.length != 1 ? 's' : ''}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[500],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Entries list
-              Expanded(
-                child: dayEntries.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.event_available_rounded,
-                                size: 48, color: Colors.grey[300]),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No schedules for this day',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
+                    // Summary
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 4),
+                      child: Row(
+                        children: [
+                          Text(
+                            '$total events',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          if (pending > 0) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.orange[50],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                '$pending pending',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.orange[700],
+                                ),
                               ),
                             ),
                           ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
-                        itemCount: dayEntries.length,
-                        itemBuilder: (context, index) {
-                          final entry = dayEntries[index];
-                          return _ScheduleItem(
-                            entry: entry,
-                            onToggle: () =>
-                                cubit.toggleComplete(entry.id),
-                            onEdit: () async {
-                              final edited =
-                                  await Navigator.push<ScheduleEntry>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AddSchedulePage(
-                                      entry: entry),
-                                ),
-                              );
-                              if (edited != null) {
-                                cubit.updateEntry(edited);
-                              }
-                            },
-                            onDelete: () async {
-                              final confirmed =
-                                  await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title:
-                                      const Text('Delete Schedule'),
-                                  content: Text(
-                                      'Delete "${entry.title}"?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, true),
-                                      style: TextButton.styleFrom(
-                                          foregroundColor:
-                                              Colors.red),
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirmed == true) {
-                                cubit.deleteEntry(entry.id);
-                              }
-                            },
-                          );
-                        },
+                        ],
                       ),
-              ),
-            ],
-          ),
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Month groups
+                    ...grouped.entries.map((monthGroup) {
+                      final key = monthGroup.key;
+                      final entries = monthGroup.value;
+                      final monthDate = DateTime(
+                        int.parse(key.split('-')[0]),
+                        int.parse(key.split('-')[1]),
+                      );
+                      final monthLabel =
+                          DateFormat('MMMM yyyy').format(monthDate);
+                      final now = DateTime.now();
+                      final isCurrentMonth = monthDate.year == now.year &&
+                          monthDate.month == now.month;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Month header
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  monthLabel,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    color: isCurrentMonth
+                                        ? Colors.blue[700]
+                                        : Colors.grey[700],
+                                  ),
+                                ),
+                                if (isCurrentMonth) ...[
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue,
+                                      borderRadius:
+                                          BorderRadius.circular(6),
+                                    ),
+                                    child: const Text(
+                                      'NOW',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                const Spacer(),
+                                Text(
+                                  '${entries.length}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Entries
+                          ...entries.map((entry) => _ScheduleItem(
+                                entry: entry,
+                                daysLeftLabel:
+                                    _daysLeftLabel(entry.dateTime),
+                                daysLeftColor:
+                                    _daysLeftColor(entry.dateTime),
+                                onToggle: () =>
+                                    cubit.toggleComplete(entry.id),
+                                onEdit: () async {
+                                  final edited = await Navigator.push<
+                                      ScheduleEntry>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          AddSchedulePage(entry: entry),
+                                    ),
+                                  );
+                                  if (edited != null) {
+                                    cubit.updateEntry(edited);
+                                  }
+                                },
+                                onDelete: () async {
+                                  final confirmed =
+                                      await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text(
+                                          'Delete Schedule'),
+                                      content: Text(
+                                          'Delete "${entry.title}"?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, true),
+                                          style: TextButton.styleFrom(
+                                              foregroundColor:
+                                                  Colors.red),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    cubit.deleteEntry(entry.id);
+                                  }
+                                },
+                              )),
+                        ],
+                      );
+                    }),
+                  ],
+                ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () async {
-              final newEntry =
-                  await Navigator.push<ScheduleEntry>(
+              final newEntry = await Navigator.push<ScheduleEntry>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => AddSchedulePage(
-                      initialDate: sel),
+                  builder: (_) => const AddSchedulePage(),
                 ),
               );
               if (newEntry != null) {
@@ -155,111 +247,20 @@ class SchedulePage extends StatelessWidget {
   }
 }
 
-// ─── Week Strip ──────────────────────────────────────────────────────────────
-
-class _WeekStrip extends StatelessWidget {
-  final DateTime selectedDate;
-  final ValueChanged<DateTime> onDateSelected;
-
-  const _WeekStrip({
-    required this.selectedDate,
-    required this.onDateSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTime.now();
-    // Show 7 days centered around selected date
-    final startOfWeek =
-        selectedDate.subtract(Duration(days: selectedDate.weekday - 1));
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      color: Colors.white,
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left_rounded, size: 20),
-            onPressed: () =>
-                onDateSelected(selectedDate.subtract(const Duration(days: 7))),
-            visualDensity: VisualDensity.compact,
-          ),
-          ...List.generate(7, (i) {
-            final date = startOfWeek.add(Duration(days: i));
-            final isSelected = date.day == selectedDate.day &&
-                date.month == selectedDate.month &&
-                date.year == selectedDate.year;
-            final isToday = date.day == today.day &&
-                date.month == today.month &&
-                date.year == today.year;
-
-            return Expanded(
-              child: GestureDetector(
-                onTap: () => onDateSelected(date),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? Colors.blue[600]
-                        : isToday
-                            ? Colors.blue[50]
-                            : null,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        DateFormat('E').format(date).substring(0, 2),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected
-                              ? Colors.white70
-                              : Colors.grey[500],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected
-                              ? Colors.white
-                              : isToday
-                                  ? Colors.blue[700]
-                                  : Colors.black87,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          IconButton(
-            icon: const Icon(Icons.chevron_right_rounded, size: 20),
-            onPressed: () =>
-                onDateSelected(selectedDate.add(const Duration(days: 7))),
-            visualDensity: VisualDensity.compact,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // ─── Schedule Item ───────────────────────────────────────────────────────────
 
 class _ScheduleItem extends StatelessWidget {
   final ScheduleEntry entry;
+  final String daysLeftLabel;
+  final Color daysLeftColor;
   final VoidCallback onToggle;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ScheduleItem({
     required this.entry,
+    required this.daysLeftLabel,
+    required this.daysLeftColor,
     required this.onToggle,
     required this.onEdit,
     required this.onDelete,
@@ -269,9 +270,7 @@ class _ScheduleItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cat = entry.category;
     final timeStr = DateFormat('h:mm a').format(entry.dateTime);
-    final endStr = entry.endTime != null
-        ? ' — ${DateFormat('h:mm a').format(entry.endTime!)}'
-        : '';
+    final dateStr = DateFormat('EEE, d').format(entry.dateTime);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -291,41 +290,53 @@ class _ScheduleItem extends StatelessWidget {
               GestureDetector(
                 onTap: onToggle,
                 child: Container(
-                  width: 28,
-                  height: 28,
+                  width: 26,
+                  height: 26,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: entry.isCompleted
                         ? cat.color.withValues(alpha: 0.15)
                         : Colors.transparent,
                     border: Border.all(
-                      color: entry.isCompleted
-                          ? cat.color
-                          : Colors.grey[300]!,
+                      color:
+                          entry.isCompleted ? cat.color : Colors.grey[300]!,
                       width: 2,
                     ),
                   ),
                   child: entry.isCompleted
                       ? Icon(Icons.check_rounded,
-                          size: 16, color: cat.color)
+                          size: 14, color: cat.color)
                       : null,
                 ),
               ),
               const SizedBox(width: 10),
-              // Time column
+              // Date + time column
               SizedBox(
-                width: 56,
-                child: Text(
-                  timeStr,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                  ),
+                width: 52,
+                child: Column(
+                  children: [
+                    Text(
+                      dateStr,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      timeStr,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[400],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              // Category dot + content
+              // Color bar
               Container(
                 width: 4,
                 height: 32,
@@ -335,6 +346,7 @@ class _ScheduleItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
+              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,15 +368,39 @@ class _ScheduleItem extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${cat.label}$endStr',
+                      cat.label,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: Colors.grey[500],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 6),
+              // Days left badge
+              if (!entry.isCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: daysLeftColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    daysLeftLabel,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: daysLeftColor,
+                    ),
+                  ),
+                )
+              else
+                Icon(Icons.check_circle_rounded,
+                    size: 18, color: Colors.green[400]),
+              const SizedBox(width: 6),
+              // Delete
               InkWell(
                 onTap: onDelete,
                 borderRadius: BorderRadius.circular(6),
@@ -375,7 +411,7 @@ class _ScheduleItem extends StatelessWidget {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                      size: 14, color: Colors.red[300]),
                 ),
               ),
             ],
@@ -510,7 +546,6 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Category
                 DropdownButtonFormField<ScheduleCategory>(
                   value: _category,
                   decoration: const InputDecoration(
@@ -536,7 +571,6 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Date
                 ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
@@ -550,7 +584,6 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ),
                 const SizedBox(height: 12),
 
-                // Start time
                 Row(
                   children: [
                     Expanded(
@@ -573,7 +606,8 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                           borderRadius: BorderRadius.circular(4),
                           side: BorderSide(color: Colors.grey[400]!),
                         ),
-                        leading: const Icon(Icons.access_time_filled_rounded),
+                        leading:
+                            const Icon(Icons.access_time_filled_rounded),
                         title: const Text('End'),
                         subtitle: Text(_endTime != null
                             ? DateFormat('h:mm a').format(_endTime!)

@@ -17,42 +17,53 @@ import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/schedule_page.dart';
 import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
 import 'package:my_data_app/src/food_menu/food_menu_page.dart';
+import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
+import 'package:my_data_app/src/loans/loan_page.dart';
+import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
+import 'package:my_data_app/src/goals/goal_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  bool _isGrid = true;
+
+  static const _categoryIds = {
+    'Finance': ['bills', 'chits', 'loans', 'home'],
+    'Lifestyle': ['schedules', 'food_menu', 'checklists', 'goals'],
+    'Personal': ['vehicles', 'periods'],
+  };
+
+  static final _categoryMeta = {
+    'Finance': (Icons.account_balance_wallet_rounded, Colors.green),
+    'Lifestyle': (Icons.self_improvement_rounded, Colors.blue),
+    'Personal': (Icons.person_rounded, Colors.purple),
+  };
 
   String _getSubtitle(String id) {
     switch (id) {
-      case 'bills': return 'Track recurring bills and daily tasks';
-      case 'vehicles': return 'Manage vehicles and expenses';
-      case 'chits': return 'Manage chit groups and auctions';
-      case 'checklists': return 'Track tasks with target dates';
-      case 'periods': return 'Track cycles & predictions';
-      case 'home': return 'Track home purchases & expenses';
-      case 'schedules': return 'Plan and manage your events';
-      case 'food_menu': return 'Plan weekly meals';
+      case 'bills': return 'Bills & recurring tasks';
+      case 'vehicles': return 'Vehicles & expenses';
+      case 'chits': return 'Chit groups & auctions';
+      case 'checklists': return 'Tasks with deadlines';
+      case 'periods': return 'Cycles & predictions';
+      case 'home': return 'Home purchases';
+      case 'schedules': return 'Events & appointments';
+      case 'food_menu': return 'Weekly meal plan';
+      case 'loans': return 'Loans & repayments';
+      case 'goals': return 'Track habits & goals';
       default: return '';
     }
   }
 
-  String _getCountLabel(String id) {
-    switch (id) {
-      case 'bills': return 'bills';
-      case 'vehicles': return 'vehicles';
-      case 'chits': return 'groups';
-      case 'checklists': return 'lists';
-      case 'periods': return 'logs';
-      case 'home': return 'records';
-      case 'schedules': return 'events';
-      case 'food_menu': return 'meals';
-      default: return '';
-    }
-  }
-
-  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState) {
+  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
     switch (id) {
       case 'bills': return billState.tasks.length;
       case 'vehicles': return vehicleState.vehicles.length;
@@ -62,6 +73,8 @@ class DashboardPage extends StatelessWidget {
       case 'home': return homeRecordState.records.length;
       case 'schedules': return scheduleState.entries.length;
       case 'food_menu': return foodMenuState.entries.length;
+      case 'loans': return loanState.loans.length;
+      case 'goals': return goalState.goals.length;
       default: return 0;
     }
   }
@@ -117,10 +130,144 @@ class DashboardPage extends StatelessWidget {
           child: const FoodMenuPage(),
         );
         break;
+      case 'loans':
+        page = BlocProvider.value(
+          value: context.read<LoanCubit>(),
+          child: const LoanListPage(),
+        );
+        break;
+      case 'goals':
+        page = BlocProvider.value(
+          value: context.read<GoalCubit>(),
+          child: const GoalListPage(),
+        );
+        break;
       default:
         return;
     }
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
+
+  Widget _buildListView(BuildContext context, List<FeatureItem> visibleFeatures,
+      billState, vehicleState, chitState, checklistState, periodState,
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      children: _categoryIds.entries.map((catEntry) {
+        final categoryName = catEntry.key;
+        final featureIds = catEntry.value;
+        final categoryFeatures = visibleFeatures
+            .where((f) => featureIds.contains(f.id))
+            .toList();
+        if (categoryFeatures.isEmpty) return const SizedBox.shrink();
+        final meta = _categoryMeta[categoryName]!;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Column(
+            children: [
+              _SectionHeader(
+                title: categoryName,
+                icon: meta.$1,
+                color: meta.$2,
+                count: categoryFeatures.length,
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                child: Column(
+                  children: categoryFeatures.map((f) {
+                    final count = 0;
+                    // final count = _getCount(f.id, billState, vehicleState,
+                    //     chitState, checklistState, periodState,
+                    //     homeRecordState, scheduleState, foodMenuState,
+                    //     loanState);
+                    return _FeatureRow(
+                      icon: f.icon,
+                      title: f.title,
+                      subtitle: _getSubtitle(f.id),
+                      count: count,
+                      color: f.gradient[0],
+                      onTap: () => _navigateToFeature(context, f.id),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildGridView(BuildContext context, List<FeatureItem> visibleFeatures,
+      billState, vehicleState, chitState, checklistState, periodState,
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final gridCols = width > 900 ? 6 : width > 600 ? 5 : 4;
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
+          children: _categoryIds.entries.map((catEntry) {
+            final categoryName = catEntry.key;
+            final featureIds = catEntry.value;
+            final categoryFeatures = visibleFeatures
+                .where((f) => featureIds.contains(f.id))
+                .toList();
+            if (categoryFeatures.isEmpty) return const SizedBox.shrink();
+            final meta = _categoryMeta[categoryName]!;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey[200]!),
+              ),
+              child: Column(
+                children: [
+                  _SectionHeader(
+                    title: categoryName,
+                    icon: meta.$1,
+                    color: meta.$2,
+                    count: categoryFeatures.length,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+                    child: GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: gridCols,
+                      mainAxisSpacing: 6,
+                      crossAxisSpacing: 6,
+                      childAspectRatio: 0.85,
+                      children: categoryFeatures.map((f) {
+                        final count = _getCount(f.id, billState,
+                            vehicleState, chitState, checklistState,
+                            periodState, homeRecordState, scheduleState,
+                            foodMenuState, loanState, goalState);
+                        return _FeatureGridCard(
+                          icon: f.icon,
+                          title: f.title,
+                          count: count,
+                          color: f.gradient[0],
+                          onTap: () =>
+                              _navigateToFeature(context, f.id),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
   void _showLogoutDialog(BuildContext context) {
@@ -156,6 +303,8 @@ class DashboardPage extends StatelessWidget {
     final homeRecordState = context.watch<HomeRecordCubit>().state;
     final scheduleState = context.watch<ScheduleCubit>().state;
     final foodMenuState = context.watch<FoodMenuCubit>().state;
+    final loanState = context.watch<LoanCubit>().state;
+    final goalState = context.watch<GoalCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
 
@@ -176,6 +325,7 @@ class DashboardPage extends StatelessWidget {
     final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F4F8),
       body: SafeArea(
         child: Column(
           children: [
@@ -254,6 +404,23 @@ class DashboardPage extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Grid/List toggle
+                  IconButton(
+                    onPressed: () =>
+                        setState(() => _isGrid = !_isGrid),
+                    icon: Icon(
+                      _isGrid
+                          ? Icons.view_list_rounded
+                          : Icons.grid_view_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor:
+                          Colors.white.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   // Settings icon
                   IconButton(
                     onPressed: () {
@@ -299,80 +466,13 @@ class DashboardPage extends StatelessWidget {
 
             // Scrollable content
             Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final width = constraints.maxWidth;
-                  final isWide = width > 600;
-                  final isExtraWide = width > 900;
-                  final gridCols = isExtraWide ? 4 : isWide ? 3 : 2;
-                  final contentMaxWidth = isExtraWide ? 1200.0 : double.infinity;
-                  final hPad = isWide ? 32.0 : 20.0;
-
-                  return CustomScrollView(
-                slivers: [
-                  // Features title
-                  SliverToBoxAdapter(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
-                        child: Padding(
-                      padding:
-                          EdgeInsets.fromLTRB(hPad + 4, 20, hPad + 4, 12),
-                      child: Text(
-                        'Features',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Grid of feature cards
-                  SliverToBoxAdapter(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
-                        child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: hPad),
-                    child: GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: gridCols,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: isExtraWide ? 1.0 : isWide ? 0.9 : 0.85,
-                      children: visibleFeatures.map((f) {
-                        return _FeatureCard(
-                          icon: f.icon,
-                          title: f.title,
-                          subtitle: _getSubtitle(f.id),
-                          count: _getCount(f.id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState),
-                          countLabel: _getCountLabel(f.id),
-                          gradient: [
-                            f.gradient[0].withValues(alpha: 1.0),
-                            f.gradient[1].withValues(alpha: 1.0),
-                          ],
-                          onTap: () => _navigateToFeature(context, f.id),
-                        );
-                      }).toList(),
-                    ),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(
-                    child: SizedBox(height: 32),
-                  ),
-                ],
-                  );
-                },
-              ),
+              child: _isGrid
+                  ? _buildGridView(context, visibleFeatures, billState,
+                      vehicleState, chitState, checklistState, periodState,
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState)
+                  : _buildListView(context, visibleFeatures, billState,
+                      vehicleState, chitState, checklistState, periodState,
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState),
             ),
           ],
         ),
@@ -381,118 +481,217 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-class _FeatureCard extends StatelessWidget {
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final int count;
+
+  const _SectionHeader({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.count,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(5),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 16, color: color),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey[700],
+            ),
+          ),
+          const SizedBox(width: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[600],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final int count;
-  final String countLabel;
-  final List<Color> gradient;
+  final Color color;
   final VoidCallback onTap;
 
-  const _FeatureCard({
+  const _FeatureRow({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.count,
-    required this.countLabel,
-    required this.gradient,
+    required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      borderRadius: BorderRadius.circular(20),
-      elevation: 2,
-      shadowColor: gradient[0].withValues(alpha: 0.3),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: gradient,
-            ),
-          ),
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(14),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 28),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (count > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const Spacer(),
-                  Container(
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  size: 20, color: Colors.grey[400]),
+            ],
+          ),
+        ),
+      );
+  }
+}
+
+class _FeatureGridCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final int count;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _FeatureGridCard({
+    required this.icon,
+    required this.title,
+    required this.count,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, size: 26, color: color),
+              ),
+              if (count > 0)
+                Positioned(
+                  top: -4,
+                  right: -6,
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                        horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(12),
+                      color: color,
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '$count $countLabel',
+                      '$count',
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.8),
-                  height: 1.3,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text(
-                    'Open',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.arrow_forward_rounded,
-                    size: 14,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
-                ],
-              ),
             ],
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }

@@ -16,6 +16,10 @@ import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/food_menu/repository/food_menu_repository.dart';
 import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
+import 'package:my_data_app/src/loans/repository/loan_repository.dart';
+import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
+import 'package:my_data_app/src/goals/repository/goal_repository.dart';
+import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
@@ -37,6 +41,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreHomeRecordRepository _homeRecordRepo;
   late final FirestoreScheduleRepository _scheduleRepo;
   late final FirestoreFoodMenuRepository _foodMenuRepo;
+  late final FirestoreLoanRepository _loanRepo;
+  late final FirestoreGoalRepository _goalRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -51,6 +57,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _homeRecordRepo = FirestoreHomeRecordRepository(uid: widget.uid);
     _scheduleRepo = FirestoreScheduleRepository(uid: widget.uid);
     _foodMenuRepo = FirestoreFoodMenuRepository(uid: widget.uid);
+    _loanRepo = FirestoreLoanRepository(uid: widget.uid);
+    _goalRepo = FirestoreGoalRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -65,6 +73,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _homeRecordRepo.init(),
       _scheduleRepo.init(),
       _foodMenuRepo.init(),
+      _loanRepo.init(),
+      _goalRepo.init(),
       _dashboardSettingsCubit.load(),
     ]);
     if (mounted) setState(() => _initialized = true);
@@ -88,6 +98,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
         BlocProvider(create: (_) => ScheduleCubit(_scheduleRepo)),
         BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
+        BlocProvider(create: (_) => LoanCubit(_loanRepo)),
+        BlocProvider(create: (_) => GoalCubit(_goalRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),
