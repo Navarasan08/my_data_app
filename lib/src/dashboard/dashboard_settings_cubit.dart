@@ -132,6 +132,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.teal, Colors.green],
           order: 9,
         ),
+        FeatureItem(
+          id: 'money_owe',
+          title: 'Lend & Owe',
+          icon: Icons.handshake_rounded,
+          gradient: [Colors.amber, Colors.orange],
+          order: 10,
+        ),
       ];
 
   Future<void> load() async {

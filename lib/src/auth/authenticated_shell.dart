@@ -20,6 +20,8 @@ import 'package:my_data_app/src/loans/repository/loan_repository.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
 import 'package:my_data_app/src/goals/repository/goal_repository.dart';
 import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
+import 'package:my_data_app/src/money_owe/repository/money_owe_repository.dart';
+import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
@@ -43,6 +45,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreFoodMenuRepository _foodMenuRepo;
   late final FirestoreLoanRepository _loanRepo;
   late final FirestoreGoalRepository _goalRepo;
+  late final FirestoreMoneyOweRepository _moneyOweRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -59,6 +62,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _foodMenuRepo = FirestoreFoodMenuRepository(uid: widget.uid);
     _loanRepo = FirestoreLoanRepository(uid: widget.uid);
     _goalRepo = FirestoreGoalRepository(uid: widget.uid);
+    _moneyOweRepo = FirestoreMoneyOweRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -75,6 +79,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _foodMenuRepo.init(),
       _loanRepo.init(),
       _goalRepo.init(),
+      _moneyOweRepo.init(),
       _dashboardSettingsCubit.load(),
     ]);
     if (mounted) setState(() => _initialized = true);
@@ -100,6 +105,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
         BlocProvider(create: (_) => LoanCubit(_loanRepo)),
         BlocProvider(create: (_) => GoalCubit(_goalRepo)),
+        BlocProvider(create: (_) => MoneyOweCubit(_moneyOweRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),

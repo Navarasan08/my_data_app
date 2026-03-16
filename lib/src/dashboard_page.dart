@@ -21,6 +21,8 @@ import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
 import 'package:my_data_app/src/loans/loan_page.dart';
 import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
 import 'package:my_data_app/src/goals/goal_page.dart';
+import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
+import 'package:my_data_app/src/money_owe/money_owe_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
@@ -36,7 +38,7 @@ class _DashboardPageState extends State<DashboardPage> {
   bool _isGrid = true;
 
   static const _categoryIds = {
-    'Finance': ['bills', 'chits', 'loans', 'home'],
+    'Finance': ['bills', 'chits', 'loans', 'home', 'money_owe'],
     'Lifestyle': ['schedules', 'food_menu', 'checklists', 'goals'],
     'Personal': ['vehicles', 'periods'],
   };
@@ -59,11 +61,12 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'food_menu': return 'Weekly meal plan';
       case 'loans': return 'Loans & repayments';
       case 'goals': return 'Track habits & goals';
+      case 'money_owe': return 'Lend & borrow tracker';
       default: return '';
     }
   }
 
-  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
+  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
     switch (id) {
       case 'bills': return billState.tasks.length;
       case 'vehicles': return vehicleState.vehicles.length;
@@ -75,6 +78,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'food_menu': return foodMenuState.entries.length;
       case 'loans': return loanState.loans.length;
       case 'goals': return goalState.goals.length;
+      case 'money_owe': return moneyOweState.entries.length;
       default: return 0;
     }
   }
@@ -142,6 +146,12 @@ class _DashboardPageState extends State<DashboardPage> {
           child: const GoalListPage(),
         );
         break;
+      case 'money_owe':
+        page = BlocProvider.value(
+          value: context.read<MoneyOweCubit>(),
+          child: const MoneyOwePage(),
+        );
+        break;
       default:
         return;
     }
@@ -150,7 +160,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildListView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: _categoryIds.entries.map((catEntry) {
@@ -183,7 +193,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     final count = _getCount(f.id, billState, vehicleState,
                         chitState, checklistState, periodState,
                         homeRecordState, scheduleState, foodMenuState,
-                        loanState, goalState);
+                        loanState, goalState, moneyOweState);
                     return _FeatureRow(
                       icon: f.icon,
                       title: f.title,
@@ -204,7 +214,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildGridView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -248,7 +258,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         final count = _getCount(f.id, billState,
                             vehicleState, chitState, checklistState,
                             periodState, homeRecordState, scheduleState,
-                            foodMenuState, loanState, goalState);
+                            foodMenuState, loanState, goalState, moneyOweState);
                         return _FeatureGridCard(
                           icon: f.icon,
                           title: f.title,
@@ -485,6 +495,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final foodMenuState = context.watch<FoodMenuCubit>().state;
     final loanState = context.watch<LoanCubit>().state;
     final goalState = context.watch<GoalCubit>().state;
+    final moneyOweState = context.watch<MoneyOweCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
 
@@ -662,10 +673,10 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _isGrid
                   ? _buildGridView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState)
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState)
                   : _buildListView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState),
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState),
             ),
           ],
         ),
