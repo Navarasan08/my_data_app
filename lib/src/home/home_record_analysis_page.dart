@@ -61,6 +61,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
+        final sym = cubit.currencySymbol;
         final categoryTotals = _getFilteredCategoryTotals(cubit);
         final filteredTotal = _getFilteredTotal(categoryTotals);
         final monthlyData = cubit.monthlyTotals(months: 12);
@@ -86,11 +87,11 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Summary Cards
-                        _buildSummaryCards(cubit, filteredTotal, categoryTotals),
+                        _buildSummaryCards(cubit, filteredTotal, categoryTotals, sym),
                         const SizedBox(height: 20),
 
                         // Filter Controls
-                        _buildFilterControls(context),
+                        _buildFilterControls(context, cubit.allCategories),
                         const SizedBox(height: 20),
 
                         // Charts: side-by-side on wide screens
@@ -106,7 +107,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                     const SizedBox(height: 12),
                                     _buildPieChart(categoryTotals, filteredTotal),
                                     const SizedBox(height: 8),
-                                    _buildPieLegend(categoryTotals, filteredTotal),
+                                    _buildPieLegend(categoryTotals, filteredTotal, sym),
                                   ],
                                 ),
                               ),
@@ -117,7 +118,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                   children: [
                                     _buildSectionTitle('Top Categories'),
                                     const SizedBox(height: 12),
-                                    _buildBarChart(categoryTotals),
+                                    _buildBarChart(categoryTotals, sym),
                                   ],
                                 ),
                               ),
@@ -126,24 +127,24 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           const SizedBox(height: 24),
                           _buildSectionTitle('Monthly Trend'),
                           const SizedBox(height: 12),
-                          _buildLineChart(monthlyData),
+                          _buildLineChart(monthlyData, sym),
                         ] else ...[
                           // Stacked on mobile
                           _buildSectionTitle('Category Breakdown'),
                           const SizedBox(height: 12),
                           _buildPieChart(categoryTotals, filteredTotal),
                           const SizedBox(height: 8),
-                          _buildPieLegend(categoryTotals, filteredTotal),
+                          _buildPieLegend(categoryTotals, filteredTotal, sym),
                           const SizedBox(height: 24),
 
                           _buildSectionTitle('Monthly Trend'),
                           const SizedBox(height: 12),
-                          _buildLineChart(monthlyData),
+                          _buildLineChart(monthlyData, sym),
                           const SizedBox(height: 24),
 
                           _buildSectionTitle('Top Categories'),
                           const SizedBox(height: 12),
-                          _buildBarChart(categoryTotals),
+                          _buildBarChart(categoryTotals, sym),
                         ],
                         const SizedBox(height: 32),
                       ],
@@ -170,7 +171,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildSummaryCards(HomeRecordCubit cubit, double filteredTotal,
-      Map<HomeCategory, double> categoryTotals) {
+      Map<HomeCategory, double> categoryTotals, String sym) {
     final highest = categoryTotals.isNotEmpty
         ? categoryTotals.entries.reduce((a, b) => a.value > b.value ? a : b)
         : null;
@@ -181,7 +182,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           child: _SummaryCard(
             icon: Icons.account_balance_wallet_rounded,
             label: 'Total Spent',
-            value: '\$${filteredTotal.toStringAsFixed(0)}',
+            value: '$sym${filteredTotal.toStringAsFixed(0)}',
             color: Colors.green,
           ),
         ),
@@ -190,7 +191,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           child: _SummaryCard(
             icon: Icons.trending_up_rounded,
             label: 'Avg/Month',
-            value: '\$${cubit.averagePerMonth.toStringAsFixed(0)}',
+            value: '$sym${cubit.averagePerMonth.toStringAsFixed(0)}',
             color: Colors.blue,
           ),
         ),
@@ -207,7 +208,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildFilterControls(BuildContext context) {
+  Widget _buildFilterControls(BuildContext context, List<HomeCategory> allCategories) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -271,7 +272,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                       value: null,
                       child: Text('All Categories'),
                     ),
-                    ...HomeCategory.values.map((cat) {
+                    ...allCategories.map((cat) {
                       return DropdownMenuItem(
                         value: cat,
                         child: Row(
@@ -360,7 +361,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildPieLegend(
-      Map<HomeCategory, double> totals, double grandTotal) {
+      Map<HomeCategory, double> totals, double grandTotal, String sym) {
     if (totals.isEmpty) return const SizedBox();
 
     final sorted = totals.entries.toList()
@@ -385,7 +386,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             ),
             const SizedBox(width: 4),
             Text(
-              '${e.key.displayName} \$${e.value.toStringAsFixed(0)} (${pct.toStringAsFixed(1)}%)',
+              '${e.key.displayName} $sym${e.value.toStringAsFixed(0)} (${pct.toStringAsFixed(1)}%)',
               style: const TextStyle(fontSize: 12),
             ),
           ],
@@ -394,7 +395,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildLineChart(Map<DateTime, double> monthlyData) {
+  Widget _buildLineChart(Map<DateTime, double> monthlyData, String sym) {
     final entries = monthlyData.entries.toList();
     if (entries.isEmpty) {
       return SizedBox(
@@ -465,7 +466,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '\$${value.toInt()}',
+                    '$sym${value.toInt()}',
                     style:
                         const TextStyle(fontSize: 10, color: Colors.grey),
                   );
@@ -490,7 +491,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildBarChart(Map<HomeCategory, double> totals) {
+  Widget _buildBarChart(Map<HomeCategory, double> totals, String sym) {
     if (totals.isEmpty) {
       return SizedBox(
         height: 200,
@@ -558,7 +559,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 reservedSize: 50,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '\$${value.toInt()}',
+                    '$sym${value.toInt()}',
                     style:
                         const TextStyle(fontSize: 10, color: Colors.grey),
                   );

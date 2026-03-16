@@ -12,6 +12,7 @@ import 'package:my_data_app/src/periods/repository/period_repository.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
 class AuthenticatedShell extends StatefulWidget {
@@ -30,6 +31,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreChecklistRepository _checklistRepo;
   late final FirestorePeriodRepository _periodRepo;
   late final FirestoreHomeRecordRepository _homeRecordRepo;
+  late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
   @override
@@ -41,6 +43,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _checklistRepo = FirestoreChecklistRepository(uid: widget.uid);
     _periodRepo = FirestorePeriodRepository(uid: widget.uid);
     _homeRecordRepo = FirestoreHomeRecordRepository(uid: widget.uid);
+    _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
 
@@ -52,6 +55,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _checklistRepo.init(),
       _periodRepo.init(),
       _homeRecordRepo.init(),
+      _dashboardSettingsCubit.load(),
     ]);
     if (mounted) setState(() => _initialized = true);
   }
@@ -72,6 +76,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => ChecklistCubit(_checklistRepo)),
         BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
         BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
+        BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),
     );

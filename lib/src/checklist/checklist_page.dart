@@ -234,154 +234,89 @@ class _ChecklistGroupCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  Color _daysLeftColor() {
+  Color _statusColor() {
     if (group.isAllCompleted) return Colors.green;
     if (group.daysLeft < 0) return Colors.red;
-    if (group.daysLeft <= 3) return Colors.orange;
-    return Colors.blue;
+    if (group.daysLeft <= 7) return Colors.orange;
+    return Colors.teal;
   }
 
-  String _daysLeftText() {
-    if (group.isAllCompleted) return 'Completed';
-    if (group.daysLeft < 0) return '${-group.daysLeft}d overdue';
-    if (group.daysLeft == 0) return 'Due today';
-    return '${group.daysLeft}d left';
+  String _progressText() {
+    final itemsText = '${group.completedItems}/${group.totalItems} items';
+    if (group.isAllCompleted) return '$itemsText  ·  Completed';
+    if (group.daysLeft < 0) return '$itemsText  ·  ${-group.daysLeft} days overdue';
+    if (group.daysLeft == 0) return '$itemsText  ·  Due today';
+    if (group.daysLeft == 1) return '$itemsText  ·  1 day left';
+    return '$itemsText  ·  ${group.daysLeft} days left';
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _daysLeftColor();
+    final statusColor = _statusColor();
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border(
+          left: BorderSide(color: statusColor, width: 3),
+        ),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
             children: [
-              // Header row
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+              Icon(Icons.checklist_rounded, size: 20, color: statusColor),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      group.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    child:
-                        Icon(Icons.checklist_rounded, color: color, size: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          group.name,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: color.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                    color: color.withValues(alpha: 0.3)),
-                              ),
-                              child: Text(
-                                _daysLeftText(),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: color,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(Icons.calendar_today_rounded,
-                                size: 12, color: Colors.grey[500]),
-                            const SizedBox(width: 4),
-                            Text(
-                              DateFormat('MMM d, yyyy')
-                                  .format(group.targetDate),
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[600]),
-                            ),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(height: 2),
+                    Text(
+                      _progressText(),
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    color: Colors.blue[400],
-                    onPressed: onEdit,
-                    iconSize: 20,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red[400],
-                    onPressed: onDelete,
-                    iconSize: 20,
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: group.progress,
-                  minHeight: 8,
-                  backgroundColor: Colors.grey[200],
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
+                    if (group.totalItems > 0) ...[
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(2),
+                        child: LinearProgressIndicator(
+                          value: group.progress,
+                          minHeight: 3,
+                          backgroundColor: Colors.grey[200],
+                          valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 10),
-
-              // Stats row
-              Row(
-                children: [
-                  Icon(Icons.format_list_numbered_rounded,
-                      size: 14, color: Colors.grey[500]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${group.totalItems} items',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: onDelete,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.check_circle_outline_rounded,
-                      size: 14, color: Colors.green[400]),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${group.completedItems} done',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${(group.progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
-                  ),
-                ],
+                  child: Icon(Icons.delete_outline_rounded,
+                      size: 16, color: Colors.red[300]),
+                ),
               ),
             ],
           ),

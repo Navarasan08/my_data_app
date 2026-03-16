@@ -237,17 +237,6 @@ class ChitFundCard extends StatelessWidget {
     required this.onDelete,
   }) : super(key: key);
 
-  Color _getStatusColor() {
-    switch (chitFund.status) {
-      case ChitStatus.active:
-        return Colors.green;
-      case ChitStatus.completed:
-        return Colors.blue;
-      case ChitStatus.upcoming:
-        return Colors.orange;
-    }
-  }
-
   String _getStatusText() {
     switch (chitFund.status) {
       case ChitStatus.active:
@@ -261,29 +250,46 @@ class ChitFundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final completedMonths = chitFund.auctions.length;
-    final progress = completedMonths / chitFund.durationMonths;
+    Color statusColor;
+    switch (chitFund.status) {
+      case ChitStatus.active:
+        statusColor = Colors.green;
+        break;
+      case ChitStatus.completed:
+        statusColor = Colors.blue;
+        break;
+      case ChitStatus.upcoming:
+        statusColor = Colors.orange;
+        break;
+    }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    final memberProgress =
+        chitFund.members.length / chitFund.totalMembers;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurple[50],
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.group_work,
-                        color: Colors.deepPurple[700], size: 28),
+                    child: Icon(Icons.group_work_rounded,
+                        size: 22, color: statusColor),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -293,122 +299,87 @@ class ChitFundCard extends StatelessWidget {
                         Text(
                           chitFund.name,
                           style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor().withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                                color: _getStatusColor().withOpacity(0.3)),
-                          ),
-                          child: Text(
-                            _getStatusText(),
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: _getStatusColor(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    color: Colors.blue[400],
-                    onPressed: onEdit,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red[400],
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              if (chitFund.description != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  chitFund.description!,
-                  style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Divider(color: Colors.grey[300]),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _InfoItem(
-                      icon: Icons.currency_rupee,
-                      label: 'Total',
-                      value: '₹${_formatAmount(chitFund.totalAmount)}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _InfoItem(
-                      icon: Icons.people,
-                      label: 'Members',
-                      value:
-                          '${chitFund.members.length}/${chitFund.totalMembers}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _InfoItem(
-                      icon: Icons.calendar_month,
-                      label: 'Duration',
-                      value: '${chitFund.durationMonths}M',
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'Progress',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: statusColor
+                                    .withValues(alpha: 0.1),
+                                borderRadius:
+                                    BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                _getStatusText(),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: statusColor,
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
-                              '$completedMonths/${chitFund.durationMonths}',
+                              '₹${_formatAmount(chitFund.totalAmount)}',
                               style: TextStyle(
                                 fontSize: 12,
+                                fontWeight: FontWeight.w600,
                                 color: Colors.grey[600],
-                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: progress,
-                            minHeight: 6,
-                            backgroundColor: Colors.grey[200],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                                _getStatusColor()),
-                          ),
-                        ),
                       ],
+                    ),
+                  ),
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline_rounded,
+                          size: 16, color: Colors.red[300]),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              // Members progress
+              Row(
+                children: [
+                  Icon(Icons.people_outline_rounded,
+                      size: 14, color: Colors.grey[400]),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${chitFund.members.length}/${chitFund.totalMembers} members',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: memberProgress.clamp(0.0, 1.0),
+                        minHeight: 4,
+                        backgroundColor: Colors.grey[200],
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            statusColor),
+                      ),
                     ),
                   ),
                 ],
@@ -427,42 +398,6 @@ class ChitFundCard extends StatelessWidget {
       return '${(amount / 1000).toStringAsFixed(0)}K';
     }
     return amount.toStringAsFixed(0);
-  }
-}
-
-class _InfoItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _InfoItem({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
   }
 }
 

@@ -491,43 +491,52 @@ class _PeriodEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.pink[50],
-            borderRadius: BorderRadius.circular(10),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.pink.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border(
+          left: BorderSide(color: Colors.pink[300]!, width: 3),
+        ),
+      ),
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: [
+              Icon(Icons.water_drop_rounded, size: 20, color: Colors.pink[400]),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${DateFormat('MMM d').format(entry.startDate)} — ${DateFormat('MMM d, yyyy').format(entry.endDate)}',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    Text(
+                      '${entry.periodLength} days${entry.notes != null && entry.notes!.isNotEmpty ? '  ·  ${entry.notes}' : ''}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: onDelete,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                ),
+              ),
+            ],
           ),
-          child: Icon(Icons.water_drop_rounded,
-              color: Colors.pink[400], size: 22),
-        ),
-        title: Text(
-          '${DateFormat('MMM d').format(entry.startDate)} — ${DateFormat('MMM d, yyyy').format(entry.endDate)}',
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        ),
-        subtitle: Text(
-          '${entry.periodLength} days${entry.notes != null && entry.notes!.isNotEmpty ? '  •  ${entry.notes}' : ''}',
-          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.edit_outlined,
-                  size: 18, color: Colors.blue[400]),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              icon: Icon(Icons.delete_outline,
-                  size: 18, color: Colors.red[400]),
-              onPressed: onDelete,
-            ),
-          ],
         ),
       ),
     );

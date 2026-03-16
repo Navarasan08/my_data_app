@@ -5,6 +5,7 @@ import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
+import 'package:my_data_app/src/home/home_record_settings_page.dart';
 
 class HomeRecordPage extends StatelessWidget {
   const HomeRecordPage({Key? key}) : super(key: key);
@@ -14,10 +15,9 @@ class HomeRecordPage extends StatelessWidget {
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
-        final monthYear = DateFormat('MMMM yyyy').format(state.selectedDate);
         final filteredRecords = cubit.filteredRecords;
-        final monthlyTotal = cubit.monthlyTotal;
-        final categoryTotals = cubit.categoryTotals;
+        final displayTotal = cubit.displayTotal;
+
 
         return Scaffold(
           appBar: AppBar(
@@ -38,6 +38,19 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                 ),
               ),
+              IconButton(
+                icon: const Icon(Icons.settings_rounded),
+                tooltip: 'Category Settings',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: cubit,
+                      child: const HomeRecordSettingsPage(),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
           body: LayoutBuilder(
@@ -50,123 +63,56 @@ class HomeRecordPage extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Month Selector
+                  // Month nav + total in one row
                   Center(
                     child: ConstrainedBox(
                       constraints:
                           BoxConstraints(maxWidth: contentMaxWidth),
-                      child: Container(
+                      child: Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment:
-                              MainAxisAlignment.spaceBetween,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.chevron_left),
-                              onPressed: () => cubit.changeMonth(-1),
-                            ),
-                            Text(
-                              monthYear,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right),
-                              onPressed: () => cubit.changeMonth(1),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const Divider(height: 1),
-
-                  // Monthly Total Summary
-                  Center(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(maxWidth: contentMaxWidth),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 12),
-                        color: Colors.white,
+                            horizontal: 12, vertical: 6),
                         child: Row(
                           children: [
+                            IconButton(
+                              icon: const Icon(
+                                  Icons.chevron_left_rounded),
+                              onPressed: () =>
+                                  cubit.changeMonth(-1),
+                              visualDensity: VisualDensity.compact,
+                            ),
                             Expanded(
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.green[50],
-                                  borderRadius:
-                                      BorderRadius.circular(8),
-                                  border: Border.all(
-                                      color: Colors.green[200]!),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.home_rounded,
-                                            color: Colors.green[700],
-                                            size: 18),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          'Monthly Total',
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.green[900],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Text(
-                                      '\$${monthlyTotal.toStringAsFixed(2)}',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green[900],
-                                      ),
-                                    ),
-                                  ],
+                              child: Text(
+                                DateFormat('MMM yyyy')
+                                    .format(state.selectedDate),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.blue[50],
-                                borderRadius: BorderRadius.circular(8),
-                                border:
-                                    Border.all(color: Colors.blue[200]!),
+                            IconButton(
+                              icon: const Icon(
+                                  Icons.chevron_right_rounded),
+                              onPressed: () =>
+                                  cubit.changeMonth(1),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${cubit.currencySymbol}${displayTotal.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green[700],
                               ),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    '${filteredRecords.length}',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.blue[900],
-                                    ),
-                                  ),
-                                  Text(
-                                    'records',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.blue[700],
-                                    ),
-                                  ),
-                                ],
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '(${filteredRecords.length})',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[500],
                               ),
                             ),
                           ],
@@ -174,55 +120,62 @@ class HomeRecordPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Divider(height: 1),
 
                   // Category Filter Chips
                   Center(
                     child: ConstrainedBox(
                       constraints:
                           BoxConstraints(maxWidth: contentMaxWidth),
-                      child: Container(
-                        color: Colors.white,
-                        height: 50,
+                      child: SizedBox(
+                        height: 38,
                         child: ListView(
                           scrollDirection: Axis.horizontal,
                           padding:
                               const EdgeInsets.symmetric(horizontal: 12),
                           children: [
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 4, vertical: 8),
-                              child: FilterChip(
-                                label: const Text('All'),
+                              padding: const EdgeInsets.only(right: 6),
+                              child: ChoiceChip(
+                                label: const Text('All',
+                                    style: TextStyle(fontSize: 12)),
                                 selected:
                                     state.selectedCategory == null,
                                 onSelected: (_) =>
                                     cubit.setCategory(null),
                                 selectedColor: Colors.green[100],
+                                showCheckmark: false,
+                                visualDensity: VisualDensity.compact,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 4),
                               ),
                             ),
-                            ...HomeCategory.values.map((cat) {
-                              final catTotal = categoryTotals[cat];
+                            ...cubit.allCategories.map((cat) {
+                              final isSelected =
+                                  state.selectedCategory == cat;
                               return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4, vertical: 8),
-                                child: FilterChip(
+                                padding:
+                                    const EdgeInsets.only(right: 6),
+                                child: ChoiceChip(
                                   avatar: Icon(cat.icon,
-                                      size: 16, color: cat.color),
-                                  label: Text(cat.displayName),
-                                  selected:
-                                      state.selectedCategory == cat,
+                                      size: 14, color: cat.color),
+                                  label: Text(cat.displayName,
+                                      style: const TextStyle(
+                                          fontSize: 12)),
+                                  selected: isSelected,
                                   onSelected: (_) =>
                                       cubit.setCategory(
-                                    state.selectedCategory == cat
-                                        ? null
-                                        : cat,
+                                    isSelected ? null : cat,
                                   ),
                                   selectedColor: cat.color
-                                      .withValues(alpha: 0.15),
-                                  tooltip: catTotal != null
-                                      ? '\$${catTotal.toStringAsFixed(0)}'
-                                      : null,
+                                      .withValues(alpha: 0.2),
+                                  showCheckmark: false,
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 4),
                                 ),
                               );
                             }),
@@ -231,7 +184,7 @@ class HomeRecordPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const Divider(height: 1),
+                  const SizedBox(height: 4),
 
                   // Records List / Grid
                   Expanded(
@@ -242,24 +195,16 @@ class HomeRecordPage extends StatelessWidget {
                                   MainAxisAlignment.center,
                               children: [
                                 Icon(Icons.home_outlined,
-                                    size: 64,
-                                    color: Colors.grey[400]),
-                                const SizedBox(height: 16),
+                                    size: 48,
+                                    color: Colors.grey[300]),
+                                const SizedBox(height: 12),
                                 Text(
                                   state.selectedCategory != null
                                       ? 'No ${state.selectedCategory!.displayName} records this month'
-                                      : 'No home records for this month',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Tap + to add a record',
+                                      : 'No records for this month',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey[400],
+                                    color: Colors.grey[500],
                                   ),
                                 ),
                               ],
@@ -272,12 +217,13 @@ class HomeRecordPage extends StatelessWidget {
                               child: gridCols > 1
                                   ? GridView.builder(
                                       padding:
-                                          const EdgeInsets.all(16),
+                                          const EdgeInsets.fromLTRB(
+                                              12, 4, 12, 12),
                                       gridDelegate:
                                           SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: gridCols,
-                                        crossAxisSpacing: 12,
-                                        mainAxisSpacing: 12,
+                                        crossAxisSpacing: 10,
+                                        mainAxisSpacing: 10,
                                         childAspectRatio:
                                             isExtraWide ? 2.5 : 2.2,
                                       ),
@@ -292,7 +238,8 @@ class HomeRecordPage extends StatelessWidget {
                                     )
                                   : ListView.builder(
                                       padding:
-                                          const EdgeInsets.all(16),
+                                          const EdgeInsets.fromLTRB(
+                                              12, 4, 12, 12),
                                       itemCount:
                                           filteredRecords.length,
                                       itemBuilder: (context, index) {
@@ -314,7 +261,8 @@ class HomeRecordPage extends StatelessWidget {
               final newRecord = await Navigator.push<HomeRecord>(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const AddHomeRecordPage()),
+                    builder: (_) => AddHomeRecordPage(
+                        categories: cubit.allCategories)),
               );
               if (newRecord != null) {
                 cubit.addRecord(newRecord);
@@ -336,7 +284,8 @@ class HomeRecordPage extends StatelessWidget {
         final edited = await Navigator.push<HomeRecord>(
           context,
           MaterialPageRoute(
-            builder: (_) => AddHomeRecordPage(record: record),
+            builder: (_) => AddHomeRecordPage(
+                record: record, categories: cubit.allCategories),
           ),
         );
         if (edited != null) {
@@ -386,113 +335,76 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: record.category.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                record.category.icon,
-                color: record.category.color,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    record.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: record.category.color
-                              .withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          record.category.displayName,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: record.category.color,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        DateFormat('MMM d, yyyy').format(record.date),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (record.description != null &&
-                      record.description!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        color: record.category.color.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border(
+          left: BorderSide(
+            color: record.category.color,
+            width: 3,
+          ),
+        ),
+      ),
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            children: [
+              Icon(record.category.icon,
+                  size: 20, color: record.category.color),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      record.description!,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
+                      record.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${record.category.displayName}  ·  ${DateFormat('d MMM').format(record.date)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                    ),
                   ],
-                ],
+                ),
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '\$${record.amount.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+              Text(
+                '${context.read<HomeRecordCubit>().currencySymbol}${record.amount.toStringAsFixed(0)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green[700],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: onDelete,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(6),
                   ),
+                  child: Icon(Icons.delete_outline_rounded,
+                      size: 16, color: Colors.red[300]),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    InkWell(
-                      onTap: onEdit,
-                      child: Icon(Icons.edit_outlined,
-                          size: 20, color: Colors.blue[400]),
-                    ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: onDelete,
-                      child: Icon(Icons.delete_outline,
-                          size: 20, color: Colors.red[400]),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -501,8 +413,13 @@ class _RecordCard extends StatelessWidget {
 
 class AddHomeRecordPage extends StatefulWidget {
   final HomeRecord? record;
+  final List<HomeCategory> categories;
 
-  const AddHomeRecordPage({Key? key, this.record}) : super(key: key);
+  const AddHomeRecordPage({
+    Key? key,
+    this.record,
+    required this.categories,
+  }) : super(key: key);
 
   @override
   State<AddHomeRecordPage> createState() => _AddHomeRecordPageState();
@@ -600,7 +517,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.category),
                   ),
-                  items: HomeCategory.values.map((cat) {
+                  items: widget.categories.map((cat) {
                     return DropdownMenuItem(
                       value: cat,
                       child: Row(

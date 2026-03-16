@@ -121,7 +121,7 @@ class BillTaskPage extends StatelessWidget {
                             ],
                           ),
                           Text(
-                            '\$${stats['paidAmount'].toStringAsFixed(2)} / \$${stats['totalAmount'].toStringAsFixed(2)}',
+                            '₹${stats['paidAmount'].toStringAsFixed(2)} / ₹${stats['totalAmount'].toStringAsFixed(2)}',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -287,7 +287,7 @@ class _StatCard extends StatelessWidget {
           if (amount != null && amount! > 0) ...[
             const SizedBox(height: 2),
             Text(
-              '\$${amount!.toStringAsFixed(2)}',
+              '₹${amount!.toStringAsFixed(2)}',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -351,109 +351,166 @@ class TaskCard extends StatelessWidget {
         dueDates.where((date) => task.isCompletedForDate(date)).length;
     final totalCount = dueDates.length;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        task.title,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (task.description != null) ...[
-                        const SizedBox(height: 4),
+    final allCompleted = completedCount == totalCount && totalCount > 0;
+    final hasMissed = dueDates.any((date) =>
+        date.isBefore(DateTime.now()) && !task.isCompletedForDate(date));
+    final accentColor =
+        allCompleted ? Colors.green : hasMissed ? Colors.red : Colors.orange;
+    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        children: [
+          // Header
+          InkWell(
+            onTap: onEdit,
+            borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(12)),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.receipt_long_rounded,
+                        size: 20, color: accentColor),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          task.description!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                          task.title,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Icon(Icons.repeat_rounded,
+                                size: 12, color: Colors.grey[400]),
+                            const SizedBox(width: 4),
+                            Text(
+                              _getRecurrenceText(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                if (task.amount != null)
-                  Text(
-                    '\$${task.amount!.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
                     ),
                   ),
-                IconButton(
-                  icon: const Icon(Icons.edit_outlined),
-                  color: Colors.blue[400],
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  color: Colors.red[400],
-                  onPressed: onDelete,
-                ),
-              ],
+                  if (task.amount != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '₹${task.amount!.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 4),
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline_rounded,
+                          size: 16, color: Colors.red[300]),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8),
-            Row(
+          ),
+          // Progress bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
               children: [
-                Icon(Icons.repeat, size: 16, color: Colors.grey[600]),
-                const SizedBox(width: 4),
-                Text(
-                  _getRecurrenceText(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 4,
+                      backgroundColor: Colors.grey[200],
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(accentColor),
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
-                  '$completedCount/$totalCount completed',
+                  '$completedCount/$totalCount',
                   style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+          ),
+          const SizedBox(height: 8),
+          // Date chips
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: dueDates.map((date) {
                 final isCompleted = task.isCompletedForDate(date);
-                final isPast = date.isBefore(DateTime.now()) && !isCompleted;
+                final isPast =
+                    date.isBefore(DateTime.now()) && !isCompleted;
 
                 return InkWell(
                   onTap: () => onToggle(date),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(6),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 5),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? Colors.green[100]
+                          ? Colors.green[50]
                           : isPast
                               ? Colors.red[50]
-                              : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
+                              : Colors.grey[50],
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: isCompleted
-                            ? Colors.green
+                            ? Colors.green[300]!
                             : isPast
-                                ? Colors.red[300]!
+                                ? Colors.red[200]!
                                 : Colors.grey[300]!,
                       ),
                     ),
@@ -462,20 +519,22 @@ class TaskCard extends StatelessWidget {
                       children: [
                         Icon(
                           isCompleted
-                              ? Icons.check_circle
-                              : Icons.circle_outlined,
-                          size: 16,
+                              ? Icons.check_circle_rounded
+                              : isPast
+                                  ? Icons.cancel_rounded
+                                  : Icons.circle_outlined,
+                          size: 14,
                           color: isCompleted
-                              ? Colors.green[700]
+                              ? Colors.green[600]
                               : isPast
                                   ? Colors.red[400]
-                                  : Colors.grey[600],
+                                  : Colors.grey[400],
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 4),
                         Text(
-                          DateFormat('MMM d').format(date),
+                          DateFormat('d').format(date),
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             color: isCompleted
                                 ? Colors.green[700]
                                 : isPast
@@ -490,8 +549,8 @@ class TaskCard extends StatelessWidget {
                 );
               }).toList(),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

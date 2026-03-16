@@ -142,86 +142,98 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final totalExpenses = vehicle.records
-        .where((r) => r.amount != null)
-        .fold<double>(0, (sum, r) => sum + r.amount!);
+    final serviceColor = vehicle.daysLeftForService == null
+        ? Colors.blue
+        : vehicle.daysLeftForService! < 0
+            ? Colors.red
+            : vehicle.daysLeftForService! <= 7
+                ? Colors.orange
+                : Colors.blue;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.all(12),
+          child: Row(
             children: [
-              Row(
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: serviceColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.directions_car_rounded,
+                    size: 22, color: serviceColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      vehicle.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${vehicle.brand} ${vehicle.model} · ${vehicle.year}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                    if (vehicle.daysLeftForService != null) ...[
+                      const SizedBox(height: 6),
+                      _ServiceDueBadge(
+                          daysLeft: vehicle.daysLeftForService!),
+                    ],
+                  ],
+                ),
+              ),
+              Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.directions_car,
-                        color: Colors.blue[700], size: 28),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          vehicle.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${vehicle.brand} ${vehicle.model} (${vehicle.year})',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      vehicle.registrationNumber,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    color: Colors.blue[400],
-                    onPressed: onEdit,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline),
-                    color: Colors.red[400],
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              if (vehicle.daysLeftForService != null) ...[
-                const SizedBox(height: 10),
-                _ServiceDueBadge(daysLeft: vehicle.daysLeftForService!),
-              ],
-              const SizedBox(height: 12),
-              Divider(color: Colors.grey[300]),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _InfoChip(
-                    icon: Icons.tag,
-                    label: vehicle.registrationNumber,
-                  ),
-                  _InfoChip(
-                    icon: Icons.receipt_long,
-                    label: '${vehicle.records.length} records',
-                  ),
-                  _InfoChip(
-                    icon: Icons.attach_money,
-                    label: '\$${totalExpenses.toStringAsFixed(0)}',
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Icon(Icons.delete_outline_rounded,
+                          size: 16, color: Colors.red[300]),
+                    ),
                   ),
                 ],
               ),
@@ -233,34 +245,6 @@ class VehicleCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _InfoChip({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.grey[700]),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 class _ServiceDueBadge extends StatelessWidget {
   final int daysLeft;
@@ -839,7 +823,7 @@ class _StatisticsRow extends StatelessWidget {
           child: _StatItem(
             icon: Icons.attach_money,
             label: 'Total',
-            value: '\$${totalExpenses.toStringAsFixed(0)}',
+            value: '₹${totalExpenses.toStringAsFixed(0)}',
             color: Colors.green,
           ),
         ),
@@ -993,7 +977,7 @@ class RecordCard extends StatelessWidget {
                 ),
                 if (record.amount != null)
                   Text(
-                    '\$${record.amount!.toStringAsFixed(2)}',
+                    '₹${record.amount!.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

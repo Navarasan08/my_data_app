@@ -10,6 +10,8 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       : super(HomeRecordState(
           records: _repository.getAll(),
           selectedDate: DateTime.now(),
+          customCategories: _repository.getCustomCategories(),
+          currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
         ));
 
   void addRecord(HomeRecord record) {
@@ -42,6 +44,18 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     }
   }
 
+  void setViewMode(HomeViewMode mode) {
+    emit(state.copyWith(viewMode: mode));
+  }
+
+  List<HomeCategory> get allCategories =>
+      [...HomeCategory.defaults, ...state.customCategories];
+
+  List<HomeRecord> get allRecordsSorted {
+    return List<HomeRecord>.from(state.records)
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
   List<HomeRecord> get recordsForSelectedMonth {
     final sel = state.selectedDate;
     return state.records
@@ -50,21 +64,31 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  List<HomeRecord> get _baseRecords {
+    return state.viewMode == HomeViewMode.monthly
+        ? recordsForSelectedMonth
+        : allRecordsSorted;
+  }
+
   List<HomeRecord> get filteredRecords {
-    final monthRecords = recordsForSelectedMonth;
-    if (state.selectedCategory == null) return monthRecords;
-    return monthRecords
+    final records = _baseRecords;
+    if (state.selectedCategory == null) return records;
+    return records
         .where((r) => r.category == state.selectedCategory)
         .toList();
   }
 
-  double get monthlyTotal {
-    return recordsForSelectedMonth.fold(0.0, (sum, r) => sum + r.amount);
+  double get displayTotal {
+    return _baseRecords.fold(0.0, (sum, r) => sum + r.amount);
+  }
+
+  double get totalAmount {
+    return state.records.fold(0.0, (sum, r) => sum + r.amount);
   }
 
   Map<HomeCategory, double> get categoryTotals {
     final map = <HomeCategory, double>{};
-    for (final r in recordsForSelectedMonth) {
+    for (final r in _baseRecords) {
       map[r.category] = (map[r.category] ?? 0) + r.amount;
     }
     return map;
@@ -118,5 +142,42 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     final totals = allTimeCategoryTotals();
     if (totals.isEmpty) return null;
     return totals.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+  }
+
+  // Custom category management
+  void addCustomCategory(HomeCategory category) {
+    _repository.addCustomCategory(category);
+    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
+  }
+
+  void updateCustomCategory(HomeCategory category) {
+    _repository.updateCustomCategory(category);
+    // Update records that use this category so they reflect new name/icon/color
+    final updatedRecords = state.records.map((r) {
+      if (r.category.id == category.id) {
+        return r.copyWith(category: category);
+      }
+      return r;
+    }).toList();
+    emit(state.copyWith(
+      customCategories: _repository.getCustomCategories(),
+      records: updatedRecords,
+    ));
+  }
+
+  void deleteCustomCategory(String categoryId) {
+    _repository.deleteCustomCategory(categoryId);
+    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
+  }
+
+  bool isCategoryInUse(String categoryId) {
+    return state.records.any((r) => r.category.id == categoryId);
+  }
+
+  String get currencySymbol => state.currency.symbol;
+
+  void setCurrency(HomeCurrency currency) {
+    _repository.setCurrencyCode(currency.code);
+    emit(state.copyWith(currency: currency));
   }
 }
