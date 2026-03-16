@@ -13,6 +13,10 @@ import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/period_page.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/home_record_page.dart';
+import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
+import 'package:my_data_app/src/schedule/schedule_page.dart';
+import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
+import 'package:my_data_app/src/food_menu/food_menu_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
@@ -28,6 +32,8 @@ class DashboardPage extends StatelessWidget {
       case 'checklists': return 'Track tasks with target dates';
       case 'periods': return 'Track cycles & predictions';
       case 'home': return 'Track home purchases & expenses';
+      case 'schedules': return 'Plan and manage your events';
+      case 'food_menu': return 'Plan weekly meals';
       default: return '';
     }
   }
@@ -40,11 +46,13 @@ class DashboardPage extends StatelessWidget {
       case 'checklists': return 'lists';
       case 'periods': return 'logs';
       case 'home': return 'records';
+      case 'schedules': return 'events';
+      case 'food_menu': return 'meals';
       default: return '';
     }
   }
 
-  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState) {
+  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState) {
     switch (id) {
       case 'bills': return billState.tasks.length;
       case 'vehicles': return vehicleState.vehicles.length;
@@ -52,6 +60,8 @@ class DashboardPage extends StatelessWidget {
       case 'checklists': return checklistState.checklists.length;
       case 'periods': return periodState.entries.length;
       case 'home': return homeRecordState.records.length;
+      case 'schedules': return scheduleState.entries.length;
+      case 'food_menu': return foodMenuState.entries.length;
       default: return 0;
     }
   }
@@ -95,6 +105,18 @@ class DashboardPage extends StatelessWidget {
           child: const HomeRecordPage(),
         );
         break;
+      case 'schedules':
+        page = BlocProvider.value(
+          value: context.read<ScheduleCubit>(),
+          child: const SchedulePage(),
+        );
+        break;
+      case 'food_menu':
+        page = BlocProvider.value(
+          value: context.read<FoodMenuCubit>(),
+          child: const FoodMenuPage(),
+        );
+        break;
       default:
         return;
     }
@@ -132,6 +154,8 @@ class DashboardPage extends StatelessWidget {
     final checklistState = context.watch<ChecklistCubit>().state;
     final periodState = context.watch<PeriodCubit>().state;
     final homeRecordState = context.watch<HomeRecordCubit>().state;
+    final scheduleState = context.watch<ScheduleCubit>().state;
+    final foodMenuState = context.watch<FoodMenuCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
 
@@ -327,7 +351,7 @@ class DashboardPage extends StatelessWidget {
                           icon: f.icon,
                           title: f.title,
                           subtitle: _getSubtitle(f.id),
-                          count: _getCount(f.id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState),
+                          count: _getCount(f.id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState),
                           countLabel: _getCountLabel(f.id),
                           gradient: [
                             f.gradient[0].withValues(alpha: 1.0),

@@ -109,6 +109,116 @@ class Vehicle {
         .inDays;
   }
 
+  // ── Computed stats ──────────────────────────────────────────────────────
+
+  /// Latest odometer reading across all records
+  double? get currentOdometer {
+    double? max;
+    for (final r in records) {
+      if (r.odometer != null && (max == null || r.odometer! > max)) {
+        max = r.odometer;
+      }
+    }
+    return max;
+  }
+
+  /// Odometer at last service
+  double? get lastServiceOdometer {
+    VehicleRecord? latest;
+    for (final r in records) {
+      if (r.type == RecordType.service &&
+          r.odometer != null &&
+          (latest == null || r.date.isAfter(latest.date))) {
+        latest = r;
+      }
+    }
+    return latest?.odometer;
+  }
+
+  /// Date of last service
+  DateTime? get lastServiceDate {
+    DateTime? latest;
+    for (final r in records) {
+      if (r.type == RecordType.service &&
+          (latest == null || r.date.isAfter(latest))) {
+        latest = r.date;
+      }
+    }
+    return latest;
+  }
+
+  /// Km driven since last service
+  double? get kmSinceLastService {
+    final current = currentOdometer;
+    final lastSvc = lastServiceOdometer;
+    if (current == null || lastSvc == null) return null;
+    return current - lastSvc;
+  }
+
+  /// Last fuel fill record
+  VehicleRecord? get lastFuelRecord {
+    VehicleRecord? latest;
+    for (final r in records) {
+      if (r.type == RecordType.fuel &&
+          (latest == null || r.date.isAfter(latest.date))) {
+        latest = r;
+      }
+    }
+    return latest;
+  }
+
+  /// Km driven since last fuel fill
+  double? get kmSinceLastFuel {
+    final current = currentOdometer;
+    final lastFuel = lastFuelRecord?.odometer;
+    if (current == null || lastFuel == null) return null;
+    return current - lastFuel;
+  }
+
+  /// Total fuel expense
+  double get totalFuelExpense {
+    return records
+        .where((r) => r.type == RecordType.fuel && r.amount != null)
+        .fold(0.0, (sum, r) => sum + r.amount!);
+  }
+
+  /// Total service expense
+  double get totalServiceExpense {
+    return records
+        .where((r) => r.type == RecordType.service && r.amount != null)
+        .fold(0.0, (sum, r) => sum + r.amount!);
+  }
+
+  /// Total all expenses
+  double get totalExpense {
+    return records
+        .where((r) => r.amount != null)
+        .fold(0.0, (sum, r) => sum + r.amount!);
+  }
+
+  /// Ownership duration in days
+  int get ownershipDays {
+    return DateTime.now().difference(purchaseDate).inDays;
+  }
+
+  /// Total km driven (current odometer or 0)
+  double get totalKmDriven => currentOdometer ?? 0;
+
+  /// Average monthly expense
+  double get avgMonthlyExpense {
+    final months = ownershipDays / 30;
+    if (months <= 0) return 0;
+    return totalExpense / months;
+  }
+
+  /// Number of fuel fills
+  int get fuelFillCount =>
+      records.where((r) => r.type == RecordType.fuel).length;
+
+  /// Number of services done
+  int get serviceCount =>
+      records.where((r) => r.type == RecordType.service).length;
+
   Vehicle copyWith({
     String? id,
     String? name,

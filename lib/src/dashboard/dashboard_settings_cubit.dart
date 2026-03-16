@@ -104,6 +104,20 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.green, Colors.green],
           order: 5,
         ),
+        FeatureItem(
+          id: 'schedules',
+          title: 'Schedules',
+          icon: Icons.calendar_month_rounded,
+          gradient: [Colors.cyan, Colors.blue],
+          order: 6,
+        ),
+        FeatureItem(
+          id: 'food_menu',
+          title: 'Food Menu',
+          icon: Icons.restaurant_menu_rounded,
+          gradient: [Colors.deepOrange, Colors.red],
+          order: 7,
+        ),
       ];
 
   Future<void> load() async {

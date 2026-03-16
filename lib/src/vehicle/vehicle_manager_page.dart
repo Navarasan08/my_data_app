@@ -642,53 +642,11 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
           ),
           body: Column(
             children: [
-              // Vehicle Info Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${vehicle.brand} ${vehicle.model}',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Year: ${vehicle.year} • ${vehicle.registrationNumber}',
-                      style:
-                          TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    if (vehicle.color != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Color: ${vehicle.color}',
-                        style:
-                            TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ],
-                    if (vehicle.daysLeftForService != null) ...[
-                      const SizedBox(height: 10),
-                      _ServiceDueBadge(
-                          daysLeft: vehicle.daysLeftForService!),
-                    ],
-                  ],
-                ),
+              // Vehicle dashboard
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _VehicleDashboard(vehicle: vehicle),
               ),
-              const Divider(height: 1),
-
-              // Statistics
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: Colors.white,
-                child: _StatisticsRow(
-                    vehicle: vehicle, records: filteredRecords),
-              ),
-              const Divider(height: 1),
 
               // Records List
               Expanded(
@@ -786,59 +744,201 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
   }
 }
 
-class _StatisticsRow extends StatelessWidget {
+class _VehicleDashboard extends StatelessWidget {
   final Vehicle vehicle;
-  final List<VehicleRecord> records;
 
-  const _StatisticsRow({required this.vehicle, required this.records});
+  const _VehicleDashboard({required this.vehicle});
+
+  String _formatKm(double? km) {
+    if (km == null) return '—';
+    if (km >= 1000) return '${(km / 1000).toStringAsFixed(1)}K km';
+    return '${km.toStringAsFixed(0)} km';
+  }
+
+  String _formatAmount(double amount) {
+    if (amount >= 100000) return '₹${(amount / 100000).toStringAsFixed(1)}L';
+    if (amount >= 1000) return '₹${(amount / 1000).toStringAsFixed(1)}K';
+    return '₹${amount.toStringAsFixed(0)}';
+  }
+
+  String _formatDays(int days) {
+    if (days >= 365) {
+      final y = days ~/ 365;
+      final m = (days % 365) ~/ 30;
+      return m > 0 ? '${y}y ${m}m' : '${y}y';
+    }
+    if (days >= 30) return '${days ~/ 30}m ${days % 30}d';
+    return '${days}d';
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fuelCount = records.where((r) => r.type == RecordType.fuel).length;
-    final serviceCount =
-        records.where((r) => r.type == RecordType.service).length;
-    final totalExpenses = records
-        .where((r) => r.amount != null)
-        .fold<double>(0, (sum, r) => sum + r.amount!);
-
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: _StatItem(
-            icon: Icons.local_gas_station,
-            label: 'Fuel',
-            value: fuelCount.toString(),
-            color: Colors.orange,
+        // Vehicle info bar
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[600],
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.directions_car_rounded,
+                  color: Colors.white, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${vehicle.brand} ${vehicle.model}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      '${vehicle.year} · ${vehicle.registrationNumber}${vehicle.color != null ? ' · ${vehicle.color}' : ''}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (vehicle.daysLeftForService != null)
+                _ServiceDueBadge(daysLeft: vehicle.daysLeftForService!),
+            ],
           ),
         ),
-        Expanded(
-          child: _StatItem(
-            icon: Icons.build,
-            label: 'Service',
-            value: serviceCount.toString(),
-            color: Colors.blue,
-          ),
+        const SizedBox(height: 8),
+
+        // Odometer + km stats
+        Row(
+          children: [
+            Expanded(
+              child: _DashTile(
+                icon: Icons.speed_rounded,
+                label: 'Odometer',
+                value: _formatKm(vehicle.currentOdometer),
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.route_rounded,
+                label: 'Since Service',
+                value: _formatKm(vehicle.kmSinceLastService),
+                color: vehicle.kmSinceLastService != null &&
+                        vehicle.kmSinceLastService! > 5000
+                    ? Colors.orange
+                    : Colors.green,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.local_gas_station_rounded,
+                label: 'Since Fuel',
+                value: _formatKm(vehicle.kmSinceLastFuel),
+                color: Colors.amber,
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: _StatItem(
-            icon: Icons.attach_money,
-            label: 'Total',
-            value: '₹${totalExpenses.toStringAsFixed(0)}',
-            color: Colors.green,
-          ),
+        const SizedBox(height: 6),
+
+        // Expense stats
+        Row(
+          children: [
+            Expanded(
+              child: _DashTile(
+                icon: Icons.payments_rounded,
+                label: 'Total Spent',
+                value: _formatAmount(vehicle.totalExpense),
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.water_drop_rounded,
+                label: 'Fuel Cost',
+                value: _formatAmount(vehicle.totalFuelExpense),
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.build_rounded,
+                label: 'Service Cost',
+                value: _formatAmount(vehicle.totalServiceExpense),
+                color: Colors.blue,
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 6),
+
+        // Counts + ownership
+        Row(
+          children: [
+            Expanded(
+              child: _DashTile(
+                icon: Icons.local_gas_station_outlined,
+                label: 'Fuel Fills',
+                value: '${vehicle.fuelFillCount}',
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.build_circle_outlined,
+                label: 'Services',
+                value: '${vehicle.serviceCount}',
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.calendar_today_rounded,
+                label: 'Ownership',
+                value: _formatDays(vehicle.ownershipDays),
+                color: Colors.purple,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _DashTile(
+                icon: Icons.trending_down_rounded,
+                label: 'Avg/Month',
+                value: _formatAmount(vehicle.avgMonthlyExpense),
+                color: Colors.teal,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
+class _DashTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final Color color;
 
-  const _StatItem({
+  const _DashTile({
     required this.icon,
     required this.label,
     required this.value,
@@ -847,23 +947,36 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: color, size: 24),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-        ),
-      ],
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

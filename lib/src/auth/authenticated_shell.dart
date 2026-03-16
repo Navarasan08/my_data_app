@@ -12,6 +12,10 @@ import 'package:my_data_app/src/periods/repository/period_repository.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
+import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
+import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
+import 'package:my_data_app/src/food_menu/repository/food_menu_repository.dart';
+import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
@@ -31,6 +35,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreChecklistRepository _checklistRepo;
   late final FirestorePeriodRepository _periodRepo;
   late final FirestoreHomeRecordRepository _homeRecordRepo;
+  late final FirestoreScheduleRepository _scheduleRepo;
+  late final FirestoreFoodMenuRepository _foodMenuRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -43,6 +49,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _checklistRepo = FirestoreChecklistRepository(uid: widget.uid);
     _periodRepo = FirestorePeriodRepository(uid: widget.uid);
     _homeRecordRepo = FirestoreHomeRecordRepository(uid: widget.uid);
+    _scheduleRepo = FirestoreScheduleRepository(uid: widget.uid);
+    _foodMenuRepo = FirestoreFoodMenuRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -55,6 +63,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _checklistRepo.init(),
       _periodRepo.init(),
       _homeRecordRepo.init(),
+      _scheduleRepo.init(),
+      _foodMenuRepo.init(),
       _dashboardSettingsCubit.load(),
     ]);
     if (mounted) setState(() => _initialized = true);
@@ -76,6 +86,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => ChecklistCubit(_checklistRepo)),
         BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
         BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
+        BlocProvider(create: (_) => ScheduleCubit(_scheduleRepo)),
+        BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),
