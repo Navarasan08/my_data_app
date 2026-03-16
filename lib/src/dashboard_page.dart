@@ -180,11 +180,10 @@ class _DashboardPageState extends State<DashboardPage> {
                 padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                 child: Column(
                   children: categoryFeatures.map((f) {
-                    final count = 0;
-                    // final count = _getCount(f.id, billState, vehicleState,
-                    //     chitState, checklistState, periodState,
-                    //     homeRecordState, scheduleState, foodMenuState,
-                    //     loanState);
+                    final count = _getCount(f.id, billState, vehicleState,
+                        chitState, checklistState, periodState,
+                        homeRecordState, scheduleState, foodMenuState,
+                        loanState, goalState);
                     return _FeatureRow(
                       icon: f.icon,
                       title: f.title,
@@ -270,6 +269,187 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  void _showAccountSwitcher(BuildContext context) {
+    final authCubit = context.read<AuthCubit>();
+    final currentEmail = authCubit.state.user?.email ?? '';
+    final otherAccounts = authCubit.otherAccounts;
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Current account
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.blue[600],
+                    child: Text(
+                      currentEmail.isNotEmpty
+                          ? currentEmail[0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          currentEmail,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'Current account',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.check_circle_rounded,
+                      color: Colors.blue[600], size: 20),
+                ],
+              ),
+            ),
+
+            // Other saved accounts
+            if (otherAccounts.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ...otherAccounts.map((account) => Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 2),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.grey[300],
+                        child: Text(
+                          account.email[0].toUpperCase(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        account.displayName ?? account.email,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: account.displayName != null
+                          ? Text(account.email,
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[500]))
+                          : null,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              authCubit.switchAccount(account);
+                            },
+                            child: const Text('Switch'),
+                          ),
+                          InkWell(
+                            onTap: () async {
+                              Navigator.pop(ctx);
+                              authCubit.removeSavedAccount(account.email);
+                            },
+                            child: Icon(Icons.close,
+                                size: 18, color: Colors.grey[400]),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )),
+            ],
+
+            const SizedBox(height: 12),
+            // Actions
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: authCubit,
+                            child: const ProfilePage(),
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.person_outline_rounded, size: 18),
+                    label: const Text('Profile'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _showLogoutDialog(context);
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    label: const Text('Logout'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -348,32 +528,45 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
               child: Row(
                 children: [
-                  // Profile icon
+                  // Profile icon — tap for account switcher
                   GestureDetector(
-                    onTap: () {
-                      final authCubit = context.read<AuthCubit>();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: authCubit,
-                            child: const ProfilePage(),
+                    onTap: () => _showAccountSwitcher(context),
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor:
+                              Colors.white.withValues(alpha: 0.25),
+                          child: Text(
+                            userInitial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    child: CircleAvatar(
-                      radius: 22,
-                      backgroundColor:
-                          Colors.white.withValues(alpha: 0.25),
-                      child: Text(
-                        userInitial,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                        if (context
+                            .read<AuthCubit>()
+                            .otherAccounts
+                            .isNotEmpty)
+                          Positioned(
+                            bottom: -2,
+                            right: -2,
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: Colors.blue[600]!, width: 1.5),
+                              ),
+                              child: Icon(Icons.swap_horiz_rounded,
+                                  size: 10, color: Colors.blue[600]),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 14),
