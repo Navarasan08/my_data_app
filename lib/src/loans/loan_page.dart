@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/loans/model/loan_model.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
 import 'package:my_data_app/src/loans/cubit/loan_state.dart';
+import 'package:my_data_app/src/loans/loan_analysis_page.dart';
+
+String _fmt(double v) => NumberFormat('#,##,###', 'en_IN').format(v.round());
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. LoanListPage
@@ -27,6 +30,21 @@ class LoanListPage extends StatelessWidget {
               title: const Text('Loans'),
               centerTitle: true,
               elevation: 0,
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.analytics_rounded),
+                  tooltip: 'Analysis',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: cubit,
+                        child: const LoanAnalysisPage(),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
               bottom: const TabBar(
                 tabs: [
                   Tab(text: 'Borrowed'),
@@ -47,7 +65,7 @@ class LoanListPage extends StatelessWidget {
                         child: _SummaryTile(
                           label: 'Outstanding',
                           value:
-                              '\u20B9${cubit.totalBorrowed.toStringAsFixed(0)}',
+                              '₹${_fmt(cubit.totalBorrowed)}',
                           color: Colors.red,
                         ),
                       ),
@@ -56,7 +74,7 @@ class LoanListPage extends StatelessWidget {
                         child: _SummaryTile(
                           label: 'Monthly EMI',
                           value:
-                              '\u20B9${cubit.totalMonthlyEmi.toStringAsFixed(0)}',
+                              '₹${_fmt(cubit.totalMonthlyEmi)}',
                           color: Colors.orange,
                         ),
                       ),
@@ -65,7 +83,7 @@ class LoanListPage extends StatelessWidget {
                         child: _SummaryTile(
                           label: 'Lent Out',
                           value:
-                              '\u20B9${cubit.totalLent.toStringAsFixed(0)}',
+                              '₹${_fmt(cubit.totalLent)}',
                           color: Colors.green,
                         ),
                       ),
@@ -294,7 +312,16 @@ class _LoanCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '\u20B9${loan.outstandingBalance.toStringAsFixed(0)}',
+                    'EMI: ₹${_fmt(loan.emiAmount)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '₹${_fmt(loan.outstandingBalance)}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -418,6 +445,19 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             centerTitle: true,
             elevation: 0,
             actions: [
+              IconButton(
+                icon: const Icon(Icons.analytics_rounded),
+                tooltip: 'Analysis',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: cubit,
+                      child: const LoanAnalysisPage(),
+                    ),
+                  ),
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined),
                 onPressed: () async {
@@ -624,7 +664,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
               title: const Text('Record EMI Payment',
                   style: TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text(
-                  'Month ${loan.paidEmiCount + 1} · ₹${loan.emiAmount.toStringAsFixed(0)}'),
+                  'Month ${loan.paidEmiCount + 1} · ₹${_fmt(loan.emiAmount)}'),
               onTap: () async {
                 Navigator.pop(ctx);
                 final repayment = await Navigator.push<Repayment>(
@@ -671,13 +711,158 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                 );
                 if (repayment != null) {
-                  cubit.addPartPayment(loan.id, repayment);
+                  if (!context.mounted) return;
+                  _showStrategyDialog(context, cubit, loan, repayment);
                 }
               },
             ),
           ],
         ),
       ),
+    );
+  }
+
+  void _showStrategyDialog(BuildContext context, LoanCubit cubit, Loan loan, Repayment repayment) {
+    final remainingPrincipal = loan.outstandingBalance - repayment.amount;
+    final remainingEmis = loan.remainingEmis;
+    final newEmi = Loan.calculateNewEmi(
+      remainingPrincipal.clamp(0, double.infinity),
+      loan.interestRate,
+      remainingEmis > 0 ? remainingEmis : 1,
+    );
+    final newTenure = Loan.calculateNewTenure(
+      remainingPrincipal.clamp(0, double.infinity),
+      loan.interestRate,
+      loan.emiAmount,
+    );
+
+    double? interestAmount;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        double? customEmi;
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              title: const Text('Part Payment Strategy'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Part Payment: ₹${_fmt(repayment.amount)}',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'New Outstanding: ₹${_fmt(remainingPrincipal.clamp(0.0, double.infinity))}',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 40,
+                    child: TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Interest charged on part payment (optional)',
+                        hintStyle: const TextStyle(fontSize: 12),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                        prefixIcon: const Icon(Icons.currency_rupee, size: 14),
+                        prefixIconConstraints: const BoxConstraints(minWidth: 30),
+                      ),
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(fontSize: 13),
+                      onChanged: (v) => interestAmount = double.tryParse(v),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Option 1: Reduce Tenure
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      cubit.addPartPayment(loan.id, repayment.copyWith(interestPortion: interestAmount ?? 0), PartPaymentStrategy.reduceTenure);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.blue[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.timelapse_rounded, size: 18, color: Colors.blue[700]),
+                              const SizedBox(width: 8),
+                              Text('Reduce Tenure', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.blue[800])),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Keep EMI ₹${_fmt(loan.emiAmount)}, reduce to ~$newTenure months', style: TextStyle(fontSize: 12, color: Colors.blue[600])),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Option 2: Reduce EMI
+                  InkWell(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      cubit.addPartPayment(loan.id, repayment.copyWith(interestPortion: interestAmount ?? 0), PartPaymentStrategy.reduceEmi, newEmi: customEmi);
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.green[50],
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.green[200]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.trending_down_rounded, size: 18, color: Colors.green[700]),
+                              const SizedBox(width: 8),
+                              Text('Reduce EMI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green[800])),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text('Keep tenure, new EMI: ₹${_fmt(newEmi)}', style: TextStyle(fontSize: 12, color: Colors.green[600])),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 40,
+                            child: TextField(
+                              decoration: InputDecoration(
+                                hintText: 'Custom EMI (optional)',
+                                hintStyle: const TextStyle(fontSize: 12),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                prefixIcon: const Icon(Icons.currency_rupee, size: 14),
+                                prefixIconConstraints: const BoxConstraints(minWidth: 30),
+                              ),
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(fontSize: 13),
+                              onChanged: (v) => customEmi = double.tryParse(v),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -690,7 +875,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             Expanded(
               child: _DashTile(
                 label: 'Principal',
-                value: '\u20B9${loan.principalAmount.toStringAsFixed(0)}',
+                value: '₹${_fmt(loan.principalAmount)}',
                 icon: Icons.account_balance_wallet_outlined,
               ),
             ),
@@ -706,7 +891,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             Expanded(
               child: _DashTile(
                 label: 'EMI',
-                value: '\u20B9${loan.emiAmount.toStringAsFixed(0)}',
+                value: '₹${_fmt(loan.emiAmount)}',
                 icon: Icons.calendar_month_rounded,
               ),
             ),
@@ -719,7 +904,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             Expanded(
               child: _DashTile(
                 label: 'Total Paid',
-                value: '\u20B9${loan.totalRepaid.toStringAsFixed(0)}',
+                value: '₹${_fmt(loan.totalRepaid)}',
                 icon: Icons.check_circle_outline,
               ),
             ),
@@ -727,7 +912,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             Expanded(
               child: _DashTile(
                 label: 'Outstanding',
-                value: '\u20B9${loan.outstandingBalance.toStringAsFixed(0)}',
+                value: '₹${_fmt(loan.outstandingBalance)}',
                 icon: Icons.pending_outlined,
               ),
             ),
@@ -795,7 +980,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                 ),
                 Text(
-                  '₹${loan.totalPartPayments.toStringAsFixed(0)}',
+                  '₹${_fmt(loan.totalPartPayments)}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -809,6 +994,55 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                     color: Colors.green[600],
                   ),
                 ),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 8),
+        // Row 5: Interest Analysis
+        Row(
+          children: [
+            Expanded(
+              child: _DashTile(
+                label: 'Total Interest',
+                value: '₹${_fmt(loan.totalInterestOriginal)}',
+                icon: Icons.account_balance_outlined,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _DashTile(
+                label: 'Interest Paid',
+                value: '₹${_fmt(loan.interestPaid)}',
+                icon: Icons.check_circle_outline,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _DashTile(
+                label: 'Interest Left',
+                value: '₹${_fmt(loan.interestRemaining)}',
+                icon: Icons.pending_outlined,
+              ),
+            ),
+          ],
+        ),
+        // Row 6: Savings from part payments (if any)
+        if (loan.interestSaved > 0) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.teal[50],
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.teal[200]!),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.celebration_rounded, size: 18, color: Colors.teal[700]),
+                const SizedBox(width: 8),
+                Text('Interest Saved: ', style: TextStyle(fontSize: 13, color: Colors.teal[800])),
+                Text('₹${_fmt(loan.interestSaved)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal[800])),
               ],
             ),
           ),
@@ -913,7 +1147,7 @@ class _RepaymentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '\u20B9${repayment.amount.toStringAsFixed(0)}',
+                  '₹${_fmt(repayment.amount)}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -928,8 +1162,8 @@ class _RepaymentTile extends StatelessWidget {
                     repayment.interestPortion != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'P: \u20B9${(repayment.principalPortion ?? 0).toStringAsFixed(0)}  '
-                    'I: \u20B9${(repayment.interestPortion ?? 0).toStringAsFixed(0)}',
+                    'P: ₹${_fmt(repayment.principalPortion ?? 0.0)}  '
+                    'I: ₹${_fmt(repayment.interestPortion ?? 0.0)}',
                     style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                   ),
                 ],
@@ -1516,3 +1750,4 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
     );
   }
 }
+

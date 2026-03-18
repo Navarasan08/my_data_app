@@ -139,6 +139,20 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.amber, Colors.orange],
           order: 10,
         ),
+        FeatureItem(
+          id: 'medical',
+          title: 'Medical',
+          icon: Icons.medical_services_rounded,
+          gradient: [Colors.red, Colors.pink],
+          order: 11,
+        ),
+        FeatureItem(
+          id: 'vault',
+          title: 'Profile Vault',
+          icon: Icons.folder_special_rounded,
+          gradient: [Colors.indigo, Colors.deepPurple],
+          order: 12,
+        ),
       ];
 
   Future<void> load() async {

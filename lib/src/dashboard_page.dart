@@ -23,6 +23,10 @@ import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
 import 'package:my_data_app/src/goals/goal_page.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/money_owe/money_owe_page.dart';
+import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
+import 'package:my_data_app/src/medical/medical_page.dart';
+import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
+import 'package:my_data_app/src/profile_vault/profile_vault_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
@@ -40,12 +44,14 @@ class _DashboardPageState extends State<DashboardPage> {
   static const _categoryIds = {
     'Finance': ['bills', 'chits', 'loans', 'home', 'money_owe'],
     'Lifestyle': ['schedules', 'food_menu', 'checklists', 'goals'],
-    'Personal': ['vehicles', 'periods'],
+    'Health': ['periods', 'medical'],
+    'Personal': ['vehicles', 'vault'],
   };
 
   static final _categoryMeta = {
     'Finance': (Icons.account_balance_wallet_rounded, Colors.green),
     'Lifestyle': (Icons.self_improvement_rounded, Colors.blue),
+    'Health': (Icons.health_and_safety_rounded, Colors.red),
     'Personal': (Icons.person_rounded, Colors.purple),
   };
 
@@ -62,11 +68,13 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'loans': return 'Loans & repayments';
       case 'goals': return 'Track habits & goals';
       case 'money_owe': return 'Lend & borrow tracker';
+      case 'medical': return 'Medical records & health';
+      case 'vault': return 'Personal details & documents';
       default: return '';
     }
   }
 
-  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
+  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState) {
     switch (id) {
       case 'bills': return billState.tasks.length;
       case 'vehicles': return vehicleState.vehicles.length;
@@ -79,6 +87,8 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'loans': return loanState.loans.length;
       case 'goals': return goalState.goals.length;
       case 'money_owe': return moneyOweState.entries.length;
+      case 'medical': return medicalState.records.length + medicalState.members.length;
+      case 'vault': return vaultState.entries.length;
       default: return 0;
     }
   }
@@ -152,6 +162,18 @@ class _DashboardPageState extends State<DashboardPage> {
           child: const MoneyOwePage(),
         );
         break;
+      case 'medical':
+        page = BlocProvider.value(
+          value: context.read<MedicalCubit>(),
+          child: const MedicalHomePage(),
+        );
+        break;
+      case 'vault':
+        page = BlocProvider.value(
+          value: context.read<ProfileVaultCubit>(),
+          child: const ProfileVaultHomePage(),
+        );
+        break;
       default:
         return;
     }
@@ -160,7 +182,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildListView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: _categoryIds.entries.map((catEntry) {
@@ -193,7 +215,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     final count = _getCount(f.id, billState, vehicleState,
                         chitState, checklistState, periodState,
                         homeRecordState, scheduleState, foodMenuState,
-                        loanState, goalState, moneyOweState);
+                        loanState, goalState, moneyOweState, medicalState, vaultState);
                     return _FeatureRow(
                       icon: f.icon,
                       title: f.title,
@@ -214,7 +236,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildGridView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -258,7 +280,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         final count = _getCount(f.id, billState,
                             vehicleState, chitState, checklistState,
                             periodState, homeRecordState, scheduleState,
-                            foodMenuState, loanState, goalState, moneyOweState);
+                            foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState);
                         return _FeatureGridCard(
                           icon: f.icon,
                           title: f.title,
@@ -496,6 +518,8 @@ class _DashboardPageState extends State<DashboardPage> {
     final loanState = context.watch<LoanCubit>().state;
     final goalState = context.watch<GoalCubit>().state;
     final moneyOweState = context.watch<MoneyOweCubit>().state;
+    final medicalState = context.watch<MedicalCubit>().state;
+    final vaultState = context.watch<ProfileVaultCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
 
@@ -673,10 +697,10 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _isGrid
                   ? _buildGridView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState)
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState)
                   : _buildListView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState),
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState),
             ),
           ],
         ),

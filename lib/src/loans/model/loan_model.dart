@@ -45,6 +45,8 @@ extension LoanTypeExt on LoanType {
 
 enum LoanDirection { borrowed, lent }
 
+enum PartPaymentStrategy { reduceTenure, reduceEmi }
+
 class Loan {
   final String id;
   final String name;
@@ -229,6 +231,118 @@ class Loan {
     }
     return result;
   }
+
+  // ── Advanced computed properties ──────────────────────────────────────
+
+  /// Effective outstanding after all part payments applied
+  double get effectivePrincipal =>
+      (principalAmount - totalPartPayments).clamp(0, double.infinity);
+
+  /// Total interest over full loan life (original schedule)
+  double get totalInterestOriginal {
+    if (interestRate == 0) return 0;
+    return (emiAmount * tenureMonths) - principalAmount;
+  }
+
+  /// Interest already paid (sum of interest portions from all repayments)
+  double get interestPaid =>
+      repayments.fold(0.0, (sum, r) => sum + (r.interestPortion ?? 0));
+
+  /// Remaining interest to be paid (estimated from remaining EMIs)
+  double get interestRemaining {
+    final remainingPrincipal = outstandingBalance;
+    if (interestRate == 0 || remainingEmis <= 0) return 0;
+    // Approximate: remaining EMIs * emiAmount - remaining principal
+    return (emiAmount * remainingEmis - remainingPrincipal).clamp(0, double.infinity);
+  }
+
+  /// Total interest (paid + remaining)
+  double get totalInterestActual => interestPaid + interestRemaining;
+
+  /// Interest saved from part payments
+  double get interestSaved =>
+      totalInterestOriginal > totalInterestActual
+          ? totalInterestOriginal - totalInterestActual
+          : 0;
+
+  // ── Amortization ─────────────────────────────────────────────────────
+
+  /// Generate month-by-month amortization schedule
+  List<AmortizationEntry> get amortizationSchedule {
+    if (interestRate == 0) {
+      return List.generate(tenureMonths, (i) {
+        final principal = emiAmount;
+        return AmortizationEntry(
+          month: i + 1,
+          emi: emiAmount,
+          principal: principal,
+          interest: 0,
+          balance: principalAmount - (principal * (i + 1)),
+        );
+      });
+    }
+    final monthlyRate = interestRate / 12 / 100;
+    double balance = principalAmount;
+    final schedule = <AmortizationEntry>[];
+    for (int i = 0; i < tenureMonths && balance > 0; i++) {
+      final interest = balance * monthlyRate;
+      final principal = (emiAmount - interest).clamp(0.0, balance);
+      balance -= principal;
+      // Apply any part payments at this month
+      for (final pp in partPayments) {
+        final ppMonth = (pp.paidDate.year - startDate.year) * 12 +
+            pp.paidDate.month - startDate.month;
+        if (ppMonth == i + 1) {
+          balance = (balance - pp.amount).clamp(0, double.infinity);
+        }
+      }
+      schedule.add(AmortizationEntry(
+        month: i + 1,
+        emi: emiAmount,
+        principal: principal,
+        interest: interest,
+        balance: balance < 0.01 ? 0 : balance,
+      ));
+      if (balance <= 0) break;
+    }
+    return schedule;
+  }
+
+  /// Calculate new EMI after part payment with reduced principal
+  static double calculateNewEmi(
+      double remainingPrincipal, double annualRate, int remainingMonths) {
+    return calculateEmi(remainingPrincipal, annualRate, remainingMonths);
+  }
+
+  /// Calculate new tenure with same EMI after part payment
+  static int calculateNewTenure(
+      double remainingPrincipal, double annualRate, double emi) {
+    if (annualRate == 0) return (remainingPrincipal / emi).ceil();
+    final r = annualRate / 12 / 100;
+    if (emi <= remainingPrincipal * r) return 999; // EMI too low
+    final n = -_log(1 - (remainingPrincipal * r / emi)) / _log(1 + r);
+    return n.ceil();
+  }
+
+  static double _log(double x) {
+    if (x <= 0) return 0;
+    // Natural log using Taylor series approximation
+    return _ln(x);
+  }
+
+  static double _ln(double x) {
+    if (x <= 0) return double.negativeInfinity;
+    if (x == 1) return 0;
+    double result = 0;
+    double term = (x - 1) / (x + 1);
+    double termSquared = term * term;
+    double currentTerm = term;
+    for (int i = 1; i <= 100; i += 2) {
+      result += currentTerm / i;
+      currentTerm *= termSquared;
+    }
+    return 2 * result;
+  }
 }
 
 class Repayment {
@@ -240,6 +354,7 @@ class Repayment {
   final DateTime paidDate;
   final String? notes;
   final bool isPartPayment;
+  final PartPaymentStrategy? strategy; // only used for part payments
 
   const Repayment({
     required this.id,
@@ -250,6 +365,7 @@ class Repayment {
     required this.paidDate,
     this.notes,
     this.isPartPayment = false,
+    this.strategy,
   });
 
   Repayment copyWith({
@@ -261,6 +377,7 @@ class Repayment {
     DateTime? paidDate,
     String? notes,
     bool? isPartPayment,
+    PartPaymentStrategy? strategy,
   }) => Repayment(
         id: id ?? this.id,
         monthNumber: monthNumber ?? this.monthNumber,
@@ -270,6 +387,7 @@ class Repayment {
         paidDate: paidDate ?? this.paidDate,
         notes: notes ?? this.notes,
         isPartPayment: isPartPayment ?? this.isPartPayment,
+        strategy: strategy ?? this.strategy,
       );
 
   Map<String, dynamic> toJson() => {
@@ -281,6 +399,7 @@ class Repayment {
         'paidDate': paidDate.toIso8601String(),
         'notes': notes,
         'isPartPayment': isPartPayment,
+        'strategy': strategy?.index,
       };
 
   factory Repayment.fromJson(Map<String, dynamic> json) => Repayment(
@@ -292,5 +411,24 @@ class Repayment {
         paidDate: DateTime.parse(json['paidDate'] as String),
         notes: json['notes'] as String?,
         isPartPayment: json['isPartPayment'] as bool? ?? false,
+        strategy: json['strategy'] != null
+            ? PartPaymentStrategy.values[(json['strategy'] as int).clamp(0, PartPaymentStrategy.values.length - 1)]
+            : null,
       );
+}
+
+class AmortizationEntry {
+  final int month;
+  final double emi;
+  final double principal;
+  final double interest;
+  final double balance;
+
+  const AmortizationEntry({
+    required this.month,
+    required this.emi,
+    required this.principal,
+    required this.interest,
+    required this.balance,
+  });
 }

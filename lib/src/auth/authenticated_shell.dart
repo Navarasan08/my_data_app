@@ -22,6 +22,10 @@ import 'package:my_data_app/src/goals/repository/goal_repository.dart';
 import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
 import 'package:my_data_app/src/money_owe/repository/money_owe_repository.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
+import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
+import 'package:my_data_app/src/medical/repository/medical_repository.dart';
+import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
+import 'package:my_data_app/src/profile_vault/repository/profile_vault_repository.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
@@ -46,6 +50,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreLoanRepository _loanRepo;
   late final FirestoreGoalRepository _goalRepo;
   late final FirestoreMoneyOweRepository _moneyOweRepo;
+  late final FirestoreMedicalRepository _medicalRepo;
+  late final FirestoreProfileVaultRepository _vaultRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -63,6 +69,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _loanRepo = FirestoreLoanRepository(uid: widget.uid);
     _goalRepo = FirestoreGoalRepository(uid: widget.uid);
     _moneyOweRepo = FirestoreMoneyOweRepository(uid: widget.uid);
+    _medicalRepo = FirestoreMedicalRepository(uid: widget.uid);
+    _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -80,6 +88,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _loanRepo.init(),
       _goalRepo.init(),
       _moneyOweRepo.init(),
+      _medicalRepo.init(),
+      _vaultRepo.init(),
       _dashboardSettingsCubit.load(),
     ]);
     if (mounted) setState(() => _initialized = true);
@@ -106,6 +116,8 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => LoanCubit(_loanRepo)),
         BlocProvider(create: (_) => GoalCubit(_goalRepo)),
         BlocProvider(create: (_) => MoneyOweCubit(_moneyOweRepo)),
+        BlocProvider(create: (_) => MedicalCubit(_medicalRepo)),
+        BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),
