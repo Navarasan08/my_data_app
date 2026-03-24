@@ -77,15 +77,78 @@ class ChitCubit extends Cubit<ChitState> {
     final idx = payments.indexWhere((p) => p.id == paymentId);
     if (idx == -1) return;
     final p = payments[idx];
-    payments[idx] = Payment(
-      id: p.id,
-      memberId: p.memberId,
-      monthNumber: p.monthNumber,
-      amount: p.amount,
-      dueDate: p.dueDate,
+    payments[idx] = p.copyWith(
       paidDate: p.isPaid ? null : DateTime.now(),
       isPaid: !p.isPaid,
-      notes: p.notes,
+    );
+    final updatedMember = member.copyWith(payments: payments);
+    _repository.update(
+        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
+    emit(state.copyWith(chitFunds: _repository.getAll()));
+  }
+
+  /// Mark payment as paid with auction details (for participant view)
+  void markPaymentWithAuction({
+    required String chitFundId,
+    required String paymentId,
+    required double auctionDiscount,
+    required bool isWonByMe,
+    String? auctionWinner,
+  }) {
+    final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
+    if (chitFund.members.isEmpty) return;
+    final member = chitFund.members.first;
+    final payments = List<Payment>.from(member.payments);
+    final idx = payments.indexWhere((p) => p.id == paymentId);
+    if (idx == -1) return;
+    final p = payments[idx];
+    payments[idx] = p.copyWith(
+      isPaid: true,
+      paidDate: DateTime.now(),
+      auctionValue: auctionDiscount,
+      auctionDiscount: auctionDiscount,
+      isWonByMe: isWonByMe,
+      auctionWinner: auctionWinner,
+      totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
+    );
+    final updatedMember = member.copyWith(payments: payments);
+    _repository.update(
+        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
+    emit(state.copyWith(chitFunds: _repository.getAll()));
+  }
+
+  /// Mark payment as unpaid (undo)
+  void markPaymentUnpaid(String chitFundId, String paymentId) {
+    final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
+    if (chitFund.members.isEmpty) return;
+    final member = chitFund.members.first;
+    final payments = List<Payment>.from(member.payments);
+    final idx = payments.indexWhere((p) => p.id == paymentId);
+    if (idx == -1) return;
+    payments[idx] = payments[idx].copyWith(
+      isPaid: false,
+      paidDate: null,
+      clearAuctionDiscount: true,
+      clearAuctionWinner: true,
+      isWonByMe: false,
+    );
+    final updatedMember = member.copyWith(payments: payments);
+    _repository.update(
+        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
+    emit(state.copyWith(chitFunds: _repository.getAll()));
+  }
+
+  /// Update auction discount for a specific payment month
+  void updatePaymentDiscount(String chitFundId, String paymentId, double auctionDiscount) {
+    final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
+    if (chitFund.members.isEmpty) return;
+    final member = chitFund.members.first;
+    final payments = List<Payment>.from(member.payments);
+    final idx = payments.indexWhere((p) => p.id == paymentId);
+    if (idx == -1) return;
+    payments[idx] = payments[idx].copyWith(
+      auctionDiscount: auctionDiscount,
+      totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
     );
     final updatedMember = member.copyWith(payments: payments);
     _repository.update(

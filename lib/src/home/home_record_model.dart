@@ -21,31 +21,52 @@ class HomeCategory {
       availableColors[colorIndex.clamp(0, availableColors.length - 1)];
 
   static final List<IconData> availableIcons = [
-    Icons.chair_rounded, // 0
-    Icons.water_drop_rounded, // 1
-    Icons.local_fire_department_rounded, // 2
-    Icons.bolt_rounded, // 3
-    Icons.shopping_cart_rounded, // 4
-    Icons.build_rounded, // 5
-    Icons.kitchen_rounded, // 6
-    Icons.home_rounded, // 7
-    Icons.wifi_rounded, // 8
-    Icons.cleaning_services_rounded, // 9
-    Icons.category_rounded, // 10
-    Icons.pets_rounded, // 11
-    Icons.medical_services_rounded, // 12
-    Icons.school_rounded, // 13
-    Icons.sports_esports_rounded, // 14
-    Icons.restaurant_rounded, // 15
-    Icons.local_gas_station_rounded, // 16
-    Icons.flight_rounded, // 17
-    Icons.fitness_center_rounded, // 18
-    Icons.child_care_rounded, // 19
-    Icons.local_laundry_service_rounded, // 20
-    Icons.park_rounded, // 21
-    Icons.shopping_bag_rounded, // 22
-    Icons.phone_android_rounded, // 23
-    Icons.tv_rounded, // 24
+    Icons.chair_rounded, // 0 - furniture
+    Icons.water_drop_rounded, // 1 - water
+    Icons.local_fire_department_rounded, // 2 - gas
+    Icons.bolt_rounded, // 3 - electricity
+    Icons.shopping_cart_rounded, // 4 - groceries
+    Icons.build_rounded, // 5 - maintenance
+    Icons.kitchen_rounded, // 6 - appliances
+    Icons.home_rounded, // 7 - rent/home
+    Icons.wifi_rounded, // 8 - internet
+    Icons.cleaning_services_rounded, // 9 - cleaning
+    Icons.category_rounded, // 10 - general
+    Icons.pets_rounded, // 11 - pets
+    Icons.medical_services_rounded, // 12 - medical
+    Icons.school_rounded, // 13 - education
+    Icons.sports_esports_rounded, // 14 - entertainment
+    Icons.restaurant_rounded, // 15 - food/dining
+    Icons.local_gas_station_rounded, // 16 - fuel
+    Icons.flight_rounded, // 17 - travel
+    Icons.fitness_center_rounded, // 18 - fitness
+    Icons.child_care_rounded, // 19 - childcare
+    Icons.local_laundry_service_rounded, // 20 - laundry
+    Icons.park_rounded, // 21 - garden
+    Icons.shopping_bag_rounded, // 22 - shopping
+    Icons.phone_android_rounded, // 23 - phone/mobile
+    Icons.tv_rounded, // 24 - tv/cable
+    Icons.local_drink_rounded, // 25 - milk/drinks
+    Icons.rice_bowl_rounded, // 26 - rice/grains
+    Icons.egg_rounded, // 27 - eggs/dairy
+    Icons.spa_rounded, // 28 - beauty/spa
+    Icons.directions_car_rounded, // 29 - vehicle
+    Icons.local_pharmacy_rounded, // 30 - pharmacy
+    Icons.cake_rounded, // 31 - bakery/snacks
+    Icons.coffee_rounded, // 32 - coffee/tea
+    Icons.local_grocery_store_rounded, // 33 - supermarket
+    Icons.grass_rounded, // 34 - vegetables
+    Icons.set_meal_rounded, // 35 - fish/meat
+    Icons.blender_rounded, // 36 - batter/mixer
+    Icons.newspaper_rounded, // 37 - newspaper
+    Icons.checkroom_rounded, // 38 - clothing
+    Icons.celebration_rounded, // 39 - festivals
+    Icons.card_giftcard_rounded, // 40 - gifts
+    Icons.savings_rounded, // 41 - savings
+    Icons.account_balance_rounded, // 42 - bank/emi
+    Icons.subscriptions_rounded, // 43 - subscriptions
+    Icons.local_taxi_rounded, // 44 - taxi/auto
+    Icons.temple_hindu_rounded, // 45 - temple/pooja
   ];
 
   static final List<Color> availableColors = [
@@ -96,18 +117,51 @@ class HomeCategory {
       id: 'internet', displayName: 'Internet', iconIndex: 8, colorIndex: 8);
   static final cleaning = HomeCategory(
       id: 'cleaning', displayName: 'Cleaning', iconIndex: 9, colorIndex: 9);
+  static final milk = HomeCategory(
+      id: 'milk', displayName: 'Milk', iconIndex: 25, colorIndex: 1);
+  static final rice = HomeCategory(
+      id: 'rice', displayName: 'Rice & Grains', iconIndex: 26, colorIndex: 0);
+  static final batter = HomeCategory(
+      id: 'batter', displayName: 'Batter', iconIndex: 36, colorIndex: 2);
+  static final vegetables = HomeCategory(
+      id: 'vegetables', displayName: 'Vegetables', iconIndex: 34, colorIndex: 4);
+  static final fish = HomeCategory(
+      id: 'fish', displayName: 'Fish & Meat', iconIndex: 35, colorIndex: 10);
+  static final medical = HomeCategory(
+      id: 'medical', displayName: 'Medical', iconIndex: 12, colorIndex: 10);
+  static final education = HomeCategory(
+      id: 'education', displayName: 'Education', iconIndex: 13, colorIndex: 13);
+  static final clothing = HomeCategory(
+      id: 'clothing', displayName: 'Clothing', iconIndex: 38, colorIndex: 8);
+  static final pooja = HomeCategory(
+      id: 'pooja', displayName: 'Pooja & Temple', iconIndex: 45, colorIndex: 14);
+  static final emi = HomeCategory(
+      id: 'emi', displayName: 'EMI & Loans', iconIndex: 42, colorIndex: 7);
+  static final subscriptions = HomeCategory(
+      id: 'subscriptions', displayName: 'Subscriptions', iconIndex: 43, colorIndex: 11);
 
   static final List<HomeCategory> defaults = [
-    furniture,
+    groceries,
+    milk,
+    vegetables,
+    rice,
+    batter,
+    fish,
     water,
     gas,
     electricity,
-    groceries,
-    maintenance,
-    appliances,
     rent,
     internet,
+    maintenance,
+    appliances,
+    furniture,
     cleaning,
+    medical,
+    education,
+    clothing,
+    pooja,
+    emi,
+    subscriptions,
   ];
 
   static HomeCategory findById(
@@ -154,6 +208,32 @@ class HomeCategory {
   int get hashCode => id.hashCode;
 }
 
+enum MeasureUnit {
+  kg('kg'),
+  gram('g'),
+  litre('L'),
+  ml('ml'),
+  piece('pcs'),
+  packet('pkt'),
+  dozen('doz'),
+  bundle('bundle'),
+  box('box'),
+  bottle('bottle'),
+  can('can'),
+  bag('bag');
+
+  final String label;
+  const MeasureUnit(this.label);
+
+  static MeasureUnit fromName(String? name) {
+    if (name == null) return MeasureUnit.piece;
+    return MeasureUnit.values.firstWhere(
+      (u) => u.name == name,
+      orElse: () => MeasureUnit.piece,
+    );
+  }
+}
+
 class HomeRecord {
   final String id;
   final String title;
@@ -162,6 +242,8 @@ class HomeRecord {
   final DateTime date;
   final String? description;
   final String? notes;
+  final double? quantity;
+  final MeasureUnit? unit;
 
   const HomeRecord({
     required this.id,
@@ -171,7 +253,17 @@ class HomeRecord {
     required this.date,
     this.description,
     this.notes,
+    this.quantity,
+    this.unit,
   });
+
+  String get quantityLabel {
+    if (quantity == null || unit == null) return '';
+    final qStr = quantity! % 1 == 0
+        ? quantity!.toInt().toString()
+        : quantity!.toStringAsFixed(2);
+    return '$qStr ${unit!.label}';
+  }
 
   HomeRecord copyWith({
     String? id,
@@ -181,6 +273,9 @@ class HomeRecord {
     DateTime? date,
     String? description,
     String? notes,
+    double? quantity,
+    MeasureUnit? unit,
+    bool clearQuantity = false,
   }) {
     return HomeRecord(
       id: id ?? this.id,
@@ -190,6 +285,8 @@ class HomeRecord {
       date: date ?? this.date,
       description: description ?? this.description,
       notes: notes ?? this.notes,
+      quantity: clearQuantity ? null : (quantity ?? this.quantity),
+      unit: clearQuantity ? null : (unit ?? this.unit),
     );
   }
 
@@ -202,6 +299,8 @@ class HomeRecord {
       'date': date.toIso8601String(),
       'description': description,
       'notes': notes,
+      if (quantity != null) 'quantity': quantity,
+      if (unit != null) 'unit': unit!.name,
     };
   }
 
@@ -224,6 +323,10 @@ class HomeRecord {
       date: DateTime.parse(json['date'] as String),
       description: json['description'] as String?,
       notes: json['notes'] as String?,
+      quantity: (json['quantity'] as num?)?.toDouble(),
+      unit: json['unit'] != null
+          ? MeasureUnit.fromName(json['unit'] as String)
+          : null,
     );
   }
 }

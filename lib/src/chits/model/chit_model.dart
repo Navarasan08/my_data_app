@@ -16,6 +16,8 @@ class ChitFund {
   final List<Auction> auctions;
   final String? description;
 
+  final double brokeragePercent; // foreman's commission %
+
   // Participant-only fields
   final int? myMonthNumber; // which month I won the auction
   final double? myAuctionAmount; // amount I received
@@ -33,6 +35,7 @@ class ChitFund {
     required this.startDate,
     this.endDate,
     required this.status,
+    this.brokeragePercent = 0,
     this.members = const [],
     this.auctions = const [],
     this.description,
@@ -42,19 +45,44 @@ class ChitFund {
     this.organizerPhone,
   });
 
+  /// Brokerage amount per member per month
+  double get brokeragePerMember {
+    if (brokeragePercent <= 0 || totalMembers <= 0) return 0;
+    return (totalAmount * brokeragePercent / 100) / totalMembers;
+  }
+
+  /// Total brokerage per month (whole pot)
+  double get totalBrokeragePerMonth {
+    return totalAmount * brokeragePercent / 100;
+  }
+
   // Participant computed helpers
   double get myTotalPaid {
     if (role != ChitRole.participant || members.isEmpty) return 0;
     return members.first.payments
         .where((p) => p.isPaid)
-        .fold(0.0, (sum, p) => sum + p.amount);
+        .fold(0.0, (sum, p) => sum + p.actualAmount);
   }
 
   double get myTotalPending {
     if (role != ChitRole.participant || members.isEmpty) return 0;
     return members.first.payments
         .where((p) => !p.isPaid)
+        .fold(0.0, (sum, p) => sum + p.actualAmount);
+  }
+
+  /// Total base amount (without any discount)
+  double get myTotalBase {
+    if (role != ChitRole.participant || members.isEmpty) return 0;
+    return members.first.payments
         .fold(0.0, (sum, p) => sum + p.amount);
+  }
+
+  /// Total savings from auction dividends
+  double get myTotalSavings {
+    if (role != ChitRole.participant || members.isEmpty) return 0;
+    return members.first.payments
+        .fold(0.0, (sum, p) => sum + p.dividend);
   }
 
   int get myPaidCount {
@@ -89,6 +117,7 @@ class ChitFund {
     DateTime? startDate,
     DateTime? endDate,
     ChitStatus? status,
+    double? brokeragePercent,
     List<Member>? members,
     List<Auction>? auctions,
     String? description,
@@ -108,6 +137,7 @@ class ChitFund {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       status: status ?? this.status,
+      brokeragePercent: brokeragePercent ?? this.brokeragePercent,
       members: members ?? this.members,
       auctions: auctions ?? this.auctions,
       description: description ?? this.description,
@@ -127,6 +157,7 @@ class ChitFund {
       'totalMembers': totalMembers,
       'durationMonths': durationMonths,
       'monthlyContribution': monthlyContribution,
+      'brokeragePercent': brokeragePercent,
       'startDate': startDate.toIso8601String(),
       'endDate': endDate?.toIso8601String(),
       'status': status.index,
@@ -151,6 +182,7 @@ class ChitFund {
       totalMembers: json['totalMembers'] as int,
       durationMonths: json['durationMonths'] as int,
       monthlyContribution: (json['monthlyContribution'] as num).toDouble(),
+      brokeragePercent: (json['brokeragePercent'] as num?)?.toDouble() ?? 0,
       startDate: DateTime.parse(json['startDate'] as String),
       endDate: json['endDate'] != null
           ? DateTime.parse(json['endDate'] as String)
@@ -244,7 +276,13 @@ class Payment {
   final String id;
   final String memberId;
   final int monthNumber;
-  final double amount;
+  final double amount; // base monthly contribution
+  final double? auctionDiscount; // total auction discount for this month
+  final int? totalMembers; // members count to calculate per-member dividend
+  final double? auctionValue; // winning bid amount
+  final String? auctionWinner; // name of person who won auction
+  final bool isWonByMe;
+  final double brokeragePerMember; // brokerage deducted per member per month
   final DateTime dueDate;
   final DateTime? paidDate;
   final bool isPaid;
@@ -255,11 +293,63 @@ class Payment {
     required this.memberId,
     required this.monthNumber,
     required this.amount,
+    this.auctionDiscount,
+    this.totalMembers,
+    this.auctionValue,
+    this.auctionWinner,
+    this.isWonByMe = false,
+    this.brokeragePerMember = 0,
     required this.dueDate,
     this.paidDate,
     this.isPaid = false,
     this.notes,
   });
+
+  /// Per-member dividend = auctionDiscount / totalMembers
+  double get dividend {
+    if (auctionDiscount == null || auctionDiscount == 0) return 0;
+    final members = totalMembers ?? 1;
+    return members > 0 ? auctionDiscount! / members : 0;
+  }
+
+  /// Actual amount to pay = base amount - dividend + brokerage
+  double get actualAmount => amount - dividend + brokeragePerMember;
+
+  Payment copyWith({
+    String? id,
+    String? memberId,
+    int? monthNumber,
+    double? amount,
+    double? auctionDiscount,
+    int? totalMembers,
+    double? auctionValue,
+    String? auctionWinner,
+    bool? isWonByMe,
+    double? brokeragePerMember,
+    DateTime? dueDate,
+    DateTime? paidDate,
+    bool? isPaid,
+    String? notes,
+    bool clearAuctionDiscount = false,
+    bool clearAuctionWinner = false,
+  }) {
+    return Payment(
+      id: id ?? this.id,
+      memberId: memberId ?? this.memberId,
+      monthNumber: monthNumber ?? this.monthNumber,
+      amount: amount ?? this.amount,
+      auctionDiscount: clearAuctionDiscount ? null : (auctionDiscount ?? this.auctionDiscount),
+      totalMembers: totalMembers ?? this.totalMembers,
+      auctionValue: auctionValue ?? this.auctionValue,
+      auctionWinner: clearAuctionWinner ? null : (auctionWinner ?? this.auctionWinner),
+      isWonByMe: isWonByMe ?? this.isWonByMe,
+      brokeragePerMember: brokeragePerMember ?? this.brokeragePerMember,
+      dueDate: dueDate ?? this.dueDate,
+      paidDate: paidDate ?? this.paidDate,
+      isPaid: isPaid ?? this.isPaid,
+      notes: notes ?? this.notes,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -267,6 +357,12 @@ class Payment {
       'memberId': memberId,
       'monthNumber': monthNumber,
       'amount': amount,
+      'auctionDiscount': auctionDiscount,
+      'totalMembers': totalMembers,
+      'auctionValue': auctionValue,
+      'auctionWinner': auctionWinner,
+      'isWonByMe': isWonByMe,
+      'brokeragePerMember': brokeragePerMember,
       'dueDate': dueDate.toIso8601String(),
       'paidDate': paidDate?.toIso8601String(),
       'isPaid': isPaid,
@@ -280,6 +376,12 @@ class Payment {
       memberId: json['memberId'] as String,
       monthNumber: json['monthNumber'] as int,
       amount: (json['amount'] as num).toDouble(),
+      auctionDiscount: (json['auctionDiscount'] as num?)?.toDouble(),
+      totalMembers: json['totalMembers'] as int?,
+      auctionValue: (json['auctionValue'] as num?)?.toDouble(),
+      auctionWinner: json['auctionWinner'] as String?,
+      isWonByMe: json['isWonByMe'] == true,
+      brokeragePerMember: (json['brokeragePerMember'] as num?)?.toDouble() ?? 0,
       dueDate: DateTime.parse(json['dueDate'] as String),
       paidDate: json['paidDate'] != null
           ? DateTime.parse(json['paidDate'] as String)

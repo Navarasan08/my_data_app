@@ -94,6 +94,20 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return map;
   }
 
+  /// Quantity totals per category, grouped by unit for the current view.
+  /// Returns { category: { unit: totalQty } }
+  Map<HomeCategory, Map<MeasureUnit, double>> get categoryQuantities {
+    final map = <HomeCategory, Map<MeasureUnit, double>>{};
+    for (final r in _baseRecords) {
+      if (r.quantity != null && r.unit != null) {
+        map.putIfAbsent(r.category, () => {});
+        map[r.category]![r.unit!] =
+            (map[r.category]![r.unit!] ?? 0) + r.quantity!;
+      }
+    }
+    return map;
+  }
+
   Map<DateTime, double> monthlyTotals({int months = 12}) {
     final now = DateTime.now();
     final result = <DateTime, double>{};

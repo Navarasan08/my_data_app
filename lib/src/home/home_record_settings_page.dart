@@ -37,32 +37,43 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  ...HomeCurrency.all.map((c) {
-                    final isSelected = state.currency == c;
-                    return ListTile(
-                      dense: true,
-                      leading: Text(c.symbol,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isSelected
-                                ? Colors.green[700]
-                                : Colors.grey[600],
-                          )),
-                      title: Text(c.name),
-                      subtitle: Text(c.code,
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey[500])),
-                      trailing: isSelected
-                          ? Icon(Icons.check_circle_rounded,
-                              color: Colors.green[600], size: 20)
-                          : null,
-                      selected: isSelected,
-                      selectedTileColor:
-                          Colors.green.withValues(alpha: 0.05),
-                      onTap: () => cubit.setCurrency(c),
-                    );
-                  }),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DropdownButtonFormField<HomeCurrency>(
+                      initialValue: state.currency,
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.only(left: 12, right: 4),
+                          child: Text(
+                            state.currency.symbol,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[700],
+                            ),
+                          ),
+                        ),
+                        prefixIconConstraints:
+                            const BoxConstraints(minWidth: 0, minHeight: 0),
+                      ),
+                      items: HomeCurrency.all.map((c) {
+                        return DropdownMenuItem<HomeCurrency>(
+                          value: c,
+                          child: Text(
+                            '${c.symbol}  ${c.name} (${c.code})',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (c) {
+                        if (c != null) cubit.setCurrency(c);
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   const Divider(),
 
                   // Default categories section

@@ -107,7 +107,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                     const SizedBox(height: 12),
                                     _buildPieChart(categoryTotals, filteredTotal),
                                     const SizedBox(height: 8),
-                                    _buildPieLegend(categoryTotals, filteredTotal, sym),
+                                    _buildPieLegend(categoryTotals, filteredTotal, sym, cubit.categoryQuantities),
                                   ],
                                 ),
                               ),
@@ -134,7 +134,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           const SizedBox(height: 12),
                           _buildPieChart(categoryTotals, filteredTotal),
                           const SizedBox(height: 8),
-                          _buildPieLegend(categoryTotals, filteredTotal, sym),
+                          _buildPieLegend(categoryTotals, filteredTotal, sym, cubit.categoryQuantities),
                           const SizedBox(height: 24),
 
                           _buildSectionTitle('Monthly Trend'),
@@ -361,35 +361,69 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildPieLegend(
-      Map<HomeCategory, double> totals, double grandTotal, String sym) {
+      Map<HomeCategory, double> totals,
+      double grandTotal,
+      String sym,
+      Map<HomeCategory, Map<MeasureUnit, double>> categoryQuantities) {
     if (totals.isEmpty) return const SizedBox();
 
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Wrap(
-      spacing: 12,
-      runSpacing: 8,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: sorted.map((e) {
         final pct =
             grandTotal > 0 ? (e.value / grandTotal * 100) : 0.0;
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: e.key.color,
-                borderRadius: BorderRadius.circular(3),
+        final quantities = categoryQuantities[e.key];
+        final qtyParts = <String>[];
+        if (quantities != null) {
+          for (final entry in quantities.entries) {
+            final qStr = entry.value % 1 == 0
+                ? entry.value.toInt().toString()
+                : entry.value.toStringAsFixed(1);
+            qtyParts.add('$qStr ${entry.key.label}');
+          }
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: Row(
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: e.key.color,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '${e.key.displayName} $sym${e.value.toStringAsFixed(0)} (${pct.toStringAsFixed(1)}%)',
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '${e.key.displayName}  ',
+                        style: const TextStyle(
+                            fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                      TextSpan(
+                        text: '$sym${e.value.toStringAsFixed(0)} (${pct.toStringAsFixed(1)}%)',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      if (qtyParts.isNotEmpty)
+                        TextSpan(
+                          text: '  ·  ${qtyParts.join(', ')}',
+                          style: TextStyle(
+                              fontSize: 11, color: Colors.grey[600]),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         );
       }).toList(),
     );

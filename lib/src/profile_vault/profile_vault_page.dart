@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:my_data_app/src/profile_vault/model/profile_vault_model.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_state.dart';
@@ -221,12 +222,11 @@ class SectionDetailPage extends StatelessWidget {
             actions: [
               if (entries.isNotEmpty)
                 IconButton(
-                  icon: const Icon(Icons.copy_rounded, size: 20),
-                  tooltip: 'Copy all to clipboard',
+                  icon: const Icon(Icons.share_rounded, size: 20),
+                  tooltip: 'Share all',
                   onPressed: () {
                     final text = cubit.shareableTextForSection(section);
-                    Clipboard.setData(ClipboardData(text: text));
-                    _showCopiedSnack(context);
+                    SharePlus.instance.share(ShareParams(text: text));
                   },
                 ),
               IconButton(
@@ -375,16 +375,14 @@ class _EntryCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       itemBuilder: (_) => const [
-        PopupMenuItem(value: 'share', child: Text('Copy to clipboard')),
+        PopupMenuItem(value: 'share', child: Text('Share')),
         PopupMenuItem(value: 'edit', child: Text('Edit')),
         PopupMenuItem(value: 'delete', child: Text('Delete')),
       ],
       onSelected: (val) {
         switch (val) {
           case 'share':
-            Clipboard.setData(
-                ClipboardData(text: entry.toShareableText()));
-            _showCopiedSnack(context);
+            SharePlus.instance.share(ShareParams(text: entry.toShareableText()));
           case 'edit':
             Navigator.push(
               context,
@@ -461,12 +459,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             title: Text(entry.title),
             actions: [
               IconButton(
-                icon: const Icon(Icons.copy_rounded, size: 20),
-                tooltip: 'Copy all to clipboard',
+                icon: const Icon(Icons.share_rounded, size: 20),
+                tooltip: 'Share',
                 onPressed: () {
-                  Clipboard.setData(
-                      ClipboardData(text: entry.toShareableText()));
-                  _showCopiedSnack(context);
+                  SharePlus.instance.share(ShareParams(text: entry.toShareableText()));
                 },
               ),
               IconButton(
@@ -624,18 +620,18 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                       },
                     )),
                 const SizedBox(height: 12),
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: selected.isEmpty
                       ? null
                       : () {
                           final text = entry.toShareableText(
                             selectedKeys: selected.toList(),
                           );
-                          Clipboard.setData(ClipboardData(text: text));
                           Navigator.pop(ctx);
-                          _showCopiedSnack(context);
+                          SharePlus.instance.share(ShareParams(text: text));
                         },
-                  child: const Text('Copy Selected'),
+                  icon: const Icon(Icons.share_rounded, size: 18),
+                  label: const Text('Share Selected'),
                 ),
               ],
             ),
@@ -672,14 +668,7 @@ class _FieldTile extends StatelessWidget {
     return InkWell(
       onTap: () => _copyValue(context),
       onLongPress: () {
-        Clipboard.setData(ClipboardData(text: '$label: $value'));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content:
-                Text('Copied "$label: $value" \u2014 paste anywhere to share'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        SharePlus.instance.share(ShareParams(text: '$label: $value'));
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
@@ -1054,12 +1043,3 @@ class _SearchPageState extends State<_SearchPage> {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-void _showCopiedSnack(BuildContext context) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Copied to clipboard \u2014 paste anywhere to share'),
-      duration: Duration(seconds: 2),
-    ),
-  );
-}

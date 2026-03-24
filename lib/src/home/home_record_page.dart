@@ -186,7 +186,7 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Records List / Grid
+                  // Records List / Grid with week headers
                   Expanded(
                     child: filteredRecords.isEmpty
                         ? Center(
@@ -236,19 +236,8 @@ class HomeRecordPage extends StatelessWidget {
                                             filteredRecords[index]);
                                       },
                                     )
-                                  : ListView.builder(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(
-                                              12, 4, 12, 12),
-                                      itemCount:
-                                          filteredRecords.length,
-                                      itemBuilder: (context, index) {
-                                        return _buildRecordItem(
-                                            context,
-                                            cubit,
-                                            filteredRecords[index]);
-                                      },
-                                    ),
+                                  : _buildWeekGroupedList(
+                                      context, cubit, filteredRecords),
                             ),
                           ),
                   ),
@@ -271,6 +260,108 @@ class HomeRecordPage extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Add Record'),
           ),
+        );
+      },
+    );
+  }
+
+  /// Returns the Monday of the week containing [date].
+  DateTime _weekStart(DateTime date) {
+    final diff = date.weekday - DateTime.monday;
+    return DateTime(date.year, date.month, date.day - diff);
+  }
+
+  String _weekLabel(DateTime weekStart, DateTime now) {
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    final todayWeek = _weekStart(now);
+    if (weekStart == todayWeek) return 'This Week';
+    if (weekStart == todayWeek.subtract(const Duration(days: 7))) {
+      return 'Last Week';
+    }
+    return '${DateFormat('d MMM').format(weekStart)} – ${DateFormat('d MMM').format(weekEnd)}';
+  }
+
+  Widget _buildWeekGroupedList(
+      BuildContext context, HomeRecordCubit cubit, List<HomeRecord> records) {
+    final now = DateTime.now();
+    // Group records by week (Monday start)
+    final grouped = <DateTime, List<HomeRecord>>{};
+    for (final r in records) {
+      final ws = _weekStart(r.date);
+      grouped.putIfAbsent(ws, () => []).add(r);
+    }
+    // Sort week keys descending (most recent first)
+    final sortedWeeks = grouped.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      itemCount: sortedWeeks.length,
+      itemBuilder: (context, weekIndex) {
+        final ws = sortedWeeks[weekIndex];
+        final weekRecords = grouped[ws]!;
+        final weekTotal =
+            weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Week header
+            Container(
+              margin: EdgeInsets.only(
+                  top: weekIndex == 0 ? 4 : 14, bottom: 8),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 12, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.date_range_rounded,
+                      size: 16, color: Colors.grey[700]),
+                  const SizedBox(width: 8),
+                  Text(
+                    _weekLabel(ws, now),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[400],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${weekRecords.length}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${cubit.currencySymbol}${weekTotal.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Week records
+            ...weekRecords
+                .map((r) => _buildRecordItem(context, cubit, r)),
+          ],
         );
       },
     );
@@ -372,7 +463,12 @@ class _RecordCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${record.category.displayName}  ·  ${DateFormat('d MMM').format(record.date)}',
+                      [
+                        record.category.displayName,
+                        if (record.quantityLabel.isNotEmpty)
+                          record.quantityLabel,
+                        DateFormat('d MMM').format(record.date),
+                      ].join('  ·  '),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[500],
@@ -431,9 +527,11 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
+  final _quantityController = TextEditingController();
 
   HomeCategory _selectedCategory = HomeCategory.groceries;
   DateTime _selectedDate = DateTime.now();
+  MeasureUnit? _selectedUnit;
 
   bool get _isEditing => widget.record != null;
 
@@ -447,6 +545,10 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       _notesController.text = widget.record!.notes ?? '';
       _selectedCategory = widget.record!.category;
       _selectedDate = widget.record!.date;
+      if (widget.record!.quantity != null) {
+        _quantityController.text = widget.record!.quantity.toString();
+      }
+      _selectedUnit = widget.record!.unit;
     }
   }
 
@@ -456,11 +558,15 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
     _amountController.dispose();
     _descriptionController.dispose();
     _notesController.dispose();
+    _quantityController.dispose();
     super.dispose();
   }
 
   void _saveRecord() {
     if (_formKey.currentState!.validate()) {
+      final qty = _quantityController.text.isNotEmpty
+          ? double.tryParse(_quantityController.text)
+          : null;
       final record = HomeRecord(
         id: widget.record?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
@@ -473,6 +579,8 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
             : _descriptionController.text,
         notes:
             _notesController.text.isEmpty ? null : _notesController.text,
+        quantity: qty,
+        unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
       );
       Navigator.pop(context, record);
     }
@@ -554,6 +662,47 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                     }
                     return null;
                   },
+                ),
+                const SizedBox(height: 16),
+
+                // Quantity & Unit row
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: TextFormField(
+                        controller: _quantityController,
+                        decoration: const InputDecoration(
+                          labelText: 'Quantity',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.numbers_rounded),
+                          hintText: 'e.g. 2',
+                        ),
+                        keyboardType: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      flex: 3,
+                      child: DropdownButtonFormField<MeasureUnit>(
+                        initialValue: _selectedUnit,
+                        decoration: const InputDecoration(
+                          labelText: 'Unit',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.straighten_rounded),
+                        ),
+                        items: MeasureUnit.values.map((u) {
+                          return DropdownMenuItem(
+                            value: u,
+                            child: Text('${u.label} (${u.name})'),
+                          );
+                        }).toList(),
+                        onChanged: (val) {
+                          setState(() => _selectedUnit = val);
+                        },
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
 

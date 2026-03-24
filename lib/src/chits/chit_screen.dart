@@ -108,6 +108,17 @@ class ChitFundListPage extends StatelessWidget {
                         ),
                       );
                     },
+                    onEdit: () async {
+                      final edited = await Navigator.push<ChitFund>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddChitFundPage(chitFund: chitFund, initialRole: ChitRole.participant),
+                        ),
+                      );
+                      if (edited != null) {
+                        cubit.updateChitFund(edited);
+                      }
+                    },
                     onDelete: () async {
                       final confirmed = await showDialog<bool>(
                         context: context,
@@ -278,11 +289,13 @@ class _ChitListView extends StatelessWidget {
 class _ParticipantChitCard extends StatelessWidget {
   final ChitFund chitFund;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _ParticipantChitCard({
     required this.chitFund,
     required this.onTap,
+    required this.onEdit,
     required this.onDelete,
   });
 
@@ -375,17 +388,35 @@ class _ParticipantChitCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  InkWell(
-                    onTap: onDelete,
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: onEdit,
                         borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(Icons.edit_outlined, size: 16, color: Colors.blue[300]),
+                        ),
                       ),
-                      child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
-                    ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: onDelete,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   if (nextPayment != null) ...[
@@ -621,59 +652,146 @@ class ParticipantChitDetailPage extends StatelessWidget {
           appBar: AppBar(
             title: Text(chitFund.name),
             elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit',
+                onPressed: () async {
+                  final edited = await Navigator.push<ChitFund>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddChitFundPage(chitFund: chitFund, initialRole: ChitRole.participant),
+                    ),
+                  );
+                  if (edited != null) {
+                    cubit.updateChitFund(edited);
+                  }
+                },
+              ),
+            ],
           ),
           body: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               // Summary card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Chit Details',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Chit Details',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    _DetailRow(
+                      label: 'Total Chit Value',
+                      value: '₹${_formatMoney(chitFund.totalAmount)}',
+                      icon: Icons.currency_rupee,
+                    ),
+                    _DetailRow(
+                      label: 'Base Monthly',
+                      value: '₹${_formatMoney(chitFund.monthlyContribution)}',
+                      icon: Icons.payment,
+                    ),
+                    _DetailRow(
+                      label: 'Members',
+                      value: '${chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths}',
+                      icon: Icons.people,
+                    ),
+                    _DetailRow(
+                      label: 'Duration',
+                      value: '${chitFund.durationMonths} Months',
+                      icon: Icons.calendar_month,
+                    ),
+                    if (chitFund.brokeragePercent > 0)
                       _DetailRow(
-                        label: 'Total Amount',
-                        value: '₹${chitFund.totalAmount.toStringAsFixed(0)}',
-                        icon: Icons.currency_rupee,
+                        label: 'Brokerage',
+                        value: '${chitFund.brokeragePercent}%',
+                        icon: Icons.percent,
                       ),
+                    _DetailRow(
+                      label: 'Status',
+                      value: _getStatusText(chitFund.status),
+                      icon: Icons.info_outline,
+                    ),
+                    if (chitFund.organizerName != null)
                       _DetailRow(
-                        label: 'Monthly Contribution',
-                        value: '₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
-                        icon: Icons.payment,
+                        label: 'Organizer',
+                        value: chitFund.organizerName!,
+                        icon: Icons.person,
                       ),
+                    if (chitFund.organizerPhone != null)
                       _DetailRow(
-                        label: 'Duration',
-                        value: '${chitFund.durationMonths} Months',
-                        icon: Icons.calendar_month,
+                        label: 'Phone',
+                        value: chitFund.organizerPhone!,
+                        icon: Icons.phone,
                       ),
-                      _DetailRow(
-                        label: 'Status',
-                        value: _getStatusText(chitFund.status),
-                        icon: Icons.info_outline,
-                      ),
-                      if (chitFund.organizerName != null)
-                        _DetailRow(
-                          label: 'Organizer',
-                          value: chitFund.organizerName!,
-                          icon: Icons.person,
-                        ),
-                      if (chitFund.organizerPhone != null)
-                        _DetailRow(
-                          label: 'Organizer Phone',
-                          value: chitFund.organizerPhone!,
-                          icon: Icons.phone,
-                        ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
+
+              // Formula explanation
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue[50],
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.blue[200]!),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.calculate_rounded, size: 18, color: Colors.blue[700]),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Payment Formula',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue[900]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      chitFund.brokeragePercent > 0
+                          ? 'You pay = ₹${_formatMoney(chitFund.monthlyContribution)} − ((Discount ÷ ${chitFund.totalMembers}) − Brokerage)'
+                          : 'You pay = ₹${_formatMoney(chitFund.monthlyContribution)} − (Discount ÷ ${chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths})',
+                      style: TextStyle(fontSize: 12, color: Colors.blue[800]),
+                    ),
+                    if (chitFund.brokeragePercent > 0) ...[
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Brokerage: ${chitFund.brokeragePercent}%',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.orange[900]),
+                            ),
+                            Text(
+                              'Total: ₹${_formatMoney(chitFund.totalBrokeragePerMonth)}/mo  →  Per member: ₹${_formatMoney(chitFund.brokeragePerMember)}/mo',
+                              style: TextStyle(fontSize: 11, color: Colors.orange[800]),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
 
               // Stats row
               Row(
@@ -681,56 +799,56 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   Expanded(
                     child: _StatCard(
                       title: 'Paid',
-                      value: paidCount.toString(),
+                      value: '$paidCount',
                       color: Colors.green,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _StatCard(
                       title: 'Pending',
-                      value: pendingCount.toString(),
+                      value: '$pendingCount',
                       color: Colors.orange,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _StatCard(
-                      title: 'Paid ₹',
+                      title: 'Actual Paid',
                       value: _formatCompact(chitFund.myTotalPaid),
                       color: Colors.blue,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   Expanded(
                     child: _StatCard(
-                      title: 'Pending ₹',
-                      value: _formatCompact(chitFund.myTotalPending),
-                      color: Colors.red,
+                      title: 'Savings',
+                      value: _formatCompact(chitFund.myTotalSavings),
+                      color: Colors.teal,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
 
               // Auction win info
               if (chitFund.myMonthNumber != null) ...[
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.amber[300]!),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.emoji_events_rounded, color: Colors.amber[800], size: 28),
-                      const SizedBox(width: 12),
+                      Icon(Icons.emoji_events_rounded, color: Colors.amber[800], size: 24),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Won auction in month ${chitFund.myMonthNumber} — received ₹${chitFund.myAuctionAmount?.toStringAsFixed(0) ?? '0'}',
+                          'Won auction in month ${chitFund.myMonthNumber} — received ₹${_formatMoney(chitFund.myAuctionAmount ?? 0)}',
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: Colors.amber[900],
                           ),
@@ -739,15 +857,24 @@ class ParticipantChitDetailPage extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
               ],
 
               // Payment timeline
-              const Text(
-                'Payment Timeline',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Payment Timeline',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Tap amount to set discount',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               if (payments.isEmpty)
                 Center(
                   child: Padding(
@@ -760,9 +887,12 @@ class ParticipantChitDetailPage extends StatelessWidget {
                 )
               else
                 ...payments.map((payment) {
-                  return _PaymentTimelineItem(
+                  return _ParticipantPaymentItem(
                     payment: payment,
-                    onToggle: () => cubit.togglePayment(chitFundId, payment.id),
+                    chitFundId: chitFundId,
+                    totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
+                    baseAmount: chitFund.monthlyContribution,
+                    totalChitAmount: chitFund.totalAmount,
                   );
                 }),
             ],
@@ -785,11 +915,451 @@ class ParticipantChitDetailPage extends StatelessWidget {
 
   String _formatCompact(double amount) {
     if (amount >= 100000) {
-      return '${(amount / 100000).toStringAsFixed(1)}L';
+      return '₹${(amount / 100000).toStringAsFixed(1)}L';
     } else if (amount >= 1000) {
-      return '${(amount / 1000).toStringAsFixed(1)}K';
+      return '₹${(amount / 1000).toStringAsFixed(1)}K';
     }
-    return amount.toStringAsFixed(0);
+    return '₹${amount.toStringAsFixed(0)}';
+  }
+
+  String _formatMoney(double amount) {
+    if (amount == amount.roundToDouble()) {
+      final str = amount.toInt().toString();
+      return _addCommas(str);
+    }
+    final parts = amount.toStringAsFixed(2).split('.');
+    return '${_addCommas(parts[0])}.${parts[1]}';
+  }
+
+  String _addCommas(String number) {
+    if (number.length <= 3) return number;
+    // Indian format: last 3 digits, then groups of 2
+    final last3 = number.substring(number.length - 3);
+    String remaining = number.substring(0, number.length - 3);
+    final parts = <String>[];
+    while (remaining.length > 2) {
+      parts.insert(0, remaining.substring(remaining.length - 2));
+      remaining = remaining.substring(0, remaining.length - 2);
+    }
+    if (remaining.isNotEmpty) {
+      parts.insert(0, remaining);
+    }
+    return '${parts.join(',')},$last3';
+  }
+}
+
+/// Payment item for participant view — shows base, discount, actual amount
+class _ParticipantPaymentItem extends StatelessWidget {
+  final Payment payment;
+  final String chitFundId;
+  final int totalMembers;
+  final double baseAmount;
+  final double totalChitAmount;
+
+  const _ParticipantPaymentItem({
+    required this.payment,
+    required this.chitFundId,
+    required this.totalMembers,
+    required this.baseAmount,
+    required this.totalChitAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cubit = context.read<ChitCubit>();
+    final isPaid = payment.isPaid;
+    final hasDiscount = payment.auctionDiscount != null && payment.auctionDiscount! > 0;
+    final dividend = payment.dividend;
+    final actualAmount = payment.actualAmount;
+    final color = isPaid ? Colors.green : Colors.orange;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey[200]!),
+        color: Colors.white,
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Row(
+        children: [
+          Container(width: 3, color: color),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top row: month circle, details, amount, toggle
+                  Row(
+                    children: [
+                      // Month circle
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${payment.monthNumber}',
+                            style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      // Details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Month ${payment.monthNumber}',
+                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                            ),
+                            Text(
+                              'Due ${DateFormat('MMM dd, yy').format(payment.dueDate)}',
+                              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Actual amount
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: hasDiscount ? Colors.teal[50] : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (hasDiscount) ...[
+                              Text(
+                                '₹${baseAmount.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[400],
+                                  decoration: TextDecoration.lineThrough,
+                                ),
+                              ),
+                            ],
+                            Text(
+                              '₹${actualAmount.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: hasDiscount ? Colors.teal[800] : Colors.grey[800],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      // Toggle — shows dialog when marking paid
+                      InkWell(
+                        onTap: () {
+                          if (isPaid) {
+                            // Undo — mark as unpaid
+                            cubit.markPaymentUnpaid(chitFundId, payment.id);
+                          } else {
+                            // Show auction details dialog
+                            _showPaymentDialog(context, cubit);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Icon(
+                          isPaid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                          size: 22,
+                          color: isPaid ? Colors.green : Colors.grey[400],
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Auction details row (if paid with auction info)
+                  if (isPaid && hasDiscount) ...[
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: payment.isWonByMe ? Colors.amber[50] : Colors.grey[50],
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            payment.isWonByMe ? Icons.emoji_events_rounded : Icons.gavel_rounded,
+                            size: 14,
+                            color: payment.isWonByMe ? Colors.amber[700] : Colors.grey[600],
+                          ),
+                          const SizedBox(width: 6),
+                          if (payment.isWonByMe)
+                            Text(
+                              'I won this auction',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber[800]),
+                            )
+                          else if (payment.auctionWinner != null && payment.auctionWinner!.isNotEmpty)
+                            Text(
+                              'Won by ${payment.auctionWinner}',
+                              style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                            )
+                          else
+                            Text(
+                              'Someone else won',
+                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            ),
+                          const Spacer(),
+                          Text(
+                            'Bid: ₹${payment.auctionValue?.toStringAsFixed(0) ?? '0'}',
+                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                          ),
+                          if (payment.brokeragePerMember > 0) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '+₹${payment.brokeragePerMember.toStringAsFixed(0)}',
+                              style: TextStyle(fontSize: 10, color: Colors.orange[700]),
+                            ),
+                          ],
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.teal[50],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '−₹${dividend.toStringAsFixed(0)}',
+                              style: TextStyle(fontSize: 10, color: Colors.teal[700], fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  // Edit button for paid items
+                  if (isPaid) ...[
+                    const SizedBox(height: 4),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: InkWell(
+                        onTap: () => _showPaymentDialog(context, cubit, isEdit: true),
+                        child: Text(
+                          'Edit auction details',
+                          style: TextStyle(fontSize: 10, color: Colors.blue[400]),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDialog(BuildContext context, ChitCubit cubit, {bool isEdit = false}) {
+    final auctionValueController = TextEditingController(
+      text: payment.auctionDiscount?.toStringAsFixed(0) ?? '',
+    );
+    final winnerNameController = TextEditingController(
+      text: payment.auctionWinner ?? '',
+    );
+    bool wonByMe = payment.isWonByMe;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final discountAmount = double.tryParse(auctionValueController.text) ?? 0;
+            final myDividend = totalMembers > 0 && discountAmount > 0 ? discountAmount / totalMembers : 0.0;
+            final brokerage = payment.brokeragePerMember;
+            final actualPay = baseAmount - myDividend + brokerage;
+
+            return AlertDialog(
+              title: Text(isEdit
+                  ? 'Edit Month ${payment.monthNumber}'
+                  : 'Month ${payment.monthNumber} — Mark Paid'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Who won?
+                    const Text('Who won the auction?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => wonByMe = true),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: wonByMe ? Colors.amber[50] : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: wonByMe ? Colors.amber[400]! : Colors.grey[300]!,
+                                  width: wonByMe ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.emoji_events_rounded, color: wonByMe ? Colors.amber[700] : Colors.grey[400], size: 24),
+                                  const SizedBox(height: 4),
+                                  Text('Me', style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: wonByMe ? FontWeight.bold : FontWeight.normal,
+                                    color: wonByMe ? Colors.amber[900] : Colors.grey[600],
+                                  )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => wonByMe = false),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                color: !wonByMe ? Colors.blue[50] : Colors.grey[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: !wonByMe ? Colors.blue[400]! : Colors.grey[300]!,
+                                  width: !wonByMe ? 2 : 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(Icons.person_rounded, color: !wonByMe ? Colors.blue[700] : Colors.grey[400], size: 24),
+                                  const SizedBox(height: 4),
+                                  Text('Someone else', style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: !wonByMe ? FontWeight.bold : FontWeight.normal,
+                                    color: !wonByMe ? Colors.blue[900] : Colors.grey[600],
+                                  )),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Winner name (optional, shown if someone else won)
+                    if (!wonByMe) ...[
+                      TextField(
+                        controller: winnerNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Winner Name (optional)',
+                          hintText: 'e.g., Ramesh',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Auction discount amount
+                    TextField(
+                      controller: auctionValueController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Auction Discount Amount *',
+                        hintText: 'e.g., 80000',
+                        border: const OutlineInputBorder(),
+                        prefixText: '₹ ',
+                        helperText: 'Total chit: ₹${totalChitAmount.toStringAsFixed(0)}',
+                      ),
+                      onChanged: (_) => setDialogState(() {}),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Live calculation preview
+                    if (discountAmount > 0)
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            _calcRow('Auction Discount', '₹${discountAmount.toStringAsFixed(0)}'),
+                            _calcRow('Your Dividend (÷$totalMembers)', '−₹${myDividend.toStringAsFixed(0)}'),
+                            if (brokerage > 0)
+                              _calcRow('Brokerage', '+₹${brokerage.toStringAsFixed(0)}'),
+                            const Divider(height: 12),
+                            _calcRow('Base Amount', '₹${baseAmount.toStringAsFixed(0)}'),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('You Pay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                Text(
+                                  '₹${actualPay.toStringAsFixed(0)}',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final discount = double.tryParse(auctionValueController.text);
+                    if (discount == null || discount <= 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a valid auction discount amount')),
+                      );
+                      return;
+                    }
+                    cubit.markPaymentWithAuction(
+                      chitFundId: chitFundId,
+                      paymentId: payment.id,
+                      auctionDiscount: discount,
+                      isWonByMe: wonByMe,
+                      auctionWinner: !wonByMe ? winnerNameController.text : null,
+                    );
+                    Navigator.pop(ctx);
+                  },
+                  child: Text(isEdit ? 'Update' : 'Mark Paid'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _calcRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
   }
 }
 
@@ -835,99 +1405,6 @@ class _StatCard extends StatelessWidget {
   }
 }
 
-class _PaymentTimelineItem extends StatelessWidget {
-  final Payment payment;
-  final VoidCallback onToggle;
-
-  const _PaymentTimelineItem({
-    required this.payment,
-    required this.onToggle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isPaid = payment.isPaid;
-    final color = isPaid ? Colors.green : Colors.orange;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${payment.monthNumber}',
-                style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 14),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Month ${payment.monthNumber}',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '₹${payment.amount.toStringAsFixed(0)} - Due ${DateFormat('MMM dd, yyyy').format(payment.dueDate)}',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isPaid ? Colors.green[50] : Colors.orange[50],
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              isPaid ? 'Paid' : 'Pending',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isPaid ? Colors.green[700] : Colors.orange[700],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          InkWell(
-            onTap: onToggle,
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: isPaid ? Colors.green.withValues(alpha: 0.1) : Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                isPaid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-                size: 22,
-                color: isPaid ? Colors.green : Colors.grey[400],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // Add Chit Fund Page
 class AddChitFundPage extends StatefulWidget {
   final ChitFund? chitFund;
@@ -946,6 +1423,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
   final _membersController = TextEditingController();
   final _durationController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _brokerageController = TextEditingController();
   final _organizerNameController = TextEditingController();
   final _organizerPhoneController = TextEditingController();
   final _auctionMonthController = TextEditingController();
@@ -967,6 +1445,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       _membersController.text = widget.chitFund!.totalMembers.toString();
       _durationController.text = widget.chitFund!.durationMonths.toString();
       _descriptionController.text = widget.chitFund!.description ?? '';
+      _brokerageController.text = widget.chitFund!.brokeragePercent > 0
+          ? widget.chitFund!.brokeragePercent.toString()
+          : '';
       _startDate = widget.chitFund!.startDate;
       _selectedStatus = widget.chitFund!.status;
       _organizerNameController.text = widget.chitFund!.organizerName ?? '';
@@ -987,6 +1468,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
     _membersController.dispose();
     _durationController.dispose();
     _descriptionController.dispose();
+    _brokerageController.dispose();
     _organizerNameController.dispose();
     _organizerPhoneController.dispose();
     _auctionMonthController.dispose();
@@ -994,23 +1476,32 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
     super.dispose();
   }
 
+  String? _getBrokerageHelper(double monthlyContribution) {
+    final brokerage = double.tryParse(_brokerageController.text) ?? 0;
+    if (brokerage <= 0 || monthlyContribution <= 0) return null;
+    final totalAmount = double.tryParse(_totalAmountController.text) ?? 0;
+    final members = int.tryParse(_membersController.text) ?? 1;
+    final perMember = members > 0 ? (totalAmount * brokerage / 100) / members : 0;
+    return 'Brokerage/member: ₹${perMember.toStringAsFixed(0)}/mo → You pay: ₹${(monthlyContribution + perMember).toStringAsFixed(0)}';
+  }
+
   double _calculateMonthlyContribution() {
     final totalAmount = double.tryParse(_totalAmountController.text) ?? 0;
-    final members = _role == ChitRole.participant
-        ? 1
-        : (int.tryParse(_membersController.text) ?? 1);
+    final members = int.tryParse(_membersController.text) ?? 1;
     return members > 0 ? totalAmount / members : 0;
   }
 
-  List<Payment> _generatePayments(int durationMonths, double monthlyAmount, DateTime startDate) {
+  List<Payment> _generatePayments(int durationMonths, double monthlyAmount, DateTime startDate, {int? totalMembers, double brokeragePerMember = 0}) {
     final payments = <Payment>[];
     for (int i = 1; i <= durationMonths; i++) {
-      final dueDate = DateTime(startDate.year, startDate.month + i, startDate.day);
+      final dueDate = DateTime(startDate.year, startDate.month + (i - 1), startDate.day);
       payments.add(Payment(
         id: '${DateTime.now().millisecondsSinceEpoch}_$i',
         memberId: 'self',
         monthNumber: i,
         amount: monthlyAmount,
+        totalMembers: totalMembers ?? durationMonths,
+        brokeragePerMember: brokeragePerMember,
         dueDate: dueDate,
       ));
     }
@@ -1020,23 +1511,61 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
   void _saveChitFund() {
     if (_formKey.currentState!.validate()) {
       final totalAmount = double.parse(_totalAmountController.text);
-      final totalMembers = _role == ChitRole.participant
-          ? 1
-          : int.parse(_membersController.text);
       final durationMonths = int.parse(_durationController.text);
+      final totalMembers = int.parse(_membersController.text);
       final monthlyContribution = totalAmount / (totalMembers > 0 ? totalMembers : 1);
+      final brokeragePercent = double.tryParse(_brokerageController.text) ?? 0;
+      final brokeragePerMember = totalMembers > 0 ? (totalAmount * brokeragePercent / 100) / totalMembers : 0.0;
 
       List<Member> members = widget.chitFund?.members ?? [];
-      if (_role == ChitRole.participant && members.isEmpty) {
-        final payments = _generatePayments(durationMonths, monthlyContribution, _startDate);
-        members = [
-          Member(
-            id: 'self',
-            name: 'Me',
-            joinedDate: DateTime.now(),
-            payments: payments,
-          ),
-        ];
+      if (_role == ChitRole.participant) {
+        if (members.isEmpty) {
+          // First time — generate fresh payments
+          final payments = _generatePayments(durationMonths, monthlyContribution, _startDate, totalMembers: totalMembers, brokeragePerMember: brokeragePerMember);
+          members = [
+            Member(
+              id: 'self',
+              name: 'Me',
+              joinedDate: DateTime.now(),
+              payments: payments,
+            ),
+          ];
+        } else {
+          // Editing — refresh payment dates, amount, brokerage while keeping paid/auction data
+          final existingPayments = members.first.payments;
+          final newPayments = <Payment>[];
+          for (int i = 1; i <= durationMonths; i++) {
+            final dueDate = DateTime(_startDate.year, _startDate.month + (i - 1), _startDate.day);
+            // Find existing payment for this month
+            final existing = existingPayments.where((p) => p.monthNumber == i).isNotEmpty
+                ? existingPayments.firstWhere((p) => p.monthNumber == i)
+                : null;
+            if (existing != null) {
+              // Preserve paid status, auction details — update date, amount, brokerage
+              newPayments.add(existing.copyWith(
+                amount: monthlyContribution,
+                dueDate: dueDate,
+                totalMembers: totalMembers,
+                brokeragePerMember: brokeragePerMember,
+              ));
+            } else {
+              // New month added (duration increased)
+              newPayments.add(Payment(
+                id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+                memberId: 'self',
+                monthNumber: i,
+                amount: monthlyContribution,
+                totalMembers: totalMembers,
+                brokeragePerMember: brokeragePerMember,
+                dueDate: dueDate,
+              ));
+            }
+          }
+          members = [
+            members.first.copyWith(payments: newPayments),
+            ...members.skip(1),
+          ];
+        }
       }
 
       final chitFund = ChitFund(
@@ -1047,6 +1576,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
         totalMembers: totalMembers,
         durationMonths: durationMonths,
         monthlyContribution: monthlyContribution,
+        brokeragePercent: brokeragePercent,
         startDate: _startDate,
         status: _selectedStatus,
         description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
@@ -1135,26 +1665,25 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
             const SizedBox(height: 16),
             Row(
               children: [
-                if (_role == ChitRole.owner)
-                  Expanded(
-                    child: TextFormField(
-                      controller: _membersController,
-                      decoration: const InputDecoration(
-                        labelText: 'Total Members *',
-                        hintText: '20',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.people),
-                      ),
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setState(() {}),
-                      validator: (value) {
-                        if (value?.isEmpty ?? true) return 'Required';
-                        if (int.tryParse(value!) == null) return 'Invalid';
-                        return null;
-                      },
+                Expanded(
+                  child: TextFormField(
+                    controller: _membersController,
+                    decoration: InputDecoration(
+                      labelText: _role == ChitRole.owner ? 'Total Members *' : 'Total Members *',
+                      hintText: '20',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.people),
                     ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
+                    validator: (value) {
+                      if (value?.isEmpty ?? true) return 'Required';
+                      if (int.tryParse(value!) == null) return 'Invalid';
+                      return null;
+                    },
                   ),
-                if (_role == ChitRole.owner) const SizedBox(width: 12),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     controller: _durationController,
@@ -1165,6 +1694,7 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                       prefixIcon: Icon(Icons.calendar_month),
                     ),
                     keyboardType: TextInputType.number,
+                    onChanged: (_) => setState(() {}),
                     validator: (value) {
                       if (value?.isEmpty ?? true) return 'Required';
                       if (int.tryParse(value!) == null) return 'Invalid';
@@ -1200,6 +1730,22 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                   ],
                 ),
               ),
+            const SizedBox(height: 16),
+
+            // Brokerage field (for both owner and participant)
+            TextFormField(
+              controller: _brokerageController,
+              decoration: InputDecoration(
+                labelText: 'Brokerage / Commission %',
+                hintText: 'e.g., 5',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.percent),
+                suffixText: '%',
+                helperText: _getBrokerageHelper(monthlyContribution),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (_) => setState(() {}),
+            ),
             const SizedBox(height: 16),
 
             // Participant-specific fields
