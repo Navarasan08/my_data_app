@@ -26,6 +26,8 @@ import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
 import 'package:my_data_app/src/medical/repository/medical_repository.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
 import 'package:my_data_app/src/profile_vault/repository/profile_vault_repository.dart';
+import 'package:my_data_app/src/land/cubit/land_cubit.dart';
+import 'package:my_data_app/src/land/repository/land_repository.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 
@@ -52,6 +54,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreMoneyOweRepository _moneyOweRepo;
   late final FirestoreMedicalRepository _medicalRepo;
   late final FirestoreProfileVaultRepository _vaultRepo;
+  late final FirestoreLandRepository _landRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -71,6 +74,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _moneyOweRepo = FirestoreMoneyOweRepository(uid: widget.uid);
     _medicalRepo = FirestoreMedicalRepository(uid: widget.uid);
     _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
+    _landRepo = FirestoreLandRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -93,6 +97,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _moneyOweRepo.init(),
         _medicalRepo.init(),
         _vaultRepo.init(),
+        _landRepo.init(),
         _dashboardSettingsCubit.load(),
       ]);
       if (mounted) setState(() => _initialized = true);
@@ -163,6 +168,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => MoneyOweCubit(_moneyOweRepo)),
         BlocProvider(create: (_) => MedicalCubit(_medicalRepo)),
         BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
+        BlocProvider(create: (_) => LandCubit(_landRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
       child: const DashboardPage(),
