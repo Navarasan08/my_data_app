@@ -75,28 +75,73 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _initRepos();
   }
 
+  String? _initError;
+
   Future<void> _initRepos() async {
-    await Future.wait([
-      _billRepo.init(),
-      _vehicleRepo.init(),
-      _chitRepo.init(),
-      _checklistRepo.init(),
-      _periodRepo.init(),
-      _homeRecordRepo.init(),
-      _scheduleRepo.init(),
-      _foodMenuRepo.init(),
-      _loanRepo.init(),
-      _goalRepo.init(),
-      _moneyOweRepo.init(),
-      _medicalRepo.init(),
-      _vaultRepo.init(),
-      _dashboardSettingsCubit.load(),
-    ]);
-    if (mounted) setState(() => _initialized = true);
+    try {
+      await Future.wait([
+        _billRepo.init(),
+        _vehicleRepo.init(),
+        _chitRepo.init(),
+        _checklistRepo.init(),
+        _periodRepo.init(),
+        _homeRecordRepo.init(),
+        _scheduleRepo.init(),
+        _foodMenuRepo.init(),
+        _loanRepo.init(),
+        _goalRepo.init(),
+        _moneyOweRepo.init(),
+        _medicalRepo.init(),
+        _vaultRepo.init(),
+        _dashboardSettingsCubit.load(),
+      ]);
+      if (mounted) setState(() => _initialized = true);
+    } catch (e) {
+      if (mounted) setState(() => _initError = e.toString());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_initError != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'Unable to connect',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Please check your internet connection and try again.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _initError = null;
+                      _initialized = false;
+                    });
+                    _initRepos();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     if (!_initialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),

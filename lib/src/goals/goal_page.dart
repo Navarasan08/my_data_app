@@ -598,54 +598,63 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
     for (int i = 0; i < startOffset; i++) {
       cells.add(const SizedBox());
     }
+    final now = DateTime.now();
     for (int day = 1; day <= daysInMonth; day++) {
       final date = DateTime(_viewMonth.year, _viewMonth.month, day);
       final isDue = goal.isDueForDate(date);
       final status = goal.statusForDate(date);
+      final isToday = date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
 
       Color? bg;
       Color? borderColor;
       if (!isDue) {
         bg = null;
-        borderColor = null;
+        borderColor = isToday ? Colors.blue[300] : null;
       } else if (status == GoalDayStatus.success) {
         bg = Colors.green[400];
-        borderColor = Colors.green[400];
+        borderColor = isToday ? Colors.blue[800] : Colors.green[400];
       } else if (status == GoalDayStatus.failure) {
         bg = Colors.red[400];
-        borderColor = Colors.red[400];
+        borderColor = isToday ? Colors.blue[800] : Colors.red[400];
       } else if (status == GoalDayStatus.skip) {
         bg = Colors.grey[400];
-        borderColor = Colors.grey[400];
+        borderColor = isToday ? Colors.blue[800] : Colors.grey[400];
       } else {
         // Due but not logged
-        bg = Colors.transparent;
-        borderColor = Colors.grey[500];
+        bg = isToday ? Colors.blue[50] : Colors.transparent;
+        borderColor = isToday ? Colors.blue : Colors.grey[500];
       }
 
       cells.add(
         GestureDetector(
-          onTap: isDue ? () => _showLogSheet(context, goal, date, cubit) : null,
+          onTap: isDue ? () => _cycleStatus(goal, date, status, cubit) : null,
           child: Container(
             margin: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(6),
-              border: borderColor != null
-                  ? Border.all(color: borderColor, width: 1.5)
-                  : null,
+              border: Border.all(
+                color: borderColor ?? Colors.transparent,
+                width: isToday ? 2.5 : 1.5,
+              ),
             ),
             alignment: Alignment.center,
             child: Text(
               '$day',
               style: TextStyle(
                 fontSize: 12,
-                fontWeight: isDue ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isDue || isToday
+                    ? FontWeight.w700
+                    : FontWeight.normal,
                 color: (status != null && isDue)
                     ? Colors.white
-                    : isDue
-                        ? Colors.grey[800]
-                        : Colors.grey[400],
+                    : isToday
+                        ? Colors.blue[800]
+                        : isDue
+                            ? Colors.grey[800]
+                            : Colors.grey[400],
               ),
             ),
           ),
@@ -662,74 +671,19 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
     );
   }
 
-  void _showLogSheet(
-      BuildContext context, Goal goal, DateTime date, GoalCubit cubit) {
-    final existing = goal.statusForDate(date);
-    showModalBottomSheet(
-      context: context,
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  DateFormat('EEE, d MMM yyyy').format(date),
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _logOption(ctx, '\u2705', 'Success', () {
-                      cubit.logDay(goal.id, date, GoalDayStatus.success);
-                      Navigator.pop(ctx);
-                    }),
-                    _logOption(ctx, '\u274C', 'Failure', () {
-                      cubit.logDay(goal.id, date, GoalDayStatus.failure);
-                      Navigator.pop(ctx);
-                    }),
-                    _logOption(ctx, '\u23ED\uFE0F', 'Skip', () {
-                      cubit.logDay(goal.id, date, GoalDayStatus.skip);
-                      Navigator.pop(ctx);
-                    }),
-                  ],
-                ),
-                if (existing != null) ...[
-                  const SizedBox(height: 12),
-                  TextButton.icon(
-                    onPressed: () {
-                      cubit.removeLog(goal.id, date);
-                      Navigator.pop(ctx);
-                    },
-                    icon: const Icon(Icons.remove_circle_outline, size: 18),
-                    label: const Text('Remove log'),
-                    style:
-                        TextButton.styleFrom(foregroundColor: Colors.red[400]),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _logOption(
-      BuildContext context, String emoji, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 13)),
-        ],
-      ),
-    );
+  /// Cycle: unlogged → success → failure → skip → unlogged
+  void _cycleStatus(
+      Goal goal, DateTime date, GoalDayStatus? current, GoalCubit cubit) {
+    switch (current) {
+      case null:
+        cubit.logDay(goal.id, date, GoalDayStatus.success);
+      case GoalDayStatus.success:
+        cubit.logDay(goal.id, date, GoalDayStatus.failure);
+      case GoalDayStatus.failure:
+        cubit.logDay(goal.id, date, GoalDayStatus.skip);
+      case GoalDayStatus.skip:
+        cubit.removeLog(goal.id, date);
+    }
   }
 }
 

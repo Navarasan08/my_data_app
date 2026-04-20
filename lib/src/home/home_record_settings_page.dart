@@ -76,6 +76,20 @@ class HomeRecordSettingsPage extends StatelessWidget {
                   const SizedBox(height: 8),
                   const Divider(),
 
+                  // Monthly calendar toggle
+                  SwitchListTile(
+                    title: const Text('Month-wise calendar'),
+                    subtitle: Text(
+                      state.showMonthlyCalendar
+                          ? 'Showing records by month with navigation'
+                          : 'Showing all records in a single scrollable list',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                    ),
+                    value: state.showMonthlyCalendar,
+                    onChanged: (val) => cubit.setShowMonthlyCalendar(val),
+                  ),
+                  const Divider(),
+
                   // Default categories section
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),

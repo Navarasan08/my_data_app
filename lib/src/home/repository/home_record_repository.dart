@@ -12,6 +12,8 @@ abstract class HomeRecordRepository {
   void deleteCustomCategory(String categoryId);
   String getCurrencyCode();
   void setCurrencyCode(String code);
+  bool getShowMonthlyCalendar();
+  void setShowMonthlyCalendar(bool value);
   Future<void> init();
 }
 
@@ -21,6 +23,7 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   List<HomeRecord> _records = [];
   List<HomeCategory> _customCategories = [];
   String _currencyCode = 'INR';
+  bool _showMonthlyCalendar = true;
 
   FirestoreHomeRecordRepository({
     required this.uid,
@@ -39,6 +42,7 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     final settingsSnap = await _settingsDoc.get();
     if (settingsSnap.exists) {
       _currencyCode = (settingsSnap.data()?['currencyCode'] as String?) ?? 'INR';
+      _showMonthlyCalendar = (settingsSnap.data()?['showMonthlyCalendar'] as bool?) ?? true;
     }
 
     // Load custom categories first so records can reference them
@@ -113,5 +117,14 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   void setCurrencyCode(String code) {
     _currencyCode = code;
     _settingsDoc.set({'currencyCode': code}, SetOptions(merge: true));
+  }
+
+  @override
+  bool getShowMonthlyCalendar() => _showMonthlyCalendar;
+
+  @override
+  void setShowMonthlyCalendar(bool value) {
+    _showMonthlyCalendar = value;
+    _settingsDoc.set({'showMonthlyCalendar': value}, SetOptions(merge: true));
   }
 }

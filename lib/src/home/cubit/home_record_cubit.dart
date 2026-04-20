@@ -12,6 +12,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           selectedDate: DateTime.now(),
           customCategories: _repository.getCustomCategories(),
           currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
+          showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
         ));
 
   void addRecord(HomeRecord record) {
@@ -65,6 +66,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }
 
   List<HomeRecord> get _baseRecords {
+    if (!state.showMonthlyCalendar) return allRecordsSorted;
     return state.viewMode == HomeViewMode.monthly
         ? recordsForSelectedMonth
         : allRecordsSorted;
@@ -193,5 +195,10 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   void setCurrency(HomeCurrency currency) {
     _repository.setCurrencyCode(currency.code);
     emit(state.copyWith(currency: currency));
+  }
+
+  void setShowMonthlyCalendar(bool value) {
+    _repository.setShowMonthlyCalendar(value);
+    emit(state.copyWith(showMonthlyCalendar: value));
   }
 }

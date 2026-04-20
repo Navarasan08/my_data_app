@@ -63,63 +63,64 @@ class HomeRecordPage extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Month nav + total in one row
-                  Center(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(maxWidth: contentMaxWidth),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 6),
-                        child: Row(
-                          children: [
-                            IconButton(
-                              icon: const Icon(
-                                  Icons.chevron_left_rounded),
-                              onPressed: () =>
-                                  cubit.changeMonth(-1),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            Expanded(
-                              child: Text(
-                                DateFormat('MMM yyyy')
-                                    .format(state.selectedDate),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                  // Month nav (only when monthly calendar enabled)
+                  if (state.showMonthlyCalendar)
+                    Center(
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(maxWidth: contentMaxWidth),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 6),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                    Icons.chevron_left_rounded),
+                                onPressed: () =>
+                                    cubit.changeMonth(-1),
+                                visualDensity: VisualDensity.compact,
+                              ),
+                              Expanded(
+                                child: Text(
+                                  DateFormat('MMM yyyy')
+                                      .format(state.selectedDate),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                  Icons.chevron_right_rounded),
-                              onPressed: () =>
-                                  cubit.changeMonth(1),
-                              visualDensity: VisualDensity.compact,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${cubit.currencySymbol}${displayTotal.toStringAsFixed(0)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green[700],
+                              IconButton(
+                                icon: const Icon(
+                                    Icons.chevron_right_rounded),
+                                onPressed: () =>
+                                    cubit.changeMonth(1),
+                                visualDensity: VisualDensity.compact,
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              '(${filteredRecords.length})',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[500],
+                              const SizedBox(width: 4),
+                              Text(
+                                '${cubit.currencySymbol}${displayTotal.toStringAsFixed(0)}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[700],
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 6),
+                              Text(
+                                '(${filteredRecords.length})',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
                   // Category Filter Chips
                   Center(
@@ -186,7 +187,7 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Records List / Grid with week headers
+                  // Records List / Grid
                   Expanded(
                     child: filteredRecords.isEmpty
                         ? Center(
@@ -200,8 +201,8 @@ class HomeRecordPage extends StatelessWidget {
                                 const SizedBox(height: 12),
                                 Text(
                                   state.selectedCategory != null
-                                      ? 'No ${state.selectedCategory!.displayName} records this month'
-                                      : 'No records for this month',
+                                      ? 'No ${state.selectedCategory!.displayName} records'
+                                      : 'No records yet',
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[500],
@@ -214,29 +215,32 @@ class HomeRecordPage extends StatelessWidget {
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                   maxWidth: contentMaxWidth),
-                              child: gridCols > 1
-                                  ? GridView.builder(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(
-                                              12, 4, 12, 12),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: gridCols,
-                                        crossAxisSpacing: 10,
-                                        mainAxisSpacing: 10,
-                                        childAspectRatio:
-                                            isExtraWide ? 2.5 : 2.2,
-                                      ),
-                                      itemCount:
-                                          filteredRecords.length,
-                                      itemBuilder: (context, index) {
-                                        return _buildRecordItem(
-                                            context,
-                                            cubit,
-                                            filteredRecords[index]);
-                                      },
-                                    )
-                                  : _buildWeekGroupedList(
+                              child: state.showMonthlyCalendar
+                                  ? (gridCols > 1
+                                      ? GridView.builder(
+                                          padding:
+                                              const EdgeInsets.fromLTRB(
+                                                  12, 4, 12, 12),
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: gridCols,
+                                            crossAxisSpacing: 10,
+                                            mainAxisSpacing: 10,
+                                            childAspectRatio:
+                                                isExtraWide ? 2.5 : 2.2,
+                                          ),
+                                          itemCount:
+                                              filteredRecords.length,
+                                          itemBuilder: (context, index) {
+                                            return _buildRecordItem(
+                                                context,
+                                                cubit,
+                                                filteredRecords[index]);
+                                          },
+                                        )
+                                      : _buildWeekGroupedList(
+                                          context, cubit, filteredRecords))
+                                  : _buildMonthGroupedList(
                                       context, cubit, filteredRecords),
                             ),
                           ),
@@ -260,6 +264,74 @@ class HomeRecordPage extends StatelessWidget {
             icon: const Icon(Icons.add),
             label: const Text('Add Record'),
           ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMonthGroupedList(
+      BuildContext context, HomeRecordCubit cubit, List<HomeRecord> records) {
+    final grouped = <String, List<HomeRecord>>{};
+    for (final r in records) {
+      final key = DateFormat('yyyy-MM').format(r.date);
+      grouped.putIfAbsent(key, () => []).add(r);
+    }
+    final sortedKeys = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+      itemCount: sortedKeys.length,
+      itemBuilder: (context, index) {
+        final key = sortedKeys[index];
+        final monthRecords = grouped[key]!;
+        final monthTotal =
+            monthRecords.fold(0.0, (sum, r) => sum + r.amount);
+        final monthDate = DateTime.parse('$key-01');
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(top: 8, bottom: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Text(
+                    DateFormat('MMMM yyyy').format(monthDate),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${cubit.currencySymbol}${monthTotal.toStringAsFixed(0)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '(${monthRecords.length})',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...monthRecords
+                .map((r) => _buildRecordItem(context, cubit, r)),
+          ],
         );
       },
     );

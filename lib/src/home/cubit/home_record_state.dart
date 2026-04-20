@@ -41,6 +41,7 @@ class HomeRecordState {
   final List<HomeCategory> customCategories;
   final HomeViewMode viewMode;
   final HomeCurrency currency;
+  final bool showMonthlyCalendar;
 
   const HomeRecordState({
     required this.records,
@@ -49,6 +50,7 @@ class HomeRecordState {
     this.customCategories = const [],
     this.viewMode = HomeViewMode.monthly,
     this.currency = HomeCurrency.inr,
+    this.showMonthlyCalendar = true,
   });
 
   HomeRecordState copyWith({
@@ -59,6 +61,7 @@ class HomeRecordState {
     List<HomeCategory>? customCategories,
     HomeViewMode? viewMode,
     HomeCurrency? currency,
+    bool? showMonthlyCalendar,
   }) {
     return HomeRecordState(
       records: records ?? this.records,
@@ -68,6 +71,7 @@ class HomeRecordState {
       customCategories: customCategories ?? this.customCategories,
       viewMode: viewMode ?? this.viewMode,
       currency: currency ?? this.currency,
+      showMonthlyCalendar: showMonthlyCalendar ?? this.showMonthlyCalendar,
     );
   }
 }
