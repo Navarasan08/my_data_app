@@ -3,6 +3,14 @@ import 'package:my_data_app/src/schedule/model/schedule_model.dart';
 import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_state.dart';
 
+/// A single occurrence instance of a schedule entry (expanded from recurrence)
+class ScheduleOccurrence {
+  final ScheduleEntry entry;
+  final DateTime date;
+
+  const ScheduleOccurrence({required this.entry, required this.date});
+}
+
 class ScheduleCubit extends Cubit<ScheduleState> {
   final ScheduleRepository _repository;
 
@@ -10,6 +18,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
       : super(ScheduleState(
           entries: _repository.getAll(),
           selectedDate: DateTime.now(),
+          customCategories: _repository.getCustomCategories(),
         ));
 
   void addEntry(ScheduleEntry entry) {
@@ -36,53 +45,107 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     emit(state.copyWith(selectedDate: date));
   }
 
-  List<ScheduleEntry> get entriesForSelectedDate {
-    final sel = state.selectedDate;
-    return state.entries
-        .where((e) =>
-            e.dateTime.year == sel.year &&
-            e.dateTime.month == sel.month &&
-            e.dateTime.day == sel.day)
-        .toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+  void setFilter(ScheduleFilter filter) {
+    emit(state.copyWith(filter: filter));
   }
 
-  List<ScheduleEntry> get upcomingEntries {
-    final now = DateTime.now();
-    return state.entries
-        .where((e) => !e.isCompleted && !e.dateTime.isBefore(now))
-        .toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+  // ── Category management ─────────────────────────────────────────────────
+
+  List<ScheduleCategory> get allCategories =>
+      [...ScheduleCategory.defaults, ...state.customCategories];
+
+  void addCustomCategory(ScheduleCategory category) {
+    _repository.addCustomCategory(category);
+    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
   }
 
-  List<ScheduleEntry> get todayEntries {
+  void updateCustomCategory(ScheduleCategory category) {
+    _repository.updateCustomCategory(category);
+    // Reflect the new name/icon/color on entries that reference it
+    final updated = state.entries.map((e) {
+      if (e.category.id == category.id) {
+        return e.copyWith(category: category);
+      }
+      return e;
+    }).toList();
+    // Persist updated entries too so they round-trip correctly later
+    for (final e in updated) {
+      if (e.category.id == category.id) _repository.update(e);
+    }
+    emit(state.copyWith(
+      customCategories: _repository.getCustomCategories(),
+      entries: _repository.getAll(),
+    ));
+  }
+
+  /// Delete a custom category. Any entries referring to it are migrated to
+  /// [fallback] (defaults to "Other").
+  void deleteCustomCategory(String categoryId,
+      {ScheduleCategory? fallback}) {
+    final fb = fallback ?? ScheduleCategory.other;
+
+    // Migrate entries to fallback first
+    for (final e in state.entries) {
+      if (e.category.id == categoryId) {
+        _repository.update(e.copyWith(category: fb));
+      }
+    }
+
+    _repository.deleteCustomCategory(categoryId);
+    emit(state.copyWith(
+      customCategories: _repository.getCustomCategories(),
+      entries: _repository.getAll(),
+    ));
+  }
+
+  bool isCategoryInUse(String categoryId) {
+    return state.entries.any((e) => e.category.id == categoryId);
+  }
+
+  // ── Occurrence expansion ────────────────────────────────────────────────
+
+  List<ScheduleOccurrence> expandedOccurrences({
+    DateTime? rangeStart,
+    DateTime? rangeEnd,
+  }) {
     final now = DateTime.now();
-    return state.entries
-        .where((e) =>
-            e.dateTime.year == now.year &&
-            e.dateTime.month == now.month &&
-            e.dateTime.day == now.day)
-        .toList()
-      ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    final start = rangeStart ?? DateTime(now.year - 1, 1, 1);
+    final end = rangeEnd ?? DateTime(now.year + 2, 12, 31);
+
+    final all = <ScheduleOccurrence>[];
+    for (final e in state.entries) {
+      final dates = e.occurrencesInRange(start, end);
+      for (final d in dates) {
+        all.add(ScheduleOccurrence(entry: e, date: d));
+      }
+    }
+    all.sort((a, b) => a.date.compareTo(b.date));
+    return all;
+  }
+
+  List<ScheduleOccurrence> get filteredOccurrences {
+    if (state.filter == ScheduleFilter.thisMonth) {
+      final now = DateTime.now();
+      final start = DateTime(now.year, now.month, 1);
+      final end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+      return expandedOccurrences(rangeStart: start, rangeEnd: end);
+    }
+    return expandedOccurrences();
+  }
+
+  Map<String, List<ScheduleOccurrence>> get groupedFilteredByMonth {
+    final occ = filteredOccurrences;
+    final map = <String, List<ScheduleOccurrence>>{};
+    for (final o in occ) {
+      final key =
+          '${o.date.year}-${o.date.month.toString().padLeft(2, '0')}';
+      (map[key] ??= []).add(o);
+    }
+    return map;
   }
 
   int get pendingCount =>
       state.entries.where((e) => !e.isCompleted).length;
 
-  /// All entries sorted by date (nearest first)
-  List<ScheduleEntry> get allSorted =>
-      List<ScheduleEntry>.from(state.entries)
-        ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
-
-  /// Group entries by month-year key, sorted
-  Map<String, List<ScheduleEntry>> get groupedByMonth {
-    final sorted = allSorted;
-    final map = <String, List<ScheduleEntry>>{};
-    for (final e in sorted) {
-      final key =
-          '${e.dateTime.year}-${e.dateTime.month.toString().padLeft(2, '0')}';
-      (map[key] ??= []).add(e);
-    }
-    return map;
-  }
+  int get filteredCount => filteredOccurrences.length;
 }

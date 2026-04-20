@@ -4,26 +4,26 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/schedule/model/schedule_model.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_state.dart';
+import 'package:my_data_app/src/schedule/schedule_settings_page.dart';
 
 class SchedulePage extends StatelessWidget {
   const SchedulePage({Key? key}) : super(key: key);
 
-  String _daysLeftLabel(DateTime dateTime) {
+  String _daysLeftLabel(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final target = DateTime(date.year, date.month, date.day);
     final diff = target.difference(today).inDays;
     if (diff < 0) return '${-diff}d ago';
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Tomorrow';
-    if (diff <= 7) return 'In $diff days';
     return 'In $diff days';
   }
 
-  Color _daysLeftColor(DateTime dateTime) {
+  Color _daysLeftColor(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(dateTime.year, dateTime.month, dateTime.day);
+    final target = DateTime(date.year, date.month, date.day);
     final diff = target.difference(today).inDays;
     if (diff < 0) return Colors.red;
     if (diff == 0) return Colors.orange;
@@ -36,8 +36,8 @@ class SchedulePage extends StatelessWidget {
     return BlocBuilder<ScheduleCubit, ScheduleState>(
       builder: (context, state) {
         final cubit = context.read<ScheduleCubit>();
-        final grouped = cubit.groupedByMonth;
-        final total = state.entries.length;
+        final grouped = cubit.groupedFilteredByMonth;
+        final totalOccurrences = cubit.filteredCount;
         final pending = cubit.pendingCount;
 
         return Scaffold(
@@ -45,193 +45,227 @@ class SchedulePage extends StatelessWidget {
             title: const Text('Schedules'),
             centerTitle: true,
             elevation: 0,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.settings_rounded),
+                tooltip: 'Category Settings',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: cubit,
+                      child: const ScheduleSettingsPage(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-          body: state.entries.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.event_available_rounded,
-                          size: 48, color: Colors.grey[300]),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No schedules yet',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
+          body: Column(
+            children: [
+              Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'All',
+                      selected: state.filter == ScheduleFilter.all,
+                      onTap: () => cubit.setFilter(ScheduleFilter.all),
+                    ),
+                    const SizedBox(width: 8),
+                    _FilterChip(
+                      label: 'This Month',
+                      selected: state.filter == ScheduleFilter.thisMonth,
+                      onTap: () => cubit.setFilter(ScheduleFilter.thisMonth),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '$totalOccurrences events',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                    if (pending > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.orange[50],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '$pending pending',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.orange[700],
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
-                  children: [
-                    // Summary
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 4, vertical: 4),
-                      child: Row(
-                        children: [
-                          Text(
-                            '$total events',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                          if (pending > 0) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.orange[50],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '$pending pending',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.orange[700],
-                                ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+
+              Expanded(
+                child: grouped.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_available_rounded,
+                                size: 48, color: Colors.grey[300]),
+                            const SizedBox(height: 12),
+                            Text(
+                              state.filter == ScheduleFilter.thisMonth
+                                  ? 'No schedules this month'
+                                  : 'No schedules yet',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
                               ),
                             ),
                           ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                        ),
+                      )
+                    : ListView(
+                        padding:
+                            const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                        children: grouped.entries.map((monthGroup) {
+                          final key = monthGroup.key;
+                          final occ = monthGroup.value;
+                          final monthDate = DateTime(
+                            int.parse(key.split('-')[0]),
+                            int.parse(key.split('-')[1]),
+                          );
+                          final monthLabel =
+                              DateFormat('MMMM yyyy').format(monthDate);
+                          final now = DateTime.now();
+                          final isCurrentMonth = monthDate.year == now.year &&
+                              monthDate.month == now.month;
 
-                    // Month groups
-                    ...grouped.entries.map((monthGroup) {
-                      final key = monthGroup.key;
-                      final entries = monthGroup.value;
-                      final monthDate = DateTime(
-                        int.parse(key.split('-')[0]),
-                        int.parse(key.split('-')[1]),
-                      );
-                      final monthLabel =
-                          DateFormat('MMMM yyyy').format(monthDate);
-                      final now = DateTime.now();
-                      final isCurrentMonth = monthDate.year == now.year &&
-                          monthDate.month == now.month;
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Month header
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  monthLabel,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.bold,
-                                    color: isCurrentMonth
-                                        ? Colors.blue[700]
-                                        : Colors.grey[700],
-                                  ),
-                                ),
-                                if (isCurrentMonth) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue,
-                                      borderRadius:
-                                          BorderRadius.circular(6),
-                                    ),
-                                    child: const Text(
-                                      'NOW',
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      monthLabel,
                                       style: TextStyle(
-                                        fontSize: 9,
+                                        fontSize: 15,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                        letterSpacing: 0.5,
+                                        color: isCurrentMonth
+                                            ? Colors.blue[700]
+                                            : Colors.grey[700],
                                       ),
                                     ),
-                                  ),
-                                ],
-                                const Spacer(),
-                                Text(
-                                  '${entries.length}',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[400],
-                                  ),
+                                    if (isCurrentMonth) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blue,
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                        ),
+                                        child: const Text(
+                                          'NOW',
+                                          style: TextStyle(
+                                            fontSize: 9,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                    const Spacer(),
+                                    Text(
+                                      '${occ.length}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[400],
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
-                          ),
-                          // Entries
-                          ...entries.map((entry) => _ScheduleItem(
-                                entry: entry,
-                                daysLeftLabel:
-                                    _daysLeftLabel(entry.dateTime),
-                                daysLeftColor:
-                                    _daysLeftColor(entry.dateTime),
-                                onToggle: () =>
-                                    cubit.toggleComplete(entry.id),
-                                onEdit: () async {
-                                  final edited = await Navigator.push<
-                                      ScheduleEntry>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          AddSchedulePage(entry: entry),
-                                    ),
-                                  );
-                                  if (edited != null) {
-                                    cubit.updateEntry(edited);
-                                  }
-                                },
-                                onDelete: () async {
-                                  final confirmed =
-                                      await showDialog<bool>(
-                                    context: context,
-                                    builder: (ctx) => AlertDialog(
-                                      title: const Text(
-                                          'Delete Schedule'),
-                                      content: Text(
-                                          'Delete "${entry.title}"?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, false),
-                                          child: const Text('Cancel'),
+                              ),
+                              ...occ.map((o) => _ScheduleItem(
+                                    entry: o.entry,
+                                    occurrenceDate: o.date,
+                                    daysLeftLabel: _daysLeftLabel(o.date),
+                                    daysLeftColor: _daysLeftColor(o.date),
+                                    onToggle: () =>
+                                        cubit.toggleComplete(o.entry.id),
+                                    onEdit: () async {
+                                      final edited = await Navigator.push<
+                                          ScheduleEntry>(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => BlocProvider.value(
+                                            value: cubit,
+                                            child: AddSchedulePage(
+                                                entry: o.entry),
+                                          ),
                                         ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(ctx, true),
-                                          style: TextButton.styleFrom(
-                                              foregroundColor:
-                                                  Colors.red),
-                                          child: const Text('Delete'),
+                                      );
+                                      if (edited != null) {
+                                        cubit.updateEntry(edited);
+                                      }
+                                    },
+                                    onDelete: () async {
+                                      final confirmed =
+                                          await showDialog<bool>(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          title: const Text('Delete Schedule'),
+                                          content: Text(
+                                              'Delete "${o.entry.title}"?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(ctx, true),
+                                              style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirmed == true) {
-                                    cubit.deleteEntry(entry.id);
-                                  }
-                                },
-                              )),
-                        ],
-                      );
-                    }),
-                  ],
-                ),
+                                      );
+                                      if (confirmed == true) {
+                                        cubit.deleteEntry(o.entry.id);
+                                      }
+                                    },
+                                  )),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+              ),
+            ],
+          ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () async {
               final newEntry = await Navigator.push<ScheduleEntry>(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const AddSchedulePage(),
+                  builder: (_) => BlocProvider.value(
+                    value: cubit,
+                    child: const AddSchedulePage(),
+                  ),
                 ),
               );
               if (newEntry != null) {
@@ -247,10 +281,49 @@ class SchedulePage extends StatelessWidget {
   }
 }
 
+// ─── Filter Chip ─────────────────────────────────────────────────────────────
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? Colors.blue[700] : Colors.grey[100],
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: selected ? Colors.white : Colors.grey[700],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Schedule Item ───────────────────────────────────────────────────────────
 
 class _ScheduleItem extends StatelessWidget {
   final ScheduleEntry entry;
+  final DateTime occurrenceDate;
   final String daysLeftLabel;
   final Color daysLeftColor;
   final VoidCallback onToggle;
@@ -259,6 +332,7 @@ class _ScheduleItem extends StatelessWidget {
 
   const _ScheduleItem({
     required this.entry,
+    required this.occurrenceDate,
     required this.daysLeftLabel,
     required this.daysLeftColor,
     required this.onToggle,
@@ -269,8 +343,9 @@ class _ScheduleItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cat = entry.category;
-    final timeStr = DateFormat('h:mm a').format(entry.dateTime);
-    final dateStr = DateFormat('EEE, d').format(entry.dateTime);
+    final dateStr = DateFormat('EEE, d MMM').format(occurrenceDate);
+    final repeatLabel = entry.repeatLabel();
+    final endLabel = entry.endLabel();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -286,7 +361,6 @@ class _ScheduleItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             children: [
-              // Completion toggle
               GestureDetector(
                 onTap: onToggle,
                 child: Container(
@@ -310,33 +384,19 @@ class _ScheduleItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              // Date + time column
               SizedBox(
-                width: 52,
-                child: Column(
-                  children: [
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    Text(
-                      timeStr,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.grey[400],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
+                width: 64,
+                child: Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[600],
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(width: 8),
-              // Color bar
               Container(
                 width: 4,
                 height: 32,
@@ -346,39 +406,52 @@ class _ScheduleItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              // Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      entry.title,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        decoration: entry.isCompleted
-                            ? TextDecoration.lineThrough
-                            : null,
-                        color: entry.isCompleted
-                            ? Colors.grey[400]
-                            : Colors.black87,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            entry.title,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              decoration: entry.isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                              color: entry.isCompleted
+                                  ? Colors.grey[400]
+                                  : Colors.black87,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (entry.isRecurring) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.repeat_rounded,
+                              size: 12, color: Colors.grey[500]),
+                        ],
+                      ],
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      cat.label,
+                      repeatLabel.isNotEmpty
+                          ? '$repeatLabel$endLabel'
+                          : cat.label,
                       style: TextStyle(
                         fontSize: 11,
                         color: Colors.grey[500],
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 6),
-              // Days left badge
               if (!entry.isCompleted)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -400,7 +473,6 @@ class _ScheduleItem extends StatelessWidget {
                 Icon(Icons.check_circle_rounded,
                     size: 18, color: Colors.green[400]),
               const SizedBox(width: 6),
-              // Delete
               InkWell(
                 onTap: onDelete,
                 borderRadius: BorderRadius.circular(6),
@@ -439,83 +511,112 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
-  ScheduleCategory _category = ScheduleCategory.personal;
-  late DateTime _dateTime;
-  DateTime? _endTime;
+  final _intervalController = TextEditingController();
+  late ScheduleCategory _category;
+  late DateTime _startDate;
+  DateTime? _endDate;
+  RepeatMode _repeatMode = RepeatMode.none;
+  List<int> _customDays = [];
 
   bool get _isEditing => widget.entry != null;
 
   @override
   void initState() {
     super.initState();
+    _category = ScheduleCategory.personal;
     if (widget.entry != null) {
-      _titleController.text = widget.entry!.title;
-      _descController.text = widget.entry!.description ?? '';
-      _category = widget.entry!.category;
-      _dateTime = widget.entry!.dateTime;
-      _endTime = widget.entry!.endTime;
+      final e = widget.entry!;
+      _titleController.text = e.title;
+      _descController.text = e.description ?? '';
+      _category = e.category;
+      _startDate = _dateOnly(e.startDate);
+      _endDate = e.endDate != null ? _dateOnly(e.endDate!) : null;
+      _repeatMode = e.repeatMode;
+      _customDays = List<int>.from(e.customDays ?? []);
+      if (e.interval != null) {
+        _intervalController.text = e.interval.toString();
+      }
     } else {
       final d = widget.initialDate ?? DateTime.now();
-      _dateTime = DateTime(d.year, d.month, d.day,
-          DateTime.now().hour, DateTime.now().minute);
+      _startDate = DateTime(d.year, d.month, d.day);
     }
   }
+
+  DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
   @override
   void dispose() {
     _titleController.dispose();
     _descController.dispose();
+    _intervalController.dispose();
     super.dispose();
   }
 
+  bool get _needsInterval =>
+      _repeatMode == RepeatMode.everyNDays ||
+      _repeatMode == RepeatMode.everyNWeeks ||
+      _repeatMode == RepeatMode.everyNMonths;
+
+  bool get _needsCustomDays =>
+      _repeatMode == RepeatMode.weeklyOnDays ||
+      _repeatMode == RepeatMode.monthlyOnDays;
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
+    if (_needsCustomDays && _customDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one day'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
     final entry = ScheduleEntry(
       id: widget.entry?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
-      description:
-          _descController.text.trim().isEmpty ? null : _descController.text.trim(),
-      dateTime: _dateTime,
-      endTime: _endTime,
+      description: _descController.text.trim().isEmpty
+          ? null
+          : _descController.text.trim(),
+      startDate: _startDate,
+      endDate: _endDate,
       category: _category,
       isCompleted: widget.entry?.isCompleted ?? false,
+      repeatMode: _repeatMode,
+      customDays: _needsCustomDays ? List<int>.from(_customDays) : null,
+      interval: _needsInterval ? int.tryParse(_intervalController.text) : null,
     );
     Navigator.pop(context, entry);
   }
 
-  Future<void> _pickDate() async {
+  Future<void> _pickStartDate() async {
     final date = await showDatePicker(
       context: context,
-      initialDate: _dateTime,
+      initialDate: _startDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
+      lastDate: DateTime(2035),
     );
     if (date != null) {
       setState(() {
-        _dateTime = DateTime(
-            date.year, date.month, date.day, _dateTime.hour, _dateTime.minute);
+        _startDate = DateTime(date.year, date.month, date.day);
+        if (_endDate != null && _endDate!.isBefore(_startDate)) {
+          _endDate = null;
+        }
       });
     }
   }
 
-  Future<void> _pickTime({bool isEnd = false}) async {
-    final initial = isEnd
-        ? TimeOfDay.fromDateTime(_endTime ?? _dateTime)
-        : TimeOfDay.fromDateTime(_dateTime);
-    final time = await showTimePicker(context: context, initialTime: initial);
-    if (time != null) {
-      setState(() {
-        if (isEnd) {
-          _endTime = DateTime(
-              _dateTime.year, _dateTime.month, _dateTime.day,
-              time.hour, time.minute);
-        } else {
-          _dateTime = DateTime(
-              _dateTime.year, _dateTime.month, _dateTime.day,
-              time.hour, time.minute);
-        }
-      });
+  Future<void> _pickEndDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _endDate ?? _startDate.add(const Duration(days: 30)),
+      firstDate: _startDate,
+      lastDate: DateTime(2035),
+    );
+    if (date != null) {
+      setState(() => _endDate = DateTime(date.year, date.month, date.day));
     }
   }
 
@@ -546,77 +647,218 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ),
                 const SizedBox(height: 16),
 
-                DropdownButtonFormField<ScheduleCategory>(
-                  value: _category,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.category),
-                  ),
-                  items: ScheduleCategory.values.map((c) {
-                    return DropdownMenuItem(
-                      value: c,
-                      child: Row(
-                        children: [
-                          Icon(c.icon, size: 18, color: c.color),
-                          const SizedBox(width: 8),
-                          Text(c.label),
-                        ],
+                Builder(
+                  builder: (ctx) {
+                    final categories =
+                        ctx.read<ScheduleCubit>().allCategories;
+                    // Ensure selected value is present in items
+                    final selected = categories.contains(_category)
+                        ? _category
+                        : categories.first;
+                    if (selected != _category) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) setState(() => _category = selected);
+                      });
+                    }
+                    return DropdownButtonFormField<ScheduleCategory>(
+                      initialValue: selected,
+                      decoration: const InputDecoration(
+                        labelText: 'Category',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.category),
                       ),
+                      items: categories.map((c) {
+                        return DropdownMenuItem(
+                          value: c,
+                          child: Row(
+                            children: [
+                              Icon(c.icon, size: 18, color: c.color),
+                              const SizedBox(width: 8),
+                              Text(c.label),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (v) {
+                        if (v != null) setState(() => _category = v);
+                      },
                     );
-                  }).toList(),
-                  onChanged: (v) {
-                    if (v != null) setState(() => _category = v);
                   },
                 ),
                 const SizedBox(height: 16),
 
+                // Start date
                 ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                     side: BorderSide(color: Colors.grey[400]!),
                   ),
                   leading: const Icon(Icons.calendar_today_rounded),
-                  title: const Text('Date'),
+                  title: const Text('Start Date *'),
                   subtitle: Text(
-                      DateFormat('EEEE, MMM d, yyyy').format(_dateTime)),
-                  onTap: _pickDate,
+                      DateFormat('EEEE, MMM d, yyyy').format(_startDate)),
+                  onTap: _pickStartDate,
                 ),
                 const SizedBox(height: 12),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                          side: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        leading: const Icon(Icons.access_time_rounded),
-                        title: const Text('Start'),
-                        subtitle: Text(
-                            DateFormat('h:mm a').format(_dateTime)),
-                        onTap: () => _pickTime(),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ListTile(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                          side: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        leading:
-                            const Icon(Icons.access_time_filled_rounded),
-                        title: const Text('End'),
-                        subtitle: Text(_endTime != null
-                            ? DateFormat('h:mm a').format(_endTime!)
-                            : 'Optional'),
-                        onTap: () => _pickTime(isEnd: true),
-                      ),
-                    ),
-                  ],
+                // End date (optional)
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    side: BorderSide(color: Colors.grey[400]!),
+                  ),
+                  leading: const Icon(Icons.event_rounded),
+                  title: const Text('End Date'),
+                  subtitle: Text(_endDate != null
+                      ? DateFormat('EEEE, MMM d, yyyy').format(_endDate!)
+                      : 'Optional — leave blank for ongoing'),
+                  trailing: _endDate != null
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 18),
+                          onPressed: () => setState(() => _endDate = null),
+                        )
+                      : null,
+                  onTap: _pickEndDate,
                 ),
+                const SizedBox(height: 16),
+
+                // Repeat mode
+                Text('Repeat',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700])),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: RepeatMode.values.map((m) {
+                    final selected = _repeatMode == m;
+                    return ChoiceChip(
+                      label: Text(m.label,
+                          style: const TextStyle(fontSize: 12)),
+                      selected: selected,
+                      showCheckmark: false,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize:
+                          MaterialTapTargetSize.shrinkWrap,
+                      onSelected: (_) {
+                        setState(() {
+                          _repeatMode = m;
+                          _customDays.clear();
+                          _intervalController.clear();
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+
+                // Interval input (every N …)
+                if (_needsInterval) ...[
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _intervalController,
+                    decoration: InputDecoration(
+                      labelText: _intervalHint(),
+                      hintText: 'e.g. 2',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.repeat_one_rounded),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (v) {
+                      if (!_needsInterval) return null;
+                      final n = int.tryParse(v ?? '');
+                      if (n == null || n <= 0) {
+                        return 'Enter a valid number (1 or more)';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+
+                // Weekly days selector
+                if (_repeatMode == RepeatMode.weeklyOnDays) ...[
+                  const SizedBox(height: 12),
+                  Text('Days of week *',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700])),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    children: List.generate(7, (i) {
+                      final day = i + 1;
+                      const names = [
+                        'Mon',
+                        'Tue',
+                        'Wed',
+                        'Thu',
+                        'Fri',
+                        'Sat',
+                        'Sun'
+                      ];
+                      final selected = _customDays.contains(day);
+                      return FilterChip(
+                        label: Text(names[i],
+                            style: const TextStyle(fontSize: 11)),
+                        selected: selected,
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                        onSelected: (v) {
+                          setState(() {
+                            if (v) {
+                              _customDays.add(day);
+                            } else {
+                              _customDays.remove(day);
+                            }
+                            _customDays.sort();
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ],
+
+                // Monthly days selector
+                if (_repeatMode == RepeatMode.monthlyOnDays) ...[
+                  const SizedBox(height: 12),
+                  Text('Days of month *',
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[700])),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: List.generate(31, (i) {
+                      final day = i + 1;
+                      final selected = _customDays.contains(day);
+                      return FilterChip(
+                        label: Text('$day',
+                            style: const TextStyle(fontSize: 11)),
+                        selected: selected,
+                        showCheckmark: false,
+                        visualDensity: VisualDensity.compact,
+                        materialTapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                        onSelected: (v) {
+                          setState(() {
+                            if (v) {
+                              _customDays.add(day);
+                            } else {
+                              _customDays.remove(day);
+                            }
+                            _customDays.sort();
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                ],
                 const SizedBox(height: 16),
 
                 TextFormField(
@@ -646,5 +888,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
         ),
       ),
     );
+  }
+
+  String _intervalHint() {
+    switch (_repeatMode) {
+      case RepeatMode.everyNDays: return 'Every N days';
+      case RepeatMode.everyNWeeks: return 'Every N weeks';
+      case RepeatMode.everyNMonths: return 'Every N months';
+      default: return 'N';
+    }
   }
 }
