@@ -611,8 +611,35 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
               else
                 ...sortedRepayments.map((r) => _RepaymentTile(
                       repayment: r,
-                      onDelete: () {
-                        cubit.deleteRepayment(loan.id, r.id);
+                      onDelete: () async {
+                        final label = r.isPartPayment
+                            ? 'Part Payment'
+                            : 'EMI #${r.monthNumber}';
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(r.isPartPayment
+                                ? 'Delete Part Payment'
+                                : 'Delete Repayment'),
+                            content: Text(
+                                'Delete $label of ₹${_fmt(r.amount)}?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirmed == true) {
+                          cubit.deleteRepayment(loan.id, r.id);
+                        }
                       },
                     )),
             ],

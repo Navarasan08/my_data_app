@@ -55,9 +55,67 @@ class LoanCubit extends Cubit<LoanState> {
   }
 
   void updateLoan(Loan loan) {
-    _repository.update(loan);
+    final existing = state.loans.firstWhere((l) => l.id == loan.id,
+        orElse: () => loan);
+
+    final startChanged = existing.startDate != loan.startDate;
+
+    Loan toSave = loan;
+
+    if (startChanged) {
+      // Rebuild the EMI schedule to span exactly from the new startDate to
+      // today. Keep part-payments untouched (they track real cash events).
+      final partPayments =
+          loan.repayments.where((r) => r.isPartPayment).toList();
+
+      final now = DateTime.now();
+      final elapsed = (now.year - loan.startDate.year) * 12 +
+          (now.month - loan.startDate.month);
+      final target = elapsed.clamp(0, loan.tenureMonths);
+
+      final rebuiltEmis = <Repayment>[];
+      double balance = loan.principalAmount;
+
+      for (int m = 1; m <= target; m++) {
+        final paidDate = DateTime(
+            loan.startDate.year, loan.startDate.month + m, loan.startDate.day);
+
+        // Reduce balance by any part-payments that fall on/before this EMI's
+        // due date so the amortization stays realistic.
+        final ppBefore = partPayments
+            .where((pp) => !pp.paidDate.isAfter(paidDate))
+            .fold(0.0, (s, pp) => s + pp.amount);
+        final effectiveBalance =
+            (loan.principalAmount - ppBefore - _paidSoFar(rebuiltEmis))
+                .clamp(0.0, loan.principalAmount)
+                .toDouble();
+
+        final split =
+            _splitEmi(effectiveBalance, loan.interestRate, loan.emiAmount);
+        balance = effectiveBalance - split.principal;
+        rebuiltEmis.add(Repayment(
+          id: '${loan.id}_auto_${DateTime.now().millisecondsSinceEpoch}_$m',
+          monthNumber: m,
+          amount: loan.emiAmount,
+          principalPortion: split.principal,
+          interestPortion: split.interest,
+          paidDate: paidDate,
+          notes: 'Auto-generated',
+        ));
+      }
+
+      // Unused local suppression; keep for clarity of intent
+      balance = balance;
+
+      toSave = loan.copyWith(repayments: [...rebuiltEmis, ...partPayments]);
+    }
+
+    _repository.update(toSave);
     emit(state.copyWith(loans: _repository.getAll()));
   }
+
+  double _paidSoFar(List<Repayment> emis) =>
+      emis.fold(0.0, (s, r) => s + (r.principalPortion ?? 0));
 
   void deleteLoan(String id) {
     _repository.delete(id);

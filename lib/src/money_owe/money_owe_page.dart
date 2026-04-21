@@ -321,8 +321,32 @@ class _DebtItemCard extends StatelessWidget {
               IconButton(
                 icon: Icon(Icons.delete_outline,
                     size: 20, color: Colors.grey.shade400),
-                onPressed: () =>
-                    context.read<MoneyOweCubit>().deleteEntry(entry.id),
+                onPressed: () async {
+                  final cubit = context.read<MoneyOweCubit>();
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Entry'),
+                      content: Text(
+                          'Delete "${entry.personName}" entry? This cannot be undone.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                              foregroundColor: Colors.red),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    cubit.deleteEntry(entry.id);
+                  }
+                },
                 splashRadius: 20,
               ),
             ],

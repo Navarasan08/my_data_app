@@ -1266,7 +1266,31 @@ class _AddLandPageState extends State<AddLandPage> {
             top: 2,
             right: 2,
             child: InkWell(
-              onTap: () => _removePhoto(url),
+              onTap: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('Delete Photo'),
+                    content: const Text(
+                        'Remove this photo? It will also be deleted from storage.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.red),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) {
+                  _removePhoto(url);
+                }
+              },
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 padding: const EdgeInsets.all(3),

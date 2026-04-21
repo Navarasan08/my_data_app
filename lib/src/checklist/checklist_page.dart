@@ -525,8 +525,8 @@ class ChecklistDetailPage extends StatelessWidget {
                                   item: item,
                                   onToggle: () =>
                                       cubit.toggleItem(groupId, item.id),
-                                  onDelete: () =>
-                                      cubit.deleteItem(groupId, item.id),
+                                  onDelete: () => _confirmDeleteItem(
+                                      context, cubit, groupId, item),
                                 )),
                           ],
 
@@ -549,8 +549,8 @@ class ChecklistDetailPage extends StatelessWidget {
                                   item: item,
                                   onToggle: () =>
                                       cubit.toggleItem(groupId, item.id),
-                                  onDelete: () =>
-                                      cubit.deleteItem(groupId, item.id),
+                                  onDelete: () => _confirmDeleteItem(
+                                      context, cubit, groupId, item),
                                 )),
                           ],
                         ],
@@ -576,6 +576,31 @@ class ChecklistDetailPage extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeleteItem(BuildContext context, ChecklistCubit cubit,
+      String groupId, ChecklistItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Item'),
+        content: Text('Delete "${item.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      cubit.deleteItem(groupId, item.id);
+    }
   }
 
   Future<String?> _showAddItemDialog(BuildContext context) {
