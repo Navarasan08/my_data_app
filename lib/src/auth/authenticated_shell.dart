@@ -28,8 +28,10 @@ import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
 import 'package:my_data_app/src/profile_vault/repository/profile_vault_repository.dart';
 import 'package:my_data_app/src/land/cubit/land_cubit.dart';
 import 'package:my_data_app/src/land/repository/land_repository.dart';
+import 'package:my_data_app/src/events/cubit/event_cubit.dart';
+import 'package:my_data_app/src/events/repository/event_repository.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
-import 'package:my_data_app/src/dashboard_page.dart';
+import 'package:my_data_app/src/shell/main_shell.dart';
 
 class AuthenticatedShell extends StatefulWidget {
   final String uid;
@@ -55,6 +57,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreMedicalRepository _medicalRepo;
   late final FirestoreProfileVaultRepository _vaultRepo;
   late final FirestoreLandRepository _landRepo;
+  late final FirestoreEventRepository _eventRepo;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -75,6 +78,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _medicalRepo = FirestoreMedicalRepository(uid: widget.uid);
     _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
     _landRepo = FirestoreLandRepository(uid: widget.uid);
+    _eventRepo = FirestoreEventRepository(uid: widget.uid);
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
   }
@@ -98,6 +102,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _medicalRepo.init(),
         _vaultRepo.init(),
         _landRepo.init(),
+        _eventRepo.init(),
         _dashboardSettingsCubit.load(),
       ]);
       if (mounted) setState(() => _initialized = true);
@@ -169,9 +174,10 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => MedicalCubit(_medicalRepo)),
         BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
         BlocProvider(create: (_) => LandCubit(_landRepo)),
+        BlocProvider(create: (_) => EventCubit(_eventRepo)),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
-      child: const DashboardPage(),
+      child: const MainShell(),
     );
   }
 }
