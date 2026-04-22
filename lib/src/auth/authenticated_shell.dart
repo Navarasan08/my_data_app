@@ -30,6 +30,11 @@ import 'package:my_data_app/src/land/cubit/land_cubit.dart';
 import 'package:my_data_app/src/land/repository/land_repository.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/repository/event_repository.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
+import 'package:my_data_app/src/notifications/repository/notification_repository.dart';
+import 'package:my_data_app/src/notifications/notification_service.dart';
+import 'package:my_data_app/src/notifications/reminder_sweeper.dart';
+import 'package:my_data_app/src/schedule/schedule_reminder_source.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/main_shell.dart';
 
@@ -58,6 +63,11 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreProfileVaultRepository _vaultRepo;
   late final FirestoreLandRepository _landRepo;
   late final FirestoreEventRepository _eventRepo;
+  late final FirestoreNotificationRepository _notificationRepo;
+  late final LocalNotificationService _notificationService;
+  late final NotificationCubit _notificationCubit;
+  late final ScheduleCubit _scheduleCubit;
+  ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
 
@@ -79,8 +89,16 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
     _landRepo = FirestoreLandRepository(uid: widget.uid);
     _eventRepo = FirestoreEventRepository(uid: widget.uid);
+    _notificationRepo = FirestoreNotificationRepository(uid: widget.uid);
+    _notificationService = LocalNotificationService();
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _initRepos();
+  }
+
+  @override
+  void dispose() {
+    _reminderSweeper?.stop();
+    super.dispose();
   }
 
   String? _initError;
@@ -103,8 +121,23 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _vaultRepo.init(),
         _landRepo.init(),
         _eventRepo.init(),
+        _notificationRepo.init(),
+        _notificationService.init(),
         _dashboardSettingsCubit.load(),
       ]);
+      // Build top-level cubits and start the reminder sweeper now that data
+      // is loaded.
+      _notificationCubit =
+          NotificationCubit(_notificationRepo, _notificationService);
+      _scheduleCubit = ScheduleCubit(_scheduleRepo);
+      // Generic reminder pipeline. Add new modules by appending another
+      // ReminderSource to the `sources` list — no other wiring needed.
+      _reminderSweeper = ReminderSweeper(
+        notificationCubit: _notificationCubit,
+        sources: [
+          ScheduleReminderSource(scheduleCubit: _scheduleCubit),
+        ],
+      )..start();
       if (mounted) setState(() => _initialized = true);
     } catch (e) {
       if (mounted) setState(() => _initError = e.toString());
@@ -166,7 +199,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => ChecklistCubit(_checklistRepo)),
         BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
         BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
-        BlocProvider(create: (_) => ScheduleCubit(_scheduleRepo)),
+        BlocProvider.value(value: _scheduleCubit),
         BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
         BlocProvider(create: (_) => LoanCubit(_loanRepo)),
         BlocProvider(create: (_) => GoalCubit(_goalRepo)),
@@ -175,9 +208,10 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
         BlocProvider(create: (_) => LandCubit(_landRepo)),
         BlocProvider(create: (_) => EventCubit(_eventRepo)),
+        BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
-      child: const MainShell(),
+      child: MainShell(notificationService: _notificationService),
     );
   }
 }

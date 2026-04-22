@@ -36,9 +36,53 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     emit(state.copyWith(entries: _repository.getAll()));
   }
 
-  void toggleComplete(String id) {
+  /// Toggle completion for a single occurrence date (per-task model).
+  void toggleCompleteOn(String id, DateTime date) {
     final entry = state.entries.firstWhere((e) => e.id == id);
-    updateEntry(entry.copyWith(isCompleted: !entry.isCompleted));
+    final d = DateTime(date.year, date.month, date.day);
+    final list = List<DateTime>.from(entry.completedDates);
+    if (entry.isCompletedOn(d)) {
+      list.removeWhere(
+          (c) => DateTime(c.year, c.month, c.day) == d);
+    } else {
+      list.add(d);
+    }
+    updateEntry(entry.copyWith(completedDates: list));
+  }
+
+  /// Skip (i.e. "delete") a single occurrence — adds it to skippedDates so
+  /// the recurrence engine no longer expands that date.
+  void skipOccurrenceOn(String id, DateTime date) {
+    final entry = state.entries.firstWhere((e) => e.id == id);
+    final d = DateTime(date.year, date.month, date.day);
+    if (entry.isSkippedOn(d)) return;
+    final list = [...entry.skippedDates, d];
+    // Also remove any completion record for that date
+    final completed = entry.completedDates
+        .where((c) => DateTime(c.year, c.month, c.day) != d)
+        .toList();
+    updateEntry(entry.copyWith(
+      skippedDates: list,
+      completedDates: completed,
+    ));
+  }
+
+  /// Edit a single occurrence: skip the original at [date] and create a new
+  /// one-time entry derived from [edited]. Returns the new entry id.
+  String splitOccurrenceAt(String id, DateTime date, ScheduleEntry edited) {
+    skipOccurrenceOn(id, date);
+    final newId = '${id}_split_${DateTime.now().millisecondsSinceEpoch}';
+    final newEntry = edited.copyWith(
+      id: newId,
+      repeatMode: RecurrenceMode.none,
+      clearCustomDays: true,
+      clearInterval: true,
+      clearEndDate: true,
+      completedDates: const [],
+      skippedDates: const [],
+    );
+    addEntry(newEntry);
+    return newId;
   }
 
   void changeDate(DateTime date) {

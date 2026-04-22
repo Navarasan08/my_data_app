@@ -5,6 +5,10 @@ import 'package:my_data_app/src/schedule/model/schedule_model.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_state.dart';
 import 'package:my_data_app/src/schedule/schedule_settings_page.dart';
+import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
+
+/// Scope of an edit/delete action on a recurring schedule.
+enum _Scope { thisOccurrence, series }
 
 class SchedulePage extends StatelessWidget {
   const SchedulePage({Key? key}) : super(key: key);
@@ -29,6 +33,71 @@ class SchedulePage extends StatelessWidget {
     if (diff == 0) return Colors.orange;
     if (diff <= 3) return Colors.amber[700]!;
     return Colors.green;
+  }
+
+  /// Delete handler. For recurring entries, prompt: this occurrence vs entire
+  /// series. For one-time entries, just confirm and delete.
+  Future<void> _onDelete(BuildContext context, ScheduleCubit cubit,
+      ScheduleEntry entry, DateTime date) async {
+    if (!entry.isRecurring) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Schedule'),
+          content: Text('Delete "${entry.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed == true) cubit.deleteEntry(entry.id);
+      return;
+    }
+
+    final scope = await _scopeDialog(context, action: 'Delete', entry: entry);
+    if (scope == null) return;
+
+    if (scope == _Scope.series) {
+      cubit.deleteEntry(entry.id);
+    } else {
+      cubit.skipOccurrenceOn(entry.id, date);
+    }
+  }
+
+  Future<_Scope?> _scopeDialog(BuildContext context,
+      {required String action, required ScheduleEntry entry}) {
+    return showDialog<_Scope>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('$action "${entry.title}"'),
+        content: const Text(
+          'This is a recurring schedule. What would you like to do?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _Scope.thisOccurrence),
+            child: const Text('This occurrence'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, _Scope.series),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Entire series'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -203,52 +272,20 @@ class SchedulePage extends StatelessWidget {
                                     occurrenceDate: o.date,
                                     daysLeftLabel: _daysLeftLabel(o.date),
                                     daysLeftColor: _daysLeftColor(o.date),
-                                    onToggle: () =>
-                                        cubit.toggleComplete(o.entry.id),
-                                    onEdit: () async {
-                                      final edited = await Navigator.push<
-                                          ScheduleEntry>(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => BlocProvider.value(
-                                            value: cubit,
-                                            child: AddSchedulePage(
-                                                entry: o.entry),
-                                          ),
+                                    onToggle: () => cubit
+                                        .toggleCompleteOn(o.entry.id, o.date),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: cubit,
+                                          child: ScheduleDetailPage(
+                                              entryId: o.entry.id),
                                         ),
-                                      );
-                                      if (edited != null) {
-                                        cubit.updateEntry(edited);
-                                      }
-                                    },
-                                    onDelete: () async {
-                                      final confirmed =
-                                          await showDialog<bool>(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: const Text('Delete Schedule'),
-                                          content: Text(
-                                              'Delete "${o.entry.title}"?'),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, false),
-                                              child: const Text('Cancel'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx, true),
-                                              style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red),
-                                              child: const Text('Delete'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                      if (confirmed == true) {
-                                        cubit.deleteEntry(o.entry.id);
-                                      }
-                                    },
+                                      ),
+                                    ),
+                                    onLongPress: () => _onDelete(
+                                        context, cubit, o.entry, o.date),
                                   )),
                             ],
                           );
@@ -327,8 +364,8 @@ class _ScheduleItem extends StatelessWidget {
   final String daysLeftLabel;
   final Color daysLeftColor;
   final VoidCallback onToggle;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const _ScheduleItem({
     required this.entry,
@@ -336,156 +373,203 @@ class _ScheduleItem extends StatelessWidget {
     required this.daysLeftLabel,
     required this.daysLeftColor,
     required this.onToggle,
-    required this.onEdit,
-    required this.onDelete,
+    required this.onTap,
+    required this.onLongPress,
   });
 
   @override
   Widget build(BuildContext context) {
     final cat = entry.category;
-    final dateStr = DateFormat('EEE, d MMM').format(occurrenceDate);
+    final dayOfWeek = DateFormat('EEE').format(occurrenceDate);
+    final dayNum = DateFormat('d').format(occurrenceDate);
+    final monthShort = DateFormat('MMM').format(occurrenceDate);
     final repeatLabel = entry.repeatLabel();
     final endLabel = entry.endLabel();
+    final isDone = entry.isCompletedOn(occurrenceDate);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey[200]!),
       ),
       child: InkWell(
-        onTap: onEdit,
-        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(10),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GestureDetector(
-                onTap: onToggle,
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: entry.isCompleted
-                        ? cat.color.withValues(alpha: 0.15)
-                        : Colors.transparent,
-                    border: Border.all(
-                      color:
-                          entry.isCompleted ? cat.color : Colors.grey[300]!,
-                      width: 2,
+              // Toggle (circle)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: GestureDetector(
+                  onTap: onToggle,
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isDone
+                          ? cat.color.withValues(alpha: 0.15)
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: isDone ? cat.color : Colors.grey[300]!,
+                        width: 2,
+                      ),
                     ),
+                    child: isDone
+                        ? Icon(Icons.check_rounded,
+                            size: 12, color: cat.color)
+                        : null,
                   ),
-                  child: entry.isCompleted
-                      ? Icon(Icons.check_rounded,
-                          size: 14, color: cat.color)
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 64,
-                child: Text(
-                  dateStr,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                  ),
-                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                width: 4,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: cat.color,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
+
+              // Date stack (compact)
+              SizedBox(
+                width: 36,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            entry.title,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              decoration: entry.isCompleted
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                              color: entry.isCompleted
-                                  ? Colors.grey[400]
-                                  : Colors.black87,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (entry.isRecurring) ...[
-                          const SizedBox(width: 4),
-                          Icon(Icons.repeat_rounded,
-                              size: 12, color: Colors.grey[500]),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 2),
                     Text(
-                      repeatLabel.isNotEmpty
-                          ? '$repeatLabel$endLabel'
-                          : cat.label,
+                      dayOfWeek,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
                         color: Colors.grey[500],
+                        letterSpacing: 0.4,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      dayNum,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: isDone ? Colors.grey[400] : cat.color,
+                        height: 1.0,
+                      ),
+                    ),
+                    Text(
+                      monthShort.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[500],
+                        letterSpacing: 0.4,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 6),
-              if (!entry.isCompleted)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: daysLeftColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    daysLeftLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: daysLeftColor,
-                    ),
-                  ),
-                )
-              else
-                Icon(Icons.check_circle_rounded,
-                    size: 18, color: Colors.green[400]),
-              const SizedBox(width: 6),
-              InkWell(
-                onTap: onDelete,
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 14, color: Colors.red[300]),
+              const SizedBox(width: 10),
+
+              // Color bar
+              Container(
+                width: 3,
+                height: 38,
+                margin: const EdgeInsets.only(top: 1),
+                decoration: BoxDecoration(
+                  color: cat.color.withValues(alpha: isDone ? 0.3 : 0.9),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
+              const SizedBox(width: 10),
+
+              // Title + meta
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title — full, up to 2 lines
+                    Text(
+                      entry.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                        decoration:
+                            isDone ? TextDecoration.lineThrough : null,
+                        color: isDone ? Colors.grey[400] : Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    // Meta row: repeat label, completed count, days-left chip
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        if (repeatLabel.isNotEmpty)
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.repeat_rounded,
+                                  size: 11, color: Colors.grey[500]),
+                              const SizedBox(width: 3),
+                              Text(
+                                repeatLabel + endLabel,
+                                style: TextStyle(
+                                    fontSize: 11, color: Colors.grey[600]),
+                              ),
+                            ],
+                          )
+                        else
+                          Text(
+                            cat.label,
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey[600]),
+                          ),
+                        if (entry.isRecurring && entry.completedCount > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: cat.color.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${entry.completedCount} done',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
+                                color: cat.color,
+                              ),
+                            ),
+                          ),
+                        if (!isDone)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: daysLeftColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              daysLeftLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: daysLeftColor,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Trailing chevron (subtle affordance for tap → detail)
+              const SizedBox(width: 4),
+              Icon(Icons.chevron_right_rounded,
+                  size: 18, color: Colors.grey[400]),
             ],
           ),
         ),
@@ -515,7 +599,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
   late ScheduleCategory _category;
   late DateTime _startDate;
   DateTime? _endDate;
-  RepeatMode _repeatMode = RepeatMode.none;
+  RecurrenceMode _repeatMode = RecurrenceMode.none;
   List<int> _customDays = [];
 
   bool get _isEditing => widget.entry != null;
@@ -553,13 +637,13 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
   }
 
   bool get _needsInterval =>
-      _repeatMode == RepeatMode.everyNDays ||
-      _repeatMode == RepeatMode.everyNWeeks ||
-      _repeatMode == RepeatMode.everyNMonths;
+      _repeatMode == RecurrenceMode.everyNDays ||
+      _repeatMode == RecurrenceMode.everyNWeeks ||
+      _repeatMode == RecurrenceMode.everyNMonths;
 
   bool get _needsCustomDays =>
-      _repeatMode == RepeatMode.weeklyOnDays ||
-      _repeatMode == RepeatMode.monthlyOnDays;
+      _repeatMode == RecurrenceMode.weeklyOnDays ||
+      _repeatMode == RecurrenceMode.monthlyOnDays;
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
@@ -583,7 +667,9 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
       startDate: _startDate,
       endDate: _endDate,
       category: _category,
-      isCompleted: widget.entry?.isCompleted ?? false,
+      // Preserve completion / skip history when editing the series
+      completedDates: widget.entry?.completedDates ?? const [],
+      skippedDates: widget.entry?.skippedDates ?? const [],
       repeatMode: _repeatMode,
       customDays: _needsCustomDays ? List<int>.from(_customDays) : null,
       interval: _needsInterval ? int.tryParse(_intervalController.text) : null,
@@ -732,7 +818,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: RepeatMode.values.map((m) {
+                  children: RecurrenceMode.values.map((m) {
                     final selected = _repeatMode == m;
                     return ChoiceChip(
                       label: Text(m.label,
@@ -777,7 +863,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ],
 
                 // Weekly days selector
-                if (_repeatMode == RepeatMode.weeklyOnDays) ...[
+                if (_repeatMode == RecurrenceMode.weeklyOnDays) ...[
                   const SizedBox(height: 12),
                   Text('Days of week *',
                       style: TextStyle(
@@ -823,7 +909,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ],
 
                 // Monthly days selector
-                if (_repeatMode == RepeatMode.monthlyOnDays) ...[
+                if (_repeatMode == RecurrenceMode.monthlyOnDays) ...[
                   const SizedBox(height: 12),
                   Text('Days of month *',
                       style: TextStyle(
@@ -892,9 +978,9 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
   String _intervalHint() {
     switch (_repeatMode) {
-      case RepeatMode.everyNDays: return 'Every N days';
-      case RepeatMode.everyNWeeks: return 'Every N weeks';
-      case RepeatMode.everyNMonths: return 'Every N months';
+      case RecurrenceMode.everyNDays: return 'Every N days';
+      case RecurrenceMode.everyNWeeks: return 'Every N weeks';
+      case RecurrenceMode.everyNMonths: return 'Every N months';
       default: return 'N';
     }
   }
