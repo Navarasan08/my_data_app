@@ -141,7 +141,7 @@ class ScheduleCategory {
   int get hashCode => id.hashCode;
 }
 
-enum RepeatMode {
+enum RecurrenceMode {
   none,              // one-time
   weeklyOnDays,      // repeat on selected weekdays each week (customDays = 1..7)
   monthlyOnDays,     // repeat on selected days of month (customDays = 1..31)
@@ -150,26 +150,26 @@ enum RepeatMode {
   everyNMonths,      // every N months
 }
 
-extension RepeatModeExt on RepeatMode {
+extension RecurrenceModeExt on RecurrenceMode {
   String get label {
     switch (this) {
-      case RepeatMode.none: return 'One-time';
-      case RepeatMode.weeklyOnDays: return 'Weekly on days';
-      case RepeatMode.monthlyOnDays: return 'Monthly on days';
-      case RepeatMode.everyNDays: return 'Every N days';
-      case RepeatMode.everyNWeeks: return 'Every N weeks';
-      case RepeatMode.everyNMonths: return 'Every N months';
+      case RecurrenceMode.none: return 'One-time';
+      case RecurrenceMode.weeklyOnDays: return 'Weekly on days';
+      case RecurrenceMode.monthlyOnDays: return 'Monthly on days';
+      case RecurrenceMode.everyNDays: return 'Every N days';
+      case RecurrenceMode.everyNWeeks: return 'Every N weeks';
+      case RecurrenceMode.everyNMonths: return 'Every N months';
     }
   }
 
   String get shortLabel {
     switch (this) {
-      case RepeatMode.none: return 'Once';
-      case RepeatMode.weeklyOnDays: return 'Weekly';
-      case RepeatMode.monthlyOnDays: return 'Monthly';
-      case RepeatMode.everyNDays: return 'Days';
-      case RepeatMode.everyNWeeks: return 'Weeks';
-      case RepeatMode.everyNMonths: return 'Months';
+      case RecurrenceMode.none: return 'Once';
+      case RecurrenceMode.weeklyOnDays: return 'Weekly';
+      case RecurrenceMode.monthlyOnDays: return 'Monthly';
+      case RecurrenceMode.everyNDays: return 'Days';
+      case RecurrenceMode.everyNWeeks: return 'Weeks';
+      case RecurrenceMode.everyNMonths: return 'Months';
     }
   }
 }
@@ -181,10 +181,13 @@ class ScheduleEntry {
   final DateTime startDate;        // date only
   final DateTime? endDate;         // optional; null = ongoing
   final ScheduleCategory category;
-  final bool isCompleted;
+
+  // Per-occurrence completion / skip lists. Stored as date-only.
+  final List<DateTime> completedDates;
+  final List<DateTime> skippedDates;
 
   // Recurrence
-  final RepeatMode repeatMode;
+  final RecurrenceMode repeatMode;
   final List<int>? customDays;     // weekly: 1..7; monthly: 1..31
   final int? interval;             // for everyN modes
 
@@ -195,13 +198,33 @@ class ScheduleEntry {
     required this.startDate,
     this.endDate,
     required this.category,
-    this.isCompleted = false,
-    this.repeatMode = RepeatMode.none,
+    this.completedDates = const [],
+    this.skippedDates = const [],
+    this.repeatMode = RecurrenceMode.none,
     this.customDays,
     this.interval,
   });
 
-  bool get isRecurring => repeatMode != RepeatMode.none;
+  bool get isRecurring => repeatMode != RecurrenceMode.none;
+
+  /// True if this specific date has been marked completed.
+  bool isCompletedOn(DateTime date) {
+    final d = _dateOnly(date);
+    return completedDates.any((c) => _dateOnly(c) == d);
+  }
+
+  /// True if this specific date has been "deleted/skipped" from the series.
+  bool isSkippedOn(DateTime date) {
+    final d = _dateOnly(date);
+    return skippedDates.any((s) => _dateOnly(s) == d);
+  }
+
+  /// Backward-compat: for non-recurring entries, treat the start date as the
+  /// single occurrence and check its completion status.
+  bool get isCompleted => isCompletedOn(startDate);
+
+  /// Total completed occurrences so far.
+  int get completedCount => completedDates.length;
 
   List<DateTime> occurrencesInRange(DateTime rangeStart, DateTime rangeEnd) {
     final result = <DateTime>[];
@@ -209,8 +232,10 @@ class ScheduleEntry {
     final rangeStartD = _dateOnly(rangeStart);
     final rangeEndD = _dateOnly(rangeEnd);
 
-    if (repeatMode == RepeatMode.none) {
-      if (!start.isBefore(rangeStartD) && !start.isAfter(rangeEndD)) {
+    if (repeatMode == RecurrenceMode.none) {
+      if (!start.isBefore(rangeStartD) &&
+          !start.isAfter(rangeEndD) &&
+          !isSkippedOn(start)) {
         result.add(start);
       }
       return result;
@@ -226,65 +251,67 @@ class ScheduleEntry {
 
     int guard = 0;
     switch (repeatMode) {
-      case RepeatMode.none:
+      case RecurrenceMode.none:
         break;
-      case RepeatMode.weeklyOnDays:
+      case RecurrenceMode.weeklyOnDays:
         {
           if (customDays == null || customDays!.isEmpty) return result;
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
             if (customDays!.contains(cursor.weekday) &&
-                !cursor.isBefore(rangeStartD)) {
+                !cursor.isBefore(rangeStartD) &&
+                !isSkippedOn(cursor)) {
               result.add(cursor);
             }
             cursor = cursor.add(const Duration(days: 1));
           }
         }
         break;
-      case RepeatMode.monthlyOnDays:
+      case RecurrenceMode.monthlyOnDays:
         {
           if (customDays == null || customDays!.isEmpty) return result;
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
             if (customDays!.contains(cursor.day) &&
-                !cursor.isBefore(rangeStartD)) {
+                !cursor.isBefore(rangeStartD) &&
+                !isSkippedOn(cursor)) {
               result.add(cursor);
             }
             cursor = cursor.add(const Duration(days: 1));
           }
         }
         break;
-      case RepeatMode.everyNDays:
+      case RecurrenceMode.everyNDays:
         {
           final n = (interval ?? 1).clamp(1, 3650);
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
             cursor = cursor.add(Duration(days: n));
           }
         }
         break;
-      case RepeatMode.everyNWeeks:
+      case RecurrenceMode.everyNWeeks:
         {
           final n = (interval ?? 1).clamp(1, 520);
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
             cursor = cursor.add(Duration(days: 7 * n));
           }
         }
         break;
-      case RepeatMode.everyNMonths:
+      case RecurrenceMode.everyNMonths:
         {
           final n = (interval ?? 1).clamp(1, 120);
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
             cursor = DateTime(cursor.year, cursor.month + n, cursor.day);
           }
         }
@@ -296,9 +323,9 @@ class ScheduleEntry {
 
   String repeatLabel() {
     switch (repeatMode) {
-      case RepeatMode.none:
+      case RecurrenceMode.none:
         return '';
-      case RepeatMode.weeklyOnDays:
+      case RecurrenceMode.weeklyOnDays:
         {
           if (customDays == null || customDays!.isEmpty) return 'Weekly';
           const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -306,23 +333,23 @@ class ScheduleEntry {
           final parts = sorted.map((d) => names[(d - 1).clamp(0, 6)]).toList();
           return 'Weekly • ${parts.join(", ")}';
         }
-      case RepeatMode.monthlyOnDays:
+      case RecurrenceMode.monthlyOnDays:
         {
           if (customDays == null || customDays!.isEmpty) return 'Monthly';
           final sorted = List<int>.from(customDays!)..sort();
           return 'Monthly • ${sorted.join(", ")}';
         }
-      case RepeatMode.everyNDays:
+      case RecurrenceMode.everyNDays:
         {
           final n = interval ?? 1;
           return n == 1 ? 'Daily' : 'Every $n days';
         }
-      case RepeatMode.everyNWeeks:
+      case RecurrenceMode.everyNWeeks:
         {
           final n = interval ?? 1;
           return n == 1 ? 'Weekly' : 'Every $n weeks';
         }
-      case RepeatMode.everyNMonths:
+      case RecurrenceMode.everyNMonths:
         {
           final n = interval ?? 1;
           return n == 1 ? 'Monthly' : 'Every $n months';
@@ -343,8 +370,9 @@ class ScheduleEntry {
     DateTime? startDate,
     DateTime? endDate,
     ScheduleCategory? category,
-    bool? isCompleted,
-    RepeatMode? repeatMode,
+    List<DateTime>? completedDates,
+    List<DateTime>? skippedDates,
+    RecurrenceMode? repeatMode,
     List<int>? customDays,
     int? interval,
     bool clearEndDate = false,
@@ -358,7 +386,8 @@ class ScheduleEntry {
       startDate: startDate ?? this.startDate,
       endDate: clearEndDate ? null : (endDate ?? this.endDate),
       category: category ?? this.category,
-      isCompleted: isCompleted ?? this.isCompleted,
+      completedDates: completedDates ?? this.completedDates,
+      skippedDates: skippedDates ?? this.skippedDates,
       repeatMode: repeatMode ?? this.repeatMode,
       customDays: clearCustomDays ? null : (customDays ?? this.customDays),
       interval: clearInterval ? null : (interval ?? this.interval),
@@ -373,7 +402,10 @@ class ScheduleEntry {
         'endDate': endDate?.toIso8601String(),
         // Persist category by id so custom categories round-trip correctly
         'category': category.id,
-        'isCompleted': isCompleted,
+        'completedDates':
+            completedDates.map((d) => d.toIso8601String()).toList(),
+        'skippedDates':
+            skippedDates.map((d) => d.toIso8601String()).toList(),
         'repeatMode': repeatMode.index,
         'customDays': customDays,
         'interval': interval,
@@ -387,18 +419,18 @@ class ScheduleEntry {
         (json['startDate'] ?? json['dateTime']) as String?;
     final endRaw = (json['endDate'] ?? json['endTime']) as String?;
 
-    RepeatMode mode = RepeatMode.none;
+    RecurrenceMode mode = RecurrenceMode.none;
     if (json['repeatMode'] != null) {
-      mode = RepeatMode.values[(json['repeatMode'] as int)
-          .clamp(0, RepeatMode.values.length - 1)];
+      mode = RecurrenceMode.values[(json['repeatMode'] as int)
+          .clamp(0, RecurrenceMode.values.length - 1)];
     } else if (json['repeatType'] != null) {
       final oldIdx = json['repeatType'] as int;
       switch (oldIdx) {
-        case 1: mode = RepeatMode.everyNDays; break;
-        case 2: mode = RepeatMode.weeklyOnDays; break;
-        case 3: mode = RepeatMode.monthlyOnDays; break;
-        case 4: mode = RepeatMode.monthlyOnDays; break;
-        default: mode = RepeatMode.none;
+        case 1: mode = RecurrenceMode.everyNDays; break;
+        case 2: mode = RecurrenceMode.weeklyOnDays; break;
+        case 3: mode = RecurrenceMode.monthlyOnDays; break;
+        case 4: mode = RecurrenceMode.monthlyOnDays; break;
+        default: mode = RecurrenceMode.none;
       }
     }
 
@@ -413,6 +445,23 @@ class ScheduleEntry {
       category = ScheduleCategory.other;
     }
 
+    // Backward-compat: legacy entries used a single isCompleted bool. Map it
+    // to a single completedDates entry on the start date so old data still
+    // shows as "done".
+    final legacyCompleted = json['isCompleted'] as bool? ?? false;
+    final completedRaw =
+        (json['completedDates'] as List<dynamic>?)?.cast<String>();
+    final skippedRaw =
+        (json['skippedDates'] as List<dynamic>?)?.cast<String>();
+
+    final completedDates = completedRaw != null
+        ? completedRaw.map(DateTime.parse).toList()
+        : (legacyCompleted && startRaw != null
+            ? [DateTime.parse(startRaw)]
+            : <DateTime>[]);
+    final skippedDates =
+        skippedRaw != null ? skippedRaw.map(DateTime.parse).toList() : <DateTime>[];
+
     return ScheduleEntry(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -420,7 +469,8 @@ class ScheduleEntry {
       startDate: startRaw != null ? DateTime.parse(startRaw) : DateTime.now(),
       endDate: endRaw != null ? DateTime.parse(endRaw) : null,
       category: category,
-      isCompleted: json['isCompleted'] as bool? ?? false,
+      completedDates: completedDates,
+      skippedDates: skippedDates,
       repeatMode: mode,
       customDays: (json['customDays'] as List<dynamic>?)?.cast<int>(),
       interval: json['interval'] as int?,

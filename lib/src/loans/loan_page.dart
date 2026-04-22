@@ -436,8 +436,11 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
           );
         }
 
-        final sortedRepayments = List<Repayment>.from(loan.repayments)
-          ..sort((a, b) => a.monthNumber.compareTo(b.monthNumber));
+        // Newest first for both lists.
+        final emiHistory = List<Repayment>.from(loan.emiRepayments)
+          ..sort((a, b) => b.paidDate.compareTo(a.paidDate));
+        final partHistory = List<Repayment>.from(loan.partPayments)
+          ..sort((a, b) => b.paidDate.compareTo(a.paidDate));
 
         return Scaffold(
           appBar: AppBar(
@@ -592,56 +595,14 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 ),
               ],
 
-              // Repayment history
+              // Repayment history — split into EMI history and Part Payment tabs.
               const SizedBox(height: 16),
-              const Text(
-                'Repayment History',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              _RepaymentTabs(
+                loan: loan,
+                emiHistory: emiHistory,
+                partHistory: partHistory,
+                onDelete: (r) => _confirmDeleteRepayment(context, cubit, loan, r),
               ),
-              const SizedBox(height: 8),
-              if (sortedRepayments.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'No repayments recorded yet',
-                    style: TextStyle(color: Colors.grey[500]),
-                  ),
-                )
-              else
-                ...sortedRepayments.map((r) => _RepaymentTile(
-                      repayment: r,
-                      onDelete: () async {
-                        final label = r.isPartPayment
-                            ? 'Part Payment'
-                            : 'EMI #${r.monthNumber}';
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: Text(r.isPartPayment
-                                ? 'Delete Part Payment'
-                                : 'Delete Repayment'),
-                            content: Text(
-                                'Delete $label of ₹${_fmt(r.amount)}?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          cubit.deleteRepayment(loan.id, r.id);
-                        }
-                      },
-                    )),
             ],
           ),
           floatingActionButton: loan.isClosed
@@ -655,6 +616,32 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeleteRepayment(
+      BuildContext context, LoanCubit cubit, Loan loan, Repayment r) async {
+    final label = r.isPartPayment ? 'Part Payment' : 'EMI #${r.monthNumber}';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(r.isPartPayment ? 'Delete Part Payment' : 'Delete Repayment'),
+        content: Text('Delete $label of ₹${_fmt(r.amount)}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      cubit.deleteRepayment(loan.id, r.id);
+    }
   }
 
   void _showPaymentOptions(
@@ -1119,6 +1106,140 @@ class _DashTile extends StatelessWidget {
             style: TextStyle(fontSize: 11, color: Colors.grey[500]),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RepaymentTabs extends StatefulWidget {
+  final Loan loan;
+  final List<Repayment> emiHistory;
+  final List<Repayment> partHistory;
+  final Future<void> Function(Repayment) onDelete;
+
+  const _RepaymentTabs({
+    required this.loan,
+    required this.emiHistory,
+    required this.partHistory,
+    required this.onDelete,
+  });
+
+  @override
+  State<_RepaymentTabs> createState() => _RepaymentTabsState();
+}
+
+class _RepaymentTabsState extends State<_RepaymentTabs>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: TabBar(
+            controller: _tabController,
+            labelColor: Theme.of(context).primaryColor,
+            unselectedLabelColor: Colors.grey[600],
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+            indicator: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 4,
+                ),
+              ],
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            tabs: [
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.receipt_long_rounded, size: 14),
+                    const SizedBox(width: 6),
+                    const Text('EMI History'),
+                    const SizedBox(width: 4),
+                    Text(
+                      '(${widget.emiHistory.length})',
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+              Tab(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.savings_rounded, size: 14),
+                    const SizedBox(width: 6),
+                    const Text('Part Payment'),
+                    const SizedBox(width: 4),
+                    Text(
+                      '(${widget.partHistory.length})',
+                      style: TextStyle(
+                          fontSize: 11, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 360,
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildList(widget.emiHistory, 'No EMI repayments yet'),
+              _buildList(widget.partHistory, 'No part payments yet'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildList(List<Repayment> items, String emptyMsg) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text(
+          emptyMsg,
+          style: TextStyle(color: Colors.grey[500]),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 4, bottom: 8),
+      itemCount: items.length,
+      itemBuilder: (ctx, i) => _RepaymentTile(
+        repayment: items[i],
+        onDelete: () => widget.onDelete(items[i]),
       ),
     );
   }

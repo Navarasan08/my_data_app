@@ -160,6 +160,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.green, Colors.brown],
           order: 13,
         ),
+        FeatureItem(
+          id: 'interest',
+          title: 'Interest',
+          icon: Icons.percent_rounded,
+          gradient: [Colors.amber, Colors.orange],
+          order: 14,
+        ),
       ];
 
   Future<void> load() async {
