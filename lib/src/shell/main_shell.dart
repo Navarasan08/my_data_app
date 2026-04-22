@@ -8,6 +8,12 @@ import 'package:my_data_app/src/notifications/notification_service.dart';
 import 'package:my_data_app/src/notifications/notifications_page.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
+import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
+import 'package:my_data_app/src/loans/loan_page.dart';
+import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
+import 'package:my_data_app/src/chits/chit_screen.dart';
+import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
+import 'package:my_data_app/src/checklist/checklist_page.dart';
 
 /// Top-level shell with bottom navigation: Home / My Events / Notifications.
 class MainShell extends StatefulWidget {
@@ -42,28 +48,44 @@ class _MainShellState extends State<MainShell> {
   void _routeTo(String module, String itemId, String? dateStr) {
     switch (module) {
       case 'schedule':
-        // Switch to Home tab (so back nav lands on the dashboard) then push
-        // the schedule detail page. Schedule cubit is already provided by the
-        // authenticated shell.
-        setState(() => _index = 0);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!mounted) return;
-          final scheduleCubit = context.read<ScheduleCubit>();
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: scheduleCubit,
-                child: ScheduleDetailPage(entryId: itemId),
-              ),
-            ),
-          );
-        });
+        _pushOnHome((ctx) => BlocProvider.value(
+              value: ctx.read<ScheduleCubit>(),
+              child: ScheduleDetailPage(entryId: itemId),
+            ));
         break;
-      // future modules slot in here
+      case 'loans':
+        _pushOnHome((ctx) => BlocProvider.value(
+              value: ctx.read<LoanCubit>(),
+              child: LoanDetailPage(loanId: itemId),
+            ));
+        break;
+      case 'chits':
+        _pushOnHome((ctx) => BlocProvider.value(
+              value: ctx.read<ChitCubit>(),
+              child: ChitFundDetailsPage(chitFundId: itemId),
+            ));
+        break;
+      case 'checklists':
+        _pushOnHome((ctx) => BlocProvider.value(
+              value: ctx.read<ChecklistCubit>(),
+              child: ChecklistDetailPage(groupId: itemId),
+            ));
+        break;
       default:
-        // Unknown module — just switch to notifications tab.
         setState(() => _index = 2);
     }
+  }
+
+  /// Switch to the Home tab and push a detail page on the next frame, so the
+  /// page builder can read cubits from the freshly-active context.
+  void _pushOnHome(Widget Function(BuildContext) builder) {
+    setState(() => _index = 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => builder(context)),
+      );
+    });
   }
 
   @override

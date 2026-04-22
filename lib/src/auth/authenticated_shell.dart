@@ -35,6 +35,9 @@ import 'package:my_data_app/src/notifications/repository/notification_repository
 import 'package:my_data_app/src/notifications/notification_service.dart';
 import 'package:my_data_app/src/notifications/reminder_sweeper.dart';
 import 'package:my_data_app/src/schedule/schedule_reminder_source.dart';
+import 'package:my_data_app/src/loans/loan_reminder_source.dart';
+import 'package:my_data_app/src/chits/chit_reminder_source.dart';
+import 'package:my_data_app/src/checklist/checklist_reminder_source.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/main_shell.dart';
 
@@ -67,6 +70,9 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final LocalNotificationService _notificationService;
   late final NotificationCubit _notificationCubit;
   late final ScheduleCubit _scheduleCubit;
+  late final LoanCubit _loanCubit;
+  late final ChitCubit _chitCubit;
+  late final ChecklistCubit _checklistCubit;
   ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   bool _initialized = false;
@@ -130,12 +136,18 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _notificationCubit =
           NotificationCubit(_notificationRepo, _notificationService);
       _scheduleCubit = ScheduleCubit(_scheduleRepo);
+      _loanCubit = LoanCubit(_loanRepo);
+      _chitCubit = ChitCubit(_chitRepo);
+      _checklistCubit = ChecklistCubit(_checklistRepo);
       // Generic reminder pipeline. Add new modules by appending another
       // ReminderSource to the `sources` list — no other wiring needed.
       _reminderSweeper = ReminderSweeper(
         notificationCubit: _notificationCubit,
         sources: [
           ScheduleReminderSource(scheduleCubit: _scheduleCubit),
+          LoanReminderSource(cubit: _loanCubit),
+          ChitReminderSource(cubit: _chitCubit),
+          ChecklistReminderSource(cubit: _checklistCubit),
         ],
       )..start();
       if (mounted) setState(() => _initialized = true);
@@ -195,13 +207,13 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       providers: [
         BlocProvider(create: (_) => BillCubit(_billRepo)),
         BlocProvider(create: (_) => VehicleCubit(_vehicleRepo)),
-        BlocProvider(create: (_) => ChitCubit(_chitRepo)),
-        BlocProvider(create: (_) => ChecklistCubit(_checklistRepo)),
+        BlocProvider.value(value: _chitCubit),
+        BlocProvider.value(value: _checklistCubit),
         BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
         BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
         BlocProvider.value(value: _scheduleCubit),
         BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
-        BlocProvider(create: (_) => LoanCubit(_loanRepo)),
+        BlocProvider.value(value: _loanCubit),
         BlocProvider(create: (_) => GoalCubit(_goalRepo)),
         BlocProvider(create: (_) => MoneyOweCubit(_moneyOweRepo)),
         BlocProvider(create: (_) => MedicalCubit(_medicalRepo)),
