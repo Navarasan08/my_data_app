@@ -98,7 +98,21 @@ class _MainShellState extends State<MainShell> {
       ),
     ];
 
-    return Scaffold(
+    // Intercept the system / browser back button.
+    //   * If the user is on a non-Home tab → switch to Home (don't exit).
+    //   * If on Home and at the root route → swallow the pop (prevents the
+    //     "blank page" on web when the browser tries to navigate past the
+    //     app's first history entry).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_index != 0) {
+          setState(() => _index = 0);
+        }
+        // else: silently absorb the pop, keeping the user inside the app.
+      },
+      child: Scaffold(
       body: IndexedStack(
         index: _index,
         children: pages,
@@ -136,6 +150,7 @@ class _MainShellState extends State<MainShell> {
             ],
           );
         },
+      ),
       ),
     );
   }
