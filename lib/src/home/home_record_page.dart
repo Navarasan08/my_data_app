@@ -101,7 +101,7 @@ class HomeRecordPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${cubit.currencySymbol}${displayTotal.toStringAsFixed(0)}',
+                                cubit.formatAmount(displayTotal),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -122,7 +122,7 @@ class HomeRecordPage extends StatelessWidget {
                       ),
                     ),
 
-                  // Category Filter Chips
+                  // Category Filter Chips (multi-select) + filter icon
                   Center(
                     child: ConstrainedBox(
                       constraints:
@@ -140,9 +140,9 @@ class HomeRecordPage extends StatelessWidget {
                                 label: const Text('All',
                                     style: TextStyle(fontSize: 12)),
                                 selected:
-                                    state.selectedCategory == null,
+                                    state.selectedCategoryIds.isEmpty,
                                 onSelected: (_) =>
-                                    cubit.setCategory(null),
+                                    cubit.clearCategoryFilter(),
                                 selectedColor: Colors.green[100],
                                 showCheckmark: false,
                                 visualDensity: VisualDensity.compact,
@@ -153,8 +153,9 @@ class HomeRecordPage extends StatelessWidget {
                               ),
                             ),
                             ...cubit.allCategories.map((cat) {
-                              final isSelected =
-                                  state.selectedCategory == cat;
+                              final isSelected = state
+                                  .selectedCategoryIds
+                                  .contains(cat.id);
                               return Padding(
                                 padding:
                                     const EdgeInsets.only(right: 6),
@@ -166,9 +167,7 @@ class HomeRecordPage extends StatelessWidget {
                                           fontSize: 12)),
                                   selected: isSelected,
                                   onSelected: (_) =>
-                                      cubit.setCategory(
-                                    isSelected ? null : cat,
-                                  ),
+                                      cubit.toggleCategory(cat),
                                   selectedColor: cat.color
                                       .withValues(alpha: 0.2),
                                   showCheckmark: false,
@@ -180,6 +179,20 @@ class HomeRecordPage extends StatelessWidget {
                                 ),
                               );
                             }),
+                            // Trailing multi-select filter icon
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 4, right: 6, top: 4, bottom: 4),
+                              child: _FilterIconButton(
+                                activeCount:
+                                    state.selectedCategoryIds.length,
+                                onTap: () => _openMultiSelectSheet(
+                                  context,
+                                  cubit,
+                                  state.selectedCategoryIds,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -200,8 +213,8 @@ class HomeRecordPage extends StatelessWidget {
                                     color: Colors.grey[300]),
                                 const SizedBox(height: 12),
                                 Text(
-                                  state.selectedCategory != null
-                                      ? 'No ${state.selectedCategory!.displayName} records'
+                                  state.selectedCategoryIds.isNotEmpty
+                                      ? 'No records for the selected categories'
                                       : 'No records yet',
                                   style: TextStyle(
                                     fontSize: 14,
@@ -311,7 +324,7 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${cubit.currencySymbol}${monthTotal.toStringAsFixed(0)}',
+                    cubit.formatAmount(monthTotal),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -420,7 +433,7 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${cubit.currencySymbol}${weekTotal.toStringAsFixed(0)}',
+                    cubit.formatAmount(weekTotal),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
@@ -480,6 +493,197 @@ class HomeRecordPage extends StatelessWidget {
           cubit.deleteRecord(record.id);
         }
       },
+    );
+  }
+
+  /// Open a multi-select bottom sheet listing every category with checkboxes.
+  /// Result is committed only when the user taps "Apply" — gives a clear
+  /// commit step compared to chip-tap toggling.
+  Future<void> _openMultiSelectSheet(
+    BuildContext context,
+    HomeRecordCubit cubit,
+    Set<String> initial,
+  ) async {
+    final categories = cubit.allCategories;
+    final selected = Set<String>.from(initial);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(builder: (ctx, setSt) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            expand: false,
+            builder: (_, scrollController) => Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_list_rounded,
+                          size: 18, color: Colors.grey[700]),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Filter by category',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: selected.isEmpty
+                            ? null
+                            : () => setSt(() => selected.clear()),
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: categories.length,
+                    itemBuilder: (_, i) {
+                      final cat = categories[i];
+                      final checked = selected.contains(cat.id);
+                      return CheckboxListTile(
+                        dense: true,
+                        controlAffinity:
+                            ListTileControlAffinity.trailing,
+                        value: checked,
+                        onChanged: (v) {
+                          setSt(() {
+                            if (v == true) {
+                              selected.add(cat.id);
+                            } else {
+                              selected.remove(cat.id);
+                            }
+                          });
+                        },
+                        title: Row(
+                          children: [
+                            Icon(cat.icon, size: 18, color: cat.color),
+                            const SizedBox(width: 10),
+                            Text(cat.displayName,
+                                style: const TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                        activeColor: cat.color,
+                      );
+                    },
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetCtx),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              cubit.setCategoryIds(selected);
+                              Navigator.pop(sheetCtx);
+                            },
+                            child: Text(selected.isEmpty
+                                ? 'Show all'
+                                : 'Apply (${selected.length})'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+}
+
+class _FilterIconButton extends StatelessWidget {
+  final int activeCount;
+  final VoidCallback onTap;
+
+  const _FilterIconButton({required this.activeCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFilter = activeCount > 0;
+    return Material(
+      color: hasFilter ? Colors.green[600] : Colors.grey[100],
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.filter_list_rounded,
+                size: 16,
+                color: hasFilter ? Colors.white : Colors.grey[700],
+              ),
+              if (hasFilter)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: Colors.white, width: 1),
+                    ),
+                    constraints:
+                        const BoxConstraints(minWidth: 14, minHeight: 14),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$activeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -550,7 +754,7 @@ class _RecordCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${context.read<HomeRecordCubit>().currencySymbol}${record.amount.toStringAsFixed(0)}',
+                context.read<HomeRecordCubit>().formatAmount(record.amount),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,

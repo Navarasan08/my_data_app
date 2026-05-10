@@ -117,36 +117,36 @@ class HomeCategory {
       id: 'internet', displayName: 'Internet', iconIndex: 8, colorIndex: 8);
   static final cleaning = HomeCategory(
       id: 'cleaning', displayName: 'Cleaning', iconIndex: 9, colorIndex: 9);
-  static final milk = HomeCategory(
-      id: 'milk', displayName: 'Milk', iconIndex: 25, colorIndex: 1);
-  static final rice = HomeCategory(
-      id: 'rice', displayName: 'Rice & Grains', iconIndex: 26, colorIndex: 0);
-  static final batter = HomeCategory(
-      id: 'batter', displayName: 'Batter', iconIndex: 36, colorIndex: 2);
-  static final vegetables = HomeCategory(
-      id: 'vegetables', displayName: 'Vegetables', iconIndex: 34, colorIndex: 4);
-  static final fish = HomeCategory(
-      id: 'fish', displayName: 'Fish & Meat', iconIndex: 35, colorIndex: 10);
+  // static final milk = HomeCategory(
+      // id: 'milk', displayName: 'Milk', iconIndex: 25, colorIndex: 1);
+  // static final rice = HomeCategory(
+  //     id: 'rice', displayName: 'Rice & Grains', iconIndex: 26, colorIndex: 0);
+  // static final batter = HomeCategory(
+  //     id: 'batter', displayName: 'Batter', iconIndex: 36, colorIndex: 2);
+  // static final vegetables = HomeCategory(
+  //     id: 'vegetables', displayName: 'Vegetables', iconIndex: 34, colorIndex: 4);
+  // static final fish = HomeCategory(
+  //     id: 'fish', displayName: 'Fish & Meat', iconIndex: 35, colorIndex: 10);
   static final medical = HomeCategory(
       id: 'medical', displayName: 'Medical', iconIndex: 12, colorIndex: 10);
-  static final education = HomeCategory(
-      id: 'education', displayName: 'Education', iconIndex: 13, colorIndex: 13);
+  // static final education = HomeCategory(
+  //     id: 'education', displayName: 'Education', iconIndex: 13, colorIndex: 13);
   static final clothing = HomeCategory(
       id: 'clothing', displayName: 'Clothing', iconIndex: 38, colorIndex: 8);
-  static final pooja = HomeCategory(
-      id: 'pooja', displayName: 'Pooja & Temple', iconIndex: 45, colorIndex: 14);
-  static final emi = HomeCategory(
-      id: 'emi', displayName: 'EMI & Loans', iconIndex: 42, colorIndex: 7);
+  // static final pooja = HomeCategory(
+  //     id: 'pooja', displayName: 'Pooja & Temple', iconIndex: 45, colorIndex: 14);
+  // static final emi = HomeCategory(
+  //     id: 'emi', displayName: 'EMI & Loans', iconIndex: 42, colorIndex: 7);
   static final subscriptions = HomeCategory(
       id: 'subscriptions', displayName: 'Subscriptions', iconIndex: 43, colorIndex: 11);
 
   static final List<HomeCategory> defaults = [
     groceries,
-    milk,
-    vegetables,
-    rice,
-    batter,
-    fish,
+    // milk,
+    // vegetables,
+    // rice,
+    // batter,
+    // fish,
     water,
     gas,
     electricity,
@@ -157,10 +157,10 @@ class HomeCategory {
     furniture,
     cleaning,
     medical,
-    education,
+    // education,
     clothing,
-    pooja,
-    emi,
+    // pooja,
+    // emi,
     subscriptions,
   ];
 

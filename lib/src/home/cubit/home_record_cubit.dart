@@ -37,12 +37,26 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     ));
   }
 
-  void setCategory(HomeCategory? category) {
-    if (category == null) {
-      emit(state.copyWith(clearCategory: true));
+  /// Toggle a category in the filter set. If the set was empty, this starts
+  /// it. Tapping a selected category removes it.
+  void toggleCategory(HomeCategory category) {
+    final next = Set<String>.from(state.selectedCategoryIds);
+    if (next.contains(category.id)) {
+      next.remove(category.id);
     } else {
-      emit(state.copyWith(selectedCategory: category));
+      next.add(category.id);
     }
+    emit(state.copyWith(selectedCategoryIds: next));
+  }
+
+  /// Replace the current selection with [ids] (used by the multi-select
+  /// filter sheet).
+  void setCategoryIds(Set<String> ids) {
+    emit(state.copyWith(selectedCategoryIds: Set<String>.from(ids)));
+  }
+
+  void clearCategoryFilter() {
+    emit(state.copyWith(selectedCategoryIds: const {}));
   }
 
   void setViewMode(HomeViewMode mode) {
@@ -74,9 +88,9 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
 
   List<HomeRecord> get filteredRecords {
     final records = _baseRecords;
-    if (state.selectedCategory == null) return records;
+    if (state.selectedCategoryIds.isEmpty) return records;
     return records
-        .where((r) => r.category == state.selectedCategory)
+        .where((r) => state.selectedCategoryIds.contains(r.category.id))
         .toList();
   }
 
@@ -191,6 +205,11 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }
 
   String get currencySymbol => state.currency.symbol;
+
+  /// Format [amount] with the active currency's symbol and locale-aware
+  /// thousands grouping (e.g. ₹1,23,456 for INR, $123,456 for USD).
+  String formatAmount(double amount, {int decimals = 0}) =>
+      state.currency.format(amount, decimals: decimals);
 
   void setCurrency(HomeCurrency currency) {
     _repository.setCurrencyCode(currency.code);

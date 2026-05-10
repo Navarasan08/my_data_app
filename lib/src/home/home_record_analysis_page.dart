@@ -61,7 +61,6 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
-        final sym = cubit.currencySymbol;
         final categoryTotals = _getFilteredCategoryTotals(cubit);
         final filteredTotal = _getFilteredTotal(categoryTotals);
         final monthlyData = cubit.monthlyTotals(months: 12);
@@ -87,7 +86,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Summary Cards
-                        _buildSummaryCards(cubit, filteredTotal, categoryTotals, sym),
+                        _buildSummaryCards(cubit, filteredTotal, categoryTotals),
                         const SizedBox(height: 20),
 
                         // Filter Controls
@@ -107,7 +106,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                     const SizedBox(height: 12),
                                     _buildPieChart(categoryTotals, filteredTotal),
                                     const SizedBox(height: 8),
-                                    _buildPieLegend(categoryTotals, filteredTotal, sym, cubit.categoryQuantities),
+                                    _buildPieLegend(categoryTotals, filteredTotal, cubit, cubit.categoryQuantities),
                                   ],
                                 ),
                               ),
@@ -118,7 +117,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                   children: [
                                     _buildSectionTitle('Top Categories'),
                                     const SizedBox(height: 12),
-                                    _buildBarChart(categoryTotals, sym),
+                                    _buildBarChart(categoryTotals, cubit),
                                   ],
                                 ),
                               ),
@@ -127,24 +126,24 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           const SizedBox(height: 24),
                           _buildSectionTitle('Monthly Trend'),
                           const SizedBox(height: 12),
-                          _buildLineChart(monthlyData, sym),
+                          _buildLineChart(monthlyData, cubit),
                         ] else ...[
                           // Stacked on mobile
                           _buildSectionTitle('Category Breakdown'),
                           const SizedBox(height: 12),
                           _buildPieChart(categoryTotals, filteredTotal),
                           const SizedBox(height: 8),
-                          _buildPieLegend(categoryTotals, filteredTotal, sym, cubit.categoryQuantities),
+                          _buildPieLegend(categoryTotals, filteredTotal, cubit, cubit.categoryQuantities),
                           const SizedBox(height: 24),
 
                           _buildSectionTitle('Monthly Trend'),
                           const SizedBox(height: 12),
-                          _buildLineChart(monthlyData, sym),
+                          _buildLineChart(monthlyData, cubit),
                           const SizedBox(height: 24),
 
                           _buildSectionTitle('Top Categories'),
                           const SizedBox(height: 12),
-                          _buildBarChart(categoryTotals, sym),
+                          _buildBarChart(categoryTotals, cubit),
                         ],
                         const SizedBox(height: 32),
                       ],
@@ -171,7 +170,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildSummaryCards(HomeRecordCubit cubit, double filteredTotal,
-      Map<HomeCategory, double> categoryTotals, String sym) {
+      Map<HomeCategory, double> categoryTotals) {
     final highest = categoryTotals.isNotEmpty
         ? categoryTotals.entries.reduce((a, b) => a.value > b.value ? a : b)
         : null;
@@ -182,7 +181,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           child: _SummaryCard(
             icon: Icons.account_balance_wallet_rounded,
             label: 'Total Spent',
-            value: '$sym${filteredTotal.toStringAsFixed(0)}',
+            value: cubit.formatAmount(filteredTotal),
             color: Colors.green,
           ),
         ),
@@ -191,7 +190,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           child: _SummaryCard(
             icon: Icons.trending_up_rounded,
             label: 'Avg/Month',
-            value: '$sym${cubit.averagePerMonth.toStringAsFixed(0)}',
+            value: cubit.formatAmount(cubit.averagePerMonth),
             color: Colors.blue,
           ),
         ),
@@ -363,7 +362,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   Widget _buildPieLegend(
       Map<HomeCategory, double> totals,
       double grandTotal,
-      String sym,
+      HomeRecordCubit cubit,
       Map<HomeCategory, Map<MeasureUnit, double>> categoryQuantities) {
     if (totals.isEmpty) return const SizedBox();
 
@@ -409,7 +408,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                             fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                       TextSpan(
-                        text: '$sym${e.value.toStringAsFixed(0)} (${pct.toStringAsFixed(1)}%)',
+                        text: '${cubit.formatAmount(e.value)} (${pct.toStringAsFixed(1)}%)',
                         style: const TextStyle(fontSize: 12),
                       ),
                       if (qtyParts.isNotEmpty)
@@ -429,7 +428,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildLineChart(Map<DateTime, double> monthlyData, String sym) {
+  Widget _buildLineChart(Map<DateTime, double> monthlyData, HomeRecordCubit cubit) {
     final entries = monthlyData.entries.toList();
     if (entries.isEmpty) {
       return SizedBox(
@@ -497,10 +496,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 50,
+                reservedSize: 60,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '$sym${value.toInt()}',
+                    cubit.formatAmount(value),
                     style:
                         const TextStyle(fontSize: 10, color: Colors.grey),
                   );
@@ -525,7 +524,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildBarChart(Map<HomeCategory, double> totals, String sym) {
+  Widget _buildBarChart(Map<HomeCategory, double> totals, HomeRecordCubit cubit) {
     if (totals.isEmpty) {
       return SizedBox(
         height: 200,
@@ -590,10 +589,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 50,
+                reservedSize: 60,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '$sym${value.toInt()}',
+                    cubit.formatAmount(value),
                     style:
                         const TextStyle(fontSize: 10, color: Colors.grey),
                   );
