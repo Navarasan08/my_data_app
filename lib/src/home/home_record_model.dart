@@ -208,6 +208,97 @@ class HomeCategory {
   int get hashCode => id.hashCode;
 }
 
+/// Optional payment method tag on a [HomeRecord]. The full payload is
+/// embedded in each record's JSON, so a record keeps its payment-type label
+/// even if the type is later deleted from the user's managed list.
+class PaymentType {
+  final String id;
+  final String displayName;
+  final int iconIndex;
+  final int colorIndex;
+
+  const PaymentType({
+    required this.id,
+    required this.displayName,
+    required this.iconIndex,
+    required this.colorIndex,
+  });
+
+  IconData get icon =>
+      availableIcons[iconIndex.clamp(0, availableIcons.length - 1)];
+  Color get color =>
+      availableColors[colorIndex.clamp(0, availableColors.length - 1)];
+
+  static final List<IconData> availableIcons = [
+    Icons.payments_rounded,                 // 0 - cash
+    Icons.qr_code_rounded,                  // 1 - upi
+    Icons.credit_card_rounded,              // 2 - card
+    Icons.account_balance_rounded,          // 3 - netbanking
+    Icons.account_balance_wallet_rounded,   // 4 - wallet
+    Icons.savings_rounded,                  // 5 - savings
+    Icons.receipt_long_rounded,             // 6 - cheque
+    Icons.handshake_rounded,                // 7 - borrowed
+    Icons.card_giftcard_rounded,            // 8 - gift card
+    Icons.local_atm_rounded,                // 9 - atm
+    Icons.phone_android_rounded,            // 10 - mobile
+    Icons.currency_exchange_rounded,        // 11 - other
+  ];
+
+  static final List<Color> availableColors = [
+    Colors.green,
+    Colors.purple,
+    Colors.blue,
+    Colors.indigo,
+    Colors.orange,
+    Colors.teal,
+    Colors.deepPurple,
+    Colors.amber,
+    Colors.cyan,
+    Colors.red,
+    Colors.brown,
+    Colors.pink,
+  ];
+
+  /// Seed values used on first load when the user has no payment types yet.
+  static final List<PaymentType> seedDefaults = [
+    PaymentType(id: 'cash', displayName: 'Cash', iconIndex: 0, colorIndex: 0),
+    PaymentType(id: 'upi', displayName: 'UPI', iconIndex: 1, colorIndex: 1),
+    PaymentType(id: 'card', displayName: 'Card', iconIndex: 2, colorIndex: 2),
+  ];
+
+  PaymentType copyWith({
+    String? displayName,
+    int? iconIndex,
+    int? colorIndex,
+  }) =>
+      PaymentType(
+        id: id,
+        displayName: displayName ?? this.displayName,
+        iconIndex: iconIndex ?? this.iconIndex,
+        colorIndex: colorIndex ?? this.colorIndex,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'displayName': displayName,
+        'iconIndex': iconIndex,
+        'colorIndex': colorIndex,
+      };
+
+  factory PaymentType.fromJson(Map<String, dynamic> json) => PaymentType(
+        id: json['id'] as String,
+        displayName: json['displayName'] as String,
+        iconIndex: (json['iconIndex'] as int? ?? 0),
+        colorIndex: (json['colorIndex'] as int? ?? 0),
+      );
+
+  @override
+  bool operator ==(Object other) => other is PaymentType && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+}
+
 enum MeasureUnit {
   kg('kg'),
   gram('g'),
@@ -245,6 +336,11 @@ class HomeRecord {
   final double? quantity;
   final MeasureUnit? unit;
 
+  /// Optional payment method (cash, upi, card, …). Stored denormalized so a
+  /// record keeps its label even if the type is later removed from the
+  /// user's managed list.
+  final PaymentType? paymentType;
+
   const HomeRecord({
     required this.id,
     required this.title,
@@ -255,6 +351,7 @@ class HomeRecord {
     this.notes,
     this.quantity,
     this.unit,
+    this.paymentType,
   });
 
   String get quantityLabel {
@@ -276,6 +373,8 @@ class HomeRecord {
     double? quantity,
     MeasureUnit? unit,
     bool clearQuantity = false,
+    PaymentType? paymentType,
+    bool clearPaymentType = false,
   }) {
     return HomeRecord(
       id: id ?? this.id,
@@ -287,6 +386,8 @@ class HomeRecord {
       notes: notes ?? this.notes,
       quantity: clearQuantity ? null : (quantity ?? this.quantity),
       unit: clearQuantity ? null : (unit ?? this.unit),
+      paymentType:
+          clearPaymentType ? null : (paymentType ?? this.paymentType),
     );
   }
 
@@ -301,6 +402,7 @@ class HomeRecord {
       'notes': notes,
       if (quantity != null) 'quantity': quantity,
       if (unit != null) 'unit': unit!.name,
+      if (paymentType != null) 'paymentType': paymentType!.toJson(),
     };
   }
 
@@ -315,6 +417,14 @@ class HomeRecord {
           HomeCategory.findById(categoryValue as String, customCategories);
     }
 
+    PaymentType? paymentType;
+    final pt = json['paymentType'];
+    if (pt is Map<String, dynamic>) {
+      paymentType = PaymentType.fromJson(pt);
+    } else if (pt is Map) {
+      paymentType = PaymentType.fromJson(Map<String, dynamic>.from(pt));
+    }
+
     return HomeRecord(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -327,6 +437,7 @@ class HomeRecord {
       unit: json['unit'] != null
           ? MeasureUnit.fromName(json['unit'] as String)
           : null,
+      paymentType: paymentType,
     );
   }
 }

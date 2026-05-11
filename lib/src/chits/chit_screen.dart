@@ -28,68 +28,13 @@ class ChitFundListPage extends StatelessWidget {
               elevation: 0,
               bottom: const TabBar(
                 tabs: [
-                  Tab(text: 'My Chits', icon: Icon(Icons.star_rounded, size: 20)),
                   Tab(text: 'Participating', icon: Icon(Icons.group_work_rounded, size: 20)),
+                  Tab(text: 'My Chits', icon: Icon(Icons.star_rounded, size: 20)),
                 ],
               ),
             ),
             body: TabBarView(
               children: [
-                // Owner tab
-                _ChitListView(
-                  chitFunds: ownerChits,
-                  emptyMessage: 'No chit groups created yet',
-                  emptySubMessage: 'Tap the + button to create your first chit group',
-                  itemBuilder: (chitFund) => ChitFundCard(
-                    chitFund: chitFund,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: cubit,
-                            child: ChitFundDetailsPage(chitFundId: chitFund.id),
-                          ),
-                        ),
-                      );
-                    },
-                    onEdit: () async {
-                      final editedChitFund = await Navigator.push<ChitFund>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddChitFundPage(chitFund: chitFund),
-                        ),
-                      );
-                      if (editedChitFund != null) {
-                        cubit.updateChitFund(editedChitFund);
-                      }
-                    },
-                    onDelete: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Chit Group'),
-                          content: Text(
-                              'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) {
-                        cubit.deleteChitFund(chitFund.id);
-                      }
-                    },
-                  ),
-                ),
                 // Participant tab
                 _ChitListView(
                   chitFunds: participantChits,
@@ -135,6 +80,61 @@ class ChitFundListPage extends StatelessWidget {
                               onPressed: () => Navigator.pop(context, true),
                               style: TextButton.styleFrom(foregroundColor: Colors.red),
                               child: const Text('Remove'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        cubit.deleteChitFund(chitFund.id);
+                      }
+                    },
+                  ),
+                ),
+                // Owner tab
+                _ChitListView(
+                  chitFunds: ownerChits,
+                  emptyMessage: 'No chit groups created yet',
+                  emptySubMessage: 'Tap the + button to create your first chit group',
+                  itemBuilder: (chitFund) => ChitFundCard(
+                    chitFund: chitFund,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: ChitFundDetailsPage(chitFundId: chitFund.id),
+                          ),
+                        ),
+                      );
+                    },
+                    onEdit: () async {
+                      final editedChitFund = await Navigator.push<ChitFund>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddChitFundPage(chitFund: chitFund),
+                        ),
+                      );
+                      if (editedChitFund != null) {
+                        cubit.updateChitFund(editedChitFund);
+                      }
+                    },
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Chit Group'),
+                          content: Text(
+                              'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              child: const Text('Delete'),
                             ),
                           ],
                         ),

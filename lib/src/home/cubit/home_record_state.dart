@@ -71,6 +71,7 @@ class HomeRecordState {
   final Set<String> selectedCategoryIds;
 
   final List<HomeCategory> customCategories;
+  final List<PaymentType> paymentTypes;
   final HomeViewMode viewMode;
   final HomeCurrency currency;
   final bool showMonthlyCalendar;
@@ -80,6 +81,7 @@ class HomeRecordState {
     required this.selectedDate,
     this.selectedCategoryIds = const {},
     this.customCategories = const [],
+    this.paymentTypes = const [],
     this.viewMode = HomeViewMode.monthly,
     this.currency = HomeCurrency.inr,
     this.showMonthlyCalendar = true,
@@ -90,6 +92,7 @@ class HomeRecordState {
     DateTime? selectedDate,
     Set<String>? selectedCategoryIds,
     List<HomeCategory>? customCategories,
+    List<PaymentType>? paymentTypes,
     HomeViewMode? viewMode,
     HomeCurrency? currency,
     bool? showMonthlyCalendar,
@@ -99,6 +102,7 @@ class HomeRecordState {
       selectedDate: selectedDate ?? this.selectedDate,
       selectedCategoryIds: selectedCategoryIds ?? this.selectedCategoryIds,
       customCategories: customCategories ?? this.customCategories,
+      paymentTypes: paymentTypes ?? this.paymentTypes,
       viewMode: viewMode ?? this.viewMode,
       currency: currency ?? this.currency,
       showMonthlyCalendar: showMonthlyCalendar ?? this.showMonthlyCalendar,

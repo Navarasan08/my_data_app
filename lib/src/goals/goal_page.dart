@@ -390,7 +390,10 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
           );
         }
 
-        final rate = (goal.successRate * 100).round();
+        final total = goal.totalTracked;
+        final successPct = total > 0 ? (goal.successCount * 100 / total).round() : 0;
+        final failurePct = total > 0 ? (goal.failureCount * 100 / total).round() : 0;
+        final streakPct = total > 0 ? (goal.currentStreak * 100 / total).round() : 0;
         final sortedLogs = List<GoalLog>.from(goal.logs)
           ..sort((a, b) => b.date.compareTo(a.date));
 
@@ -429,12 +432,18 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
               Row(
                 children: [
                   _StatTile(
-                      label: 'Streak', value: '${goal.currentStreak}'),
+                      label: 'Success',
+                      value: '${goal.successCount}',
+                      subValue: '$successPct%'),
                   _StatTile(
-                      label: 'Longest', value: '${goal.longestStreak}'),
-                  _StatTile(label: 'Rate', value: '$rate%'),
+                      label: 'Failure',
+                      value: '${goal.failureCount}',
+                      subValue: '$failurePct%'),
                   _StatTile(
-                      label: 'Total', value: '${goal.totalTracked}'),
+                      label: 'Streak',
+                      value: '${goal.currentStreak}',
+                      subValue: '$streakPct%'),
+                  _StatTile(label: 'Total', value: '$total'),
                 ],
               ),
 
@@ -524,60 +533,60 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
               const SizedBox(height: 20),
 
               // Logs list
-              if (sortedLogs.isNotEmpty) ...[
-                const Text(
-                  'Activity Log',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                ...sortedLogs.map((log) {
-                  IconData icon;
-                  Color color;
-                  String label;
-                  switch (log.status) {
-                    case GoalDayStatus.success:
-                      icon = Icons.check_circle_rounded;
-                      color = Colors.green;
-                      label = 'Success';
-                    case GoalDayStatus.failure:
-                      icon = Icons.cancel_rounded;
-                      color = Colors.red;
-                      label = 'Failure';
-                    case GoalDayStatus.skip:
-                      icon = Icons.skip_next_rounded;
-                      color = Colors.grey;
-                      label = 'Skipped';
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        Icon(icon, size: 18, color: color),
-                        const SizedBox(width: 8),
-                        Text(log.date,
-                            style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w500)),
-                        const SizedBox(width: 8),
-                        Text(label,
-                            style:
-                                TextStyle(fontSize: 12, color: Colors.grey[600])),
-                        if (log.note != null && log.note!.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              log.note!,
-                              style: TextStyle(
-                                  fontSize: 12, color: Colors.grey[500]),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  );
-                }),
-              ],
+              // if (sortedLogs.isNotEmpty) ...[
+              //   const Text(
+              //     'Activity Log',
+              //     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              //   ),
+              //   const SizedBox(height: 8),
+              //   ...sortedLogs.map((log) {
+              //     IconData icon;
+              //     Color color;
+              //     String label;
+              //     switch (log.status) {
+              //       case GoalDayStatus.success:
+              //         icon = Icons.check_circle_rounded;
+              //         color = Colors.green;
+              //         label = 'Success';
+              //       case GoalDayStatus.failure:
+              //         icon = Icons.cancel_rounded;
+              //         color = Colors.red;
+              //         label = 'Failure';
+              //       case GoalDayStatus.skip:
+              //         icon = Icons.skip_next_rounded;
+              //         color = Colors.grey;
+              //         label = 'Skipped';
+              //     }
+              //     return Padding(
+              //       padding: const EdgeInsets.only(bottom: 6),
+              //       child: Row(
+              //         children: [
+              //           Icon(icon, size: 18, color: color),
+              //           const SizedBox(width: 8),
+              //           Text(log.date,
+              //               style: const TextStyle(
+              //                   fontSize: 13, fontWeight: FontWeight.w500)),
+              //           const SizedBox(width: 8),
+              //           Text(label,
+              //               style:
+              //                   TextStyle(fontSize: 12, color: Colors.grey[600])),
+              //           if (log.note != null && log.note!.isNotEmpty) ...[
+              //             const SizedBox(width: 8),
+              //             Expanded(
+              //               child: Text(
+              //                 log.note!,
+              //                 style: TextStyle(
+              //                     fontSize: 12, color: Colors.grey[500]),
+              //                 maxLines: 1,
+              //                 overflow: TextOverflow.ellipsis,
+              //               ),
+              //             ),
+              //           ],
+              //         ],
+              //       ),
+              //     );
+              //   }),
+              // ],
             ],
           ),
         );
@@ -690,8 +699,13 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
 class _StatTile extends StatelessWidget {
   final String label;
   final String value;
-  const _StatTile({Key? key, required this.label, required this.value})
-      : super(key: key);
+  final String? subValue;
+  const _StatTile({
+    Key? key,
+    required this.label,
+    required this.value,
+    this.subValue,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -705,9 +719,28 @@ class _StatTile extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text.rich(
+                TextSpan(
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                  children: [
+                    TextSpan(text: value),
+                    if (subValue != null)
+                      TextSpan(
+                        text: '  $subValue',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                  ],
+                ),
+                maxLines: 1,
+              ),
+            ),
             const SizedBox(height: 2),
             Text(label,
                 style: TextStyle(fontSize: 11, color: Colors.grey[600])),

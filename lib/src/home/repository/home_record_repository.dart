@@ -10,6 +10,10 @@ abstract class HomeRecordRepository {
   void addCustomCategory(HomeCategory category);
   void updateCustomCategory(HomeCategory category);
   void deleteCustomCategory(String categoryId);
+  List<PaymentType> getPaymentTypes();
+  void addPaymentType(PaymentType type);
+  void updatePaymentType(PaymentType type);
+  void deletePaymentType(String typeId);
   String getCurrencyCode();
   void setCurrencyCode(String code);
   bool getShowMonthlyCalendar();
@@ -22,6 +26,7 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   final FirebaseFirestore _firestore;
   List<HomeRecord> _records = [];
   List<HomeCategory> _customCategories = [];
+  List<PaymentType> _paymentTypes = [];
   String _currencyCode = 'INR';
   bool _showMonthlyCalendar = true;
 
@@ -36,13 +41,19 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   CollectionReference<Map<String, dynamic>> get _categoryCollection =>
       _firestore.collection('users').doc(uid).collection('home_categories');
 
+  CollectionReference<Map<String, dynamic>> get _paymentTypeCollection =>
+      _firestore.collection('users').doc(uid).collection('home_payment_types');
+
   @override
   Future<void> init() async {
     // Load settings
     final settingsSnap = await _settingsDoc.get();
+    bool paymentTypesSeeded = false;
     if (settingsSnap.exists) {
       _currencyCode = (settingsSnap.data()?['currencyCode'] as String?) ?? 'INR';
       _showMonthlyCalendar = (settingsSnap.data()?['showMonthlyCalendar'] as bool?) ?? true;
+      paymentTypesSeeded =
+          (settingsSnap.data()?['paymentTypesSeeded'] as bool?) ?? false;
     }
 
     // Load custom categories first so records can reference them
@@ -50,6 +61,25 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     _customCategories = catSnapshot.docs
         .map((doc) => HomeCategory.fromJson(doc.data()))
         .toList();
+
+    // Load payment types. On the very first init for a user, seed the
+    // default trio (cash / upi / card). After that, the user is free to add
+    // or remove anything — we won't re-seed on subsequent launches even if
+    // they delete them all.
+    final ptSnapshot = await _paymentTypeCollection.get();
+    _paymentTypes = ptSnapshot.docs
+        .map((doc) => PaymentType.fromJson(doc.data()))
+        .toList();
+    if (!paymentTypesSeeded && _paymentTypes.isEmpty) {
+      for (final t in PaymentType.seedDefaults) {
+        _paymentTypes.add(t);
+        _paymentTypeCollection.doc(t.id).set(t.toJson());
+      }
+      _settingsDoc.set(
+        {'paymentTypesSeeded': true},
+        SetOptions(merge: true),
+      );
+    }
 
     final snapshot = await _collection.get();
     _records = snapshot.docs
@@ -105,6 +135,30 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   void deleteCustomCategory(String categoryId) {
     _customCategories.removeWhere((c) => c.id == categoryId);
     _categoryCollection.doc(categoryId).delete();
+  }
+
+  @override
+  List<PaymentType> getPaymentTypes() => List.unmodifiable(_paymentTypes);
+
+  @override
+  void addPaymentType(PaymentType type) {
+    _paymentTypes.add(type);
+    _paymentTypeCollection.doc(type.id).set(type.toJson());
+  }
+
+  @override
+  void updatePaymentType(PaymentType type) {
+    final i = _paymentTypes.indexWhere((t) => t.id == type.id);
+    if (i != -1) {
+      _paymentTypes[i] = type;
+      _paymentTypeCollection.doc(type.id).set(type.toJson());
+    }
+  }
+
+  @override
+  void deletePaymentType(String typeId) {
+    _paymentTypes.removeWhere((t) => t.id == typeId);
+    _paymentTypeCollection.doc(typeId).delete();
   }
 
   DocumentReference<Map<String, dynamic>> get _settingsDoc =>

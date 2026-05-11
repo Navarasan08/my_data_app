@@ -90,7 +90,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         const SizedBox(height: 20),
 
                         // Filter Controls
-                        _buildFilterControls(context, cubit.allCategories),
+                        _buildFilterControls(context, cubit.categoriesByUsage),
                         const SizedBox(height: 20),
 
                         // Charts: side-by-side on wide screens

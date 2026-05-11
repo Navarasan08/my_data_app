@@ -11,6 +11,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           records: _repository.getAll(),
           selectedDate: DateTime.now(),
           customCategories: _repository.getCustomCategories(),
+          paymentTypes: _repository.getPaymentTypes(),
           currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
           showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
         ));
@@ -65,6 +66,23 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
 
   List<HomeCategory> get allCategories =>
       [...HomeCategory.defaults, ...state.customCategories];
+
+  /// Categories sorted by usage (most-used first). Ties keep their declared
+  /// order so the strip stays stable when counts are equal.
+  List<HomeCategory> get categoriesByUsage {
+    final counts = <String, int>{};
+    for (final r in state.records) {
+      counts[r.category.id] = (counts[r.category.id] ?? 0) + 1;
+    }
+    final indexed = allCategories.asMap().entries.toList();
+    indexed.sort((a, b) {
+      final ca = counts[a.value.id] ?? 0;
+      final cb = counts[b.value.id] ?? 0;
+      if (cb != ca) return cb.compareTo(ca);
+      return a.key.compareTo(b.key);
+    });
+    return indexed.map((e) => e.value).toList();
+  }
 
   List<HomeRecord> get allRecordsSorted {
     return List<HomeRecord>.from(state.records)
@@ -202,6 +220,45 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
 
   bool isCategoryInUse(String categoryId) {
     return state.records.any((r) => r.category.id == categoryId);
+  }
+
+  // ── Payment types ───────────────────────────────────────────────────────
+
+  List<PaymentType> get paymentTypes => state.paymentTypes;
+
+  bool isPaymentTypeInUse(String typeId) {
+    return state.records.any((r) => r.paymentType?.id == typeId);
+  }
+
+  void addPaymentType(PaymentType type) {
+    _repository.addPaymentType(type);
+    emit(state.copyWith(paymentTypes: _repository.getPaymentTypes()));
+  }
+
+  /// Updating a payment type also rewrites the embedded snapshot on every
+  /// record currently using that id, so existing records reflect the new
+  /// name / icon / color rather than a stale copy.
+  void updatePaymentType(PaymentType type) {
+    _repository.updatePaymentType(type);
+    final updatedRecords = state.records.map((r) {
+      if (r.paymentType?.id == type.id) {
+        final updated = r.copyWith(paymentType: type);
+        _repository.update(updated);
+        return updated;
+      }
+      return r;
+    }).toList();
+    emit(state.copyWith(
+      paymentTypes: _repository.getPaymentTypes(),
+      records: updatedRecords,
+    ));
+  }
+
+  /// Removes the type from the user's managed list. Existing records keep
+  /// the type snapshot they were saved with — they don't lose their label.
+  void deletePaymentType(String typeId) {
+    _repository.deletePaymentType(typeId);
+    emit(state.copyWith(paymentTypes: _repository.getPaymentTypes()));
   }
 
   String get currencySymbol => state.currency.symbol;

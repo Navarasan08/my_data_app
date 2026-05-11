@@ -105,7 +105,7 @@ class HomeRecordPage extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green[700],
+                                  color: Colors.red[700],
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -152,7 +152,7 @@ class HomeRecordPage extends StatelessWidget {
                                     horizontal: 4),
                               ),
                             ),
-                            ...cubit.allCategories.map((cat) {
+                            ...cubit.categoriesByUsage.map((cat) {
                               final isSelected = state
                                   .selectedCategoryIds
                                   .contains(cat.id);
@@ -268,7 +268,8 @@ class HomeRecordPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (_) => AddHomeRecordPage(
-                        categories: cubit.allCategories)),
+                        categories: cubit.allCategories,
+                        paymentTypes: cubit.paymentTypes)),
               );
               if (newRecord != null) {
                 cubit.addRecord(newRecord);
@@ -328,7 +329,7 @@ class HomeRecordPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
+                      color: Colors.red[700],
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -379,77 +380,43 @@ class HomeRecordPage extends StatelessWidget {
     final sortedWeeks = grouped.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      itemCount: sortedWeeks.length,
-      itemBuilder: (context, weekIndex) {
-        final ws = sortedWeeks[weekIndex];
-        final weekRecords = grouped[ws]!;
-        final weekTotal =
-            weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+    final slivers = <Widget>[
+      const SliverToBoxAdapter(child: SizedBox(height: 4)),
+    ];
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Week header
-            Container(
-              margin: EdgeInsets.only(
-                  top: weekIndex == 0 ? 4 : 14, bottom: 8),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.date_range_rounded,
-                      size: 16, color: Colors.grey[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    _weekLabel(ws, now),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${weekRecords.length}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    cubit.formatAmount(weekTotal),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                ],
-              ),
+    for (final ws in sortedWeeks) {
+      final weekRecords = grouped[ws]!;
+      final weekTotal =
+          weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+
+      slivers.add(
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _WeekHeaderDelegate(
+            label: _weekLabel(ws, now),
+            count: weekRecords.length,
+            formattedTotal: cubit.formatAmount(weekTotal),
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, i) =>
+                  _buildRecordItem(context, cubit, weekRecords[i]),
+              childCount: weekRecords.length,
             ),
-            // Week records
-            ...weekRecords
-                .map((r) => _buildRecordItem(context, cubit, r)),
-          ],
-        );
-      },
-    );
+          ),
+        ),
+      );
+    }
+
+    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
+
+    return CustomScrollView(slivers: slivers);
   }
 
   Widget _buildRecordItem(
@@ -461,7 +428,9 @@ class HomeRecordPage extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => AddHomeRecordPage(
-                record: record, categories: cubit.allCategories),
+                record: record,
+                categories: cubit.allCategories,
+                paymentTypes: cubit.paymentTypes),
           ),
         );
         if (edited != null) {
@@ -504,7 +473,7 @@ class HomeRecordPage extends StatelessWidget {
     HomeRecordCubit cubit,
     Set<String> initial,
   ) async {
-    final categories = cubit.allCategories;
+    final categories = cubit.categoriesByUsage;
     final selected = Set<String>.from(initial);
 
     await showModalBottomSheet(
@@ -688,6 +657,91 @@ class _FilterIconButton extends StatelessWidget {
   }
 }
 
+class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final String label;
+  final int count;
+  final String formattedTotal;
+
+  _WeekHeaderDelegate({
+    required this.label,
+    required this.count,
+    required this.formattedTotal,
+  });
+
+  static const double _height = 52;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.date_range_rounded,
+                size: 16, color: Colors.grey[700]),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              formattedTotal,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _WeekHeaderDelegate oldDelegate) {
+    return oldDelegate.label != label ||
+        oldDelegate.count != count ||
+        oldDelegate.formattedTotal != formattedTotal;
+  }
+}
+
 class _RecordCard extends StatelessWidget {
   final HomeRecord record;
   final VoidCallback onEdit;
@@ -743,6 +797,8 @@ class _RecordCard extends StatelessWidget {
                         record.category.displayName,
                         if (record.quantityLabel.isNotEmpty)
                           record.quantityLabel,
+                        if (record.paymentType != null)
+                          record.paymentType!.displayName,
                         DateFormat('d MMM').format(record.date),
                       ].join('  ·  '),
                       style: TextStyle(
@@ -786,11 +842,13 @@ class _RecordCard extends StatelessWidget {
 class AddHomeRecordPage extends StatefulWidget {
   final HomeRecord? record;
   final List<HomeCategory> categories;
+  final List<PaymentType> paymentTypes;
 
   const AddHomeRecordPage({
     Key? key,
     this.record,
     required this.categories,
+    this.paymentTypes = const [],
   }) : super(key: key);
 
   @override
@@ -808,6 +866,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
   HomeCategory _selectedCategory = HomeCategory.groceries;
   DateTime _selectedDate = DateTime.now();
   MeasureUnit? _selectedUnit;
+  PaymentType? _selectedPaymentType;
 
   bool get _isEditing => widget.record != null;
 
@@ -825,6 +884,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
         _quantityController.text = widget.record!.quantity.toString();
       }
       _selectedUnit = widget.record!.unit;
+      _selectedPaymentType = widget.record!.paymentType;
     }
   }
 
@@ -838,28 +898,61 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
     super.dispose();
   }
 
+  HomeRecord? _buildRecord() {
+    if (!_formKey.currentState!.validate()) return null;
+    final qty = _quantityController.text.isNotEmpty
+        ? double.tryParse(_quantityController.text)
+        : null;
+    return HomeRecord(
+      id: widget.record?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text,
+      category: _selectedCategory,
+      amount: double.parse(_amountController.text),
+      date: _selectedDate,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
+      quantity: qty,
+      unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
+      paymentType: _selectedPaymentType,
+    );
+  }
+
   void _saveRecord() {
-    if (_formKey.currentState!.validate()) {
-      final qty = _quantityController.text.isNotEmpty
-          ? double.tryParse(_quantityController.text)
-          : null;
-      final record = HomeRecord(
-        id: widget.record?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        category: _selectedCategory,
-        amount: double.parse(_amountController.text),
-        date: _selectedDate,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        notes:
-            _notesController.text.isEmpty ? null : _notesController.text,
-        quantity: qty,
-        unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
-      );
-      Navigator.pop(context, record);
-    }
+    final record = _buildRecord();
+    if (record != null) Navigator.pop(context, record);
+  }
+
+  /// Save the current entry directly through the cubit and reset the form so
+  /// the user can keep adding more without leaving the page. Date stays as-is
+  /// to speed up multi-entry on the same day.
+  void _saveAndContinue() {
+    final record = _buildRecord();
+    if (record == null) return;
+    context.read<HomeRecordCubit>().addRecord(record);
+
+    setState(() {
+      _titleController.clear();
+      _amountController.clear();
+      _descriptionController.clear();
+      _notesController.clear();
+      _quantityController.clear();
+      _selectedCategory = HomeCategory.groceries;
+      _selectedUnit = null;
+      _selectedPaymentType = null;
+      // _selectedDate is intentionally preserved.
+    });
+    _formKey.currentState?.reset();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Saved "${record.title}"'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -982,6 +1075,15 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
+                // Payment type picker (optional)
+                _PaymentTypePicker(
+                  types: widget.paymentTypes,
+                  selected: _selectedPaymentType,
+                  onChanged: (t) =>
+                      setState(() => _selectedPaymentType = t),
+                ),
+                const SizedBox(height: 16),
+
                 // Date Picker
                 ListTile(
                   contentPadding:
@@ -1032,22 +1134,135 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 32),
 
-                ElevatedButton(
-                  onPressed: _saveRecord,
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 16),
+                if (_isEditing)
+                  ElevatedButton(
+                    onPressed: _saveRecord,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Update Record',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _saveRecord,
+                          style: ElevatedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _saveAndContinue,
+                          style: OutlinedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          icon: const Icon(Icons.arrow_forward_rounded,
+                              size: 18),
+                          label: const Text(
+                            'Continue',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    _isEditing ? 'Update Record' : 'Save Record',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Inline picker for the optional [PaymentType] on a record.
+///
+/// The list shows every type currently in the user's managed list plus the
+/// record's stored type even if it's no longer in that list — so editing an
+/// old record never silently drops the value just because the type was
+/// deleted from settings.
+class _PaymentTypePicker extends StatelessWidget {
+  final List<PaymentType> types;
+  final PaymentType? selected;
+  final ValueChanged<PaymentType?> onChanged;
+
+  const _PaymentTypePicker({
+    required this.types,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final merged = <PaymentType>[...types];
+    if (selected != null && !merged.any((t) => t.id == selected!.id)) {
+      merged.add(selected!);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.payments_rounded, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 6),
+            Text(
+              'Payment type (optional)',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (merged.isEmpty)
+          Text(
+            'No payment types yet — add some from Settings.',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          )
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              ChoiceChip(
+                label: const Text('None', style: TextStyle(fontSize: 12)),
+                selected: selected == null,
+                onSelected: (_) => onChanged(null),
+                showCheckmark: false,
+                visualDensity: VisualDensity.compact,
+              ),
+              ...merged.map((t) {
+                final isSelected = selected?.id == t.id;
+                return ChoiceChip(
+                  avatar: Icon(t.icon, size: 14, color: t.color),
+                  label: Text(t.displayName,
+                      style: const TextStyle(fontSize: 12)),
+                  selected: isSelected,
+                  onSelected: (_) => onChanged(isSelected ? null : t),
+                  selectedColor: t.color.withValues(alpha: 0.2),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                );
+              }),
+            ],
+          ),
+      ],
     );
   }
 }

@@ -167,6 +167,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           gradient: [Colors.amber, Colors.orange],
           order: 14,
         ),
+        FeatureItem(
+          id: 'activities',
+          title: 'Activity Log',
+          icon: Icons.history_rounded,
+          gradient: [Colors.blue, Colors.indigo],
+          order: 15,
+        ),
       ];
 
   Future<void> load() async {
