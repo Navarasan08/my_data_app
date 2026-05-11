@@ -140,7 +140,7 @@ class VaultTemplate {
       case VaultSection.bankAccount:
         return ['Bank Name', 'Branch', 'Account Number', 'IFSC Code', 'Account Type', 'Account Holder', 'UPI ID', 'Net Banking ID', 'Nominee', 'Notes'];
       case VaultSection.card:
-        return ['Card Type', 'Bank/Issuer', 'Card Number (Last 4)', 'Card Holder Name', 'Expiry', 'Billing Address', 'Credit Limit', 'Notes'];
+        return ['Card Type', 'Network', 'Bank/Issuer', 'Card Number', 'Card Holder Name', 'Expiry', 'CVV', 'PIN', 'Issue Date', 'Credit Limit', 'Billing Address', 'Customer Care', 'Notes'];
       case VaultSection.credential:
         return ['Service/Website', 'Username/Email', 'Password', 'PIN', 'Security Question', 'Security Answer', 'Recovery Email', 'Recovery Phone', '2FA Method', 'Notes'];
       case VaultSection.vehicle:
@@ -169,6 +169,11 @@ class VaultTemplate {
   /// Common card types
   static List<String> get cardTypes => [
     'Debit Card', 'Credit Card', 'Prepaid Card', 'Forex Card', 'Other',
+  ];
+
+  /// Common card networks (used by the card visual's network label).
+  static List<String> get cardNetworks => [
+    'Visa', 'Mastercard', 'RuPay', 'Amex', 'Discover', 'Diners', 'Other',
   ];
 
   /// Common account types

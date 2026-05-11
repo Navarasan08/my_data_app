@@ -6,6 +6,7 @@ import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
 import 'package:my_data_app/src/home/home_record_settings_page.dart';
+import 'package:my_data_app/src/home/widgets/expense_io_sheet.dart';
 
 class HomeRecordPage extends StatelessWidget {
   const HomeRecordPage({Key? key}) : super(key: key);
@@ -21,10 +22,24 @@ class HomeRecordPage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Home Records'),
+            title: const Text('Expense Tracker'),
             centerTitle: true,
             elevation: 0,
             actions: [
+              IconButton(
+                icon: Icon(state.isCalendarView
+                    ? Icons.view_list_rounded
+                    : Icons.calendar_month_rounded),
+                tooltip: state.isCalendarView
+                    ? 'List view'
+                    : 'Calendar view',
+                onPressed: cubit.toggleCalendarView,
+              ),
+              IconButton(
+                icon: const Icon(Icons.ios_share_rounded),
+                tooltip: 'Export / Import',
+                onPressed: () => ExpenseIoSheet.show(context, cubit),
+              ),
               IconButton(
                 icon: const Icon(Icons.bar_chart_rounded),
                 tooltip: 'Analysis',
@@ -63,8 +78,9 @@ class HomeRecordPage extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Month nav (only when monthly calendar enabled)
-                  if (state.showMonthlyCalendar)
+                  // Month nav — shown whenever the user is browsing by month
+                  // (the existing monthly-list mode or the new calendar view).
+                  if (state.showMonthlyCalendar || state.isCalendarView)
                     Center(
                       child: ConstrainedBox(
                         constraints:
@@ -101,11 +117,11 @@ class HomeRecordPage extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${cubit.currencySymbol}${displayTotal.toStringAsFixed(0)}',
+                                cubit.formatAmount(displayTotal),
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.green[700],
+                                  color: Colors.red[700],
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -122,7 +138,7 @@ class HomeRecordPage extends StatelessWidget {
                       ),
                     ),
 
-                  // Category Filter Chips
+                  // Category Filter Chips (multi-select) + filter icon
                   Center(
                     child: ConstrainedBox(
                       constraints:
@@ -140,9 +156,9 @@ class HomeRecordPage extends StatelessWidget {
                                 label: const Text('All',
                                     style: TextStyle(fontSize: 12)),
                                 selected:
-                                    state.selectedCategory == null,
+                                    state.selectedCategoryIds.isEmpty,
                                 onSelected: (_) =>
-                                    cubit.setCategory(null),
+                                    cubit.clearCategoryFilter(),
                                 selectedColor: Colors.green[100],
                                 showCheckmark: false,
                                 visualDensity: VisualDensity.compact,
@@ -152,9 +168,10 @@ class HomeRecordPage extends StatelessWidget {
                                     horizontal: 4),
                               ),
                             ),
-                            ...cubit.allCategories.map((cat) {
-                              final isSelected =
-                                  state.selectedCategory == cat;
+                            ...cubit.categoriesByUsage.map((cat) {
+                              final isSelected = state
+                                  .selectedCategoryIds
+                                  .contains(cat.id);
                               return Padding(
                                 padding:
                                     const EdgeInsets.only(right: 6),
@@ -166,9 +183,7 @@ class HomeRecordPage extends StatelessWidget {
                                           fontSize: 12)),
                                   selected: isSelected,
                                   onSelected: (_) =>
-                                      cubit.setCategory(
-                                    isSelected ? null : cat,
-                                  ),
+                                      cubit.toggleCategory(cat),
                                   selectedColor: cat.color
                                       .withValues(alpha: 0.2),
                                   showCheckmark: false,
@@ -180,6 +195,20 @@ class HomeRecordPage extends StatelessWidget {
                                 ),
                               );
                             }),
+                            // Trailing multi-select filter icon
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 4, right: 6, top: 4, bottom: 4),
+                              child: _FilterIconButton(
+                                activeCount:
+                                    state.selectedCategoryIds.length,
+                                onTap: () => _openMultiSelectSheet(
+                                  context,
+                                  cubit,
+                                  state.selectedCategoryIds,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -187,63 +216,71 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Records List / Grid
+                  // Records List / Grid / Calendar
                   Expanded(
-                    child: filteredRecords.isEmpty
+                    child: state.isCalendarView
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.home_outlined,
-                                    size: 48,
-                                    color: Colors.grey[300]),
-                                const SizedBox(height: 12),
-                                Text(
-                                  state.selectedCategory != null
-                                      ? 'No ${state.selectedCategory!.displayName} records'
-                                      : 'No records yet',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Center(
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                   maxWidth: contentMaxWidth),
-                              child: state.showMonthlyCalendar
-                                  ? (gridCols > 1
-                                      ? GridView.builder(
-                                          padding:
-                                              const EdgeInsets.fromLTRB(
-                                                  12, 4, 12, 12),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: gridCols,
-                                            crossAxisSpacing: 10,
-                                            mainAxisSpacing: 10,
-                                            childAspectRatio:
-                                                isExtraWide ? 2.5 : 2.2,
-                                          ),
-                                          itemCount:
-                                              filteredRecords.length,
-                                          itemBuilder: (context, index) {
-                                            return _buildRecordItem(
-                                                context,
-                                                cubit,
-                                                filteredRecords[index]);
-                                          },
-                                        )
-                                      : _buildWeekGroupedList(
-                                          context, cubit, filteredRecords))
-                                  : _buildMonthGroupedList(
-                                      context, cubit, filteredRecords),
+                              child: _MonthCalendarView(cubit: cubit),
                             ),
-                          ),
+                          )
+                        : filteredRecords.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.home_outlined,
+                                        size: 48,
+                                        color: Colors.grey[300]),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      state.selectedCategoryIds.isNotEmpty
+                                          ? 'No records for the selected categories'
+                                          : 'No records yet',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                      maxWidth: contentMaxWidth),
+                                  child: state.showMonthlyCalendar
+                                      ? (gridCols > 1
+                                          ? GridView.builder(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      12, 4, 12, 12),
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: gridCols,
+                                                crossAxisSpacing: 10,
+                                                mainAxisSpacing: 10,
+                                                childAspectRatio:
+                                                    isExtraWide ? 2.5 : 2.2,
+                                              ),
+                                              itemCount:
+                                                  filteredRecords.length,
+                                              itemBuilder: (context, index) {
+                                                return _buildRecordItem(
+                                                    context,
+                                                    cubit,
+                                                    filteredRecords[index]);
+                                              },
+                                            )
+                                          : _buildWeekGroupedList(context,
+                                              cubit, filteredRecords))
+                                      : _buildMonthGroupedList(
+                                          context, cubit, filteredRecords),
+                                ),
+                              ),
                   ),
                 ],
               );
@@ -255,7 +292,8 @@ class HomeRecordPage extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                     builder: (_) => AddHomeRecordPage(
-                        categories: cubit.allCategories)),
+                        categories: cubit.allCategories,
+                        paymentTypes: cubit.paymentTypes)),
               );
               if (newRecord != null) {
                 cubit.addRecord(newRecord);
@@ -311,11 +349,11 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const Spacer(),
                   Text(
-                    '${cubit.currencySymbol}${monthTotal.toStringAsFixed(0)}',
+                    cubit.formatAmount(monthTotal),
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
-                      color: Colors.green[700],
+                      color: Colors.red[700],
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -366,77 +404,43 @@ class HomeRecordPage extends StatelessWidget {
     final sortedWeeks = grouped.keys.toList()
       ..sort((a, b) => b.compareTo(a));
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
-      itemCount: sortedWeeks.length,
-      itemBuilder: (context, weekIndex) {
-        final ws = sortedWeeks[weekIndex];
-        final weekRecords = grouped[ws]!;
-        final weekTotal =
-            weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+    final slivers = <Widget>[
+      const SliverToBoxAdapter(child: SizedBox(height: 4)),
+    ];
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Week header
-            Container(
-              margin: EdgeInsets.only(
-                  top: weekIndex == 0 ? 4 : 14, bottom: 8),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.date_range_rounded,
-                      size: 16, color: Colors.grey[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    _weekLabel(ws, now),
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[400],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${weekRecords.length}',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${cubit.currencySymbol}${weekTotal.toStringAsFixed(0)}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                ],
-              ),
+    for (final ws in sortedWeeks) {
+      final weekRecords = grouped[ws]!;
+      final weekTotal =
+          weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+
+      slivers.add(
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _WeekHeaderDelegate(
+            label: _weekLabel(ws, now),
+            count: weekRecords.length,
+            formattedTotal: cubit.formatAmount(weekTotal),
+          ),
+        ),
+      );
+
+      slivers.add(
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, i) =>
+                  _buildRecordItem(context, cubit, weekRecords[i]),
+              childCount: weekRecords.length,
             ),
-            // Week records
-            ...weekRecords
-                .map((r) => _buildRecordItem(context, cubit, r)),
-          ],
-        );
-      },
-    );
+          ),
+        ),
+      );
+    }
+
+    slivers.add(const SliverToBoxAdapter(child: SizedBox(height: 12)));
+
+    return CustomScrollView(slivers: slivers);
   }
 
   Widget _buildRecordItem(
@@ -448,7 +452,9 @@ class HomeRecordPage extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (_) => AddHomeRecordPage(
-                record: record, categories: cubit.allCategories),
+                record: record,
+                categories: cubit.allCategories,
+                paymentTypes: cubit.paymentTypes),
           ),
         );
         if (edited != null) {
@@ -481,6 +487,282 @@ class HomeRecordPage extends StatelessWidget {
         }
       },
     );
+  }
+
+  /// Open a multi-select bottom sheet listing every category with checkboxes.
+  /// Result is committed only when the user taps "Apply" — gives a clear
+  /// commit step compared to chip-tap toggling.
+  Future<void> _openMultiSelectSheet(
+    BuildContext context,
+    HomeRecordCubit cubit,
+    Set<String> initial,
+  ) async {
+    final categories = cubit.categoriesByUsage;
+    final selected = Set<String>.from(initial);
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(builder: (ctx, setSt) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.92,
+            expand: false,
+            builder: (_, scrollController) => Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+                  child: Row(
+                    children: [
+                      Icon(Icons.filter_list_rounded,
+                          size: 18, color: Colors.grey[700]),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Filter by category',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: selected.isEmpty
+                            ? null
+                            : () => setSt(() => selected.clear()),
+                        child: const Text('Clear'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: categories.length,
+                    itemBuilder: (_, i) {
+                      final cat = categories[i];
+                      final checked = selected.contains(cat.id);
+                      return CheckboxListTile(
+                        dense: true,
+                        controlAffinity:
+                            ListTileControlAffinity.trailing,
+                        value: checked,
+                        onChanged: (v) {
+                          setSt(() {
+                            if (v == true) {
+                              selected.add(cat.id);
+                            } else {
+                              selected.remove(cat.id);
+                            }
+                          });
+                        },
+                        title: Row(
+                          children: [
+                            Icon(cat.icon, size: 18, color: cat.color),
+                            const SizedBox(width: 10),
+                            Text(cat.displayName,
+                                style: const TextStyle(fontSize: 14)),
+                          ],
+                        ),
+                        activeColor: cat.color,
+                      );
+                    },
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetCtx),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              cubit.setCategoryIds(selected);
+                              Navigator.pop(sheetCtx);
+                            },
+                            child: Text(selected.isEmpty
+                                ? 'Show all'
+                                : 'Apply (${selected.length})'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+}
+
+class _FilterIconButton extends StatelessWidget {
+  final int activeCount;
+  final VoidCallback onTap;
+
+  const _FilterIconButton({required this.activeCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasFilter = activeCount > 0;
+    return Material(
+      color: hasFilter ? Colors.green[600] : Colors.grey[100],
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 30,
+          height: 30,
+          child: Stack(
+            alignment: Alignment.center,
+            clipBehavior: Clip.none,
+            children: [
+              Icon(
+                Icons.filter_list_rounded,
+                size: 16,
+                color: hasFilter ? Colors.white : Colors.grey[700],
+              ),
+              if (hasFilter)
+                Positioned(
+                  top: -2,
+                  right: -2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(8),
+                      border:
+                          Border.all(color: Colors.white, width: 1),
+                    ),
+                    constraints:
+                        const BoxConstraints(minWidth: 14, minHeight: 14),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$activeCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
+  final String label;
+  final int count;
+  final String formattedTotal;
+
+  _WeekHeaderDelegate({
+    required this.label,
+    required this.count,
+    required this.formattedTotal,
+  });
+
+  static const double _height = 52;
+
+  @override
+  double get minExtent => _height;
+
+  @override
+  double get maxExtent => _height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.date_range_rounded,
+                size: 16, color: Colors.grey[700]),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.grey[400],
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              formattedTotal,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey[800],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _WeekHeaderDelegate oldDelegate) {
+    return oldDelegate.label != label ||
+        oldDelegate.count != count ||
+        oldDelegate.formattedTotal != formattedTotal;
   }
 }
 
@@ -539,6 +821,8 @@ class _RecordCard extends StatelessWidget {
                         record.category.displayName,
                         if (record.quantityLabel.isNotEmpty)
                           record.quantityLabel,
+                        if (record.paymentType != null)
+                          record.paymentType!.displayName,
                         DateFormat('d MMM').format(record.date),
                       ].join('  ·  '),
                       style: TextStyle(
@@ -550,7 +834,7 @@ class _RecordCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '${context.read<HomeRecordCubit>().currencySymbol}${record.amount.toStringAsFixed(0)}',
+                context.read<HomeRecordCubit>().formatAmount(record.amount),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -582,11 +866,13 @@ class _RecordCard extends StatelessWidget {
 class AddHomeRecordPage extends StatefulWidget {
   final HomeRecord? record;
   final List<HomeCategory> categories;
+  final List<PaymentType> paymentTypes;
 
   const AddHomeRecordPage({
     Key? key,
     this.record,
     required this.categories,
+    this.paymentTypes = const [],
   }) : super(key: key);
 
   @override
@@ -604,6 +890,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
   HomeCategory _selectedCategory = HomeCategory.groceries;
   DateTime _selectedDate = DateTime.now();
   MeasureUnit? _selectedUnit;
+  PaymentType? _selectedPaymentType;
 
   bool get _isEditing => widget.record != null;
 
@@ -621,6 +908,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
         _quantityController.text = widget.record!.quantity.toString();
       }
       _selectedUnit = widget.record!.unit;
+      _selectedPaymentType = widget.record!.paymentType;
     }
   }
 
@@ -634,28 +922,61 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
     super.dispose();
   }
 
+  HomeRecord? _buildRecord() {
+    if (!_formKey.currentState!.validate()) return null;
+    final qty = _quantityController.text.isNotEmpty
+        ? double.tryParse(_quantityController.text)
+        : null;
+    return HomeRecord(
+      id: widget.record?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text,
+      category: _selectedCategory,
+      amount: double.parse(_amountController.text),
+      date: _selectedDate,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      notes: _notesController.text.isEmpty ? null : _notesController.text,
+      quantity: qty,
+      unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
+      paymentType: _selectedPaymentType,
+    );
+  }
+
   void _saveRecord() {
-    if (_formKey.currentState!.validate()) {
-      final qty = _quantityController.text.isNotEmpty
-          ? double.tryParse(_quantityController.text)
-          : null;
-      final record = HomeRecord(
-        id: widget.record?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        category: _selectedCategory,
-        amount: double.parse(_amountController.text),
-        date: _selectedDate,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        notes:
-            _notesController.text.isEmpty ? null : _notesController.text,
-        quantity: qty,
-        unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
-      );
-      Navigator.pop(context, record);
-    }
+    final record = _buildRecord();
+    if (record != null) Navigator.pop(context, record);
+  }
+
+  /// Save the current entry directly through the cubit and reset the form so
+  /// the user can keep adding more without leaving the page. Date stays as-is
+  /// to speed up multi-entry on the same day.
+  void _saveAndContinue() {
+    final record = _buildRecord();
+    if (record == null) return;
+    context.read<HomeRecordCubit>().addRecord(record);
+
+    setState(() {
+      _titleController.clear();
+      _amountController.clear();
+      _descriptionController.clear();
+      _notesController.clear();
+      _quantityController.clear();
+      _selectedCategory = HomeCategory.groceries;
+      _selectedUnit = null;
+      _selectedPaymentType = null;
+      // _selectedDate is intentionally preserved.
+    });
+    _formKey.currentState?.reset();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Saved "${record.title}"'),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -778,6 +1099,15 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
+                // Payment type picker (optional)
+                _PaymentTypePicker(
+                  types: widget.paymentTypes,
+                  selected: _selectedPaymentType,
+                  onChanged: (t) =>
+                      setState(() => _selectedPaymentType = t),
+                ),
+                const SizedBox(height: 16),
+
                 // Date Picker
                 ListTile(
                   contentPadding:
@@ -828,20 +1158,442 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 32),
 
-                ElevatedButton(
-                  onPressed: _saveRecord,
-                  style: ElevatedButton.styleFrom(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 16),
+                if (_isEditing)
+                  ElevatedButton(
+                    onPressed: _saveRecord,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text(
+                      'Update Record',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  )
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _saveRecord,
+                          style: ElevatedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _saveAndContinue,
+                          style: OutlinedButton.styleFrom(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          icon: const Icon(Icons.arrow_forward_rounded,
+                              size: 18),
+                          label: const Text(
+                            'Continue',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Text(
-                    _isEditing ? 'Update Record' : 'Save Record',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Inline picker for the optional [PaymentType] on a record.
+///
+/// The list shows every type currently in the user's managed list plus the
+/// record's stored type even if it's no longer in that list — so editing an
+/// old record never silently drops the value just because the type was
+/// deleted from settings.
+class _PaymentTypePicker extends StatelessWidget {
+  final List<PaymentType> types;
+  final PaymentType? selected;
+  final ValueChanged<PaymentType?> onChanged;
+
+  const _PaymentTypePicker({
+    required this.types,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final merged = <PaymentType>[...types];
+    if (selected != null && !merged.any((t) => t.id == selected!.id)) {
+      merged.add(selected!);
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.payments_rounded, size: 16, color: Colors.grey[600]),
+            const SizedBox(width: 6),
+            Text(
+              'Payment type (optional)',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (merged.isEmpty)
+          Text(
+            'No payment types yet — add some from Settings.',
+            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+          )
+        else
+          Wrap(
+            spacing: 6,
+            runSpacing: 4,
+            children: [
+              ChoiceChip(
+                label: const Text('None', style: TextStyle(fontSize: 12)),
+                selected: selected == null,
+                onSelected: (_) => onChanged(null),
+                showCheckmark: false,
+                visualDensity: VisualDensity.compact,
+              ),
+              ...merged.map((t) {
+                final isSelected = selected?.id == t.id;
+                return ChoiceChip(
+                  avatar: Icon(t.icon, size: 14, color: t.color),
+                  label: Text(t.displayName,
+                      style: const TextStyle(fontSize: 12)),
+                  selected: isSelected,
+                  onSelected: (_) => onChanged(isSelected ? null : t),
+                  selectedColor: t.color.withValues(alpha: 0.2),
+                  showCheckmark: false,
+                  visualDensity: VisualDensity.compact,
+                );
+              }),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+/// Month-grid calendar view: 7-column layout (Mon → Sun) where each cell
+/// shows the day-of-month plus the total expense for that day. Tapping a
+/// cell selects that day; the list of records for the selected day is
+/// rendered below the grid.
+class _MonthCalendarView extends StatelessWidget {
+  final HomeRecordCubit cubit;
+  const _MonthCalendarView({required this.cubit});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = cubit.state;
+    final sel = state.selectedDate;
+    final firstOfMonth = DateTime(sel.year, sel.month, 1);
+    final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
+    // Monday=1 .. Sunday=7. Leading blanks put Monday at column 0.
+    final leading = firstOfMonth.weekday - 1;
+    final totalCells = ((leading + daysInMonth + 6) ~/ 7) * 7;
+    final rows = totalCells ~/ 7;
+    final dailyTotals = cubit.dailyTotalsForSelectedMonth;
+    final today = DateTime.now();
+    final isCurrentMonth =
+        today.year == sel.year && today.month == sel.month;
+
+    const dowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    final dayRecords = cubit.recordsForSelectedDay;
+    final dayTotal = dayRecords.fold<double>(0, (s, r) => s + r.amount);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Compute the exact grid height so the calendar takes only the
+        // space it actually needs and the records list below grows freely.
+        const hPad = 8.0;
+        const spacing = 4.0;
+        const aspect = 0.95;
+        final cellWidth =
+            (constraints.maxWidth - hPad * 2 - spacing * 6) / 7;
+        final cellHeight = cellWidth / aspect;
+        final gridHeight = rows * cellHeight + (rows - 1) * spacing;
+
+        return Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Row(
+                children: dowLabels
+                    .map((d) => Expanded(
+                          child: Center(
+                            child: Text(
+                              d,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+            SizedBox(
+              height: gridHeight + 8,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemCount: totalCells,
+                itemBuilder: (context, i) {
+                  final dayNum = i - leading + 1;
+                  if (dayNum < 1 || dayNum > daysInMonth) {
+                    return const SizedBox.shrink();
+                  }
+                  final amount = dailyTotals[dayNum] ?? 0;
+                  final isToday =
+                      isCurrentMonth && today.day == dayNum;
+                  final isSelected = sel.day == dayNum;
+                  return _DayCell(
+                    day: dayNum,
+                    isToday: isToday,
+                    isSelected: isSelected,
+                    amountLabel:
+                        amount > 0 ? cubit.formatAmount(amount) : '',
+                    onTap: () => cubit.selectDay(dayNum),
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1),
+
+            // Selected-day summary header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+              child: Row(
+                children: [
+                  Icon(Icons.event_rounded,
+                      size: 16, color: Colors.grey[700]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DateFormat('EEEE, d MMM yyyy').format(sel),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (dayRecords.isNotEmpty) ...[
+                    Text(
+                      cubit.formatAmount(dayTotal),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '(${dayRecords.length})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Records for the selected day
+            Expanded(
+              child: dayRecords.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.event_busy_rounded,
+                              size: 36, color: Colors.grey[300]),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No records on this day',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                      itemCount: dayRecords.length,
+                      itemBuilder: (_, i) {
+                        final r = dayRecords[i];
+                        return _RecordCard(
+                          record: r,
+                          onEdit: () async {
+                            final edited =
+                                await Navigator.push<HomeRecord>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddHomeRecordPage(
+                                  record: r,
+                                  categories: cubit.allCategories,
+                                  paymentTypes: cubit.paymentTypes,
+                                ),
+                              ),
+                            );
+                            if (edited != null) {
+                              cubit.updateRecord(edited);
+                            }
+                          },
+                          onDelete: () async {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (dctx) => AlertDialog(
+                                title: const Text('Delete Record'),
+                                content: Text(
+                                    'Are you sure you want to delete "${r.title}"?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dctx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dctx, true),
+                                    style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (ok == true) cubit.deleteRecord(r.id);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DayCell extends StatelessWidget {
+  final int day;
+  final bool isToday;
+  final bool isSelected;
+  final String amountLabel;
+  final VoidCallback? onTap;
+
+  const _DayCell({
+    required this.day,
+    required this.isToday,
+    required this.isSelected,
+    required this.amountLabel,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasExpense = amountLabel.isNotEmpty;
+
+    // Border priority: selected (thick blue) > today (thin blue) > default.
+    final Color borderColor;
+    final double borderWidth;
+    if (isSelected) {
+      borderColor = Colors.blue[700]!;
+      borderWidth = 2;
+    } else if (isToday) {
+      borderColor = Colors.blue;
+      borderWidth = 1.4;
+    } else {
+      borderColor = Colors.grey[200]!;
+      borderWidth = 1;
+    }
+
+    final Color bg;
+    if (isSelected) {
+      bg = Colors.blue.withValues(alpha: 0.18);
+    } else if (isToday) {
+      bg = Colors.blue.withValues(alpha: 0.10);
+    } else if (hasExpense) {
+      bg = Colors.red.withValues(alpha: 0.05);
+    } else {
+      bg = Colors.grey[50]!;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: borderWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: (isToday || isSelected)
+                    ? FontWeight.bold
+                    : FontWeight.w600,
+                color: (isToday || isSelected)
+                    ? Colors.blue[800]
+                    : Colors.grey[800],
+              ),
+            ),
+            const Spacer(),
+            if (hasExpense)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    amountLabel,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red[700],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
