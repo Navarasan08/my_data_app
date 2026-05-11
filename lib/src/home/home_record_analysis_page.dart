@@ -6,6 +6,26 @@ import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 
+/// Quick-pick time window for the analysis page. A user-set [DateTimeRange]
+/// overrides this when present.
+enum AnalysisPeriod { thisMonth, lastMonth, year, all }
+
+extension _AnalysisPeriodX on AnalysisPeriod {
+  /// Short label used in the segmented control and section subtitles.
+  String get label {
+    switch (this) {
+      case AnalysisPeriod.thisMonth:
+        return 'This Month';
+      case AnalysisPeriod.lastMonth:
+        return 'Last Month';
+      case AnalysisPeriod.year:
+        return 'Year';
+      case AnalysisPeriod.all:
+        return 'All';
+    }
+  }
+}
+
 class HomeRecordAnalysisPage extends StatefulWidget {
   const HomeRecordAnalysisPage({Key? key}) : super(key: key);
 
@@ -17,52 +37,107 @@ class HomeRecordAnalysisPage extends StatefulWidget {
 class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   DateTimeRange? _dateRange;
   HomeCategory? _filterCategory;
-  bool _isYearly = false;
+  AnalysisPeriod _period = AnalysisPeriod.thisMonth;
 
-  Map<HomeCategory, double> _getFilteredCategoryTotals(
-      HomeRecordCubit cubit) {
+  /// Resolved [start, end] window for the current selection. When the user
+  /// has picked a [DateTimeRange] explicitly it wins; otherwise we derive
+  /// the window from [_period]. The `allTime` flag tells the caller it can
+  /// short-circuit to the cubit's all-time aggregates.
+  ({DateTime start, DateTime end, bool allTime}) _activeRange() {
     if (_dateRange != null) {
-      final totals =
-          cubit.categoryTotalsInRange(_dateRange!.start, _dateRange!.end);
-      if (_filterCategory != null) {
-        final val = totals[_filterCategory];
-        if (val != null) return {_filterCategory!: val};
-        return {};
-      }
-      return totals;
+      // showDateRangePicker's end-date is the start-of-day — bump to
+      // end-of-day so a same-day range matches all records that day.
+      final end = DateTime(_dateRange!.end.year, _dateRange!.end.month,
+          _dateRange!.end.day, 23, 59, 59);
+      return (start: _dateRange!.start, end: end, allTime: false);
     }
-    if (_isYearly) {
-      final now = DateTime.now();
-      final start = DateTime(now.year, 1, 1);
-      final end = DateTime(now.year, 12, 31);
-      final totals = cubit.categoryTotalsInRange(start, end);
-      if (_filterCategory != null) {
-        final val = totals[_filterCategory];
-        if (val != null) return {_filterCategory!: val};
-        return {};
-      }
-      return totals;
+    final now = DateTime.now();
+    switch (_period) {
+      case AnalysisPeriod.thisMonth:
+        return (
+          start: DateTime(now.year, now.month, 1),
+          end: DateTime(now.year, now.month + 1, 0, 23, 59, 59),
+          allTime: false,
+        );
+      case AnalysisPeriod.lastMonth:
+        return (
+          start: DateTime(now.year, now.month - 1, 1),
+          end: DateTime(now.year, now.month, 0, 23, 59, 59),
+          allTime: false,
+        );
+      case AnalysisPeriod.year:
+        return (
+          start: DateTime(now.year, 1, 1),
+          end: DateTime(now.year, 12, 31, 23, 59, 59),
+          allTime: false,
+        );
+      case AnalysisPeriod.all:
+        return (
+          start: DateTime(1970),
+          end: DateTime(2100),
+          allTime: true,
+        );
     }
-    final totals = cubit.allTimeCategoryTotals();
-    if (_filterCategory != null) {
-      final val = totals[_filterCategory];
-      if (val != null) return {_filterCategory!: val};
-      return {};
-    }
-    return totals;
   }
 
-  double _getFilteredTotal(Map<HomeCategory, double> totals) {
-    return totals.values.fold(0.0, (sum, v) => sum + v);
+  String _activeRangeLabel() {
+    if (_dateRange != null) {
+      return '${DateFormat('d MMM').format(_dateRange!.start)} – ${DateFormat('d MMM yyyy').format(_dateRange!.end)}';
+    }
+    return _period.label;
   }
+
+  Map<HomeCategory, double> _categoryTotals(HomeRecordCubit cubit) {
+    final r = _activeRange();
+    final base = r.allTime
+        ? cubit.allTimeCategoryTotals()
+        : cubit.categoryTotalsInRange(r.start, r.end);
+    if (_filterCategory != null) {
+      final v = base[_filterCategory!];
+      return v != null ? {_filterCategory!: v} : {};
+    }
+    return base;
+  }
+
+  Map<PaymentType, double> _paymentTotals(HomeRecordCubit cubit) {
+    final r = _activeRange();
+    return cubit.paymentTotalsInRange(
+      r.start,
+      r.end,
+      category: _filterCategory,
+    );
+  }
+
+  int _untaggedPaymentCount(HomeRecordCubit cubit) {
+    final r = _activeRange();
+    return cubit.countUntaggedPaymentsInRange(
+      r.start,
+      r.end,
+      category: _filterCategory,
+    );
+  }
+
+  /// Key used to invalidate the [AnimatedSwitcher]s when any filter
+  /// dimension changes — the new charts/lists cross-fade in.
+  Object _filterKey() => Object.hash(
+        _period,
+        _dateRange?.start,
+        _dateRange?.end,
+        _filterCategory?.id,
+      );
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
-        final categoryTotals = _getFilteredCategoryTotals(cubit);
-        final filteredTotal = _getFilteredTotal(categoryTotals);
+        final categoryTotals = _categoryTotals(cubit);
+        final filteredTotal =
+            categoryTotals.values.fold<double>(0, (s, v) => s + v);
+        final paymentTotals = _paymentTotals(cubit);
+        final paymentTotal =
+            paymentTotals.values.fold<double>(0, (s, v) => s + v);
+        final untaggedCount = _untaggedPaymentCount(cubit);
         final monthlyData = cubit.monthlyTotals(months: 12);
 
         return Scaffold(
@@ -82,71 +157,111 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: contentMaxWidth),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Summary Cards
-                        _buildSummaryCards(cubit, filteredTotal, categoryTotals),
-                        const SizedBox(height: 20),
+                    child: _FadeSlideIn(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildSummaryCards(
+                              cubit, filteredTotal, categoryTotals),
+                          const SizedBox(height: 20),
 
-                        // Filter Controls
-                        _buildFilterControls(context, cubit.categoriesByUsage),
-                        const SizedBox(height: 20),
+                          _buildFilterControls(
+                              context, cubit.categoriesByUsage),
+                          const SizedBox(height: 20),
 
-                        // Charts: side-by-side on wide screens
-                        if (isWide) ...[
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildSectionTitle('Category Breakdown'),
-                                    const SizedBox(height: 12),
-                                    _buildPieChart(categoryTotals, filteredTotal),
-                                    const SizedBox(height: 8),
-                                    _buildPieLegend(categoryTotals, filteredTotal, cubit, cubit.categoryQuantities),
-                                  ],
+                          // Charts swap with a cross-fade whenever the
+                          // filter changes.
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 320),
+                            switchInCurve: Curves.easeOut,
+                            child: Column(
+                              key: ValueKey(_filterKey()),
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (isWide)
+                                  Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _buildSectionTitle(
+                                                'Category Breakdown',
+                                                subtitle: _activeRangeLabel()),
+                                            const SizedBox(height: 12),
+                                            _buildPieChart(categoryTotals,
+                                                filteredTotal),
+                                            const SizedBox(height: 8),
+                                            _buildPieLegend(
+                                              categoryTotals,
+                                              filteredTotal,
+                                              cubit,
+                                              cubit.categoryQuantities,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 24),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            _buildSectionTitle(
+                                                'Top Categories'),
+                                            const SizedBox(height: 12),
+                                            _buildBarChart(
+                                                categoryTotals, cubit),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else ...[
+                                  _buildSectionTitle('Category Breakdown',
+                                      subtitle: _activeRangeLabel()),
+                                  const SizedBox(height: 12),
+                                  _buildPieChart(categoryTotals, filteredTotal),
+                                  const SizedBox(height: 8),
+                                  _buildPieLegend(
+                                    categoryTotals,
+                                    filteredTotal,
+                                    cubit,
+                                    cubit.categoryQuantities,
+                                  ),
+                                ],
+                                const SizedBox(height: 24),
+
+                                _buildSectionTitle('Payment Method',
+                                    subtitle: _activeRangeLabel()),
+                                const SizedBox(height: 12),
+                                _buildPaymentBreakdown(
+                                  paymentTotals,
+                                  paymentTotal,
+                                  untaggedCount,
+                                  cubit,
                                 ),
-                              ),
-                              const SizedBox(width: 24),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildSectionTitle('Top Categories'),
-                                    const SizedBox(height: 12),
-                                    _buildBarChart(categoryTotals, cubit),
-                                  ],
-                                ),
-                              ),
-                            ],
+                                const SizedBox(height: 24),
+
+                                _buildSectionTitle('Monthly Trend'),
+                                const SizedBox(height: 12),
+                                _buildLineChart(monthlyData, cubit),
+
+                                if (!isWide) ...[
+                                  const SizedBox(height: 24),
+                                  _buildSectionTitle('Top Categories'),
+                                  const SizedBox(height: 12),
+                                  _buildBarChart(categoryTotals, cubit),
+                                ],
+                              ],
+                            ),
                           ),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle('Monthly Trend'),
-                          const SizedBox(height: 12),
-                          _buildLineChart(monthlyData, cubit),
-                        ] else ...[
-                          // Stacked on mobile
-                          _buildSectionTitle('Category Breakdown'),
-                          const SizedBox(height: 12),
-                          _buildPieChart(categoryTotals, filteredTotal),
-                          const SizedBox(height: 8),
-                          _buildPieLegend(categoryTotals, filteredTotal, cubit, cubit.categoryQuantities),
-                          const SizedBox(height: 24),
-
-                          _buildSectionTitle('Monthly Trend'),
-                          const SizedBox(height: 12),
-                          _buildLineChart(monthlyData, cubit),
-                          const SizedBox(height: 24),
-
-                          _buildSectionTitle('Top Categories'),
-                          const SizedBox(height: 12),
-                          _buildBarChart(categoryTotals, cubit),
+                          const SizedBox(height: 32),
                         ],
-                        const SizedBox(height: 32),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -158,14 +273,35 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[800],
-      ),
+  // ── Section helpers ─────────────────────────────────────────────────────
+
+  Widget _buildSectionTitle(String title, {String? subtitle}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        if (subtitle != null) ...[
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(
+              '· $subtitle',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -207,7 +343,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     );
   }
 
-  Widget _buildFilterControls(BuildContext context, List<HomeCategory> allCategories) {
+  Widget _buildFilterControls(
+      BuildContext context, List<HomeCategory> allCategories) {
+    final hasRange = _dateRange != null;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -216,17 +355,58 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       ),
       child: Column(
         children: [
+          // Segmented period picker. Selection is empty when a custom date
+          // range is active so no segment looks "wrong-selected".
+          SizedBox(
+            width: double.infinity,
+            child: SegmentedButton<AnalysisPeriod>(
+              segments: AnalysisPeriod.values
+                  .map((p) => ButtonSegment<AnalysisPeriod>(
+                        value: p,
+                        label: Text(p.label),
+                      ))
+                  .toList(),
+              selected:
+                  hasRange ? <AnalysisPeriod>{} : <AnalysisPeriod>{_period},
+              emptySelectionAllowed: true,
+              showSelectedIcon: false,
+              onSelectionChanged: (values) {
+                if (values.isEmpty) return;
+                setState(() {
+                  _period = values.first;
+                  _dateRange = null;
+                });
+              },
+              style: ButtonStyle(
+                visualDensity: VisualDensity.compact,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                textStyle: const WidgetStatePropertyAll(
+                  TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                ),
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           Row(
             children: [
-              // Date Range Picker
               Expanded(
                 child: OutlinedButton.icon(
                   icon: const Icon(Icons.date_range, size: 18),
                   label: Text(
-                    _dateRange != null
-                        ? '${DateFormat('MMM d').format(_dateRange!.start)} - ${DateFormat('MMM d').format(_dateRange!.end)}'
+                    hasRange
+                        ? '${DateFormat('d MMM').format(_dateRange!.start)} – ${DateFormat('d MMM').format(_dateRange!.end)}'
                         : 'Date Range',
                     style: const TextStyle(fontSize: 12),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor:
+                        hasRange ? Colors.blue[700] : null,
+                    side: hasRange
+                        ? BorderSide(color: Colors.blue[300]!)
+                        : null,
                   ),
                   onPressed: () async {
                     final range = await showDateRangePicker(
@@ -241,7 +421,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                   },
                 ),
               ),
-              if (_dateRange != null) ...[
+              if (hasRange) ...[
                 const SizedBox(width: 4),
                 IconButton(
                   icon: const Icon(Icons.clear, size: 18),
@@ -253,83 +433,49 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              // Category Filter
-              Expanded(
-                child: DropdownButtonFormField<HomeCategory?>(
-                  initialValue: _filterCategory,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    isDense: true,
-                  ),
-                  items: [
-                    const DropdownMenuItem(
-                      value: null,
-                      child: Text('All Categories'),
-                    ),
-                    ...allCategories.map((cat) {
-                      return DropdownMenuItem(
-                        value: cat,
-                        child: Row(
-                          children: [
-                            Icon(cat.icon, size: 16, color: cat.color),
-                            const SizedBox(width: 6),
-                            Text(cat.displayName,
-                                style: const TextStyle(fontSize: 13)),
-                          ],
-                        ),
-                      );
-                    }),
-                  ],
-                  onChanged: (value) {
-                    setState(() => _filterCategory = value);
-                  },
-                ),
+          DropdownButtonFormField<HomeCategory?>(
+            initialValue: _filterCategory,
+            decoration: const InputDecoration(
+              labelText: 'Category',
+              border: OutlineInputBorder(),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              isDense: true,
+            ),
+            items: [
+              const DropdownMenuItem(
+                value: null,
+                child: Text('All Categories'),
               ),
-              const SizedBox(width: 8),
-              // Monthly/Yearly Toggle
-              SegmentedButton<bool>(
-                segments: const [
-                  ButtonSegment(value: false, label: Text('All')),
-                  ButtonSegment(value: true, label: Text('Year')),
-                ],
-                selected: {_isYearly},
-                onSelectionChanged: (value) {
-                  setState(() {
-                    _isYearly = value.first;
-                    if (_isYearly) _dateRange = null;
-                  });
-                },
-                style: ButtonStyle(
-                  visualDensity: VisualDensity.compact,
-                  textStyle: WidgetStatePropertyAll(
-                    const TextStyle(fontSize: 12),
+              ...allCategories.map((cat) {
+                return DropdownMenuItem(
+                  value: cat,
+                  child: Row(
+                    children: [
+                      Icon(cat.icon, size: 16, color: cat.color),
+                      const SizedBox(width: 6),
+                      Text(cat.displayName,
+                          style: const TextStyle(fontSize: 13)),
+                    ],
                   ),
-                ),
-              ),
+                );
+              }),
             ],
+            onChanged: (value) {
+              setState(() => _filterCategory = value);
+            },
           ),
         ],
       ),
     );
   }
 
+  // ── Chart builders ──────────────────────────────────────────────────────
+
   Widget _buildPieChart(
       Map<HomeCategory, double> totals, double grandTotal) {
     if (totals.isEmpty || grandTotal == 0) {
-      return SizedBox(
-        height: 200,
-        child: Center(
-          child: Text(
-            'No data to display',
-            style: TextStyle(color: Colors.grey[500], fontSize: 16),
-          ),
-        ),
-      );
+      return _emptyChart('No data in this period');
     }
 
     return SizedBox(
@@ -355,6 +501,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           sectionsSpace: 2,
           centerSpaceRadius: 35,
         ),
+        // fl_chart animates section-value changes when this duration is set.
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
       ),
     );
   }
@@ -372,8 +521,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: sorted.map((e) {
-        final pct =
-            grandTotal > 0 ? (e.value / grandTotal * 100) : 0.0;
+        final pct = grandTotal > 0 ? (e.value / grandTotal * 100) : 0.0;
         final quantities = categoryQuantities[e.key];
         final qtyParts = <String>[];
         if (quantities != null) {
@@ -385,65 +533,199 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           }
         }
 
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: e.key.color,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${e.key.displayName}  ',
-                        style: const TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w600),
-                      ),
-                      TextSpan(
-                        text: '${cubit.formatAmount(e.value)} (${pct.toStringAsFixed(1)}%)',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      if (qtyParts.isNotEmpty)
-                        TextSpan(
-                          text: '  ·  ${qtyParts.join(', ')}',
-                          style: TextStyle(
-                              fontSize: 11, color: Colors.grey[600]),
-                        ),
-                    ],
+        return InkWell(
+          onTap: () => _showCategoryRecords(context, cubit, e.key),
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: e.key.color,
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: '${e.key.displayName}  ',
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                        TextSpan(
+                          text:
+                              '${cubit.formatAmount(e.value)} (${pct.toStringAsFixed(1)}%)',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        if (qtyParts.isNotEmpty)
+                          TextSpan(
+                            text: '  ·  ${qtyParts.join(', ')}',
+                            style: TextStyle(
+                                fontSize: 11, color: Colors.grey[600]),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded,
+                    size: 16, color: Colors.grey[400]),
+              ],
+            ),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildLineChart(Map<DateTime, double> monthlyData, HomeRecordCubit cubit) {
-    final entries = monthlyData.entries.toList();
-    if (entries.isEmpty) {
-      return SizedBox(
-        height: 200,
-        child: Center(
-          child: Text(
-            'No data to display',
-            style: TextStyle(color: Colors.grey[500], fontSize: 16),
-          ),
+  Widget _buildPaymentBreakdown(
+    Map<PaymentType, double> totals,
+    double grandTotal,
+    int untaggedCount,
+    HomeRecordCubit cubit,
+  ) {
+    if (totals.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.payments_rounded,
+                color: Colors.grey[500], size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                untaggedCount > 0
+                    ? 'No tagged records yet. $untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period have no payment method.'
+                    : 'No data in this period',
+                style:
+                    TextStyle(color: Colors.grey[600], fontSize: 13),
+              ),
+            ),
+          ],
         ),
       );
     }
 
-    final maxY = entries.map((e) => e.value).reduce(
-        (a, b) => a > b ? a : b);
+    final sorted = totals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...sorted.map((e) {
+            final pct = grandTotal > 0 ? (e.value / grandTotal * 100) : 0.0;
+            return InkWell(
+              onTap: () => _showPaymentTypeRecords(context, cubit, e.key),
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: e.key.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(e.key.icon,
+                          color: e.key.color, size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            e.key.displayName,
+                            style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600),
+                          ),
+                          const SizedBox(height: 4),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: pct / 100),
+                            duration:
+                                const Duration(milliseconds: 500),
+                            curve: Curves.easeOutCubic,
+                            builder: (_, t, _) {
+                              return ClipRRect(
+                                borderRadius:
+                                    BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: t,
+                                  minHeight: 6,
+                                  backgroundColor:
+                                      Colors.grey[200],
+                                  valueColor:
+                                      AlwaysStoppedAnimation<Color>(
+                                          e.key.color),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          cubit.formatAmount(e.value),
+                          style: const TextStyle(
+                              fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          '${pct.toStringAsFixed(1)}%',
+                          style: TextStyle(
+                              fontSize: 11, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 16, color: Colors.grey[400]),
+                  ],
+                ),
+              ),
+            );
+          }),
+          if (untaggedCount > 0) ...[
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Text(
+                '$untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period without a payment method.',
+                style:
+                    TextStyle(fontSize: 11, color: Colors.grey[500]),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLineChart(
+      Map<DateTime, double> monthlyData, HomeRecordCubit cubit) {
+    final entries = monthlyData.entries.toList();
+    if (entries.isEmpty) return _emptyChart('No data to display');
+
+    final maxY =
+        entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final yMax = maxY == 0 ? 100.0 : maxY * 1.2;
 
     return SizedBox(
@@ -512,30 +794,20 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             drawVerticalLine: false,
             horizontalInterval: yMax / 4,
             getDrawingHorizontalLine: (value) {
-              return FlLine(
-                color: Colors.grey[300]!,
-                strokeWidth: 1,
-              );
+              return FlLine(color: Colors.grey[300]!, strokeWidth: 1);
             },
           ),
           borderData: FlBorderData(show: false),
         ),
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
       ),
     );
   }
 
-  Widget _buildBarChart(Map<HomeCategory, double> totals, HomeRecordCubit cubit) {
-    if (totals.isEmpty) {
-      return SizedBox(
-        height: 200,
-        child: Center(
-          child: Text(
-            'No data to display',
-            style: TextStyle(color: Colors.grey[500], fontSize: 16),
-          ),
-        ),
-      );
-    }
+  Widget _buildBarChart(
+      Map<HomeCategory, double> totals, HomeRecordCubit cubit) {
+    if (totals.isEmpty) return _emptyChart('No data to display');
 
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -556,8 +828,8 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                   toY: e.value.value,
                   color: e.value.key.color,
                   width: sorted.length <= 5 ? 28 : 18,
-                  borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(6)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(6)),
                 ),
               ],
             );
@@ -605,15 +877,197 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             drawVerticalLine: false,
             horizontalInterval: yMax / 4,
             getDrawingHorizontalLine: (value) {
-              return FlLine(
-                color: Colors.grey[300]!,
-                strokeWidth: 1,
-              );
+              return FlLine(color: Colors.grey[300]!, strokeWidth: 1);
             },
           ),
           borderData: FlBorderData(show: false),
         ),
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeOutCubic,
       ),
+    );
+  }
+
+  Widget _emptyChart(String message) {
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(color: Colors.grey[500], fontSize: 15),
+        ),
+      ),
+    );
+  }
+
+  // ── Records sheets ──────────────────────────────────────────────────────
+
+  void _showCategoryRecords(
+      BuildContext context, HomeRecordCubit cubit, HomeCategory cat) {
+    final r = _activeRange();
+    final records = cubit.recordsInRange(r.start, r.end, category: cat);
+    _showRecordsSheet(
+      context,
+      cubit: cubit,
+      title: cat.displayName,
+      subtitle: _activeRangeLabel(),
+      accentColor: cat.color,
+      icon: cat.icon,
+      records: records,
+    );
+  }
+
+  void _showPaymentTypeRecords(
+      BuildContext context, HomeRecordCubit cubit, PaymentType type) {
+    final r = _activeRange();
+    final records = cubit.recordsInRange(
+      r.start,
+      r.end,
+      paymentTypeId: type.id,
+      category: _filterCategory,
+    );
+    _showRecordsSheet(
+      context,
+      cubit: cubit,
+      title: type.displayName,
+      subtitle: _activeRangeLabel(),
+      accentColor: type.color,
+      icon: type.icon,
+      records: records,
+    );
+  }
+
+  void _showRecordsSheet(
+    BuildContext context, {
+    required HomeRecordCubit cubit,
+    required String title,
+    required String subtitle,
+    required Color accentColor,
+    required IconData icon,
+    required List<HomeRecord> records,
+  }) {
+    final total = records.fold<double>(0, (s, r) => s + r.amount);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetCtx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, scrollController) => Column(
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: accentColor.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child:
+                          Icon(icon, color: accentColor, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '$subtitle  ·  ${records.length} record${records.length == 1 ? '' : 's'}',
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      cubit.formatAmount(total),
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: records.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No records to show',
+                          style: TextStyle(
+                              color: Colors.grey[500], fontSize: 14),
+                        ),
+                      )
+                    : ListView.separated(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        itemCount: records.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: 6),
+                        itemBuilder: (_, i) =>
+                            _RecordListTile(record: records[i], cubit: cubit),
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ── Helper widgets ────────────────────────────────────────────────────────
+
+/// One-shot fade + slide-up wrapper used to give the analysis page a soft
+/// entrance animation when it first appears.
+class _FadeSlideIn extends StatelessWidget {
+  final Widget child;
+  const _FadeSlideIn({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 420),
+      curve: Curves.easeOutCubic,
+      builder: (_, t, c) {
+        return Opacity(
+          opacity: t,
+          child: Transform.translate(
+            offset: Offset(0, (1 - t) * 16),
+            child: c,
+          ),
+        );
+      },
+      child: child,
     );
   }
 }
@@ -646,15 +1100,19 @@ class _SummaryCard extends StatelessWidget {
         children: [
           Icon(icon, color: color, size: 20),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 280),
+            child: Text(
+              value,
+              key: ValueKey(value),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
@@ -663,6 +1121,68 @@ class _SummaryCard extends StatelessWidget {
               fontSize: 11,
               color: color.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact record tile used inside the records bottom sheet — read-only
+/// (edits happen in the main records page).
+class _RecordListTile extends StatelessWidget {
+  final HomeRecord record;
+  final HomeRecordCubit cubit;
+  const _RecordListTile({required this.record, required this.cubit});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: record.category.color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border(
+          left: BorderSide(color: record.category.color, width: 3),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      child: Row(
+        children: [
+          Icon(record.category.icon, size: 18, color: record.category.color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  record.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    DateFormat('d MMM yyyy').format(record.date),
+                    if (record.paymentType != null)
+                      record.paymentType!.displayName,
+                    if (record.quantityLabel.isNotEmpty) record.quantityLabel,
+                  ].join('  ·  '),
+                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            cubit.formatAmount(record.amount),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Colors.red[700],
             ),
           ),
         ],

@@ -21,10 +21,19 @@ class HomeRecordPage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Home Records'),
+            title: const Text('Expense Tracker'),
             centerTitle: true,
             elevation: 0,
             actions: [
+              IconButton(
+                icon: Icon(state.isCalendarView
+                    ? Icons.view_list_rounded
+                    : Icons.calendar_month_rounded),
+                tooltip: state.isCalendarView
+                    ? 'List view'
+                    : 'Calendar view',
+                onPressed: cubit.toggleCalendarView,
+              ),
               IconButton(
                 icon: const Icon(Icons.bar_chart_rounded),
                 tooltip: 'Analysis',
@@ -63,8 +72,9 @@ class HomeRecordPage extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Month nav (only when monthly calendar enabled)
-                  if (state.showMonthlyCalendar)
+                  // Month nav — shown whenever the user is browsing by month
+                  // (the existing monthly-list mode or the new calendar view).
+                  if (state.showMonthlyCalendar || state.isCalendarView)
                     Center(
                       child: ConstrainedBox(
                         constraints:
@@ -200,63 +210,71 @@ class HomeRecordPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
 
-                  // Records List / Grid
+                  // Records List / Grid / Calendar
                   Expanded(
-                    child: filteredRecords.isEmpty
+                    child: state.isCalendarView
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment:
-                                  MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.home_outlined,
-                                    size: 48,
-                                    color: Colors.grey[300]),
-                                const SizedBox(height: 12),
-                                Text(
-                                  state.selectedCategoryIds.isNotEmpty
-                                      ? 'No records for the selected categories'
-                                      : 'No records yet',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[500],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Center(
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                   maxWidth: contentMaxWidth),
-                              child: state.showMonthlyCalendar
-                                  ? (gridCols > 1
-                                      ? GridView.builder(
-                                          padding:
-                                              const EdgeInsets.fromLTRB(
-                                                  12, 4, 12, 12),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: gridCols,
-                                            crossAxisSpacing: 10,
-                                            mainAxisSpacing: 10,
-                                            childAspectRatio:
-                                                isExtraWide ? 2.5 : 2.2,
-                                          ),
-                                          itemCount:
-                                              filteredRecords.length,
-                                          itemBuilder: (context, index) {
-                                            return _buildRecordItem(
-                                                context,
-                                                cubit,
-                                                filteredRecords[index]);
-                                          },
-                                        )
-                                      : _buildWeekGroupedList(
-                                          context, cubit, filteredRecords))
-                                  : _buildMonthGroupedList(
-                                      context, cubit, filteredRecords),
+                              child: _MonthCalendarView(cubit: cubit),
                             ),
-                          ),
+                          )
+                        : filteredRecords.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.home_outlined,
+                                        size: 48,
+                                        color: Colors.grey[300]),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      state.selectedCategoryIds.isNotEmpty
+                                          ? 'No records for the selected categories'
+                                          : 'No records yet',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[500],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                      maxWidth: contentMaxWidth),
+                                  child: state.showMonthlyCalendar
+                                      ? (gridCols > 1
+                                          ? GridView.builder(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      12, 4, 12, 12),
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: gridCols,
+                                                crossAxisSpacing: 10,
+                                                mainAxisSpacing: 10,
+                                                childAspectRatio:
+                                                    isExtraWide ? 2.5 : 2.2,
+                                              ),
+                                              itemCount:
+                                                  filteredRecords.length,
+                                              itemBuilder: (context, index) {
+                                                return _buildRecordItem(
+                                                    context,
+                                                    cubit,
+                                                    filteredRecords[index]);
+                                              },
+                                            )
+                                          : _buildWeekGroupedList(context,
+                                              cubit, filteredRecords))
+                                      : _buildMonthGroupedList(
+                                          context, cubit, filteredRecords),
+                                ),
+                              ),
                   ),
                 ],
               );
@@ -1263,6 +1281,315 @@ class _PaymentTypePicker extends StatelessWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// Month-grid calendar view: 7-column layout (Mon → Sun) where each cell
+/// shows the day-of-month plus the total expense for that day. Tapping a
+/// cell selects that day; the list of records for the selected day is
+/// rendered below the grid.
+class _MonthCalendarView extends StatelessWidget {
+  final HomeRecordCubit cubit;
+  const _MonthCalendarView({required this.cubit});
+
+  @override
+  Widget build(BuildContext context) {
+    final state = cubit.state;
+    final sel = state.selectedDate;
+    final firstOfMonth = DateTime(sel.year, sel.month, 1);
+    final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
+    // Monday=1 .. Sunday=7. Leading blanks put Monday at column 0.
+    final leading = firstOfMonth.weekday - 1;
+    final totalCells = ((leading + daysInMonth + 6) ~/ 7) * 7;
+    final rows = totalCells ~/ 7;
+    final dailyTotals = cubit.dailyTotalsForSelectedMonth;
+    final today = DateTime.now();
+    final isCurrentMonth =
+        today.year == sel.year && today.month == sel.month;
+
+    const dowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+    final dayRecords = cubit.recordsForSelectedDay;
+    final dayTotal = dayRecords.fold<double>(0, (s, r) => s + r.amount);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Compute the exact grid height so the calendar takes only the
+        // space it actually needs and the records list below grows freely.
+        const hPad = 8.0;
+        const spacing = 4.0;
+        const aspect = 0.95;
+        final cellWidth =
+            (constraints.maxWidth - hPad * 2 - spacing * 6) / 7;
+        final cellHeight = cellWidth / aspect;
+        final gridHeight = rows * cellHeight + (rows - 1) * spacing;
+
+        return Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              child: Row(
+                children: dowLabels
+                    .map((d) => Expanded(
+                          child: Center(
+                            child: Text(
+                              d,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ),
+                        ))
+                    .toList(),
+              ),
+            ),
+            SizedBox(
+              height: gridHeight + 8,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
+                gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemCount: totalCells,
+                itemBuilder: (context, i) {
+                  final dayNum = i - leading + 1;
+                  if (dayNum < 1 || dayNum > daysInMonth) {
+                    return const SizedBox.shrink();
+                  }
+                  final amount = dailyTotals[dayNum] ?? 0;
+                  final isToday =
+                      isCurrentMonth && today.day == dayNum;
+                  final isSelected = sel.day == dayNum;
+                  return _DayCell(
+                    day: dayNum,
+                    isToday: isToday,
+                    isSelected: isSelected,
+                    amountLabel:
+                        amount > 0 ? cubit.formatAmount(amount) : '',
+                    onTap: () => cubit.selectDay(dayNum),
+                  );
+                },
+              ),
+            ),
+            const Divider(height: 1),
+
+            // Selected-day summary header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+              child: Row(
+                children: [
+                  Icon(Icons.event_rounded,
+                      size: 16, color: Colors.grey[700]),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      DateFormat('EEEE, d MMM yyyy').format(sel),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  if (dayRecords.isNotEmpty) ...[
+                    Text(
+                      cubit.formatAmount(dayTotal),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[700],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '(${dayRecords.length})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+
+            // Records for the selected day
+            Expanded(
+              child: dayRecords.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.event_busy_rounded,
+                              size: 36, color: Colors.grey[300]),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No records on this day',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                      itemCount: dayRecords.length,
+                      itemBuilder: (_, i) {
+                        final r = dayRecords[i];
+                        return _RecordCard(
+                          record: r,
+                          onEdit: () async {
+                            final edited =
+                                await Navigator.push<HomeRecord>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddHomeRecordPage(
+                                  record: r,
+                                  categories: cubit.allCategories,
+                                  paymentTypes: cubit.paymentTypes,
+                                ),
+                              ),
+                            );
+                            if (edited != null) {
+                              cubit.updateRecord(edited);
+                            }
+                          },
+                          onDelete: () async {
+                            final ok = await showDialog<bool>(
+                              context: context,
+                              builder: (dctx) => AlertDialog(
+                                title: const Text('Delete Record'),
+                                content: Text(
+                                    'Are you sure you want to delete "${r.title}"?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dctx, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(dctx, true),
+                                    style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (ok == true) cubit.deleteRecord(r.id);
+                          },
+                        );
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _DayCell extends StatelessWidget {
+  final int day;
+  final bool isToday;
+  final bool isSelected;
+  final String amountLabel;
+  final VoidCallback? onTap;
+
+  const _DayCell({
+    required this.day,
+    required this.isToday,
+    required this.isSelected,
+    required this.amountLabel,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final hasExpense = amountLabel.isNotEmpty;
+
+    // Border priority: selected (thick blue) > today (thin blue) > default.
+    final Color borderColor;
+    final double borderWidth;
+    if (isSelected) {
+      borderColor = Colors.blue[700]!;
+      borderWidth = 2;
+    } else if (isToday) {
+      borderColor = Colors.blue;
+      borderWidth = 1.4;
+    } else {
+      borderColor = Colors.grey[200]!;
+      borderWidth = 1;
+    }
+
+    final Color bg;
+    if (isSelected) {
+      bg = Colors.blue.withValues(alpha: 0.18);
+    } else if (isToday) {
+      bg = Colors.blue.withValues(alpha: 0.10);
+    } else if (hasExpense) {
+      bg = Colors.red.withValues(alpha: 0.05);
+    } else {
+      bg = Colors.grey[50]!;
+    }
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: borderColor, width: borderWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: (isToday || isSelected)
+                    ? FontWeight.bold
+                    : FontWeight.w600,
+                color: (isToday || isSelected)
+                    ? Colors.blue[800]
+                    : Colors.grey[800],
+              ),
+            ),
+            const Spacer(),
+            if (hasExpense)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    amountLabel,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red[700],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

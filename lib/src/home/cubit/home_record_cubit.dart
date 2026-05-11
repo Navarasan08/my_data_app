@@ -14,6 +14,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           paymentTypes: _repository.getPaymentTypes(),
           currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
           showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
+          isCalendarView: _repository.getIsCalendarView(),
         ));
 
   void addRecord(HomeRecord record) {
@@ -32,9 +33,24 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }
 
   void changeMonth(int monthDelta) {
-    final current = state.selectedDate;
+    final cur = state.selectedDate;
+    final target = DateTime(cur.year, cur.month + monthDelta, 1);
+    final daysInTarget = DateTime(target.year, target.month + 1, 0).day;
+    final day = cur.day > daysInTarget ? daysInTarget : cur.day;
     emit(state.copyWith(
-      selectedDate: DateTime(current.year, current.month + monthDelta, 1),
+      selectedDate: DateTime(target.year, target.month, day),
+    ));
+  }
+
+  /// Select a specific day-of-month within the currently selected month.
+  /// Used by the calendar view to drive the records list shown below the
+  /// grid.
+  void selectDay(int day) {
+    final cur = state.selectedDate;
+    final daysIn = DateTime(cur.year, cur.month + 1, 0).day;
+    final safe = day.clamp(1, daysIn);
+    emit(state.copyWith(
+      selectedDate: DateTime(cur.year, cur.month, safe),
     ));
   }
 
@@ -175,6 +191,62 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return map;
   }
 
+  /// Records whose `date` falls within `[start, end]` (inclusive), optionally
+  /// restricted to a single category and/or payment-type id. Used by the
+  /// analysis page to power the "tap a category to see its records" sheet.
+  List<HomeRecord> recordsInRange(
+    DateTime start,
+    DateTime end, {
+    HomeCategory? category,
+    String? paymentTypeId,
+  }) {
+    final list = state.records.where((r) {
+      if (r.date.isBefore(start) || r.date.isAfter(end)) return false;
+      if (category != null && r.category.id != category.id) return false;
+      if (paymentTypeId != null && r.paymentType?.id != paymentTypeId) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    return list;
+  }
+
+  /// Totals per payment-type within `[start, end]`. Records without a payment
+  /// type are excluded (since `paymentType` is optional on `HomeRecord`).
+  Map<PaymentType, double> paymentTotalsInRange(
+    DateTime start,
+    DateTime end, {
+    HomeCategory? category,
+  }) {
+    final map = <PaymentType, double>{};
+    for (final r in state.records) {
+      if (r.date.isBefore(start) || r.date.isAfter(end)) continue;
+      if (category != null && r.category.id != category.id) continue;
+      final pt = r.paymentType;
+      if (pt == null) continue;
+      map[pt] = (map[pt] ?? 0) + r.amount;
+    }
+    return map;
+  }
+
+  /// Count of records in `[start, end]` that don't have a payment type
+  /// recorded, used by the analysis page to surface "X records with no
+  /// payment method" hint.
+  int countUntaggedPaymentsInRange(
+    DateTime start,
+    DateTime end, {
+    HomeCategory? category,
+  }) {
+    int n = 0;
+    for (final r in state.records) {
+      if (r.date.isBefore(start) || r.date.isAfter(end)) continue;
+      if (category != null && r.category.id != category.id) continue;
+      if (r.paymentType == null) n++;
+    }
+    return n;
+  }
+
   double get allTimeTotal =>
       state.records.fold(0.0, (sum, r) => sum + r.amount);
 
@@ -277,4 +349,47 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     _repository.setShowMonthlyCalendar(value);
     emit(state.copyWith(showMonthlyCalendar: value));
   }
+
+  void toggleCalendarView() {
+    final next = !state.isCalendarView;
+    _repository.setIsCalendarView(next);
+    emit(state.copyWith(isCalendarView: next));
+  }
+
+  /// Totals grouped by day-of-month, restricted to the currently selected
+  /// month and respecting the active category filter. Used by the
+  /// month-grid calendar view.
+  Map<int, double> get dailyTotalsForSelectedMonth {
+    final sel = state.selectedDate;
+    final selected = state.selectedCategoryIds;
+    final out = <int, double>{};
+    for (final r in state.records) {
+      if (r.date.year != sel.year || r.date.month != sel.month) continue;
+      if (selected.isNotEmpty && !selected.contains(r.category.id)) continue;
+      out[r.date.day] = (out[r.date.day] ?? 0) + r.amount;
+    }
+    return out;
+  }
+
+  /// Records for a specific day within the selected month, respecting the
+  /// active category filter.
+  List<HomeRecord> recordsForDay(int day) {
+    final sel = state.selectedDate;
+    final selected = state.selectedCategoryIds;
+    return state.records.where((r) {
+      if (r.date.year != sel.year ||
+          r.date.month != sel.month ||
+          r.date.day != day) return false;
+      if (selected.isNotEmpty && !selected.contains(r.category.id)) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  /// Records on the currently selected day. Drives the records list shown
+  /// under the month-grid calendar.
+  List<HomeRecord> get recordsForSelectedDay =>
+      recordsForDay(state.selectedDate.day);
 }

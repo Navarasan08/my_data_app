@@ -76,6 +76,11 @@ class HomeRecordState {
   final HomeCurrency currency;
   final bool showMonthlyCalendar;
 
+  /// When true, the records list is replaced with a month-grid calendar where
+  /// each day cell shows the total expense for that day. Toggled from the
+  /// app bar.
+  final bool isCalendarView;
+
   const HomeRecordState({
     required this.records,
     required this.selectedDate,
@@ -85,6 +90,7 @@ class HomeRecordState {
     this.viewMode = HomeViewMode.monthly,
     this.currency = HomeCurrency.inr,
     this.showMonthlyCalendar = true,
+    this.isCalendarView = false,
   });
 
   HomeRecordState copyWith({
@@ -96,6 +102,7 @@ class HomeRecordState {
     HomeViewMode? viewMode,
     HomeCurrency? currency,
     bool? showMonthlyCalendar,
+    bool? isCalendarView,
   }) {
     return HomeRecordState(
       records: records ?? this.records,
@@ -106,6 +113,7 @@ class HomeRecordState {
       viewMode: viewMode ?? this.viewMode,
       currency: currency ?? this.currency,
       showMonthlyCalendar: showMonthlyCalendar ?? this.showMonthlyCalendar,
+      isCalendarView: isCalendarView ?? this.isCalendarView,
     );
   }
 }

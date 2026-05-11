@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:my_data_app/src/profile_vault/model/profile_vault_model.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_state.dart';
+import 'package:my_data_app/src/profile_vault/widgets/vault_visuals.dart';
 
 // ─── 1. ProfileVaultHomePage ─────────────────────────────────────────────────
 
@@ -293,76 +294,52 @@ class _EntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<ProfileVaultCubit>();
-    final section = entry.section;
-    final nonEmpty = entry.fields.entries
-        .where((e) => e.value.isNotEmpty)
-        .take(2)
-        .map((e) => '${e.key}: ${e.value}')
-        .join('  \u2022  ');
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => BlocProvider.value(
-              value: cubit,
-              child: EntryDetailPage(entryId: entry.id),
-            ),
+    return VaultEntryVisual(
+      entry: entry,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BlocProvider.value(
+            value: cubit,
+            child: EntryDetailPage(entryId: entry.id),
           ),
         ),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            border:
-                Border(left: BorderSide(color: section.color, width: 3)),
-            color: section.color.withAlpha(10),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              Icon(section.icon, color: section.color, size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      entry.title,
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    if (nonEmpty.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          nonEmpty,
-                          style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: () => cubit.toggleFavorite(entry.id),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            InkWell(
+              onTap: () => cubit.toggleFavorite(entry.id),
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(6),
                 child: Icon(
                   entry.isFavorite
                       ? Icons.star_rounded
                       : Icons.star_border_rounded,
-                  color:
-                      entry.isFavorite ? Colors.amber : Colors.grey.shade400,
-                  size: 20,
+                  color: entry.isFavorite
+                      ? Colors.amber
+                      : Colors.grey.shade500,
+                  size: 18,
                 ),
               ),
-              const SizedBox(width: 4),
-              _moreMenu(context, cubit),
-            ],
-          ),
+            ),
+            _moreMenu(context, cubit),
+          ],
         ),
       ),
     );
@@ -777,12 +754,16 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
   bool _isSensitiveField(String label) {
     final lower = label.toLowerCase();
-    return lower.contains('password') || lower.contains('pin');
+    return lower.contains('password') ||
+        lower.contains('pin') ||
+        lower == 'cvv' ||
+        lower == 'card number';
   }
 
   List<String>? _dropdownOptions(String label) {
     if (label == 'ID Type') return VaultTemplate.govtIdTypes;
     if (label == 'Card Type') return VaultTemplate.cardTypes;
+    if (label == 'Network') return VaultTemplate.cardNetworks;
     if (label == 'Account Type') return VaultTemplate.accountTypes;
     if (label == 'Policy Type') return VaultTemplate.insuranceTypes;
     if (label == 'Gender') return ['Male', 'Female', 'Other'];

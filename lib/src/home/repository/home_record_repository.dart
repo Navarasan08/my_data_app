@@ -18,6 +18,8 @@ abstract class HomeRecordRepository {
   void setCurrencyCode(String code);
   bool getShowMonthlyCalendar();
   void setShowMonthlyCalendar(bool value);
+  bool getIsCalendarView();
+  void setIsCalendarView(bool value);
   Future<void> init();
 }
 
@@ -29,6 +31,7 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   List<PaymentType> _paymentTypes = [];
   String _currencyCode = 'INR';
   bool _showMonthlyCalendar = true;
+  bool _isCalendarView = false;
 
   FirestoreHomeRecordRepository({
     required this.uid,
@@ -52,6 +55,8 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     if (settingsSnap.exists) {
       _currencyCode = (settingsSnap.data()?['currencyCode'] as String?) ?? 'INR';
       _showMonthlyCalendar = (settingsSnap.data()?['showMonthlyCalendar'] as bool?) ?? true;
+      _isCalendarView =
+          (settingsSnap.data()?['isCalendarView'] as bool?) ?? false;
       paymentTypesSeeded =
           (settingsSnap.data()?['paymentTypesSeeded'] as bool?) ?? false;
     }
@@ -180,5 +185,14 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   void setShowMonthlyCalendar(bool value) {
     _showMonthlyCalendar = value;
     _settingsDoc.set({'showMonthlyCalendar': value}, SetOptions(merge: true));
+  }
+
+  @override
+  bool getIsCalendarView() => _isCalendarView;
+
+  @override
+  void setIsCalendarView(bool value) {
+    _isCalendarView = value;
+    _settingsDoc.set({'isCalendarView': value}, SetOptions(merge: true));
   }
 }

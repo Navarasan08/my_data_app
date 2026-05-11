@@ -33,6 +33,8 @@ import 'package:my_data_app/src/interest/cubit/interest_cubit.dart';
 import 'package:my_data_app/src/interest/interest_page.dart';
 import 'package:my_data_app/src/activities/cubit/activity_cubit.dart';
 import 'package:my_data_app/src/activities/activity_page.dart';
+import 'package:my_data_app/src/diet/cubit/diet_cubit.dart';
+import 'package:my_data_app/src/diet/diet_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
@@ -49,7 +51,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   static const _categoryIds = {
     'Finance': ['bills', 'chits', 'loans', 'home', 'money_owe', 'interest'],
-    'Lifestyle': ['schedules', 'food_menu', 'checklists', 'goals', 'activities'],
+    'Lifestyle': ['schedules', 'food_menu', 'checklists', 'goals', 'activities', 'diet'],
     'Health': ['periods', 'medical'],
     'Personal': ['vehicles', 'vault', 'land'],
   };
@@ -68,7 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'chits': return 'Chit groups & auctions';
       case 'checklists': return 'Tasks with deadlines';
       case 'periods': return 'Cycles & predictions';
-      case 'home': return 'Home purchases';
+      case 'home': return 'Daily expenses';
       case 'schedules': return 'Events & appointments';
       case 'food_menu': return 'Weekly meal plan';
       case 'loans': return 'Loans & repayments';
@@ -79,11 +81,12 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'land': return 'Land & property details';
       case 'interest': return 'Interest-bearing money';
       case 'activities': return 'Trips, certificates, milestones';
+      case 'diet': return 'Food items & consumption';
       default: return '';
     }
   }
 
-  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState) {
+  int _getCount(String id, billState, vehicleState, chitState, checklistState, periodState, homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState) {
     switch (id) {
       case 'bills': return billState.tasks.length;
       case 'vehicles': return vehicleState.vehicles.length;
@@ -105,6 +108,11 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'land': return landState.records.length;
       case 'interest': return interestState.records.length;
       case 'activities': return activityState.records.length;
+      case 'diet':
+        final now = DateTime.now();
+        return dietState.entries
+            .where((e) => e.date.year == now.year && e.date.month == now.month)
+            .length;
       default: return 0;
     }
   }
@@ -208,6 +216,12 @@ class _DashboardPageState extends State<DashboardPage> {
           child: const ActivityPage(),
         );
         break;
+      case 'diet':
+        page = BlocProvider.value(
+          value: context.read<DietCubit>(),
+          child: const DietPage(),
+        );
+        break;
       default:
         return;
     }
@@ -216,7 +230,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildListView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
       children: _categoryIds.entries.map((catEntry) {
@@ -249,7 +263,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     final count = _getCount(f.id, billState, vehicleState,
                         chitState, checklistState, periodState,
                         homeRecordState, scheduleState, foodMenuState,
-                        loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState);
+                        loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState);
                     return _FeatureRow(
                       icon: f.icon,
                       title: f.title,
@@ -270,7 +284,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildGridView(BuildContext context, List<FeatureItem> visibleFeatures,
       billState, vehicleState, chitState, checklistState, periodState,
-      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState) {
+      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -314,7 +328,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         final count = _getCount(f.id, billState,
                             vehicleState, chitState, checklistState,
                             periodState, homeRecordState, scheduleState,
-                            foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState);
+                            foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState);
                         return _FeatureGridCard(
                           icon: f.icon,
                           title: f.title,
@@ -557,6 +571,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final landState = context.watch<LandCubit>().state;
     final interestState = context.watch<InterestCubit>().state;
     final activityState = context.watch<ActivityCubit>().state;
+    final dietState = context.watch<DietCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
 
@@ -734,10 +749,10 @@ class _DashboardPageState extends State<DashboardPage> {
               child: _isGrid
                   ? _buildGridView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState)
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState)
                   : _buildListView(context, visibleFeatures, billState,
                       vehicleState, chitState, checklistState, periodState,
-                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState),
+                      homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState),
             ),
           ],
         ),

@@ -99,7 +99,7 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
         ),
         FeatureItem(
           id: 'home',
-          title: 'Home Records',
+          title: 'Expense Tracker',
           icon: Icons.home_rounded,
           gradient: [Colors.green, Colors.green],
           order: 5,
@@ -173,6 +173,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           icon: Icons.history_rounded,
           gradient: [Colors.blue, Colors.indigo],
           order: 15,
+        ),
+        FeatureItem(
+          id: 'diet',
+          title: 'Diet Tracker',
+          icon: Icons.restaurant_menu_rounded,
+          gradient: [Colors.green, Colors.teal],
+          order: 16,
         ),
       ];
 

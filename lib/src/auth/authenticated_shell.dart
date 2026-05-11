@@ -34,6 +34,8 @@ import 'package:my_data_app/src/interest/cubit/interest_cubit.dart';
 import 'package:my_data_app/src/interest/repository/interest_repository.dart';
 import 'package:my_data_app/src/activities/cubit/activity_cubit.dart';
 import 'package:my_data_app/src/activities/repository/activity_repository.dart';
+import 'package:my_data_app/src/diet/cubit/diet_cubit.dart';
+import 'package:my_data_app/src/diet/repository/diet_repository.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
 import 'package:my_data_app/src/notifications/repository/notification_repository.dart';
 import 'package:my_data_app/src/notifications/notification_service.dart';
@@ -72,6 +74,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreEventRepository _eventRepo;
   late final FirestoreInterestRepository _interestRepo;
   late final FirestoreActivityRepository _activityRepo;
+  late final FirestoreDietRepository _dietRepo;
   late final FirestoreNotificationRepository _notificationRepo;
   late final LocalNotificationService _notificationService;
   late final NotificationCubit _notificationCubit;
@@ -103,6 +106,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _eventRepo = FirestoreEventRepository(uid: widget.uid);
     _interestRepo = FirestoreInterestRepository(uid: widget.uid);
     _activityRepo = FirestoreActivityRepository(uid: widget.uid);
+    _dietRepo = FirestoreDietRepository(uid: widget.uid);
     _notificationRepo = FirestoreNotificationRepository(uid: widget.uid);
     _notificationService = LocalNotificationService();
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
@@ -137,6 +141,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _eventRepo.init(),
         _interestRepo.init(),
         _activityRepo.init(),
+        _dietRepo.init(),
         _notificationRepo.init(),
         _notificationService.init(),
         _dashboardSettingsCubit.load(),
@@ -232,6 +237,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => EventCubit(_eventRepo)),
         BlocProvider(create: (_) => InterestCubit(_interestRepo)),
         BlocProvider(create: (_) => ActivityCubit(_activityRepo)),
+        BlocProvider(create: (_) => DietCubit(_dietRepo)),
         BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
       ],
