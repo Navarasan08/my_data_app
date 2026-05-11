@@ -100,7 +100,7 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
         FeatureItem(
           id: 'home',
           title: 'Expense Tracker',
-          icon: Icons.home_rounded,
+          icon: Icons.account_balance_wallet_rounded,
           gradient: [Colors.green, Colors.green],
           order: 5,
         ),
@@ -180,6 +180,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
           icon: Icons.restaurant_menu_rounded,
           gradient: [Colors.green, Colors.teal],
           order: 16,
+        ),
+        FeatureItem(
+          id: 'days_counter',
+          title: 'Days Counter',
+          icon: Icons.hourglass_top_rounded,
+          gradient: [Colors.pink, Colors.deepPurple],
+          order: 17,
         ),
       ];
 
