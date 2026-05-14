@@ -37,6 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -220,7 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: cs.onSurfaceVariant),
                           ),
                           TextButton(
                             onPressed: () {

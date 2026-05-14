@@ -9,6 +9,7 @@ class ScheduleSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ScheduleCubit, ScheduleState>(
       builder: (context, state) {
         final cubit = context.read<ScheduleCubit>();
@@ -33,7 +34,7 @@ class ScheduleSettingsPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -68,7 +69,7 @@ class ScheduleSettingsPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: cs.onSurface,
                           ),
                         ),
                         const Spacer(),
@@ -90,7 +91,7 @@ class ScheduleSettingsPage extends StatelessWidget {
                           'No custom categories yet',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -236,6 +237,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewIcon =
         ScheduleCategory.availableIcons[_selectedIconIndex];
     final previewColor =
@@ -296,7 +298,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700])),
+                      color: cs.onSurface)),
               const SizedBox(height: 8),
               SizedBox(
                 height: 140,
@@ -318,7 +320,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: isSelected
                               ? Border.all(color: previewColor, width: 2)
@@ -329,7 +331,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                           size: 20,
                           color: isSelected
                               ? previewColor
-                              : Colors.grey[600],
+                              : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -342,7 +344,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700])),
+                      color: cs.onSurface)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -362,9 +364,9 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         color: color,
                         shape: BoxShape.circle,
                         border: isSelected
-                            ? Border.all(color: Colors.black, width: 3)
+                            ? Border.all(color: cs.onSurface, width: 3)
                             : Border.all(
-                                color: Colors.grey[300]!, width: 1),
+                                color: cs.outline, width: 1),
                       ),
                       child: isSelected
                           ? const Icon(Icons.check,

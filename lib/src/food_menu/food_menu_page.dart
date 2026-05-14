@@ -52,13 +52,13 @@ class FoodMenuPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<FoodMenuCubit, FoodMenuState>(
       builder: (context, state) {
         final cubit = context.read<FoodMenuCubit>();
         final sel = state.selectedWeekday;
 
         return Scaffold(
-          backgroundColor: Colors.grey[50],
           appBar: AppBar(
             title: const Text('Food Menu'),
             centerTitle: true,
@@ -68,7 +68,7 @@ class FoodMenuPage extends StatelessWidget {
             children: [
               // Weekday selector
               Container(
-                color: Colors.white,
+                color: cs.surface,
                 padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
                 child: Row(
                   children: List.generate(7, (i) {
@@ -102,7 +102,7 @@ class FoodMenuPage extends StatelessWidget {
                                       ? Colors.white
                                       : isToday
                                           ? Colors.deepOrange
-                                          : Colors.grey[500],
+                                          : cs.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -125,7 +125,7 @@ class FoodMenuPage extends StatelessWidget {
                                           : (isSelected
                                               ? Colors.white
                                                   .withValues(alpha: 0.3)
-                                              : Colors.grey[300]),
+                                              : cs.outline),
                                     ),
                                   );
                                 }).toList(),
@@ -139,7 +139,7 @@ class FoodMenuPage extends StatelessWidget {
                                     fontWeight: FontWeight.w600,
                                     color: isSelected
                                         ? Colors.white70
-                                        : Colors.grey[400],
+                                        : cs.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -246,6 +246,7 @@ class _MealTimelineSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = mealType.color;
     final hasMeals = meals.isNotEmpty;
 
@@ -263,7 +264,7 @@ class _MealTimelineSection extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: hasMeals ? color : Colors.grey[400],
+                    color: hasMeals ? color : cs.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -272,7 +273,7 @@ class _MealTimelineSection extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: hasMeals ? color : Colors.grey[300],
+                    color: hasMeals ? color : cs.outline,
                     border: hasMeals
                         ? Border.all(
                             color: color.withValues(alpha: 0.3), width: 3)
@@ -281,7 +282,7 @@ class _MealTimelineSection extends StatelessWidget {
                 ),
                 if (!isLast)
                   Expanded(
-                    child: Container(width: 2, color: Colors.grey[200]),
+                    child: Container(width: 2, color: cs.outlineVariant),
                   ),
               ],
             ),
@@ -292,12 +293,12 @@ class _MealTimelineSection extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: hasMeals
                       ? color.withValues(alpha: 0.2)
-                      : Colors.grey[200]!,
+                      : cs.outlineVariant,
                 ),
               ),
               child: Padding(
@@ -319,14 +320,14 @@ class _MealTimelineSection extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: hasMeals ? color : Colors.grey[400],
+                                  color: hasMeals ? color : cs.onSurfaceVariant,
                                 ),
                               ),
                               Text(
                                 mealType.timeHint,
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[400],
+                                  color: cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -379,7 +380,7 @@ class _MealTimelineSection extends StatelessWidget {
                         'No meal planned yet',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[400],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -411,6 +412,7 @@ class _CustomEntriesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = MealType.custom.color;
 
     return IntrinsicHeight(
@@ -432,7 +434,7 @@ class _CustomEntriesSection extends StatelessWidget {
                   height: 12,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: customEntries.isNotEmpty ? color : Colors.grey[300],
+                    color: customEntries.isNotEmpty ? color : cs.outline,
                     border: customEntries.isNotEmpty
                         ? Border.all(
                             color: color.withValues(alpha: 0.3), width: 3)
@@ -448,12 +450,12 @@ class _CustomEntriesSection extends StatelessWidget {
             child: Container(
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cs.surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: customEntries.isNotEmpty
                       ? color.withValues(alpha: 0.2)
-                      : Colors.grey[200]!,
+                      : cs.outlineVariant,
                 ),
               ),
               child: Padding(
@@ -478,14 +480,14 @@ class _CustomEntriesSection extends StatelessWidget {
                                   fontWeight: FontWeight.bold,
                                   color: customEntries.isNotEmpty
                                       ? color
-                                      : Colors.grey[400],
+                                      : cs.onSurfaceVariant,
                                 ),
                               ),
                               Text(
                                 'Pre-workout, Juice, Supplements...',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: Colors.grey[400],
+                                  color: cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -534,7 +536,7 @@ class _CustomEntriesSection extends StatelessWidget {
                         'Add items for specific times',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.grey[400],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -562,6 +564,7 @@ class _CustomItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = MealType.custom.color;
     final time = meal.formattedTime;
 
@@ -626,7 +629,7 @@ class _CustomItemRow extends StatelessWidget {
                         meal.notes!,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[500],
+                          color: cs.onSurfaceVariant,
                           fontStyle: FontStyle.italic,
                         ),
                         maxLines: 1,
@@ -698,6 +701,7 @@ class _MealItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final items = meal.items
         .split(',')
         .map((item) => item.trim())
@@ -753,7 +757,7 @@ class _MealItemRow extends StatelessWidget {
                           meal.notes!,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant,
                             fontStyle: FontStyle.italic,
                           ),
                           maxLines: 1,
@@ -881,6 +885,7 @@ class _AddMealPageState extends State<AddMealPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Meal' : 'Add Meal'),
@@ -933,7 +938,7 @@ class _AddMealPageState extends State<AddMealPage> {
                                   : _mealType.timeHint,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey[500],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -1013,7 +1018,7 @@ class _AddMealPageState extends State<AddMealPage> {
                   ListTile(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
-                      side: BorderSide(color: Colors.grey[400]!),
+                      side: BorderSide(color: cs.outline),
                     ),
                     leading: Icon(Icons.access_time_rounded,
                         color: _mealType.color),
@@ -1024,7 +1029,7 @@ class _AddMealPageState extends State<AddMealPage> {
                         fontWeight: FontWeight.w500,
                         color: _timeHour != null
                             ? _mealType.color
-                            : Colors.grey[500],
+                            : cs.onSurfaceVariant,
                       ),
                     ),
                     onTap: _pickTime,

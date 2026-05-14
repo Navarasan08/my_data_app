@@ -12,6 +12,7 @@ class BillTaskPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<BillCubit, BillState>(
       builder: (context, state) {
+        final cs = Theme.of(context).colorScheme;
         final cubit = context.read<BillCubit>();
         final monthYear = DateFormat('MMMM yyyy').format(state.selectedDate);
         final tasksForMonth = cubit.tasksForSelectedMonth;
@@ -29,7 +30,7 @@ class BillTaskPage extends StatelessWidget {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: Colors.white,
+                color: cs.surface,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -57,7 +58,7 @@ class BillTaskPage extends StatelessWidget {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: Colors.white,
+                color: cs.surface,
                 child: Column(
                   children: [
                     Row(
@@ -144,13 +145,13 @@ class BillTaskPage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.inbox_outlined,
-                                size: 64, color: Colors.grey[400]),
+                                size: 64, color: cs.onSurfaceVariant),
                             const SizedBox(height: 16),
                             Text(
                               'No bills or tasks for this month',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey[600],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -346,6 +347,7 @@ class TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final dueDates = _getDueDatesInMonth();
     final completedCount =
         dueDates.where((date) => task.isCompletedForDate(date)).length;
@@ -361,9 +363,9 @@ class TaskCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         children: [
@@ -403,13 +405,13 @@ class TaskCard extends StatelessWidget {
                         Row(
                           children: [
                             Icon(Icons.repeat_rounded,
-                                size: 12, color: Colors.grey[400]),
+                                size: 12, color: cs.onSurfaceVariant),
                             const SizedBox(width: 4),
                             Text(
                               _getRecurrenceText(),
                               style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey[500],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -463,7 +465,7 @@ class TaskCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 4,
-                      backgroundColor: Colors.grey[200],
+                      backgroundColor: cs.surfaceContainerHighest,
                       valueColor:
                           AlwaysStoppedAnimation<Color>(accentColor),
                     ),
@@ -504,14 +506,14 @@ class TaskCard extends StatelessWidget {
                           ? Colors.green[50]
                           : isPast
                               ? Colors.red[50]
-                              : Colors.grey[50],
+                              : cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: isCompleted
                             ? Colors.green[300]!
                             : isPast
                                 ? Colors.red[200]!
-                                : Colors.grey[300]!,
+                                : cs.outline,
                       ),
                     ),
                     child: Row(
@@ -528,7 +530,7 @@ class TaskCard extends StatelessWidget {
                               ? Colors.green[600]
                               : isPast
                                   ? Colors.red[400]
-                                  : Colors.grey[400],
+                                  : cs.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                         Text(
@@ -539,7 +541,7 @@ class TaskCard extends StatelessWidget {
                                 ? Colors.green[700]
                                 : isPast
                                     ? Colors.red[700]
-                                    : Colors.grey[800],
+                                    : cs.onSurface,
                             fontWeight: FontWeight.w500,
                           ),
                         ),

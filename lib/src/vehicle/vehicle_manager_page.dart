@@ -13,6 +13,7 @@ class VehicleListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<VehicleCubit, VehicleState>(
       builder: (context, state) {
         final cubit = context.read<VehicleCubit>();
@@ -30,18 +31,18 @@ class VehicleListPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.directions_car_outlined,
-                          size: 80, color: Colors.grey[400]),
+                          size: 80, color: cs.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text(
                         'No vehicles added yet',
                         style:
-                            TextStyle(fontSize: 16, color: Colors.grey[600]),
+                            TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Tap the + button to add your first vehicle',
                         style:
-                            TextStyle(fontSize: 14, color: Colors.grey[500]),
+                            TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -142,6 +143,7 @@ class VehicleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final serviceColor = vehicle.daysLeftForService == null
         ? Colors.blue
         : vehicle.daysLeftForService! < 0
@@ -153,9 +155,9 @@ class VehicleCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
@@ -192,7 +194,7 @@ class VehicleCard extends StatelessWidget {
                       '${vehicle.brand} ${vehicle.model} · ${vehicle.year}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                     if (vehicle.daysLeftForService != null) ...[
@@ -209,7 +211,7 @@ class VehicleCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -217,7 +219,7 @@ class VehicleCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[600],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -609,6 +611,7 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<VehicleCubit, VehicleState>(
       builder: (context, state) {
         final cubit = context.read<VehicleCubit>();
@@ -656,14 +659,14 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.inbox_outlined,
-                                size: 64, color: Colors.grey[400]),
+                                size: 64, color: cs.onSurfaceVariant),
                             const SizedBox(height: 16),
                             Text(
                               hasActiveFilters
                                   ? 'No records match your filters'
                                   : 'No records yet',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey[600]),
+                                  fontSize: 16, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -972,7 +975,7 @@ class _DashTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
         ],
@@ -1040,6 +1043,7 @@ class RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = _getColor();
 
     return Card(
@@ -1083,7 +1087,7 @@ class RecordCard extends StatelessWidget {
                       Text(
                         DateFormat('MMM dd, yyyy').format(record.date),
                         style: TextStyle(
-                            fontSize: 13, color: Colors.grey[600]),
+                            fontSize: 13, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -1113,7 +1117,7 @@ class RecordCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 record.description!,
-                style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 14, color: cs.onSurface),
               ),
             ],
             const SizedBox(height: 8),
@@ -1158,20 +1162,21 @@ class _DetailChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: Colors.grey[700]),
+          Icon(icon, size: 12, color: cs.onSurface),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 11, color: cs.onSurface),
           ),
         ],
       ),
@@ -1382,7 +1387,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                   style: TextStyle(
                     color: _nextServiceDate != null
                         ? Colors.blue[700]
-                        : Colors.grey[500],
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 trailing: _nextServiceDate != null

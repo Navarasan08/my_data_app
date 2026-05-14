@@ -10,6 +10,7 @@ class ActivityPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ActivityCubit, ActivityState>(
       builder: (context, state) {
         final cubit = context.read<ActivityCubit>();
@@ -66,18 +67,18 @@ class ActivityPage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.history_rounded, size: 56, color: Colors.grey[300]),
+                            Icon(Icons.history_rounded, size: 56, color: cs.outlineVariant),
                             const SizedBox(height: 12),
                             Text(
                               state.selectedCategories.isNotEmpty
                                   ? 'No activities for the selected categories'
                                   : 'No activities yet',
-                              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Tap + to log a trip, certificate or milestone',
-                              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -104,6 +105,7 @@ class ActivityPage extends StatelessWidget {
 
   Widget _buildYearGroupedList(
       BuildContext context, ActivityCubit cubit, List<ActivityRecord> records) {
+    final cs = Theme.of(context).colorScheme;
     final grouped = <String, List<ActivityRecord>>{};
     for (final r in records) {
       final key = DateFormat('yyyy').format(r.startDate);
@@ -124,7 +126,7 @@ class ActivityPage extends StatelessWidget {
               margin: const EdgeInsets.only(top: 8, bottom: 6),
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -136,7 +138,7 @@ class ActivityPage extends StatelessWidget {
                   const SizedBox(width: 6),
                   Text(
                     '(${list.length})',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -201,6 +203,7 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final c = record.category;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -241,7 +244,7 @@ class _ActivityCard extends StatelessWidget {
                       ].join('  ·  '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -361,6 +364,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Activity' : 'Add Activity'),
@@ -438,7 +442,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: Colors.grey[600]!),
+                    side: BorderSide(color: cs.outline),
                   ),
                   leading: const Icon(Icons.event_rounded),
                   title: Text(_isRange ? 'Start date' : 'Date'),
@@ -451,7 +455,7 @@ class _AddActivityPageState extends State<AddActivityPage> {
                     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(4),
-                      side: BorderSide(color: Colors.grey[600]!),
+                      side: BorderSide(color: cs.outline),
                     ),
                     leading: const Icon(Icons.event_available_rounded),
                     title: const Text('End date'),

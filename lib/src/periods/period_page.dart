@@ -12,6 +12,7 @@ class PeriodTrackerPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<PeriodCubit, PeriodState>(
       builder: (context, state) {
         final cubit = context.read<PeriodCubit>();
@@ -31,7 +32,7 @@ class PeriodTrackerPage extends StatelessWidget {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: Colors.white,
+                color: cs.surface,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -96,7 +97,7 @@ class PeriodTrackerPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
+                    color: cs.onSurface,
                   ),
                 ),
               ),
@@ -109,18 +110,18 @@ class PeriodTrackerPage extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(Icons.calendar_today_rounded,
-                            size: 48, color: Colors.grey[300]),
+                            size: 48, color: cs.onSurfaceVariant),
                         const SizedBox(height: 12),
                         Text(
                           'No periods logged yet',
                           style: TextStyle(
-                              fontSize: 16, color: Colors.grey[500]),
+                              fontSize: 16, color: cs.onSurfaceVariant),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Tap + to log your first period',
                           style: TextStyle(
-                              fontSize: 13, color: Colors.grey[400]),
+                              fontSize: 13, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -204,6 +205,7 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -216,7 +218,7 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(label, style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
       ],
     );
   }
@@ -232,6 +234,7 @@ class _CalendarGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final firstDay = DateTime(selectedMonth.year, selectedMonth.month, 1);
     final daysInMonth =
         DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
@@ -245,7 +248,7 @@ class _CalendarGrid extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -267,7 +270,7 @@ class _CalendarGrid extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -298,7 +301,7 @@ class _CalendarGrid extends StatelessWidget {
                 final isOvulation = cubit.isOvulationDay(date);
 
                 Color? bgColor;
-                Color textColor = Colors.grey[800]!;
+                Color textColor = cs.onSurface;
 
                 if (isPeriod) {
                   bgColor = Colors.pink[300];
@@ -432,6 +435,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -456,7 +460,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -491,6 +495,7 @@ class _PeriodEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       decoration: BoxDecoration(
@@ -519,7 +524,7 @@ class _PeriodEntryCard extends StatelessWidget {
                     ),
                     Text(
                       '${entry.periodLength} days${entry.notes != null && entry.notes!.isNotEmpty ? '  ·  ${entry.notes}' : ''}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -621,6 +626,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final duration = _endDate.difference(_startDate).inDays + 1;
 
     return Scaffold(
@@ -664,7 +670,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
           ListTile(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
+              side: BorderSide(color: cs.outline),
             ),
             leading: Icon(Icons.play_circle_rounded,
                 color: Colors.pink[400]),
@@ -682,7 +688,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
           ListTile(
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.grey[300]!),
+              side: BorderSide(color: cs.outline),
             ),
             leading: Icon(Icons.stop_circle_rounded,
                 color: Colors.pink[400]),

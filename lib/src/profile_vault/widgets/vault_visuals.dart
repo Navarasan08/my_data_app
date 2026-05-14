@@ -505,6 +505,7 @@ class _BankVisual extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final bank = state._f('Bank Name') ?? state.widget.entry.title;
     final branch = state._f('Branch');
     final accountNumber = state._f('Account Number');
@@ -522,7 +523,7 @@ class _BankVisual extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.teal.shade100, width: 1),
         boxShadow: [
@@ -565,7 +566,7 @@ class _BankVisual extends StatelessWidget {
                       Text(
                         branch,
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600),
+                            fontSize: 12, color: cs.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -593,7 +594,7 @@ class _BankVisual extends StatelessWidget {
                       Text('A/C NUMBER',
                           style: TextStyle(
                               fontSize: 9,
-                              color: Colors.grey.shade600,
+                              color: cs.onSurfaceVariant,
                               letterSpacing: 1)),
                       const SizedBox(height: 2),
                       Text(
@@ -657,11 +658,12 @@ class _ContactVisual extends StatelessWidget {
             .join();
 
     final accent = Colors.redAccent;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.4)),
         boxShadow: [
@@ -712,7 +714,7 @@ class _ContactVisual extends StatelessWidget {
                         child: Text(
                           relation,
                           style: TextStyle(
-                              fontSize: 13, color: Colors.grey.shade600),
+                              fontSize: 13, color: cs.onSurfaceVariant),
                         ),
                       ),
                   ],
@@ -792,10 +794,11 @@ class _InsuranceVisual extends StatelessWidget {
     final end = state._f('End Date');
 
     final accent = Colors.pink.shade700;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.25)),
         boxShadow: [
@@ -908,13 +911,14 @@ class _PolicyStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
             style: TextStyle(
                 fontSize: 10,
-                color: Colors.grey.shade600,
+                color: cs.onSurfaceVariant,
                 letterSpacing: 0.6)),
         const SizedBox(height: 2),
         Text(
@@ -1118,11 +1122,12 @@ class _VehicleVisual extends StatelessWidget {
         : [if (make != null) make, if (model != null) model].join(' ').trim();
 
     final accent = Colors.orange.shade800;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.3)),
         boxShadow: [
@@ -1160,7 +1165,7 @@ class _VehicleVisual extends StatelessWidget {
                         [if (type != null) type, if (year != null) year]
                             .join(' · '),
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade600),
+                            fontSize: 11, color: cs.onSurfaceVariant),
                       ),
                   ],
                 ),
@@ -1237,6 +1242,7 @@ class _EmploymentVisual extends StatelessWidget {
     final endDate = state._f('End Date');
 
     final accent = Colors.brown.shade600;
+    final cs = Theme.of(context).colorScheme;
     final initials = company.trim().isEmpty
         ? '?'
         : company.trim().split(RegExp(r'\s+')).first[0].toUpperCase();
@@ -1244,7 +1250,7 @@ class _EmploymentVisual extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.3)),
         boxShadow: [
@@ -1293,7 +1299,7 @@ class _EmploymentVisual extends StatelessWidget {
                         child: Text(
                           designation,
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
+                              fontSize: 12, color: cs.onSurfaceVariant),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1655,11 +1661,12 @@ class _BasicDetailsVisual extends StatelessWidget {
             .join();
 
     final accent = Colors.blue.shade700;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.25)),
         boxShadow: [
@@ -1710,7 +1717,7 @@ class _BasicDetailsVisual extends StatelessWidget {
                           [if (gender != null) gender, if (dob != null) dob]
                               .join(' · '),
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
+                              fontSize: 12, color: cs.onSurfaceVariant),
                         ),
                       ),
                   ],
@@ -1823,7 +1830,7 @@ class _MiniLabel extends StatelessWidget {
           label.toUpperCase(),
           style: TextStyle(
             fontSize: 9,
-            color: Colors.grey.shade600,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             letterSpacing: 0.8,
           ),
         ),

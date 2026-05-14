@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
+import 'package:my_data_app/src/theme/theme_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthCubit>().state.user;
+    final authState = context.watch<AuthCubit>().state;
+    final user = authState.user;
     final name = user?.displayName ?? '';
     final email = user?.email ?? '';
     final uid = user?.uid ?? '';
@@ -15,6 +19,19 @@ class ProfilePage extends StatelessWidget {
     final initial = name.isNotEmpty
         ? name[0].toUpperCase()
         : (email.isNotEmpty ? email[0].toUpperCase() : '?');
+
+    final authCubit = context.read<AuthCubit>();
+    final otherAccounts = authCubit.otherAccounts;
+
+    // Dashboard options are only shown when the dashboard cubit is in scope
+    // (i.e., when the profile page was opened from the dashboard, not from
+    // an unrelated entry point).
+    DashboardSettingsCubit? dashCubit;
+    try {
+      dashCubit = context.read<DashboardSettingsCubit>();
+    } catch (_) {
+      dashCubit = null;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -52,7 +69,7 @@ class ProfilePage extends StatelessWidget {
               email,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 32),
@@ -79,14 +96,132 @@ class ProfilePage extends StatelessWidget {
                 value:
                     '${createdAt.day}/${createdAt.month}/${createdAt.year}',
               ),
+
+            const SizedBox(height: 16),
+            _SectionLabel(label: 'Appearance'),
+            const SizedBox(height: 8),
+            BlocBuilder<ThemeCubit, ThemeMode>(
+              builder: (context, themeMode) {
+                final isDark = themeMode == ThemeMode.dark;
+                return _ActionTile(
+                  icon: isDark
+                      ? Icons.dark_mode_rounded
+                      : Icons.light_mode_rounded,
+                  label: 'Dark Mode',
+                  value: isDark ? 'On' : 'Off',
+                  trailing: Switch(
+                    value: isDark,
+                    onChanged: (_) => context.read<ThemeCubit>().toggle(),
+                  ),
+                );
+              },
+            ),
+
+            if (dashCubit != null) ...[
+              const SizedBox(height: 16),
+              _SectionLabel(label: 'Dashboard'),
+              const SizedBox(height: 8),
+              BlocBuilder<DashboardSettingsCubit, DashboardSettingsState>(
+                bloc: dashCubit,
+                builder: (context, dashSettings) {
+                  return _ActionTile(
+                    icon: dashSettings.isGridView
+                        ? Icons.grid_view_rounded
+                        : Icons.view_list_rounded,
+                    label: 'View Mode',
+                    value: dashSettings.isGridView ? 'Grid' : 'List',
+                    trailing: Switch(
+                      value: dashSettings.isGridView,
+                      onChanged: (_) => dashCubit!.toggleViewMode(),
+                    ),
+                  );
+                },
+              ),
+              _ActionTile(
+                icon: Icons.settings_rounded,
+                label: 'Dashboard Settings',
+                value: 'Manage features & order',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: dashCubit!,
+                      child: const DashboardSettingsPage(),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+
+            if (otherAccounts.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _SectionLabel(label: 'Other Accounts'),
+              const SizedBox(height: 8),
+              ...otherAccounts.map(
+                (account) {
+                  final cs = Theme.of(context).colorScheme;
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: cs.outlineVariant),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 4),
+                      leading: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: cs.onSurfaceVariant,
+                        child: Text(
+                          account.email[0].toUpperCase(),
+                          style: TextStyle(
+                            color: cs.surface,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      title: Text(
+                        account.displayName ?? account.email,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      subtitle: account.displayName != null
+                          ? Text(
+                              account.email,
+                              style: TextStyle(
+                                  fontSize: 12, color: cs.onSurfaceVariant),
+                            )
+                          : null,
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextButton(
+                            onPressed: () => authCubit.switchAccount(account),
+                            child: const Text('Switch'),
+                          ),
+                          IconButton(
+                            onPressed: () =>
+                                authCubit.removeSavedAccount(account.email),
+                            icon: Icon(Icons.close,
+                                size: 18, color: cs.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
+
             const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context.read<AuthCubit>().signOut();
-                },
+                onPressed: () => _confirmLogout(context),
                 icon: const Icon(Icons.logout_rounded),
                 label: const Text('Logout'),
                 style: OutlinedButton.styleFrom(
@@ -143,6 +278,50 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AuthCubit>().signOut();
+            },
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          letterSpacing: 0.3,
+        ),
+      ),
+    );
+  }
 }
 
 class _ProfileTile extends StatelessWidget {
@@ -160,17 +339,18 @@ class _ProfileTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.blue[600], size: 22),
+          Icon(icon, color: cs.primary, size: 22),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -180,7 +360,7 @@ class _ProfileTile extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[500],
+                    color: cs.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -203,10 +383,81 @@ class _ProfileTile extends StatelessWidget {
               icon: Icon(
                 Icons.edit_rounded,
                 size: 18,
-                color: Colors.grey[400],
+                color: cs.onSurfaceVariant,
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.onTap,
+    this.trailing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(icon, color: cs.primary, size: 22),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (trailing != null)
+                trailing!
+              else if (onTap != null)
+                Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }

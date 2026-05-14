@@ -39,6 +39,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
@@ -270,7 +271,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         children: [
                           Text(
                             'Already have an account? ',
-                            style: TextStyle(color: Colors.grey[600]),
+                            style: TextStyle(color: cs.onSurfaceVariant),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context),

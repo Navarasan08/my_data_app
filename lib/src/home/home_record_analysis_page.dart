@@ -276,6 +276,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   // ── Section helpers ─────────────────────────────────────────────────────
 
   Widget _buildSectionTitle(String title, {String? subtitle}) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -284,7 +285,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
+            color: cs.onSurface,
           ),
         ),
         if (subtitle != null) ...[
@@ -295,7 +296,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
               '· $subtitle',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[500],
+                color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -345,12 +346,13 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   Widget _buildFilterControls(
       BuildContext context, List<HomeCategory> allCategories) {
+    final cs = Theme.of(context).colorScheme;
     final hasRange = _dateRange != null;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -515,6 +517,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       Map<HomeCategory, Map<MeasureUnit, double>> categoryQuantities) {
     if (totals.isEmpty) return const SizedBox();
 
+    final cs = Theme.of(context).colorScheme;
     final sorted = totals.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
@@ -568,14 +571,14 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           TextSpan(
                             text: '  ·  ${qtyParts.join(', ')}',
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[600]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                       ],
                     ),
                   ),
                 ),
                 Icon(Icons.chevron_right_rounded,
-                    size: 16, color: Colors.grey[400]),
+                    size: 16, color: cs.onSurfaceVariant),
               ],
             ),
           ),
@@ -590,17 +593,18 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     int untaggedCount,
     HomeRecordCubit cubit,
   ) {
+    final cs = Theme.of(context).colorScheme;
     if (totals.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
             Icon(Icons.payments_rounded,
-                color: Colors.grey[500], size: 20),
+                color: cs.onSurfaceVariant, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -608,7 +612,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                     ? 'No tagged records yet. $untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period have no payment method.'
                     : 'No data in this period',
                 style:
-                    TextStyle(color: Colors.grey[600], fontSize: 13),
+                    TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
               ),
             ),
           ],
@@ -668,7 +672,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                   value: t,
                                   minHeight: 6,
                                   backgroundColor:
-                                      Colors.grey[200],
+                                      cs.surfaceContainerHighest,
                                   valueColor:
                                       AlwaysStoppedAnimation<Color>(
                                           e.key.color),
@@ -691,13 +695,13 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         Text(
                           '${pct.toStringAsFixed(1)}%',
                           style: TextStyle(
-                              fontSize: 11, color: Colors.grey[600]),
+                              fontSize: 11, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
                     const SizedBox(width: 6),
                     Icon(Icons.chevron_right_rounded,
-                        size: 16, color: Colors.grey[400]),
+                        size: 16, color: cs.onSurfaceVariant),
                   ],
                 ),
               ),
@@ -710,7 +714,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
               child: Text(
                 '$untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period without a payment method.',
                 style:
-                    TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
             ),
           ],
@@ -721,6 +725,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   Widget _buildLineChart(
       Map<DateTime, double> monthlyData, HomeRecordCubit cubit) {
+    final cs = Theme.of(context).colorScheme;
     final entries = monthlyData.entries.toList();
     if (entries.isEmpty) return _emptyChart('No data to display');
 
@@ -794,7 +799,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             drawVerticalLine: false,
             horizontalInterval: yMax / 4,
             getDrawingHorizontalLine: (value) {
-              return FlLine(color: Colors.grey[300]!, strokeWidth: 1);
+              return FlLine(color: cs.outlineVariant, strokeWidth: 1);
             },
           ),
           borderData: FlBorderData(show: false),
@@ -807,6 +812,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   Widget _buildBarChart(
       Map<HomeCategory, double> totals, HomeRecordCubit cubit) {
+    final cs = Theme.of(context).colorScheme;
     if (totals.isEmpty) return _emptyChart('No data to display');
 
     final sorted = totals.entries.toList()
@@ -877,7 +883,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             drawVerticalLine: false,
             horizontalInterval: yMax / 4,
             getDrawingHorizontalLine: (value) {
-              return FlLine(color: Colors.grey[300]!, strokeWidth: 1);
+              return FlLine(color: cs.outlineVariant, strokeWidth: 1);
             },
           ),
           borderData: FlBorderData(show: false),
@@ -889,12 +895,13 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _emptyChart(String message) {
+    final cs = Theme.of(context).colorScheme;
     return SizedBox(
       height: 200,
       child: Center(
         child: Text(
           message,
-          style: TextStyle(color: Colors.grey[500], fontSize: 15),
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
         ),
       ),
     );
@@ -955,6 +962,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetCtx) {
+        final cs = Theme.of(sheetCtx).colorScheme;
         return DraggableScrollableSheet(
           initialChildSize: 0.7,
           minChildSize: 0.4,
@@ -967,7 +975,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 height: 4,
                 margin: const EdgeInsets.only(top: 8),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: cs.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -999,7 +1007,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           Text(
                             '$subtitle  ·  ${records.length} record${records.length == 1 ? '' : 's'}',
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[600]),
+                                fontSize: 12, color: cs.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -1022,7 +1030,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         child: Text(
                           'No records to show',
                           style: TextStyle(
-                              color: Colors.grey[500], fontSize: 14),
+                              color: cs.onSurfaceVariant, fontSize: 14),
                         ),
                       )
                     : ListView.separated(
@@ -1138,6 +1146,7 @@ class _RecordListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
         color: record.category.color.withValues(alpha: 0.05),
@@ -1172,7 +1181,7 @@ class _RecordListTile extends StatelessWidget {
                       record.paymentType!.displayName,
                     if (record.quantityLabel.isNotEmpty) record.quantityLabel,
                   ].join('  ·  '),
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                 ),
               ],
             ),

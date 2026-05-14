@@ -39,6 +39,7 @@ class _InterestListPageState extends State<InterestListPage>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<InterestCubit, InterestState>(
       builder: (context, state) {
         final cubit = context.read<InterestCubit>();
@@ -66,7 +67,7 @@ class _InterestListPageState extends State<InterestListPage>
                       const SizedBox(width: 4),
                       Text('($lentActive)',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600])),
+                              fontSize: 12, color: cs.onSurfaceVariant)),
                     ],
                   ),
                 ),
@@ -81,7 +82,7 @@ class _InterestListPageState extends State<InterestListPage>
                       const SizedBox(width: 4),
                       Text('($borrowedActive)',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600])),
+                              fontSize: 12, color: cs.onSurfaceVariant)),
                     ],
                   ),
                 ),
@@ -93,7 +94,7 @@ class _InterestListPageState extends State<InterestListPage>
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 10),
-                color: Colors.white,
+                color: cs.surface,
                 child: Row(
                   children: [
                     Expanded(
@@ -142,7 +143,9 @@ class _InterestListPageState extends State<InterestListPage>
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => Padding(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return Padding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -151,7 +154,7 @@ class _InterestListPageState extends State<InterestListPage>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: cs.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -185,7 +188,8 @@ class _InterestListPageState extends State<InterestListPage>
               ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -244,19 +248,20 @@ class _RecordListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (records.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.account_balance_wallet_outlined,
-                size: 64, color: Colors.grey[400]),
+                size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
             Text('No records yet',
-                style: TextStyle(fontSize: 16, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant)),
             const SizedBox(height: 4),
             Text('Tap + to add',
-                style: TextStyle(fontSize: 13, color: Colors.grey[500])),
+                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
           ],
         ),
       );
@@ -279,6 +284,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<InterestCubit>();
     final color = record.direction.color;
 
@@ -336,7 +342,7 @@ class _RecordCard extends StatelessWidget {
                       '${record.interestRate.toStringAsFixed(record.interestRate.truncateToDouble() == record.interestRate ? 0 : 2)}'
                       '${record.rateUnit.short} · Started ${_date(record.startDate)}',
                       style:
-                          TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -346,15 +352,15 @@ class _RecordCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           'CLOSED',
                           style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black54),
+                              color: cs.onSurfaceVariant),
                         ),
                       )
                     else
@@ -373,7 +379,7 @@ class _RecordCard extends StatelessWidget {
                 record.isClosed
                     ? Icons.archive_rounded
                     : Icons.chevron_right_rounded,
-                color: Colors.grey[400],
+                color: cs.onSurfaceVariant,
               ),
             ],
           ),
@@ -394,6 +400,7 @@ class InterestDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<InterestCubit, InterestState>(
       builder: (context, state) {
         final cubit = context.read<InterestCubit>();
@@ -515,12 +522,12 @@ class InterestDetailPage extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.phone_outlined,
-                              size: 14, color: Colors.grey[600]),
+                              size: 14, color: cs.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Text(
                             record.personContact!,
                             style: TextStyle(
-                                fontSize: 13, color: Colors.grey[700]),
+                                fontSize: 13, color: cs.onSurface),
                           ),
                         ],
                       ),
@@ -584,9 +591,9 @@ class InterestDetailPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: cs.outlineVariant),
                 ),
                 child: Column(
                   children: [
@@ -648,9 +655,9 @@ class InterestDetailPage extends StatelessWidget {
                               errorBuilder: (_, __, ___) => Container(
                                 width: 80,
                                 height: 80,
-                                color: Colors.grey[200],
+                                color: cs.surfaceContainerHighest,
                                 child: Icon(Icons.broken_image_rounded,
-                                    color: Colors.grey[400]),
+                                    color: cs.onSurfaceVariant),
                               ),
                             ),
                           ),
@@ -669,12 +676,12 @@ class InterestDetailPage extends StatelessWidget {
                   padding: const EdgeInsets.all(20),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     'No payments yet',
-                    style: TextStyle(color: Colors.grey[600]),
+                    style: TextStyle(color: cs.onSurfaceVariant),
                   ),
                 )
               else
@@ -855,12 +862,13 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -880,7 +888,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
           ),
         ],
       ),
@@ -895,6 +903,7 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -904,7 +913,7 @@ class _InfoRow extends StatelessWidget {
             width: 130,
             child: Text(
               label,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
             ),
           ),
           Expanded(
@@ -941,11 +950,12 @@ class _PaymentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final kindColor = payment.kind.color;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
         border: Border(left: BorderSide(color: kindColor, width: 4)),
       ),
@@ -990,17 +1000,17 @@ class _PaymentTile extends StatelessWidget {
                         Text(
                           _date(payment.paidDate),
                           style: TextStyle(
-                              fontSize: 11, color: Colors.grey[600]),
+                              fontSize: 11, color: cs.onSurfaceVariant),
                         ),
                         if (payment.photoUrls.isNotEmpty) ...[
                           const SizedBox(width: 8),
                           Icon(Icons.attach_file_rounded,
-                              size: 11, color: Colors.grey[600]),
+                              size: 11, color: cs.onSurfaceVariant),
                           const SizedBox(width: 2),
                           Text(
                             '${payment.photoUrls.length}',
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[600]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                         ],
                       ],
@@ -1011,7 +1021,7 @@ class _PaymentTile extends StatelessWidget {
                       Text(
                         payment.notes!,
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey[500]),
+                            fontSize: 11, color: cs.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1020,7 +1030,7 @@ class _PaymentTile extends StatelessWidget {
                 ),
               ),
               PopupMenuButton<String>(
-                icon: Icon(Icons.more_vert, color: Colors.grey[500]),
+                icon: Icon(Icons.more_vert, color: cs.onSurfaceVariant),
                 onSelected: (v) {
                   if (v == 'edit') onEdit();
                   if (v == 'delete') onDelete();
@@ -1706,6 +1716,7 @@ class _PhotosPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final tiles = <Widget>[];
     for (final url in urls) {
       tiles.add(Stack(
@@ -1720,9 +1731,9 @@ class _PhotosPicker extends StatelessWidget {
               errorBuilder: (_, __, ___) => Container(
                 width: 80,
                 height: 80,
-                color: Colors.grey[200],
+                color: cs.surfaceContainerHighest,
                 child: Icon(Icons.broken_image_rounded,
-                    color: Colors.grey[400]),
+                    color: cs.onSurfaceVariant),
               ),
             ),
           ),
@@ -1775,9 +1786,9 @@ class _PhotosPicker extends StatelessWidget {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[400]!),
+          border: Border.all(color: cs.outline),
         ),
         child: uploading
             ? const Center(
@@ -1791,11 +1802,11 @@ class _PhotosPicker extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add_photo_alternate_rounded,
-                      size: 22, color: Colors.grey[600]),
+                      size: 22, color: cs.onSurfaceVariant),
                   const SizedBox(height: 2),
                   Text('Gallery',
                       style:
-                          TextStyle(fontSize: 10, color: Colors.grey[600])),
+                          TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
                 ],
               ),
       ),
@@ -1808,18 +1819,18 @@ class _PhotosPicker extends StatelessWidget {
         width: 80,
         height: 80,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey[400]!),
+          border: Border.all(color: cs.outline),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.photo_camera_rounded,
-                size: 22, color: Colors.grey[600]),
+                size: 22, color: cs.onSurfaceVariant),
             const SizedBox(height: 2),
             Text('Camera',
-                style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
           ],
         ),
       ),

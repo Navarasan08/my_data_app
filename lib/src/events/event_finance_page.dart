@@ -88,18 +88,19 @@ class _EventList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (events.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.event_note_rounded, size: 48, color: Colors.grey[300]),
+            Icon(Icons.event_note_rounded, size: 48, color: cs.outlineVariant),
             const SizedBox(height: 12),
             Text(emptyTitle,
-                style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant)),
             const SizedBox(height: 4),
             Text(emptySub,
-                style: TextStyle(fontSize: 12, color: Colors.grey[400])),
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
           ],
         ),
       );
@@ -138,6 +139,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = event.color;
     final budgetProgress = event.budget != null && event.budget! > 0
         ? (total / event.budget!).clamp(0.0, 1.2)
@@ -196,15 +198,15 @@ class _EventCard extends StatelessWidget {
                           children: [
                             Text('$count ${count == 1 ? "expense" : "expenses"}',
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600])),
+                                    fontSize: 12, color: cs.onSurfaceVariant)),
                             if (event.eventDate != null) ...[
                               Text('  ·  ',
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.grey[400])),
+                                      fontSize: 12, color: cs.onSurfaceVariant)),
                               Text(
                                 DateFormat('d MMM yyyy').format(event.eventDate!),
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[600]),
+                                    fontSize: 12, color: cs.onSurfaceVariant),
                               ),
                             ],
                           ],
@@ -225,7 +227,7 @@ class _EventCard extends StatelessWidget {
                         Text(
                           'of ₹${_fmt.format(event.budget)}',
                           style: TextStyle(
-                              fontSize: 10, color: Colors.grey[500]),
+                              fontSize: 10, color: cs.onSurfaceVariant),
                         ),
                     ],
                   ),
@@ -238,7 +240,7 @@ class _EventCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: budgetProgress.clamp(0.0, 1.0),
                     minHeight: 4,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: cs.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
                         overBudget ? Colors.red : color),
                   ),
@@ -260,6 +262,7 @@ class EventDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<EventCubit, EventState>(
       builder: (context, state) {
         final cubit = context.read<EventCubit>();
@@ -360,7 +363,7 @@ class EventDetailPage extends StatelessWidget {
                               Text('Total Spent',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.grey[700],
+                                    color: cs.onSurface,
                                   )),
                               const SizedBox(height: 2),
                               Text(
@@ -381,12 +384,12 @@ class EventDetailPage extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: overBudget
                                   ? Colors.red[50]
-                                  : Colors.white,
+                                  : cs.surface,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: overBudget
                                     ? Colors.red[200]!
-                                    : Colors.grey[300]!,
+                                    : cs.outline,
                               ),
                             ),
                             child: Column(
@@ -395,7 +398,7 @@ class EventDetailPage extends StatelessWidget {
                                 Text('Budget',
                                     style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.grey[600],
+                                      color: cs.onSurfaceVariant,
                                     )),
                                 Text('₹${_fmt.format(event.budget)}',
                                     style: TextStyle(
@@ -403,7 +406,7 @@ class EventDetailPage extends StatelessWidget {
                                       fontWeight: FontWeight.bold,
                                       color: overBudget
                                           ? Colors.red[700]
-                                          : Colors.black87,
+                                          : cs.onSurface,
                                     )),
                               ],
                             ),
@@ -418,7 +421,7 @@ class EventDetailPage extends StatelessWidget {
                           value: (total / event.budget!).clamp(0.0, 1.0),
                           minHeight: 6,
                           backgroundColor:
-                              Colors.white.withValues(alpha: 0.6),
+                              cs.surface.withValues(alpha: 0.6),
                           valueColor: AlwaysStoppedAnimation<Color>(
                               overBudget ? Colors.red : event.color),
                         ),
@@ -437,10 +440,10 @@ class EventDetailPage extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 10, vertical: 5),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cs.surface,
                                   borderRadius: BorderRadius.circular(16),
                                   border:
-                                      Border.all(color: Colors.grey[300]!),
+                                      Border.all(color: cs.outline),
                                 ),
                                 child: Row(
                                   children: [
@@ -476,15 +479,15 @@ class EventDetailPage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.receipt_long_rounded,
-                                size: 44, color: Colors.grey[300]),
+                                size: 44, color: cs.outlineVariant),
                             const SizedBox(height: 10),
                             Text('No expenses yet',
                                 style: TextStyle(
-                                    fontSize: 13, color: Colors.grey[500])),
+                                    fontSize: 13, color: cs.onSurfaceVariant)),
                             const SizedBox(height: 4),
                             Text('Tap + to record your first expense',
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[400])),
+                                    fontSize: 11, color: cs.onSurfaceVariant)),
                           ],
                         ),
                       )
@@ -540,12 +543,13 @@ class _ExpenseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -590,12 +594,12 @@ class _ExpenseRow extends StatelessWidget {
                       children: [
                         Text(DateFormat('d MMM yy').format(expense.date),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[500])),
+                                fontSize: 11, color: cs.onSurfaceVariant)),
                         if (expense.category != null &&
                             expense.category!.isNotEmpty) ...[
                           Text('  ·  ',
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[400])),
+                                  fontSize: 11, color: cs.onSurfaceVariant)),
                           Text(expense.category!,
                               style: TextStyle(
                                 fontSize: 11,
@@ -607,11 +611,11 @@ class _ExpenseRow extends StatelessWidget {
                             expense.paidTo!.isNotEmpty) ...[
                           Text('  ·  ',
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[400])),
+                                  fontSize: 11, color: cs.onSurfaceVariant)),
                           Flexible(
                             child: Text(expense.paidTo!,
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[500]),
+                                    fontSize: 11, color: cs.onSurfaceVariant),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis),
                           ),
@@ -736,6 +740,7 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewColor = EventFund.availableColors[_colorIndex];
     final previewIcon = EventFund.availableIcons[_iconIndex];
 
@@ -827,8 +832,8 @@ class _AddEventPageState extends State<AddEventPage> {
                       style: TextStyle(
                         fontSize: 14,
                         color: _eventDate != null
-                            ? Colors.black87
-                            : Colors.grey[500],
+                            ? cs.onSurface
+                            : cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -839,7 +844,7 @@ class _AddEventPageState extends State<AddEventPage> {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700])),
+                        color: cs.onSurface)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -856,7 +861,7 @@ class _AddEventPageState extends State<AddEventPage> {
                         decoration: BoxDecoration(
                           color: selected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(10),
                           border: selected
                               ? Border.all(color: previewColor, width: 2)
@@ -866,7 +871,7 @@ class _AddEventPageState extends State<AddEventPage> {
                           EventFund.availableIcons[i],
                           size: 22,
                           color:
-                              selected ? previewColor : Colors.grey[600],
+                              selected ? previewColor : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -878,7 +883,7 @@ class _AddEventPageState extends State<AddEventPage> {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700])),
+                        color: cs.onSurface)),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
@@ -898,7 +903,7 @@ class _AddEventPageState extends State<AddEventPage> {
                           shape: BoxShape.circle,
                           border: selected
                               ? Border.all(color: Colors.black, width: 3)
-                              : Border.all(color: Colors.grey[300]!),
+                              : Border.all(color: cs.outline),
                         ),
                         child: selected
                             ? const Icon(Icons.check,

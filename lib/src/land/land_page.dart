@@ -16,6 +16,7 @@ class LandListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<LandCubit, LandState>(
       builder: (context, state) {
         final cubit = context.read<LandCubit>();
@@ -33,13 +34,13 @@ class LandListPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.landscape_rounded,
-                          size: 48, color: Colors.grey[300]),
+                          size: 48, color: cs.outlineVariant),
                       const SizedBox(height: 12),
                       Text(
                         'No land records yet',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[500],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -47,7 +48,7 @@ class LandListPage extends StatelessWidget {
                         'Tap + to add your first land',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[400],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -88,6 +89,7 @@ class _LandCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<LandCubit>();
     final color = record.type.color;
 
@@ -175,7 +177,7 @@ class _LandCard extends StatelessWidget {
                       Text(
                         record.locationShort,
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey[600]),
+                            fontSize: 12, color: cs.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -187,13 +189,13 @@ class _LandCard extends StatelessWidget {
                           Text(
                             record.areaDisplay,
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[500]),
+                                fontSize: 12, color: cs.onSurfaceVariant),
                           ),
                         if (record.askingPrice != null) ...[
                           if (record.areaDisplay.isNotEmpty)
                             Text('  ·  ',
                                 style: TextStyle(
-                                    fontSize: 12, color: Colors.grey[400])),
+                                    fontSize: 12, color: cs.onSurfaceVariant)),
                           Text(
                             '₹${NumberFormat.compact().format(record.askingPrice)}',
                             style: TextStyle(
@@ -206,12 +208,12 @@ class _LandCard extends StatelessWidget {
                         if (record.photoUrls.isNotEmpty) ...[
                           const Spacer(),
                           Icon(Icons.photo_library_rounded,
-                              size: 12, color: Colors.grey[400]),
+                              size: 12, color: cs.onSurfaceVariant),
                           const SizedBox(width: 2),
                           Text(
                             '${record.photoUrls.length}',
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[500]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                         ],
                       ],
@@ -241,6 +243,7 @@ class LandDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<LandCubit, LandState>(
       builder: (context, state) {
         final cubit = context.read<LandCubit>();
@@ -402,7 +405,7 @@ class LandDetailPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[700],
+                              color: cs.onSurface,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -479,7 +482,7 @@ class LandDetailPage extends StatelessWidget {
                     child: Text(
                       'Updated ${DateFormat('MMM d, yyyy').format(record.updatedAt)}',
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey[500]),
+                          fontSize: 11, color: cs.onSurfaceVariant),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -544,7 +547,7 @@ class LandDetailPage extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[700],
+                              color: Theme.of(ctx).colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -561,7 +564,7 @@ class LandDetailPage extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey[600]),
+                                  color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                             ),
                             onChanged: (v) {
                               setSt(() {
@@ -627,13 +630,14 @@ class _DetailSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (fields.isEmpty) return const SizedBox.shrink();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,7 +649,7 @@ class _DetailSection extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
                 letterSpacing: 0.5,
               ),
             ),
@@ -666,6 +670,7 @@ class _FieldRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
         Clipboard.setData(ClipboardData(text: value));
@@ -689,7 +694,7 @@ class _FieldRow extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -705,7 +710,7 @@ class _FieldRow extends StatelessWidget {
               ),
             ),
             Icon(Icons.content_copy_rounded,
-                size: 14, color: Colors.grey[400]),
+                size: 14, color: cs.onSurfaceVariant),
           ],
         ),
       ),
@@ -774,9 +779,9 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                   fit: BoxFit.cover,
                   width: double.infinity,
                   errorBuilder: (_, __, ___) => Container(
-                    color: Colors.grey[200],
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
                     child: Icon(Icons.broken_image_rounded,
-                        size: 40, color: Colors.grey[400]),
+                        size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   loadingBuilder: (_, child, progress) {
                     if (progress == null) return child;
@@ -1217,7 +1222,7 @@ class _AddLandPageState extends State<AddLandPage> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[700],
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: 0.5,
             )),
       );
@@ -1242,6 +1247,7 @@ class _AddLandPageState extends State<AddLandPage> {
   }
 
   Widget _buildPhotosPicker() {
+    final cs = Theme.of(context).colorScheme;
     final thumbs = <Widget>[];
     for (final url in _photoUrls) {
       thumbs.add(Stack(
@@ -1256,9 +1262,9 @@ class _AddLandPageState extends State<AddLandPage> {
               errorBuilder: (_, __, ___) => Container(
                 width: 80,
                 height: 80,
-                color: Colors.grey[200],
+                color: cs.surfaceContainerLow,
                 child: Icon(Icons.broken_image_rounded,
-                    color: Colors.grey[400]),
+                    color: cs.onSurfaceVariant),
               ),
             ),
           ),
@@ -1315,10 +1321,10 @@ class _AddLandPageState extends State<AddLandPage> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: Colors.grey[400]!,
+              color: cs.outline,
               style: BorderStyle.solid,
             ),
           ),
@@ -1334,12 +1340,12 @@ class _AddLandPageState extends State<AddLandPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.add_photo_alternate_rounded,
-                        size: 22, color: Colors.grey[600]),
+                        size: 22, color: cs.onSurfaceVariant),
                     const SizedBox(height: 2),
                     Text(
                       'Gallery',
                       style: TextStyle(
-                          fontSize: 10, color: Colors.grey[600]),
+                          fontSize: 10, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1355,20 +1361,20 @@ class _AddLandPageState extends State<AddLandPage> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[400]!),
+            border: Border.all(color: cs.outline),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.photo_camera_rounded,
-                  size: 22, color: Colors.grey[600]),
+                  size: 22, color: cs.onSurfaceVariant),
               const SizedBox(height: 2),
               Text(
                 'Camera',
                 style:
-                    TextStyle(fontSize: 10, color: Colors.grey[600]),
+                    TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -1418,7 +1424,9 @@ class _AddLandPageState extends State<AddLandPage> {
                 : 'Not set',
             style: TextStyle(
               fontSize: 14,
-              color: value != null ? Colors.black87 : Colors.grey[500],
+              color: value != null
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),

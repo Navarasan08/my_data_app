@@ -17,6 +17,7 @@ class LoanListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<LoanCubit, LoanState>(
       builder: (context, state) {
         final cubit = context.read<LoanCubit>();
@@ -58,7 +59,7 @@ class LoanListPage extends StatelessWidget {
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  color: Colors.white,
+                  color: cs.surface,
                   child: Row(
                     children: [
                       Expanded(
@@ -177,17 +178,18 @@ class _LoanListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (loans.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.account_balance_outlined,
-                size: 64, color: Colors.grey[400]),
+                size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
               'No loans here',
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -211,6 +213,7 @@ class _LoanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<LoanCubit>();
     final typeColor = loan.type.color;
     final overdue = loan.overdueEmis;
@@ -218,9 +221,9 @@ class _LoanCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -270,12 +273,12 @@ class _LoanCard extends StatelessWidget {
                         loan.direction == LoanDirection.borrowed
                             ? 'From: ${loan.lenderOrBorrower}'
                             : 'To: ${loan.lenderOrBorrower}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                       ),
                     const SizedBox(height: 2),
                     Text(
                       loan.type.label,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -286,7 +289,7 @@ class _LoanCard extends StatelessWidget {
                             child: LinearProgressIndicator(
                               value: loan.progressPercent,
                               minHeight: 4,
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: cs.surfaceContainerHighest,
                               valueColor:
                                   AlwaysStoppedAnimation<Color>(typeColor),
                             ),
@@ -316,7 +319,7 @@ class _LoanCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: Colors.grey[600],
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -424,6 +427,7 @@ class LoanDetailPage extends StatefulWidget {
 class _LoanDetailPageState extends State<LoanDetailPage> {
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<LoanCubit, LoanState>(
       builder: (context, state) {
         final cubit = context.read<LoanCubit>();
@@ -575,14 +579,14 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cs.surface,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(color: cs.outlineVariant),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.person_outline,
-                          size: 18, color: Colors.grey[600]),
+                          size: 18, color: cs.onSurfaceVariant),
                       const SizedBox(width: 8),
                       Text(
                         loan.direction == LoanDirection.borrowed
@@ -651,7 +655,9 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (ctx) => Padding(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return Padding(
         padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -660,7 +666,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: cs.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -732,7 +738,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             ),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 
@@ -755,6 +762,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
         double? customEmi;
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
@@ -771,7 +779,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   const SizedBox(height: 4),
                   Text(
                     'New Outstanding: ₹${_fmt(remainingPrincipal.clamp(0.0, double.infinity))}',
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -1079,17 +1087,18 @@ class _DashTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: Colors.grey[500]),
+          Icon(icon, size: 16, color: cs.onSurfaceVariant),
           const SizedBox(height: 6),
           Text(
             value,
@@ -1103,7 +1112,7 @@ class _DashTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
           ),
         ],
       ),
@@ -1146,24 +1155,25 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey[100],
+            color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(10),
           ),
           child: TabBar(
             controller: _tabController,
             labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: Colors.grey[600],
+            unselectedLabelColor: cs.onSurfaceVariant,
             labelStyle: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
             indicator: BoxDecoration(
-              color: Colors.white,
+              color: cs.surface,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
@@ -1186,7 +1196,7 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
                     Text(
                       '(${widget.emiHistory.length})',
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey[500]),
+                          fontSize: 11, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1202,7 +1212,7 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
                     Text(
                       '(${widget.partHistory.length})',
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey[500]),
+                          fontSize: 11, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1227,12 +1237,15 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
 
   Widget _buildList(List<Repayment> items, String emptyMsg) {
     if (items.isEmpty) {
-      return Center(
-        child: Text(
-          emptyMsg,
-          style: TextStyle(color: Colors.grey[500]),
-        ),
-      );
+      return Builder(builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        return Center(
+          child: Text(
+            emptyMsg,
+            style: TextStyle(color: cs.onSurfaceVariant),
+          ),
+        );
+      });
     }
     return ListView.builder(
       padding: const EdgeInsets.only(top: 4, bottom: 8),
@@ -1256,13 +1269,14 @@ class _RepaymentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
@@ -1304,7 +1318,7 @@ class _RepaymentTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   DateFormat('dd MMM yyyy').format(repayment.paidDate),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
                 if (repayment.principalPortion != null ||
                     repayment.interestPortion != null) ...[
@@ -1312,14 +1326,14 @@ class _RepaymentTile extends StatelessWidget {
                   Text(
                     'P: ₹${_fmt(repayment.principalPortion ?? 0.0)}  '
                     'I: ₹${_fmt(repayment.interestPortion ?? 0.0)}',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 ],
                 if (repayment.notes != null && repayment.notes!.isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
                     repayment.notes!,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

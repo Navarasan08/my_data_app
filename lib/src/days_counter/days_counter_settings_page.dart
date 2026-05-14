@@ -10,6 +10,7 @@ class DaysCounterSettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<DaysCounterCubit, DaysCounterState>(
       builder: (context, state) {
         final cubit = context.read<DaysCounterCubit>();
@@ -32,7 +33,7 @@ class DaysCounterSettingsPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: cs.onSurface,
                       ),
                     ),
                     const Spacer(),
@@ -48,7 +49,7 @@ class DaysCounterSettingsPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   "Tag events as Birthday, Death Anniversary, Festival, etc. Events keep their tag even if the type is later removed here.",
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
               ),
               const SizedBox(height: 8),
@@ -59,7 +60,7 @@ class DaysCounterSettingsPage extends StatelessWidget {
                     child: Text(
                       'No event types yet',
                       style:
-                          TextStyle(fontSize: 14, color: Colors.grey[500]),
+                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     ),
                   ),
                 )
@@ -198,6 +199,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewIcon = DaysCounterEventType.availableIcons[_iconIndex];
     final previewColor = DaysCounterEventType.availableColors[_colorIndex];
 
@@ -254,7 +256,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700])),
+                      color: cs.onSurface)),
               const SizedBox(height: 6),
               SizedBox(
                 height: 110,
@@ -275,7 +277,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                         decoration: BoxDecoration(
                           color: selected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: selected
                               ? Border.all(color: previewColor, width: 2)
@@ -286,7 +288,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                           size: 20,
                           color: selected
                               ? previewColor
-                              : Colors.grey[600],
+                              : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -298,7 +300,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700])),
+                      color: cs.onSurface)),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -317,9 +319,9 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                         color: c,
                         shape: BoxShape.circle,
                         border: selected
-                            ? Border.all(color: Colors.black, width: 3)
+                            ? Border.all(color: cs.onSurface, width: 3)
                             : Border.all(
-                                color: Colors.grey[300]!, width: 1),
+                                color: cs.outline, width: 1),
                       ),
                       child: selected
                           ? const Icon(Icons.check,

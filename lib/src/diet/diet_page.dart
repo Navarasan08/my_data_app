@@ -177,6 +177,7 @@ class _FoodItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final consumed = cubit.consumedThisMonth(item.id);
     final remaining = cubit.remainingThisMonth(item);
     final limit = item.monthlyLimit;
@@ -237,7 +238,7 @@ class _FoodItemCard extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
-                              color: Colors.grey[800],
+                              color: cs.onSurface,
                             ),
                           ),
                       ],
@@ -254,7 +255,7 @@ class _FoodItemCard extends StatelessWidget {
                             child: LinearProgressIndicator(
                               value: t,
                               minHeight: 6,
-                              backgroundColor: Colors.grey[200],
+                              backgroundColor: cs.surfaceContainerHighest,
                               valueColor: AlwaysStoppedAnimation<Color>(
                                 exceeded ? Colors.red : item.color,
                               ),
@@ -269,7 +270,7 @@ class _FoodItemCard extends StatelessWidget {
                           : 'No limit set',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey[600],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -339,12 +340,13 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.restaurant_menu_rounded,
-              size: 64, color: Colors.grey[300]),
+              size: 64, color: cs.onSurfaceVariant),
           const SizedBox(height: 12),
           const Text(
             'No food items yet',
@@ -353,7 +355,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Add a food, drink or habit to start tracking',
-            style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 18),
           ElevatedButton.icon(
@@ -432,6 +434,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewColor = FoodItem.availableColors[_colorIndex];
     final previewIcon = FoodItem.availableIcons[_iconIndex];
 
@@ -457,7 +460,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: cs.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -559,7 +562,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -582,7 +585,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                         decoration: BoxDecoration(
                           color: selected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: selected
                               ? Border.all(color: previewColor, width: 2)
@@ -592,7 +595,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                           FoodItem.availableIcons[i],
                           size: 20,
                           color:
-                              selected ? previewColor : Colors.grey[600],
+                              selected ? previewColor : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -605,7 +608,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -628,7 +631,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                           border: selected
                               ? Border.all(color: Colors.black, width: 3)
                               : Border.all(
-                                  color: Colors.grey[300]!, width: 1),
+                                  color: cs.outline, width: 1),
                         ),
                         child: selected
                             ? const Icon(Icons.check,
@@ -737,6 +740,7 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final item = widget.item;
     return Padding(
       padding: EdgeInsets.only(
@@ -755,7 +759,7 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: cs.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -788,7 +792,7 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
                               ? 'Quantity counts as "times eaten"'
                               : 'Unit: ${item.unitLabel}',
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey[600]),
+                              fontSize: 12, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -822,7 +826,7 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(4),
-                  side: BorderSide(color: Colors.grey[600]!),
+                  side: BorderSide(color: cs.outline),
                 ),
                 leading: const Icon(Icons.event_rounded),
                 title: const Text('Date'),
@@ -883,6 +887,7 @@ class _FoodItemDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<DietCubit, DietState>(
       builder: (context, state) {
         final cubit = context.read<DietCubit>();
@@ -985,7 +990,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
+                                color: cs.onSurface,
                               ),
                             ),
                             if (limit != null) ...[
@@ -1023,7 +1028,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                     Text(
                       '${entries.length}',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey[600]),
+                          fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1033,7 +1038,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                     ? Center(
                         child: Text(
                           'No entries this month',
-                          style: TextStyle(color: Colors.grey[500]),
+                          style: TextStyle(color: cs.onSurfaceVariant),
                         ),
                       )
                     : ListView.separated(
@@ -1077,10 +1082,10 @@ class _FoodItemDetailPage extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[50],
+                                  color: cs.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                      color: Colors.grey[200]!),
+                                      color: cs.outlineVariant),
                                 ),
                                 child: Row(
                                   children: [
@@ -1115,7 +1120,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                                                 e.description!,
                                                 style: TextStyle(
                                                   fontSize: 12,
-                                                  color: Colors.grey[600],
+                                                  color: cs.onSurfaceVariant,
                                                 ),
                                                 maxLines: 2,
                                                 overflow:
@@ -1130,7 +1135,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                                       DateFormat('d MMM').format(e.date),
                                       style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey[600],
+                                        color: cs.onSurfaceVariant,
                                       ),
                                     ),
                                   ],

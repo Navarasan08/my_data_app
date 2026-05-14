@@ -16,6 +16,7 @@ class MedicalHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<MedicalCubit, MedicalState>(
       builder: (context, state) {
         final cubit = context.read<MedicalCubit>();
@@ -156,7 +157,7 @@ class MedicalHomePage extends StatelessWidget {
                                   '${f.member.name} \u00B7 ${DateFormat('dd MMM yyyy').format(f.record.followUpDate!)}',
                                   style: TextStyle(
                                       fontSize: 11,
-                                      color: Colors.grey[500]),
+                                      color: cs.onSurfaceVariant),
                                 ),
                               ],
                             ),
@@ -235,7 +236,7 @@ class MedicalHomePage extends StatelessWidget {
                                     ].join(' \u00B7 '),
                                     style: TextStyle(
                                         fontSize: 11,
-                                        color: Colors.grey[500]),
+                                        color: cs.onSurfaceVariant),
                                   ),
                                 ],
                               ),
@@ -243,7 +244,7 @@ class MedicalHomePage extends StatelessWidget {
                             Text(
                               m.member.name,
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[500]),
+                                  fontSize: 11, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -308,18 +309,18 @@ class MedicalHomePage extends StatelessWidget {
                     child: Column(
                       children: [
                         Icon(Icons.medical_services_outlined,
-                            size: 64, color: Colors.grey[400]),
+                            size: 64, color: cs.onSurfaceVariant),
                         const SizedBox(height: 16),
                         Text(
                           'No medical records yet',
                           style: TextStyle(
-                              fontSize: 16, color: Colors.grey[600]),
+                              fontSize: 16, color: cs.onSurfaceVariant),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Add a family member to get started',
                           style: TextStyle(
-                              fontSize: 14, color: Colors.grey[500]),
+                              fontSize: 14, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -343,6 +344,7 @@ class _MemberChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = member.relation == Relation.self
         ? Colors.blue
         : member.gender == Gender.female
@@ -378,7 +380,7 @@ class _MemberChip extends StatelessWidget {
             ),
             Text(
               member.relation.label,
-              style: TextStyle(fontSize: 10, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -397,6 +399,7 @@ class _AddMemberChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -405,8 +408,8 @@ class _AddMemberChip extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: Colors.grey[100],
-              child: Icon(Icons.add_rounded, color: Colors.grey[500], size: 22),
+              backgroundColor: cs.surfaceContainerLow,
+              child: Icon(Icons.add_rounded, color: cs.onSurfaceVariant, size: 22),
             ),
             const SizedBox(height: 4),
             Text(
@@ -414,7 +417,7 @@ class _AddMemberChip extends StatelessWidget {
               style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey[600]),
+                  color: cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -487,6 +490,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = record.type.color;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -525,7 +529,7 @@ class _RecordCard extends StatelessWidget {
                         DateFormat('dd MMM yyyy').format(record.date),
                       ].join(' \u00B7 '),
                       style:
-                          TextStyle(fontSize: 11, color: Colors.grey[500]),
+                          TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -535,13 +539,13 @@ class _RecordCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: Colors.grey[100],
+                          color: cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           member!.name,
                           style: TextStyle(
-                              fontSize: 10, color: Colors.grey[600]),
+                              fontSize: 10, color: cs.onSurfaceVariant),
                         ),
                       ),
                     ],
@@ -600,6 +604,7 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<MedicalCubit, MedicalState>(
       builder: (context, state) {
         final cubit = context.read<MedicalCubit>();
@@ -702,7 +707,7 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
                     child: Text(
                       'No records found',
                       style:
-                          TextStyle(fontSize: 14, color: Colors.grey[500]),
+                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     ),
                   ),
                 )
@@ -771,6 +776,7 @@ class _MemberInfoSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -847,11 +853,11 @@ class _MemberInfoSection extends StatelessWidget {
             const SizedBox(height: 10),
             Row(
               children: [
-                Icon(Icons.phone_rounded, size: 14, color: Colors.grey[500]),
+                Icon(Icons.phone_rounded, size: 14, color: cs.onSurfaceVariant),
                 const SizedBox(width: 6),
                 Text(
                   member.emergencyContact!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
               ],
             ),
@@ -863,12 +869,12 @@ class _MemberInfoSection extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.shield_rounded, size: 14, color: Colors.grey[500]),
+                Icon(Icons.shield_rounded, size: 14, color: cs.onSurfaceVariant),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     member.insuranceInfo!,
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -892,6 +898,7 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -901,7 +908,7 @@ class _InfoTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: TextStyle(fontSize: 9, color: Colors.grey[500])),
+                style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant)),
             Text(value,
                 style: const TextStyle(
                     fontSize: 12, fontWeight: FontWeight.w500)),
@@ -949,6 +956,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final c = color ?? Colors.blue;
     return GestureDetector(
       onTap: onTap,
@@ -956,10 +964,10 @@ class _FilterChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? c.withValues(alpha: 0.15) : Colors.grey[100],
+          color: isSelected ? c.withValues(alpha: 0.15) : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? c : Colors.grey[300]!,
+            color: isSelected ? c : cs.outline,
           ),
         ),
         child: Text(
@@ -967,7 +975,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? c : Colors.grey[600],
+            color: isSelected ? c : cs.onSurfaceVariant,
           ),
         ),
       ),
@@ -986,6 +994,7 @@ class RecordDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<MedicalCubit, MedicalState>(
       builder: (context, state) {
         final cubit = context.read<MedicalCubit>();
@@ -1097,7 +1106,7 @@ class RecordDetailPage extends StatelessWidget {
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(record.diagnosis!,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                    style: TextStyle(fontSize: 13, color: cs.onSurface)),
               ],
 
               // ── Symptoms ────────────────────────────────────────────────
@@ -1171,7 +1180,7 @@ class RecordDetailPage extends StatelessWidget {
                               med.mealTiming.label,
                             ].join(' \u00B7 '),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[500]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                           if (med.morning ||
                               med.afternoon ||
@@ -1205,7 +1214,7 @@ class RecordDetailPage extends StatelessWidget {
                             Text(
                               '${DateFormat('dd MMM').format(med.startDate!)} - ${DateFormat('dd MMM').format(med.endDate!)} (${med.durationDays} days)',
                               style: TextStyle(
-                                  fontSize: 10, color: Colors.grey[400]),
+                                  fontSize: 10, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ],
@@ -1223,7 +1232,7 @@ class RecordDetailPage extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey[200]!),
+                    border: Border.all(color: cs.outlineVariant),
                   ),
                   child: Column(
                     children: [
@@ -1232,7 +1241,7 @@ class RecordDetailPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
+                          color: cs.surfaceContainerLow,
                           borderRadius: const BorderRadius.vertical(
                               top: Radius.circular(8)),
                         ),
@@ -1261,7 +1270,7 @@ class RecordDetailPage extends StatelessWidget {
                                 child: Text('',
                                     style: TextStyle(
                                         fontSize: 10,
-                                        color: Colors.grey[400]))),
+                                        color: cs.onSurfaceVariant))),
                           ],
                         ),
                       ),
@@ -1270,7 +1279,7 @@ class RecordDetailPage extends StatelessWidget {
                                 horizontal: 10, vertical: 8),
                             decoration: BoxDecoration(
                               border: Border(
-                                  top: BorderSide(color: Colors.grey[100]!)),
+                                  top: BorderSide(color: cs.outlineVariant)),
                             ),
                             child: Row(
                               children: [
@@ -1289,7 +1298,7 @@ class RecordDetailPage extends StatelessWidget {
                                       fontSize: 12,
                                       color: lr.isAbnormal
                                           ? Colors.red[700]
-                                          : Colors.grey[700],
+                                          : cs.onSurface,
                                       fontWeight: lr.isAbnormal
                                           ? FontWeight.w600
                                           : FontWeight.normal,
@@ -1301,7 +1310,7 @@ class RecordDetailPage extends StatelessWidget {
                                   child: Text(lr.normalRange ?? '-',
                                       style: TextStyle(
                                           fontSize: 11,
-                                          color: Colors.grey[400])),
+                                          color: cs.onSurfaceVariant)),
                                 ),
                                 SizedBox(
                                   width: 50,
@@ -1370,7 +1379,7 @@ class RecordDetailPage extends StatelessWidget {
                         TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
                 Text(record.notes!,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                    style: TextStyle(fontSize: 13, color: cs.onSurface)),
               ],
 
               // ── Member name ─────────────────────────────────────────────
@@ -1379,12 +1388,12 @@ class RecordDetailPage extends StatelessWidget {
                 Row(
                   children: [
                     Icon(Icons.person_rounded,
-                        size: 14, color: Colors.grey[400]),
+                        size: 14, color: cs.onSurfaceVariant),
                     const SizedBox(width: 6),
                     Text(
                       '${member.name} (${member.relation.label})',
                       style:
-                          TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -1409,14 +1418,15 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: Colors.grey[400]),
+          Icon(icon, size: 16, color: cs.onSurfaceVariant),
           const SizedBox(width: 8),
           Text('$label: ',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
           Expanded(
             child: Text(value,
                 style: const TextStyle(
@@ -2281,6 +2291,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Record' : 'Add Record'),
@@ -2477,7 +2488,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                         med.frequency.label,
                       ].join(' \u00B7 '),
                       style: TextStyle(
-                          fontSize: 11, color: Colors.grey[500]),
+                          fontSize: 11, color: cs.onSurfaceVariant),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -2485,7 +2496,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                         InkWell(
                           onTap: () => _editMedication(i),
                           child: Icon(Icons.edit_outlined,
-                              size: 18, color: Colors.grey[500]),
+                              size: 18, color: cs.onSurfaceVariant),
                         ),
                         const SizedBox(width: 12),
                         InkWell(
@@ -2526,13 +2537,13 @@ class _AddRecordPageState extends State<AddRecordPage> {
                   decoration: BoxDecoration(
                     color: lr.isAbnormal
                         ? Colors.red.withValues(alpha: 0.04)
-                        : Colors.grey.withValues(alpha: 0.04),
+                        : cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
                     border: Border(
                       left: BorderSide(
                         color: lr.isAbnormal
                             ? Colors.red[400]!
-                            : Colors.grey[400]!,
+                            : cs.outline,
                         width: 3,
                       ),
                     ),
@@ -2550,7 +2561,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                             Text(
                               '${lr.value ?? '-'} ${lr.unit ?? ''} (${lr.normalRange ?? '-'})',
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[500]),
+                                  fontSize: 11, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),

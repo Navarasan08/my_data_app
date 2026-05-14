@@ -102,6 +102,7 @@ class SchedulePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ScheduleCubit, ScheduleState>(
       builder: (context, state) {
         final cubit = context.read<ScheduleCubit>();
@@ -133,7 +134,7 @@ class SchedulePage extends StatelessWidget {
           body: Column(
             children: [
               Container(
-                color: Colors.white,
+                color: cs.surface,
                 padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 child: Row(
                   children: [
@@ -153,7 +154,7 @@ class SchedulePage extends StatelessWidget {
                       '$totalOccurrences events',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                     if (pending > 0) ...[
@@ -187,7 +188,7 @@ class SchedulePage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.event_available_rounded,
-                                size: 48, color: Colors.grey[300]),
+                                size: 48, color: cs.outline),
                             const SizedBox(height: 12),
                             Text(
                               state.filter == ScheduleFilter.thisMonth
@@ -195,7 +196,7 @@ class SchedulePage extends StatelessWidget {
                                   : 'No schedules yet',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey[500],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -232,7 +233,7 @@ class SchedulePage extends StatelessWidget {
                                         fontWeight: FontWeight.bold,
                                         color: isCurrentMonth
                                             ? Colors.blue[700]
-                                            : Colors.grey[700],
+                                            : cs.onSurface,
                                       ),
                                     ),
                                     if (isCurrentMonth) ...[
@@ -261,7 +262,7 @@ class SchedulePage extends StatelessWidget {
                                       '${occ.length}',
                                       style: TextStyle(
                                         fontSize: 12,
-                                        color: Colors.grey[400],
+                                        color: cs.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -333,6 +334,7 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -340,7 +342,7 @@ class _FilterChip extends StatelessWidget {
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? Colors.blue[700] : Colors.grey[100],
+          color: selected ? Colors.blue[700] : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -348,7 +350,7 @@ class _FilterChip extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : Colors.grey[700],
+            color: selected ? Colors.white : cs.onSurface,
           ),
         ),
       ),
@@ -379,6 +381,7 @@ class _ScheduleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cat = entry.category;
     final dayOfWeek = DateFormat('EEE').format(occurrenceDate);
     final dayNum = DateFormat('d').format(occurrenceDate);
@@ -390,9 +393,9 @@ class _ScheduleItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
@@ -418,7 +421,7 @@ class _ScheduleItem extends StatelessWidget {
                           ? cat.color.withValues(alpha: 0.15)
                           : Colors.transparent,
                       border: Border.all(
-                        color: isDone ? cat.color : Colors.grey[300]!,
+                        color: isDone ? cat.color : cs.outline,
                         width: 2,
                       ),
                     ),
@@ -441,7 +444,7 @@ class _ScheduleItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -450,7 +453,7 @@ class _ScheduleItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: isDone ? Colors.grey[400] : cat.color,
+                        color: isDone ? cs.onSurfaceVariant : cat.color,
                         height: 1.0,
                       ),
                     ),
@@ -459,7 +462,7 @@ class _ScheduleItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                         letterSpacing: 0.4,
                       ),
                     ),
@@ -494,7 +497,7 @@ class _ScheduleItem extends StatelessWidget {
                         height: 1.25,
                         decoration:
                             isDone ? TextDecoration.lineThrough : null,
-                        color: isDone ? Colors.grey[400] : Colors.black87,
+                        color: isDone ? cs.onSurfaceVariant : cs.onSurface,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -511,12 +514,12 @@ class _ScheduleItem extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.repeat_rounded,
-                                  size: 11, color: Colors.grey[500]),
+                                  size: 11, color: cs.onSurfaceVariant),
                               const SizedBox(width: 3),
                               Text(
                                 repeatLabel + endLabel,
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[600]),
+                                    fontSize: 11, color: cs.onSurfaceVariant),
                               ),
                             ],
                           )
@@ -524,7 +527,7 @@ class _ScheduleItem extends StatelessWidget {
                           Text(
                             cat.label,
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[600]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                         if (entry.isRecurring && entry.completedCount > 0)
                           Container(
@@ -569,7 +572,7 @@ class _ScheduleItem extends StatelessWidget {
               // Trailing chevron (subtle affordance for tap → detail)
               const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded,
-                  size: 18, color: Colors.grey[400]),
+                  size: 18, color: cs.onSurfaceVariant),
             ],
           ),
         ),
@@ -708,6 +711,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Schedule' : 'Add Schedule'),
@@ -777,7 +781,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: Colors.grey[400]!),
+                    side: BorderSide(color: cs.outline),
                   ),
                   leading: const Icon(Icons.calendar_today_rounded),
                   title: const Text('Start Date *'),
@@ -791,7 +795,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 ListTile(
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: Colors.grey[400]!),
+                    side: BorderSide(color: cs.outline),
                   ),
                   leading: const Icon(Icons.event_rounded),
                   title: const Text('End Date'),
@@ -813,7 +817,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                     style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[700])),
+                        color: cs.onSurface)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
@@ -869,7 +873,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[700])),
+                          color: cs.onSurface)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,
@@ -915,7 +919,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                       style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[700])),
+                          color: cs.onSurface)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,

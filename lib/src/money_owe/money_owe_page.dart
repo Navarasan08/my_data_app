@@ -68,7 +68,9 @@ class MoneyOwePage extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      builder: (_) => SafeArea(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -77,7 +79,7 @@ class MoneyOwePage extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: cs.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -126,7 +128,8 @@ class MoneyOwePage extends StatelessWidget {
             const SizedBox(height: 12),
           ],
         ),
-      ),
+      );
+      },
     );
   }
 }
@@ -198,10 +201,11 @@ class _DebtList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (entries.isEmpty) {
       return Center(
         child: Text(emptyLabel,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 15)),
+            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15)),
       );
     }
     return ListView.builder(
@@ -220,15 +224,16 @@ class _DebtItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = entry.direction.color;
     final isSettled = entry.isFullySettled || entry.isSettled;
     final dateFmt = DateFormat('dd MMM yyyy');
 
     return Card(
-      color: Colors.white,
+      color: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300),
+        side: BorderSide(color: cs.outlineVariant),
       ),
       margin: const EdgeInsets.only(bottom: 10),
       child: InkWell(
@@ -275,12 +280,12 @@ class _DebtItemCard extends StatelessWidget {
                     if (entry.reason != null && entry.reason!.isNotEmpty)
                       Text(entry.reason!,
                           style: TextStyle(
-                              fontSize: 12, color: Colors.grey.shade600),
+                              fontSize: 12, color: cs.onSurfaceVariant),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis),
                     Text(dateFmt.format(entry.date),
                         style: TextStyle(
-                            fontSize: 11, color: Colors.grey.shade500)),
+                            fontSize: 11, color: cs.onSurfaceVariant)),
                   ],
                 ),
               ),
@@ -294,7 +299,7 @@ class _DebtItemCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: isSettled ? Colors.grey : color,
+                      color: isSettled ? cs.onSurfaceVariant : color,
                       decoration:
                           isSettled ? TextDecoration.lineThrough : null,
                     ),
@@ -304,7 +309,7 @@ class _DebtItemCard extends StatelessWidget {
                     width: 60,
                     child: LinearProgressIndicator(
                       value: entry.settledPercent,
-                      backgroundColor: Colors.grey.shade200,
+                      backgroundColor: cs.surfaceContainerHighest,
                       color: color,
                       minHeight: 4,
                       borderRadius: BorderRadius.circular(2),
@@ -320,7 +325,7 @@ class _DebtItemCard extends StatelessWidget {
               // Delete button
               IconButton(
                 icon: Icon(Icons.delete_outline,
-                    size: 20, color: Colors.grey.shade400),
+                    size: 20, color: cs.onSurfaceVariant),
                 onPressed: () async {
                   final cubit = context.read<MoneyOweCubit>();
                   final confirmed = await showDialog<bool>(
@@ -385,6 +390,7 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<MoneyOweCubit, MoneyOweState>(
       builder: (context, state) {
         final entry = state.entries
@@ -414,9 +420,9 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: cs.outlineVariant),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +457,7 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: entry.settledPercent,
-                        backgroundColor: Colors.grey.shade200,
+                        backgroundColor: cs.surfaceContainerHighest,
                         color: color,
                         minHeight: 8,
                       ),
@@ -462,7 +468,7 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                       child: Text(
                         '${(entry.settledPercent * 100).toStringAsFixed(0)}% settled',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey.shade600),
+                            fontSize: 12, color: cs.onSurfaceVariant),
                       ),
                     ),
                   ],
@@ -515,12 +521,12 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                   style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: Colors.grey.shade800)),
+                      color: cs.onSurface)),
               const SizedBox(height: 8),
               if (entry.settlements.isEmpty)
                 Text('No payments recorded yet.',
                     style: TextStyle(
-                        color: Colors.grey.shade500, fontSize: 13))
+                        color: cs.onSurfaceVariant, fontSize: 13))
               else
                 ...entry.settlements.map((s) => _settlementTile(s)),
             ],
@@ -551,19 +557,22 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
   }
 
   Widget _detailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-        ],
-      ),
-    );
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+            Text(value,
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _statusChip(String label, Color color) {
@@ -580,36 +589,39 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
   }
 
   Widget _settlementTile(DebtSettlement s) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.receipt_long, size: 20, color: Colors.green),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('\u20B9${_fmt(s.amount)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                if (s.note != null && s.note!.isNotEmpty)
-                  Text(s.note!,
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600)),
-              ],
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: cs.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.receipt_long, size: 20, color: Colors.green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('\u20B9${_fmt(s.amount)}',
+                      style: const TextStyle(fontWeight: FontWeight.w600)),
+                  if (s.note != null && s.note!.isNotEmpty)
+                    Text(s.note!,
+                        style: TextStyle(
+                            fontSize: 12, color: cs.onSurfaceVariant)),
+                ],
+              ),
             ),
-          ),
-          Text(_dateFmt.format(s.date),
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500)),
-        ],
-      ),
-    );
+            Text(_dateFmt.format(s.date),
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -880,6 +892,7 @@ class _AddSettlementPageState extends State<AddSettlementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final dateFmt = DateFormat('dd MMM yyyy');
 
     return Scaffold(
@@ -895,7 +908,7 @@ class _AddSettlementPageState extends State<AddSettlementPage> {
           children: [
             Text(
               'Pending: \u20B9${_fmt(widget.pendingAmount)}',
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextFormField(

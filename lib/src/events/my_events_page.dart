@@ -64,7 +64,6 @@ class MyEventsPage extends StatelessWidget {
             userName.isNotEmpty ? userName[0].toUpperCase() : '?';
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
           body: SafeArea(
             child: Column(
               children: [
@@ -288,6 +287,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
@@ -306,14 +306,14 @@ class _SectionHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[700],
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -321,7 +321,7 @@ class _SectionHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
+                color: cs.onSurface,
               ),
             ),
           ),
@@ -411,6 +411,7 @@ class _AddEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -420,14 +421,14 @@ class _AddEventCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.grey[300]!,
+                color: cs.outline,
                 style: BorderStyle.solid,
               ),
             ),
-            child: Icon(Icons.add_rounded, size: 26, color: Colors.grey[600]),
+            child: Icon(Icons.add_rounded, size: 26, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
           Text(
@@ -435,7 +436,7 @@ class _AddEventCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
@@ -451,6 +452,7 @@ class _ManageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -460,11 +462,11 @@ class _ManageCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(Icons.inventory_2_rounded,
-                size: 26, color: Colors.grey[600]),
+                size: 26, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
           Text(
@@ -472,7 +474,7 @@ class _ManageCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),

@@ -13,6 +13,7 @@ class HomeRecordPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
@@ -129,7 +130,7 @@ class HomeRecordPage extends StatelessWidget {
                                 '(${filteredRecords.length})',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Colors.grey[500],
+                                  color: cs.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -234,7 +235,7 @@ class HomeRecordPage extends StatelessWidget {
                                   children: [
                                     Icon(Icons.home_outlined,
                                         size: 48,
-                                        color: Colors.grey[300]),
+                                        color: cs.outline),
                                     const SizedBox(height: 12),
                                     Text(
                                       state.selectedCategoryIds.isNotEmpty
@@ -242,7 +243,7 @@ class HomeRecordPage extends StatelessWidget {
                                           : 'No records yet',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey[500],
+                                        color: cs.onSurfaceVariant,
                                       ),
                                     ),
                                   ],
@@ -291,9 +292,13 @@ class HomeRecordPage extends StatelessWidget {
               final newRecord = await Navigator.push<HomeRecord>(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => AddHomeRecordPage(
+                  builder: (_) => BlocProvider.value(
+                    value: cubit,
+                    child: AddHomeRecordPage(
                         categories: cubit.allCategories,
-                        paymentTypes: cubit.paymentTypes)),
+                        paymentTypes: cubit.paymentTypes),
+                  ),
+                ),
               );
               if (newRecord != null) {
                 cubit.addRecord(newRecord);
@@ -309,6 +314,7 @@ class HomeRecordPage extends StatelessWidget {
 
   Widget _buildMonthGroupedList(
       BuildContext context, HomeRecordCubit cubit, List<HomeRecord> records) {
+    final cs = Theme.of(context).colorScheme;
     final grouped = <String, List<HomeRecord>>{};
     for (final r in records) {
       final key = DateFormat('yyyy-MM').format(r.date);
@@ -335,7 +341,7 @@ class HomeRecordPage extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -361,7 +367,7 @@ class HomeRecordPage extends StatelessWidget {
                     '(${monthRecords.length})',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -497,6 +503,7 @@ class HomeRecordPage extends StatelessWidget {
     HomeRecordCubit cubit,
     Set<String> initial,
   ) async {
+    final cs = Theme.of(context).colorScheme;
     final categories = cubit.categoriesByUsage;
     final selected = Set<String>.from(initial);
 
@@ -520,7 +527,7 @@ class HomeRecordPage extends StatelessWidget {
                   height: 4,
                   margin: const EdgeInsets.only(top: 8),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: cs.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -529,7 +536,7 @@ class HomeRecordPage extends StatelessWidget {
                   child: Row(
                     children: [
                       Icon(Icons.filter_list_rounded,
-                          size: 18, color: Colors.grey[700]),
+                          size: 18, color: cs.onSurface),
                       const SizedBox(width: 8),
                       const Text(
                         'Filter by category',
@@ -628,9 +635,10 @@ class _FilterIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasFilter = activeCount > 0;
     return Material(
-      color: hasFilter ? Colors.green[600] : Colors.grey[100],
+      color: hasFilter ? Colors.green[600] : cs.surfaceContainerLow,
       shape: const CircleBorder(),
       child: InkWell(
         onTap: onTap,
@@ -645,7 +653,7 @@ class _FilterIconButton extends StatelessWidget {
               Icon(
                 Icons.filter_list_rounded,
                 size: 16,
-                color: hasFilter ? Colors.white : Colors.grey[700],
+                color: hasFilter ? Colors.white : cs.onSurface,
               ),
               if (hasFilter)
                 Positioned(
@@ -703,6 +711,7 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(
       BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -710,20 +719,20 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
         padding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: cs.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
             Icon(Icons.date_range_rounded,
-                size: 16, color: Colors.grey[700]),
+                size: 16, color: cs.onSurface),
             const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
+                color: cs.onSurface,
               ),
             ),
             const SizedBox(width: 8),
@@ -731,15 +740,15 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
               padding: const EdgeInsets.symmetric(
                   horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.grey[400],
+                color: cs.onSurfaceVariant,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 '$count',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: cs.surface,
                 ),
               ),
             ),
@@ -749,7 +758,7 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Colors.grey[800],
+                color: cs.onSurface,
               ),
             ),
           ],
@@ -780,6 +789,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
@@ -827,7 +837,7 @@ class _RecordCard extends StatelessWidget {
                       ].join('  ·  '),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -981,6 +991,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Record' : 'Add Record'),
@@ -1114,7 +1125,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                       const EdgeInsets.symmetric(horizontal: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: Colors.grey[600]!),
+                    side: BorderSide(color: cs.outline),
                   ),
                   leading: const Icon(Icons.calendar_today),
                   title: const Text('Date'),
@@ -1231,6 +1242,7 @@ class _PaymentTypePicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final merged = <PaymentType>[...types];
     if (selected != null && !merged.any((t) => t.id == selected!.id)) {
       merged.add(selected!);
@@ -1241,14 +1253,14 @@ class _PaymentTypePicker extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(Icons.payments_rounded, size: 16, color: Colors.grey[600]),
+            Icon(Icons.payments_rounded, size: 16, color: cs.onSurfaceVariant),
             const SizedBox(width: 6),
             Text(
               'Payment type (optional)',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: cs.onSurface,
               ),
             ),
           ],
@@ -1257,7 +1269,7 @@ class _PaymentTypePicker extends StatelessWidget {
         if (merged.isEmpty)
           Text(
             'No payment types yet — add some from Settings.',
-            style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
           )
         else
           Wrap(
@@ -1301,6 +1313,7 @@ class _MonthCalendarView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final state = cubit.state;
     final sel = state.selectedDate;
     final firstOfMonth = DateTime(sel.year, sel.month, 1);
@@ -1345,7 +1358,7 @@ class _MonthCalendarView extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.grey[600],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ),
@@ -1394,7 +1407,7 @@ class _MonthCalendarView extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(Icons.event_rounded,
-                      size: 16, color: Colors.grey[700]),
+                      size: 16, color: cs.onSurface),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -1419,7 +1432,7 @@ class _MonthCalendarView extends StatelessWidget {
                       '(${dayRecords.length})',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -1435,13 +1448,13 @@ class _MonthCalendarView extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.event_busy_rounded,
-                              size: 36, color: Colors.grey[300]),
+                              size: 36, color: cs.outline),
                           const SizedBox(height: 8),
                           Text(
                             'No records on this day',
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.grey[500],
+                              color: cs.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -1523,6 +1536,7 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasExpense = amountLabel.isNotEmpty;
 
     // Border priority: selected (thick blue) > today (thin blue) > default.
@@ -1535,7 +1549,7 @@ class _DayCell extends StatelessWidget {
       borderColor = Colors.blue;
       borderWidth = 1.4;
     } else {
-      borderColor = Colors.grey[200]!;
+      borderColor = cs.outlineVariant;
       borderWidth = 1;
     }
 
@@ -1547,7 +1561,7 @@ class _DayCell extends StatelessWidget {
     } else if (hasExpense) {
       bg = Colors.red.withValues(alpha: 0.05);
     } else {
-      bg = Colors.grey[50]!;
+      bg = cs.surfaceContainerLow;
     }
 
     return InkWell(
@@ -1572,7 +1586,7 @@ class _DayCell extends StatelessWidget {
                     : FontWeight.w600,
                 color: (isToday || isSelected)
                     ? Colors.blue[800]
-                    : Colors.grey[800],
+                    : cs.onSurface,
               ),
             ),
             const Spacer(),
