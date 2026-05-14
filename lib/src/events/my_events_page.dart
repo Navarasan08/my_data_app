@@ -6,7 +6,7 @@ import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/cubit/event_state.dart';
 import 'package:my_data_app/src/events/event_finance_page.dart';
-import 'package:my_data_app/src/profile/profile_page.dart';
+import 'package:my_data_app/src/shell/widgets/app_header.dart';
 
 /// "My Events" tab — mirrors the Home dashboard's layout (blue gradient header
 /// + categorized grid of cards). Currently shows a Finance category with one
@@ -46,110 +46,18 @@ class MyEventsPage extends StatelessWidget {
         final cubit = context.read<EventCubit>();
         final active = cubit.activeEvents;
 
-        final hour = DateTime.now().hour;
-        final greeting = hour < 12
-            ? 'Good Morning'
-            : hour < 17
-                ? 'Good Afternoon'
-                : 'Good Evening';
-
-        final authState = context.watch<AuthCubit>().state;
-        final user = authState.user;
-        final displayName = user?.displayName;
-        final email = user?.email ?? '';
-        final userName = (displayName != null && displayName.isNotEmpty)
-            ? displayName
-            : email;
-        final userInitial =
-            userName.isNotEmpty ? userName[0].toUpperCase() : '?';
-
         return Scaffold(
           body: SafeArea(
             child: Column(
               children: [
-                // Fixed Header — mirrors the Home dashboard header.
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.blue[700]!, Colors.blue[500]!],
+                AppHeader(
+                  actions: [
+                    HeaderIconButton(
+                      icon: Icons.logout_rounded,
+                      tooltip: 'Logout',
+                      onPressed: () => _showLogoutDialog(context),
                     ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          final authCubit = context.read<AuthCubit>();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: authCubit,
-                                child: const ProfilePage(),
-                              ),
-                            ),
-                          );
-                        },
-                        child: CircleAvatar(
-                          radius: 22,
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.25),
-                          child: Text(
-                            userInitial,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$greeting!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              userName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _showLogoutDialog(context),
-                        icon: const Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
 
                 // Body — categorized sections (same visual as dashboard)

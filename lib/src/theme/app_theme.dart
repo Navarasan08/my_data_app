@@ -4,16 +4,24 @@ import 'package:flutter/material.dart';
 /// project-wide — try to add new visual rules here rather than overriding
 /// them at each call site.
 class AppTheme {
-  /// Brand seed. Pulls the ColorScheme towards a deeper, slightly violet
-  /// blue that reads well as a primary in both light and dark modes.
-  static const Color seedColor = Color(0xFF2563EB);
+  /// Brand seed. A saturated violet — gives the M3 ColorScheme a vibrant
+  /// primary that reads well on both light and dark surfaces, and tints the
+  /// bottom navigation indicator + filled buttons + focus rings.
+  static const Color seedColor = Color(0xFF7C3AED);
 
-  /// Two-stop gradient used by the splash, the dashboard header, and the
-  /// login/signup headers. Single source of truth.
+  /// Three-stop aurora gradient used by the splash, branded loader, dashboard
+  /// header, and login/signup headers. Single source of truth. Reads as the
+  /// app's "hero" surface — vibrant on both light and dark backgrounds.
   static const List<Color> brandGradient = [
-    Color(0xFF1D4ED8),
-    Color(0xFF3B82F6),
+    Color(0xFF4F46E5), // indigo-600
+    Color(0xFF9333EA), // purple-600
+    Color(0xFFEC4899), // pink-500
   ];
+
+  /// Solid accent color drawn from the gradient's middle stop. Use this
+  /// wherever a single brand color is needed instead of the gradient
+  /// (e.g., the small swap-icon badge on the avatar).
+  static const Color brandAccent = Color(0xFF7C3AED);
 
   static ThemeData light() {
     final scheme = ColorScheme.fromSeed(

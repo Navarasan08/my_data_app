@@ -122,43 +122,106 @@ class _MainShellState extends State<MainShell> {
       bottomNavigationBar: BlocBuilder<NotificationCubit, NotificationState>(
         builder: (context, state) {
           final unread = context.read<NotificationCubit>().unreadCount;
-          return NavigationBar(
-            selectedIndex: _index,
-            onDestinationSelected: (i) => setState(() => _index = i),
-            destinations: [
-              const NavigationDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard_rounded),
-                label: 'Home',
+          final cs = Theme.of(context).colorScheme;
+          // Wrap the NavigationBar so it has a soft top edge separating it
+          // from the content above (M3 doesn't ship one by default).
+          return DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: cs.outlineVariant, width: 0.6),
               ),
-              const NavigationDestination(
-                icon: Icon(Icons.event_outlined),
-                selectedIcon: Icon(Icons.event_rounded),
-                label: 'My Events',
-              ),
-              NavigationDestination(
-                icon: Badge(
-                  isLabelVisible: unread > 0,
-                  label: Text('$unread'),
-                  child: const Icon(Icons.notifications_outlined),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 16,
+                  offset: const Offset(0, -2),
                 ),
-                selectedIcon: Badge(
-                  isLabelVisible: unread > 0,
-                  label: Text('$unread'),
-                  child: const Icon(Icons.notifications_rounded),
+              ],
+            ),
+            child: NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: (i) => setState(() => _index = i),
+              destinations: [
+                const NavigationDestination(
+                  icon: Icon(Icons.dashboard_outlined),
+                  selectedIcon: Icon(Icons.dashboard_rounded),
+                  label: 'Home',
                 ),
-                label: 'Alerts',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: 'Profile',
-              ),
-            ],
+                const NavigationDestination(
+                  icon: Icon(Icons.event_outlined),
+                  selectedIcon: Icon(Icons.event_rounded),
+                  label: 'My Events',
+                ),
+                NavigationDestination(
+                  icon: _NotificationIcon(
+                    unread: unread,
+                    icon: Icons.notifications_outlined,
+                  ),
+                  selectedIcon: _NotificationIcon(
+                    unread: unread,
+                    icon: Icons.notifications_rounded,
+                  ),
+                  label: 'Alerts',
+                ),
+                const NavigationDestination(
+                  icon: Icon(Icons.person_outline_rounded),
+                  selectedIcon: Icon(Icons.person_rounded),
+                  label: 'Profile',
+                ),
+              ],
+            ),
           );
         },
       ),
       ),
+    );
+  }
+}
+
+/// Notification icon with a refined unread badge. Cleaner than the default
+/// Material `Badge` — smaller, tighter, and color-correct for both light
+/// and dark themes.
+class _NotificationIcon extends StatelessWidget {
+  final int unread;
+  final IconData icon;
+
+  const _NotificationIcon({required this.unread, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(icon),
+        if (unread > 0)
+          Positioned(
+            top: -4,
+            right: -6,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: BoxDecoration(
+                color: Colors.red[500],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.surface,
+                  width: 1.4,
+                ),
+              ),
+              child: Text(
+                unread > 99 ? '99+' : '$unread',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  height: 1.2,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
