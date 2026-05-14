@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
@@ -242,7 +243,9 @@ class _DashboardPageState extends State<DashboardPage> {
       homeRecordState, scheduleState, foodMenuState, loanState, goalState, moneyOweState, medicalState, vaultState, landState, interestState, activityState, dietState, daysCounterState) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-      children: _categoryIds.entries.map((catEntry) {
+      children: _categoryIds.entries.toList().asMap().entries.map((mapEntry) {
+        final i = mapEntry.key;
+        final catEntry = mapEntry.value;
         final categoryName = catEntry.key;
         final featureIds = catEntry.value;
         final categoryFeatures = visibleFeatures
@@ -287,7 +290,16 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
-        );
+        )
+            .animate()
+            .fadeIn(delay: (i * 80).ms, duration: 400.ms)
+            .slideY(
+              begin: 0.08,
+              end: 0,
+              delay: (i * 80).ms,
+              duration: 400.ms,
+              curve: Curves.easeOutCubic,
+            );
       }).toList(),
     );
   }
@@ -302,7 +314,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
         return ListView(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-          children: _categoryIds.entries.map((catEntry) {
+          children:
+              _categoryIds.entries.toList().asMap().entries.map((mapEntry) {
+            final i = mapEntry.key;
+            final catEntry = mapEntry.value;
             final categoryName = catEntry.key;
             final featureIds = catEntry.value;
             final categoryFeatures = visibleFeatures
@@ -353,7 +368,16 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ],
               ),
-            );
+            )
+                .animate()
+                .fadeIn(delay: (i * 80).ms, duration: 400.ms)
+                .slideY(
+                  begin: 0.08,
+                  end: 0,
+                  delay: (i * 80).ms,
+                  duration: 400.ms,
+                  curve: Curves.easeOutCubic,
+                );
           }).toList(),
         );
       },

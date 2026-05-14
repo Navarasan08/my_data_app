@@ -48,6 +48,7 @@ import 'package:my_data_app/src/chits/chit_reminder_source.dart';
 import 'package:my_data_app/src/checklist/checklist_reminder_source.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/main_shell.dart';
+import 'package:my_data_app/src/splash/branded_loader.dart';
 
 class AuthenticatedShell extends StatefulWidget {
   final String uid;
@@ -218,9 +219,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     }
 
     if (!_initialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const BrandedLoader(message: 'Loading your data…');
     }
 
     return MultiBlocProvider(
