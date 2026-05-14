@@ -6,7 +6,7 @@ import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/cubit/event_state.dart';
 import 'package:my_data_app/src/events/event_finance_page.dart';
-import 'package:my_data_app/src/profile/profile_page.dart';
+import 'package:my_data_app/src/shell/widgets/app_header.dart';
 
 /// "My Events" tab — mirrors the Home dashboard's layout (blue gradient header
 /// + categorized grid of cards). Currently shows a Finance category with one
@@ -46,111 +46,18 @@ class MyEventsPage extends StatelessWidget {
         final cubit = context.read<EventCubit>();
         final active = cubit.activeEvents;
 
-        final hour = DateTime.now().hour;
-        final greeting = hour < 12
-            ? 'Good Morning'
-            : hour < 17
-                ? 'Good Afternoon'
-                : 'Good Evening';
-
-        final authState = context.watch<AuthCubit>().state;
-        final user = authState.user;
-        final displayName = user?.displayName;
-        final email = user?.email ?? '';
-        final userName = (displayName != null && displayName.isNotEmpty)
-            ? displayName
-            : email;
-        final userInitial =
-            userName.isNotEmpty ? userName[0].toUpperCase() : '?';
-
         return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
           body: SafeArea(
             child: Column(
               children: [
-                // Fixed Header — mirrors the Home dashboard header.
-                Container(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.blue[700]!, Colors.blue[500]!],
+                AppHeader(
+                  actions: [
+                    HeaderIconButton(
+                      icon: Icons.logout_rounded,
+                      tooltip: 'Logout',
+                      onPressed: () => _showLogoutDialog(context),
                     ),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      GestureDetector(
-                        onTap: () {
-                          final authCubit = context.read<AuthCubit>();
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: authCubit,
-                                child: const ProfilePage(),
-                              ),
-                            ),
-                          );
-                        },
-                        child: CircleAvatar(
-                          radius: 22,
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.25),
-                          child: Text(
-                            userInitial,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '$greeting!',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.white.withValues(alpha: 0.8),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            Text(
-                              userName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => _showLogoutDialog(context),
-                        icon: const Icon(
-                          Icons.logout_rounded,
-                          color: Colors.white,
-                          size: 22,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor:
-                              Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
 
                 // Body — categorized sections (same visual as dashboard)
@@ -288,6 +195,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Row(
@@ -306,14 +214,14 @@ class _SectionHeader extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: Colors.grey[700],
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -321,7 +229,7 @@ class _SectionHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[700],
+                color: cs.onSurface,
               ),
             ),
           ),
@@ -411,6 +319,7 @@ class _AddEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -420,14 +329,14 @@ class _AddEventCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.grey[300]!,
+                color: cs.outline,
                 style: BorderStyle.solid,
               ),
             ),
-            child: Icon(Icons.add_rounded, size: 26, color: Colors.grey[600]),
+            child: Icon(Icons.add_rounded, size: 26, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
           Text(
@@ -435,7 +344,7 @@ class _AddEventCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
@@ -451,6 +360,7 @@ class _ManageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -460,11 +370,11 @@ class _ManageCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(Icons.inventory_2_rounded,
-                size: 26, color: Colors.grey[600]),
+                size: 26, color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: 6),
           Text(
@@ -472,7 +382,7 @@ class _ManageCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[600],
+              color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),

@@ -11,6 +11,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
+        final cs = Theme.of(context).colorScheme;
         final cubit = context.read<HomeRecordCubit>();
         final customCategories = state.customCategories;
         final paymentTypes = state.paymentTypes;
@@ -34,7 +35,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -84,7 +85,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       state.showMonthlyCalendar
                           ? 'Showing records by month with navigation'
                           : 'Showing all records in a single scrollable list',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                     value: state.showMonthlyCalendar,
                     onChanged: (val) => cubit.setShowMonthlyCalendar(val),
@@ -99,7 +100,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -133,7 +134,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: cs.onSurface,
                           ),
                         ),
                         const Spacer(),
@@ -155,7 +156,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                           'No custom categories yet',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -224,7 +225,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[700],
+                            color: cs.onSurface,
                           ),
                         ),
                         const Spacer(),
@@ -241,7 +242,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'Tag records with cash / UPI / card etc. Records keep their tag even if the type is later removed here.',
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -253,7 +254,7 @@ class HomeRecordSettingsPage extends StatelessWidget {
                           'No payment types yet',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.grey[500],
+                            color: cs.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -445,6 +446,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewIcon =
         HomeCategory.availableIcons[_selectedIconIndex];
     final previewColor =
@@ -507,7 +509,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   )),
               const SizedBox(height: 8),
               SizedBox(
@@ -530,7 +532,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: isSelected
                               ? Border.all(color: previewColor, width: 2)
@@ -541,7 +543,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                           size: 20,
                           color: isSelected
                               ? previewColor
-                              : Colors.grey[600],
+                              : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -555,7 +557,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   )),
               const SizedBox(height: 8),
               Wrap(
@@ -578,7 +580,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                         border: isSelected
                             ? Border.all(color: Colors.black, width: 3)
                             : Border.all(
-                                color: Colors.grey[300]!, width: 1),
+                                color: cs.outline, width: 1),
                       ),
                       child: isSelected
                           ? const Icon(Icons.check,
@@ -656,6 +658,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final previewIcon = PaymentType.availableIcons[_selectedIconIndex];
     final previewColor = PaymentType.availableColors[_selectedColorIndex];
 
@@ -714,7 +717,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   )),
               const SizedBox(height: 6),
               SizedBox(
@@ -737,7 +740,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                         decoration: BoxDecoration(
                           color: isSelected
                               ? previewColor.withValues(alpha: 0.15)
-                              : Colors.grey[100],
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(8),
                           border: isSelected
                               ? Border.all(color: previewColor, width: 2)
@@ -748,7 +751,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                           size: 20,
                           color: isSelected
                               ? previewColor
-                              : Colors.grey[600],
+                              : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -761,7 +764,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   )),
               const SizedBox(height: 6),
               Wrap(
@@ -784,7 +787,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                         border: isSelected
                             ? Border.all(color: Colors.black, width: 3)
                             : Border.all(
-                                color: Colors.grey[300]!, width: 1),
+                                color: cs.outline, width: 1),
                       ),
                       child: isSelected
                           ? const Icon(Icons.check,

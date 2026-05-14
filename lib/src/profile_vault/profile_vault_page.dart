@@ -15,6 +15,7 @@ class ProfileVaultHomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ProfileVaultCubit, ProfileVaultState>(
       builder: (context, state) {
         final cubit = context.read<ProfileVaultCubit>();
@@ -52,13 +53,13 @@ class ProfileVaultHomePage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade600,
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                 ),
                 ...favorites.map((e) => _EntryCard(entry: e)),
                 const SizedBox(height: 10),
-                Divider(color: Colors.grey.shade200, height: 1),
+                Divider(color: cs.outlineVariant, height: 1),
                 const SizedBox(height: 10),
               ],
               // Section tiles
@@ -193,7 +194,7 @@ class _SectionTile extends StatelessWidget {
                 ),
               const SizedBox(width: 4),
               Icon(Icons.chevron_right_rounded,
-                  color: Colors.grey.shade400, size: 20),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
             ],
           ),
         ),
@@ -250,12 +251,12 @@ class SectionDetailPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(section.icon,
-                          size: 48, color: Colors.grey.shade300),
+                          size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(height: 12),
                       Text(
                         'Add your first ${section.label}',
                         style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 14),
+                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
                       ),
                     ],
                   ),
@@ -333,7 +334,7 @@ class _EntryCard extends StatelessWidget {
                       : Icons.star_border_rounded,
                   color: entry.isFavorite
                       ? Colors.amber
-                      : Colors.grey.shade500,
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   size: 18,
                 ),
               ),
@@ -348,7 +349,7 @@ class _EntryCard extends StatelessWidget {
   Widget _moreMenu(BuildContext context, ProfileVaultCubit cubit) {
     return PopupMenuButton<String>(
       icon: Icon(Icons.more_vert_rounded,
-          size: 18, color: Colors.grey.shade500),
+          size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       itemBuilder: (_) => const [
@@ -414,6 +415,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<ProfileVaultCubit>();
 
     return BlocBuilder<ProfileVaultCubit, ProfileVaultState>(
@@ -501,13 +503,13 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               Text(
                 'Created: ${DateFormat('dd MMM yyyy, hh:mm a').format(entry.createdAt)}',
                 style:
-                    TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 2),
               Text(
                 'Updated: ${DateFormat('dd MMM yyyy, hh:mm a').format(entry.updatedAt)}',
                 style:
-                    TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
             ],
@@ -638,6 +640,7 @@ class _FieldTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final displayValue = isSensitive && !isRevealed
         ? '\u2022' * value.length.clamp(4, 12)
         : value;
@@ -659,7 +662,7 @@ class _FieldTile extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                        fontSize: 11, color: Colors.grey.shade500),
+                        fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 1),
                   Text(displayValue,
@@ -677,7 +680,7 @@ class _FieldTile extends StatelessWidget {
                         ? Icons.visibility_off_rounded
                         : Icons.visibility_rounded,
                     size: 18,
-                    color: Colors.grey.shade500,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -686,7 +689,7 @@ class _FieldTile extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 6),
                 child: Icon(Icons.copy_rounded,
-                    size: 16, color: Colors.grey.shade400),
+                    size: 16, color: cs.onSurfaceVariant),
               ),
             ),
           ],
@@ -975,21 +978,21 @@ class _SearchPageState extends State<_SearchPage> {
               child: Text(
                 'Type to search across all entries',
                 style: TextStyle(
-                    color: Colors.grey.shade500, fontSize: 14),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
               ),
             )
-          : _buildResults(cubit),
+          : _buildResults(context, cubit),
     );
   }
 
-  Widget _buildResults(ProfileVaultCubit cubit) {
+  Widget _buildResults(BuildContext context, ProfileVaultCubit cubit) {
     final results = cubit.search(_query);
     if (results.isEmpty) {
       return Center(
         child: Text(
           'No results found',
           style:
-              TextStyle(color: Colors.grey.shade500, fontSize: 14),
+              TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
         ),
       );
     }

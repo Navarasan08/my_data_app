@@ -164,6 +164,7 @@ class ChitFundListPage extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (sheetContext) {
+        final cs = Theme.of(sheetContext).colorScheme;
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -174,7 +175,7 @@ class ChitFundListPage extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: cs.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -257,21 +258,22 @@ class _ChitListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (chitFunds.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_work_outlined, size: 80, color: Colors.grey[400]),
+            Icon(Icons.group_work_outlined, size: 80, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
               emptyMessage,
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
             Text(
               emptySubMessage,
-              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],
@@ -301,6 +303,7 @@ class _ParticipantChitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     Color statusColor;
     switch (chitFund.status) {
       case ChitStatus.active:
@@ -319,9 +322,9 @@ class _ParticipantChitCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
@@ -353,7 +356,7 @@ class _ParticipantChitCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'By ${chitFund.organizerName}',
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                       ),
                     ],
                     const SizedBox(height: 4),
@@ -373,14 +376,14 @@ class _ParticipantChitCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           '${chitFund.myPaidCount}/${chitFund.durationMonths} paid',
-                          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Monthly: ₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[700]),
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface),
                     ),
                   ],
                 ),
@@ -481,6 +484,7 @@ class ChitFundCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     Color statusColor;
     switch (chitFund.status) {
       case ChitStatus.active:
@@ -499,9 +503,9 @@ class ChitFundCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
         onTap: onTap,
@@ -558,7 +562,7 @@ class ChitFundCard extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey[600],
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -584,13 +588,13 @@ class ChitFundCard extends StatelessWidget {
               // Members progress
               Row(
                 children: [
-                  Icon(Icons.people_outline_rounded, size: 14, color: Colors.grey[400]),
+                  Icon(Icons.people_outline_rounded, size: 14, color: cs.onSurfaceVariant),
                   const SizedBox(width: 6),
                   Text(
                     '${chitFund.members.length}/${chitFund.totalMembers} members',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[500],
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -600,7 +604,7 @@ class ChitFundCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: memberProgress.clamp(0.0, 1.0),
                         minHeight: 4,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: cs.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                       ),
                     ),
@@ -632,6 +636,7 @@ class ParticipantChitDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ChitCubit, ChitState>(
       builder: (context, state) {
         final cubit = context.read<ChitCubit>();
@@ -677,9 +682,9 @@ class ParticipantChitDetailPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cs.surface,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: cs.outlineVariant),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -870,7 +875,7 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   ),
                   Text(
                     'Tap amount to set discount',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -881,7 +886,7 @@ class ParticipantChitDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       'No payments recorded',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     ),
                   ),
                 )
@@ -966,6 +971,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<ChitCubit>();
     final isPaid = payment.isPaid;
     final hasDiscount = payment.auctionDiscount != null && payment.auctionDiscount! > 0;
@@ -977,8 +983,8 @@ class _ParticipantPaymentItem extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey[200]!),
-        color: Colors.white,
+        border: Border.all(color: cs.outlineVariant),
+        color: cs.surface,
       ),
       clipBehavior: Clip.hardEdge,
       child: Row(
@@ -1020,7 +1026,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                             ),
                             Text(
                               'Due ${DateFormat('MMM dd, yy').format(payment.dueDate)}',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -1029,7 +1035,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: hasDiscount ? Colors.teal[50] : Colors.grey[50],
+                          color: hasDiscount ? Colors.teal[50] : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Column(
@@ -1040,7 +1046,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                                 '₹${baseAmount.toStringAsFixed(0)}',
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.grey[400],
+                                  color: cs.onSurfaceVariant,
                                   decoration: TextDecoration.lineThrough,
                                 ),
                               ),
@@ -1050,7 +1056,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: hasDiscount ? Colors.teal[800] : Colors.grey[800],
+                                color: hasDiscount ? Colors.teal[800] : cs.onSurface,
                               ),
                             ),
                           ],
@@ -1072,7 +1078,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                         child: Icon(
                           isPaid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
                           size: 22,
-                          color: isPaid ? Colors.green : Colors.grey[400],
+                          color: isPaid ? Colors.green : cs.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -1083,7 +1089,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
                       decoration: BoxDecoration(
-                        color: payment.isWonByMe ? Colors.amber[50] : Colors.grey[50],
+                        color: payment.isWonByMe ? Colors.amber[50] : cs.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
@@ -1091,7 +1097,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
                           Icon(
                             payment.isWonByMe ? Icons.emoji_events_rounded : Icons.gavel_rounded,
                             size: 14,
-                            color: payment.isWonByMe ? Colors.amber[700] : Colors.grey[600],
+                            color: payment.isWonByMe ? Colors.amber[700] : cs.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           if (payment.isWonByMe)
@@ -1102,17 +1108,17 @@ class _ParticipantPaymentItem extends StatelessWidget {
                           else if (payment.auctionWinner != null && payment.auctionWinner!.isNotEmpty)
                             Text(
                               'Won by ${payment.auctionWinner}',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[700]),
+                              style: TextStyle(fontSize: 11, color: cs.onSurface),
                             )
                           else
                             Text(
                               'Someone else won',
-                              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                             ),
                           const Spacer(),
                           Text(
                             'Bid: ₹${payment.auctionValue?.toStringAsFixed(0) ?? '0'}',
-                            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                           if (payment.brokeragePerMember > 0) ...[
                             const SizedBox(width: 6),
@@ -1174,6 +1180,7 @@ class _ParticipantPaymentItem extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final cs = Theme.of(context).colorScheme;
             final discountAmount = double.tryParse(auctionValueController.text) ?? 0;
             final myDividend = totalMembers > 0 && discountAmount > 0 ? discountAmount / totalMembers : 0.0;
             final brokerage = payment.brokeragePerMember;
@@ -1200,21 +1207,21 @@ class _ParticipantPaymentItem extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: wonByMe ? Colors.amber[50] : Colors.grey[50],
+                                color: wonByMe ? Colors.amber[50] : cs.surfaceContainerLow,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: wonByMe ? Colors.amber[400]! : Colors.grey[300]!,
+                                  color: wonByMe ? Colors.amber[400]! : cs.outline,
                                   width: wonByMe ? 2 : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.emoji_events_rounded, color: wonByMe ? Colors.amber[700] : Colors.grey[400], size: 24),
+                                  Icon(Icons.emoji_events_rounded, color: wonByMe ? Colors.amber[700] : cs.onSurfaceVariant, size: 24),
                                   const SizedBox(height: 4),
                                   Text('Me', style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: wonByMe ? FontWeight.bold : FontWeight.normal,
-                                    color: wonByMe ? Colors.amber[900] : Colors.grey[600],
+                                    color: wonByMe ? Colors.amber[900] : cs.onSurfaceVariant,
                                   )),
                                 ],
                               ),
@@ -1229,21 +1236,21 @@ class _ParticipantPaymentItem extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: !wonByMe ? Colors.blue[50] : Colors.grey[50],
+                                color: !wonByMe ? Colors.blue[50] : cs.surfaceContainerLow,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: !wonByMe ? Colors.blue[400]! : Colors.grey[300]!,
+                                  color: !wonByMe ? Colors.blue[400]! : cs.outline,
                                   width: !wonByMe ? 2 : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.person_rounded, color: !wonByMe ? Colors.blue[700] : Colors.grey[400], size: 24),
+                                  Icon(Icons.person_rounded, color: !wonByMe ? Colors.blue[700] : cs.onSurfaceVariant, size: 24),
                                   const SizedBox(height: 4),
                                   Text('Someone else', style: TextStyle(
                                     fontSize: 13,
                                     fontWeight: !wonByMe ? FontWeight.bold : FontWeight.normal,
-                                    color: !wonByMe ? Colors.blue[900] : Colors.grey[600],
+                                    color: !wonByMe ? Colors.blue[900] : cs.onSurfaceVariant,
                                   )),
                                 ],
                               ),
@@ -1350,16 +1357,19 @@ class _ParticipantPaymentItem extends StatelessWidget {
   }
 
   Widget _calcRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-          Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
+    return Builder(builder: (context) {
+      final cs = Theme.of(context).colorScheme;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label, style: TextStyle(fontSize: 12, color: cs.onSurface)),
+            Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -1376,6 +1386,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
@@ -1396,7 +1407,7 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             title,
-            style: TextStyle(fontSize: 10, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 10, color: cs.onSurface),
             textAlign: TextAlign.center,
           ),
         ],
@@ -1958,6 +1969,7 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final completedMonths = chitFund.auctions.length;
     final remainingMonths = chitFund.durationMonths - completedMonths;
     final progress = completedMonths / chitFund.durationMonths;
@@ -2006,7 +2018,7 @@ class _OverviewTab extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     chitFund.description!,
-                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    style: TextStyle(fontSize: 14, color: cs.onSurface),
                   ),
                 ],
               ],
@@ -2050,7 +2062,7 @@ class _OverviewTab extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 20,
-                    backgroundColor: Colors.grey[200],
+                    backgroundColor: cs.surfaceContainerHighest,
                     valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
                   ),
                 ),
@@ -2086,16 +2098,17 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20, color: Colors.grey[600]),
+          Icon(icon, size: 20, color: cs.onSurfaceVariant),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
             ),
           ),
           Text(
@@ -2121,6 +2134,7 @@ class _ProgressCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -2143,7 +2157,7 @@ class _ProgressCard extends StatelessWidget {
             title,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[700],
+              color: cs.onSurface,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -2166,11 +2180,12 @@ class _MembersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.white,
+          color: cs.surface,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -2209,11 +2224,11 @@ class _MembersTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.people_outline, size: 64, color: cs.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text(
                         'No members added yet',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -2445,11 +2460,12 @@ class _AuctionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(16),
-          color: Colors.white,
+          color: cs.surface,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -2488,11 +2504,11 @@ class _AuctionsTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.gavel, size: 64, color: Colors.grey[400]),
+                      Icon(Icons.gavel, size: 64, color: cs.onSurfaceVariant),
                       const SizedBox(height: 16),
                       Text(
                         'No auctions recorded yet',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -2535,6 +2551,7 @@ class AuctionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -2566,7 +2583,7 @@ class AuctionCard extends StatelessWidget {
                       ),
                       Text(
                         DateFormat('MMM dd, yyyy').format(auction.auctionDate),
-                        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -2606,7 +2623,7 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Bid Amount:',
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(fontSize: 13, color: cs.onSurface)),
                       Text(
                         '₹${auction.bidAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -2620,7 +2637,7 @@ class AuctionCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('Discount:',
-                          style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                          style: TextStyle(fontSize: 13, color: cs.onSurface)),
                       Text(
                         '₹${auction.discountAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -2659,7 +2676,7 @@ class AuctionCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 auction.notes!,
-                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
               ),
             ],
           ],
@@ -2756,6 +2773,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final amountReceived = _calculateAmountReceived();
     final discount = _calculateDiscount();
 
@@ -2785,7 +2803,7 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     const SizedBox(height: 8),
                     Text(
                       'Total Chit Amount: ₹${widget.chitFund.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     ),
                   ],
                 ),

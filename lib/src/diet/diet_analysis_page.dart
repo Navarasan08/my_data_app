@@ -18,6 +18,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<DietCubit, DietState>(
       builder: (context, state) {
         final cubit = context.read<DietCubit>();
@@ -51,32 +52,32 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                   _summaryCards(state, monthlyEntriesCount, totalAll),
                   const SizedBox(height: 20),
 
-                  _sectionTitle('Top items',
+                  _sectionTitle(context, 'Top items',
                       subtitle: 'Last 12 months'),
                   const SizedBox(height: 10),
                   if (sorted.isEmpty)
-                    _emptyBox('No entries yet')
+                    _emptyBox(context, 'No entries yet')
                   else
-                    _topItemsList(sorted, totalAll, cubit),
+                    _topItemsList(context, sorted, totalAll, cubit),
                   const SizedBox(height: 24),
 
-                  _sectionTitle('Monthly trend'),
+                  _sectionTitle(context, 'Monthly trend'),
                   const SizedBox(height: 10),
                   if (state.items.isEmpty)
-                    _emptyBox('Add some items first')
+                    _emptyBox(context, 'Add some items first')
                   else ...[
                     _itemPicker(state.items),
                     const SizedBox(height: 8),
                     if (selectedItem != null)
-                      _trendChart(selectedItem, cubit)
+                      _trendChart(context, selectedItem, cubit)
                     else
-                      _emptyBox('Pick an item to see its trend'),
+                      _emptyBox(context, 'Pick an item to see its trend'),
                   ],
 
                   const SizedBox(height: 24),
-                  _sectionTitle('This month'),
+                  _sectionTitle(context, 'This month'),
                   const SizedBox(height: 10),
-                  _monthBreakdown(state, cubit),
+                  _monthBreakdown(context, state, cubit),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -126,10 +127,12 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
   // ── Top items leaderboard ───────────────────────────────────────────────
 
   Widget _topItemsList(
+    BuildContext context,
     List<MapEntry<String, double>> sorted,
     double total,
     DietCubit cubit,
   ) {
+    final cs = Theme.of(context).colorScheme;
     final top = sorted.take(8).toList();
     return Column(
       children: top.map((e) {
@@ -168,7 +171,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                         child: LinearProgressIndicator(
                           value: t,
                           minHeight: 6,
-                          backgroundColor: Colors.grey[200],
+                          backgroundColor: cs.surfaceContainerHighest,
                           valueColor:
                               AlwaysStoppedAnimation<Color>(item.color),
                         ),
@@ -189,7 +192,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                   Text(
                     '${pct.toStringAsFixed(1)}%',
                     style:
-                        TextStyle(fontSize: 11, color: Colors.grey[600]),
+                        TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -226,11 +229,12 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
     );
   }
 
-  Widget _trendChart(FoodItem item, DietCubit cubit) {
+  Widget _trendChart(BuildContext context, FoodItem item, DietCubit cubit) {
+    final cs = Theme.of(context).colorScheme;
     final series = cubit.monthlySeries(item.id);
     final entries = series.entries.toList();
     final hasAny = entries.any((e) => e.value > 0);
-    if (!hasAny) return _emptyBox('No entries in the last 12 months');
+    if (!hasAny) return _emptyBox(context, 'No entries in the last 12 months');
 
     final maxY = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final yMax = maxY == 0 ? 1.0 : maxY * 1.2;
@@ -265,7 +269,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                 reservedSize: 36,
                 getTitlesWidget: (v, _) => Text(
                   _fmtQty(v),
-                  style: const TextStyle(fontSize: 10, color: Colors.grey),
+                  style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
                 ),
               ),
             ),
@@ -281,8 +285,8 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       DateFormat('MMM').format(entries[i].key),
-                      style: const TextStyle(
-                          fontSize: 10, color: Colors.grey),
+                      style: TextStyle(
+                          fontSize: 10, color: cs.onSurfaceVariant),
                     ),
                   );
                 },
@@ -294,7 +298,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
             drawVerticalLine: false,
             horizontalInterval: yMax / 4,
             getDrawingHorizontalLine: (_) =>
-                FlLine(color: Colors.grey[300]!, strokeWidth: 1),
+                FlLine(color: cs.outlineVariant, strokeWidth: 1),
           ),
           borderData: FlBorderData(show: false),
         ),
@@ -306,17 +310,18 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
 
   // ── Selected-month breakdown ────────────────────────────────────────────
 
-  Widget _monthBreakdown(DietState state, DietCubit cubit) {
+  Widget _monthBreakdown(BuildContext context, DietState state, DietCubit cubit) {
+    final cs = Theme.of(context).colorScheme;
     final consumed = cubit.consumedInMonth(
         state.selectedMonth.year, state.selectedMonth.month);
-    if (state.items.isEmpty) return _emptyBox('No items yet');
+    if (state.items.isEmpty) return _emptyBox(context, 'No items yet');
     final monthLabel =
         DateFormat('MMMM yyyy').format(state.selectedMonth);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -326,14 +331,14 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
             child: Row(
               children: [
                 Icon(Icons.calendar_today_rounded,
-                    size: 14, color: Colors.grey[700]),
+                    size: 14, color: cs.onSurface),
                 const SizedBox(width: 6),
                 Text(
                   monthLabel,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: Colors.grey[700],
+                    color: cs.onSurface,
                   ),
                 ),
               ],
@@ -372,7 +377,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                               child: LinearProgressIndicator(
                                 value: t,
                                 minHeight: 5,
-                                backgroundColor: Colors.grey[300],
+                                backgroundColor: cs.outlineVariant,
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                     exceeded ? Colors.red : item.color),
                               ),
@@ -389,7 +394,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: exceeded ? Colors.red : Colors.grey[800],
+                      color: exceeded ? Colors.red : cs.onSurface,
                     ),
                   ),
                 ],
@@ -403,7 +408,8 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
 
   // ── Misc helpers ────────────────────────────────────────────────────────
 
-  Widget _sectionTitle(String title, {String? subtitle}) {
+  Widget _sectionTitle(BuildContext context, String title, {String? subtitle}) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -411,7 +417,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: cs.onSurface,
             )),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
@@ -421,7 +427,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
               '· $subtitle',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[500],
+                color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -431,17 +437,18 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
     );
   }
 
-  Widget _emptyBox(String message) {
+  Widget _emptyBox(BuildContext context, String message) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Center(
         child: Text(
           message,
-          style: TextStyle(color: Colors.grey[500], fontSize: 13),
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
         ),
       ),
     );

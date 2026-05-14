@@ -81,6 +81,8 @@ class AuthCubit extends Cubit<AuthState> {
       await _saveCurrentAccount(email, password);
     } on FirebaseAuthException catch (e) {
       emit(state.copyWith(errorMessage: _mapErrorCode(e.code)));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Sign in failed: $e'));
     }
   }
 
@@ -92,6 +94,8 @@ class AuthCubit extends Cubit<AuthState> {
       await _saveCurrentAccount(email, password);
     } on FirebaseAuthException catch (e) {
       emit(state.copyWith(errorMessage: _mapErrorCode(e.code)));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Sign up failed: $e'));
     }
   }
 
@@ -105,6 +109,8 @@ class AuthCubit extends Cubit<AuthState> {
       await _saveCurrentAccount(account.email, account.password);
     } on FirebaseAuthException catch (e) {
       emit(state.copyWith(errorMessage: _mapErrorCode(e.code)));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Account switch failed: $e'));
     }
   }
 

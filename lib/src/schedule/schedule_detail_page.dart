@@ -17,6 +17,7 @@ class ScheduleDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ScheduleCubit, ScheduleState>(
       builder: (context, state) {
         final cubit = context.read<ScheduleCubit>();
@@ -102,7 +103,7 @@ class ScheduleDetailPage extends StatelessWidget {
                         const Spacer(),
                         if (entry.isRecurring)
                           Icon(Icons.repeat_rounded,
-                              size: 14, color: Colors.grey[500]),
+                              size: 14, color: cs.onSurfaceVariant),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -119,7 +120,7 @@ class ScheduleDetailPage extends StatelessWidget {
                       Text(
                         entry.description!,
                         style:
-                            TextStyle(fontSize: 13, color: Colors.grey[700]),
+                            TextStyle(fontSize: 13, color: cs.onSurface),
                       ),
                     ],
                     const SizedBox(height: 10),
@@ -332,19 +333,20 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 14, color: Colors.grey[600]),
+        Icon(icon, size: 14, color: cs.onSurfaceVariant),
         const SizedBox(width: 6),
         Text('$label: ',
-            style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
         Expanded(
           child: Text(
             value,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
+              color: cs.onSurface,
             ),
           ),
         ),
@@ -414,6 +416,7 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6, top: 2),
       child: Row(
@@ -425,7 +428,7 @@ class _SectionTitle extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Colors.grey[800],
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(width: 6),
@@ -433,14 +436,14 @@ class _SectionTitle extends StatelessWidget {
             padding:
                 const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
+              color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text('$count',
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[700],
+                  color: cs.onSurface,
                 )),
           ),
         ],
@@ -463,13 +466,14 @@ class _OccurrenceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: Row(
         children: [
@@ -510,13 +514,14 @@ class _EmptyHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 12,
-          color: Colors.grey[500],
+          color: cs.onSurfaceVariant,
           fontStyle: FontStyle.italic,
         ),
       ),

@@ -100,6 +100,7 @@ class _EventList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (events.isEmpty) {
       return Center(
         child: Column(
@@ -110,20 +111,20 @@ class _EventList extends StatelessWidget {
                   ? Icons.event_available_rounded
                   : Icons.history_rounded,
               size: 56,
-              color: Colors.grey[300],
+              color: cs.outline,
             ),
             const SizedBox(height: 12),
             Text(
               mode == _EventListMode.upcoming
                   ? 'No upcoming events'
                   : 'No past events',
-              style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 15, color: cs.onSurfaceVariant),
             ),
             if (mode == _EventListMode.upcoming) ...[
               const SizedBox(height: 4),
               Text(
                 'Tap + to add a birthday, anniversary or one-time event',
-                style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -152,6 +153,7 @@ class _EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final color = event.eventType.color;
     final isUpcoming = mode == _EventListMode.upcoming;
     final daysCount =
@@ -183,7 +185,7 @@ class _EventCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: color.withValues(alpha: 0.25)),
         boxShadow: [
@@ -312,7 +314,7 @@ class _EventCard extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.event_rounded,
-                            size: 13, color: Colors.grey[600]),
+                            size: 13, color: cs.onSurfaceVariant),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -322,7 +324,7 @@ class _EventCard extends StatelessWidget {
                                   : 'd MMM yyyy',
                             ).format(occurDate),
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[700]),
+                                fontSize: 12, color: cs.onSurface),
                           ),
                         ),
                         if (event.isYearly) ...[
@@ -330,7 +332,7 @@ class _EventCard extends StatelessWidget {
                           Text(
                             DateFormat('yyyy').format(occurDate),
                             style: TextStyle(
-                                fontSize: 11, color: Colors.grey[500]),
+                                fontSize: 11, color: cs.onSurfaceVariant),
                           ),
                         ],
                         if (yearsLabel != null) ...[
@@ -352,7 +354,7 @@ class _EventCard extends StatelessWidget {
                           event.notes!,
                           style: TextStyle(
                             fontSize: 11,
-                            color: Colors.grey[600],
+                            color: cs.onSurfaceVariant,
                             fontStyle: FontStyle.italic,
                           ),
                           maxLines: 2,
@@ -381,7 +383,7 @@ class _EventCard extends StatelessWidget {
                       ),
                     )
                   : Icon(Icons.chevron_right_rounded,
-                      size: 20, color: Colors.grey[400]),
+                      size: 20, color: cs.onSurfaceVariant),
             ],
           ),
         ),
@@ -507,6 +509,7 @@ class _AddEventPageState extends State<AddEventPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<DaysCounterCubit>();
     final types = cubit.state.eventTypes;
     // Make sure the saved type is in the dropdown even if it was deleted
@@ -574,7 +577,7 @@ class _AddEventPageState extends State<AddEventPage> {
                       const EdgeInsets.symmetric(horizontal: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: Colors.grey[600]!),
+                    side: BorderSide(color: cs.outline),
                   ),
                   leading: const Icon(Icons.event_rounded),
                   title: const Text('Date'),
@@ -590,7 +593,7 @@ class _AddEventPageState extends State<AddEventPage> {
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey[700]),
+                      color: cs.onSurface),
                 ),
                 const SizedBox(height: 6),
                 SegmentedButton<DaysCounterRecurrence>(

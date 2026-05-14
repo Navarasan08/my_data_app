@@ -9,6 +9,7 @@ class DashboardSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardSettingsCubit, DashboardSettingsState>(
       builder: (context, state) {
+        final cs = Theme.of(context).colorScheme;
         final cubit = context.read<DashboardSettingsCubit>();
         final features = state.features;
 
@@ -30,7 +31,7 @@ class DashboardSettingsPage extends StatelessWidget {
                       'Drag to reorder, toggle to show/hide',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.grey[500],
+                        color: cs.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -80,13 +81,14 @@ class _FeatureSettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
-        color: feature.visible ? Colors.white : Colors.grey[50],
+        color: feature.visible ? cs.surface : cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: feature.visible ? Colors.grey[200]! : Colors.grey[300]!,
+          color: feature.visible ? cs.outlineVariant : cs.outline,
         ),
       ),
       child: ListTile(
@@ -98,7 +100,7 @@ class _FeatureSettingTile extends StatelessWidget {
             gradient: feature.visible
                 ? LinearGradient(colors: feature.gradient)
                 : null,
-            color: feature.visible ? null : Colors.grey[300],
+            color: feature.visible ? null : cs.outline,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(feature.icon, size: 20, color: Colors.white),
@@ -108,14 +110,14 @@ class _FeatureSettingTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: feature.visible ? Colors.black87 : Colors.grey[500],
+            color: feature.visible ? cs.onSurface : cs.onSurfaceVariant,
           ),
         ),
         subtitle: Text(
           feature.visible ? 'Visible' : 'Hidden',
           style: TextStyle(
             fontSize: 12,
-            color: feature.visible ? Colors.green[600] : Colors.grey[400],
+            color: feature.visible ? Colors.green[600] : cs.onSurfaceVariant,
           ),
         ),
         trailing: Row(
@@ -127,7 +129,7 @@ class _FeatureSettingTile extends StatelessWidget {
               activeColor: Colors.green,
             ),
             Icon(Icons.drag_handle_rounded,
-                color: Colors.grey[400], size: 22),
+                color: cs.onSurfaceVariant, size: 22),
           ],
         ),
       ),

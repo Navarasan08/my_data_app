@@ -198,7 +198,9 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
     final controller = TextEditingController();
     return showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return AlertDialog(
         title: const Text('Send by email'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -206,7 +208,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
           children: [
             Text(
               'Excel report · $_rangeLabel\n${_filtered.length} record${_filtered.length == 1 ? '' : 's'}',
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -242,7 +244,8 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
             label: const Text('Continue'),
           ),
         ],
-      ),
+      );
+      },
     );
   }
 
@@ -305,7 +308,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                     child: Text(
                       '… and ${outcome.errors.length - 5} more',
                       style:
-                          TextStyle(fontSize: 11, color: Colors.grey[600]),
+                          TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
                     ),
                   ),
               ],
@@ -344,6 +347,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final count = _filtered.length;
     return SafeArea(
       child: Padding(
@@ -360,7 +364,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: cs.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -385,14 +389,14 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 12, vertical: 10),
                   decoration: BoxDecoration(
-                    color: Colors.grey[100],
+                    color: cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.grey[300]!),
+                    border: Border.all(color: cs.outline),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.date_range_rounded,
-                          size: 18, color: Colors.grey[700]),
+                          size: 18, color: cs.onSurface),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -406,13 +410,13 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                             Text(
                               '$count record${count == 1 ? '' : 's'} in range',
                               style: TextStyle(
-                                  fontSize: 11, color: Colors.grey[600]),
+                                  fontSize: 11, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
                       ),
                       Icon(Icons.edit_calendar_rounded,
-                          size: 18, color: Colors.grey[600]),
+                          size: 18, color: cs.onSurfaceVariant),
                     ],
                   ),
                 ),
@@ -482,6 +486,7 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -509,12 +514,12 @@ class _ActionTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right_rounded, color: Colors.grey[400]),
+            Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
           ],
         ),
       ),

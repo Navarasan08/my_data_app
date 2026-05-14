@@ -14,6 +14,7 @@ class NotificationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<NotificationCubit, NotificationState>(
       builder: (context, state) {
         final cubit = context.read<NotificationCubit>();
@@ -21,7 +22,6 @@ class NotificationsPage extends StatelessWidget {
         final unread = cubit.unreadCount;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFF0F4F8),
           appBar: AppBar(
             title: const Text('Notifications'),
             centerTitle: true,
@@ -69,18 +69,18 @@ class NotificationsPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.notifications_off_rounded,
-                          size: 56, color: Colors.grey[300]),
+                          size: 56, color: cs.outlineVariant),
                       const SizedBox(height: 12),
                       Text(
                         'You\'re all caught up',
                         style: TextStyle(
-                            fontSize: 14, color: Colors.grey[500]),
+                            fontSize: 14, color: cs.onSurfaceVariant),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'New reminders will appear here',
                         style: TextStyle(
-                            fontSize: 12, color: Colors.grey[400]),
+                            fontSize: 12, color: cs.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -125,6 +125,7 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final n = notification;
     final color = n.severity.color;
 
@@ -145,10 +146,10 @@ class _NotificationTile extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          color: n.isRead ? Colors.grey[50] : Colors.white,
+          color: n.isRead ? cs.surfaceContainerLow : cs.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: n.isRead ? Colors.grey[200]! : color.withValues(alpha: 0.4),
+            color: n.isRead ? cs.outlineVariant : color.withValues(alpha: 0.4),
           ),
         ),
         child: InkWell(
@@ -183,8 +184,8 @@ class _NotificationTile extends StatelessWidget {
                                     ? FontWeight.w500
                                     : FontWeight.w700,
                                 color: n.isRead
-                                    ? Colors.grey[700]
-                                    : Colors.black87,
+                                    ? cs.onSurfaceVariant
+                                    : cs.onSurface,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -208,7 +209,7 @@ class _NotificationTile extends StatelessWidget {
                           n.body,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey[600],
+                            color: cs.onSurfaceVariant,
                             height: 1.3,
                           ),
                           maxLines: 3,
@@ -239,7 +240,7 @@ class _NotificationTile extends StatelessWidget {
                           Text(
                             _ago(n.createdAt),
                             style: TextStyle(
-                                fontSize: 10, color: Colors.grey[500]),
+                                fontSize: 10, color: cs.onSurfaceVariant),
                           ),
                         ],
                       ),

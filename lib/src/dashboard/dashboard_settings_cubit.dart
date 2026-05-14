@@ -37,15 +37,25 @@ class FeatureItem {
 
 class DashboardSettingsState {
   final List<FeatureItem> features;
+  final bool isGridView;
 
-  const DashboardSettingsState({required this.features});
+  const DashboardSettingsState({
+    required this.features,
+    this.isGridView = true,
+  });
 
   List<FeatureItem> get visibleFeatures =>
       features.where((f) => f.visible).toList()
         ..sort((a, b) => a.order.compareTo(b.order));
 
-  DashboardSettingsState copyWith({List<FeatureItem>? features}) =>
-      DashboardSettingsState(features: features ?? this.features);
+  DashboardSettingsState copyWith({
+    List<FeatureItem>? features,
+    bool? isGridView,
+  }) =>
+      DashboardSettingsState(
+        features: features ?? this.features,
+        isGridView: isGridView ?? this.isGridView,
+      );
 }
 
 class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
@@ -195,24 +205,32 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
     if (!snap.exists) return;
 
     final data = snap.data();
-    if (data == null || data['features'] == null) return;
+    if (data == null) return;
 
-    final saved = (data['features'] as List<dynamic>)
-        .cast<Map<String, dynamic>>();
     final features = List<FeatureItem>.from(state.features);
-
-    for (final s in saved) {
-      final idx = features.indexWhere((f) => f.id == s['id']);
-      if (idx != -1) {
-        features[idx] = features[idx].copyWith(
-          visible: s['visible'] as bool? ?? true,
-          order: s['order'] as int? ?? idx,
-        );
+    if (data['features'] != null) {
+      final saved =
+          (data['features'] as List<dynamic>).cast<Map<String, dynamic>>();
+      for (final s in saved) {
+        final idx = features.indexWhere((f) => f.id == s['id']);
+        if (idx != -1) {
+          features[idx] = features[idx].copyWith(
+            visible: s['visible'] as bool? ?? true,
+            order: s['order'] as int? ?? idx,
+          );
+        }
       }
+      features.sort((a, b) => a.order.compareTo(b.order));
     }
 
-    features.sort((a, b) => a.order.compareTo(b.order));
-    emit(state.copyWith(features: features));
+    final isGridView = data['isGridView'] as bool? ?? state.isGridView;
+    emit(state.copyWith(features: features, isGridView: isGridView));
+  }
+
+  void toggleViewMode() {
+    final next = !state.isGridView;
+    emit(state.copyWith(isGridView: next));
+    _settingsDoc.set({'isGridView': next}, SetOptions(merge: true));
   }
 
   void toggleVisibility(String id) {
@@ -239,6 +257,6 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
   void _save(List<FeatureItem> features) {
     _settingsDoc.set({
       'features': features.map((f) => f.toJson()).toList(),
-    });
+    }, SetOptions(merge: true));
   }
 }

@@ -12,6 +12,7 @@ class ChecklistListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ChecklistCubit, ChecklistState>(
       builder: (context, state) {
         final cubit = context.read<ChecklistCubit>();
@@ -31,7 +32,7 @@ class ChecklistListPage extends StatelessWidget {
               // Summary bar
               Container(
                 padding: const EdgeInsets.all(16),
-                color: Colors.white,
+                color: cs.surface,
                 child: Row(
                   children: [
                     Expanded(
@@ -72,18 +73,18 @@ class ChecklistListPage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.checklist_rounded,
-                                size: 64, color: Colors.grey[300]),
+                                size: 64, color: cs.outline),
                             const SizedBox(height: 16),
                             Text(
                               'No checklists yet',
                               style: TextStyle(
-                                  fontSize: 18, color: Colors.grey[500]),
+                                  fontSize: 18, color: cs.onSurfaceVariant),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Tap + to create your first checklist',
                               style: TextStyle(
-                                  fontSize: 14, color: Colors.grey[400]),
+                                  fontSize: 14, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -252,6 +253,7 @@ class _ChecklistGroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final statusColor = _statusColor();
 
     return Container(
@@ -288,7 +290,7 @@ class _ChecklistGroupCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       _progressText(),
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                     if (group.totalItems > 0) ...[
                       const SizedBox(height: 4),
@@ -297,7 +299,7 @@ class _ChecklistGroupCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: group.progress,
                           minHeight: 3,
-                          backgroundColor: Colors.grey[200],
+                          backgroundColor: cs.surfaceContainerHighest,
                           valueColor: AlwaysStoppedAnimation<Color>(statusColor),
                         ),
                       ),
@@ -351,6 +353,7 @@ class ChecklistDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ChecklistCubit, ChecklistState>(
       builder: (context, state) {
         final cubit = context.read<ChecklistCubit>();
@@ -412,7 +415,7 @@ class ChecklistDetailPage extends StatelessWidget {
                             Text(
                               'Target: ${DateFormat('MMM d, yyyy').format(group.targetDate)}',
                               style: TextStyle(
-                                  fontSize: 13, color: Colors.grey[600]),
+                                  fontSize: 13, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -442,7 +445,7 @@ class ChecklistDetailPage extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: group.progress,
                         minHeight: 8,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: cs.surfaceContainerHighest,
                         valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
                     ),
@@ -455,7 +458,7 @@ class ChecklistDetailPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
+                            color: cs.onSurface,
                           ),
                         ),
                       ],
@@ -473,7 +476,7 @@ class ChecklistDetailPage extends StatelessWidget {
                     child: Text(
                       group.description!,
                       style:
-                          TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -486,18 +489,18 @@ class ChecklistDetailPage extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.add_task_rounded,
-                                size: 48, color: Colors.grey[300]),
+                                size: 48, color: cs.outline),
                             const SizedBox(height: 12),
                             Text(
                               'No items yet',
                               style: TextStyle(
-                                  fontSize: 16, color: Colors.grey[500]),
+                                  fontSize: 16, color: cs.onSurfaceVariant),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Tap + to add items',
                               style: TextStyle(
-                                  fontSize: 13, color: Colors.grey[400]),
+                                  fontSize: 13, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
@@ -516,7 +519,7 @@ class ChecklistDetailPage extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey[500],
+                                  color: cs.onSurfaceVariant,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -540,7 +543,7 @@ class ChecklistDetailPage extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey[500],
+                                  color: cs.onSurfaceVariant,
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -648,11 +651,12 @@ class _ChecklistItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       elevation: item.isCompleted ? 0 : 1,
-      color: item.isCompleted ? Colors.grey[50] : Colors.white,
+      color: item.isCompleted ? cs.surfaceContainerLow : cs.surface,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         leading: Checkbox(
@@ -667,18 +671,18 @@ class _ChecklistItemTile extends StatelessWidget {
             fontSize: 15,
             decoration:
                 item.isCompleted ? TextDecoration.lineThrough : null,
-            color: item.isCompleted ? Colors.grey[400] : Colors.grey[800],
+            color: item.isCompleted ? cs.onSurfaceVariant : cs.onSurface,
           ),
         ),
         subtitle: item.isCompleted && item.completedDate != null
             ? Text(
                 'Done ${DateFormat('MMM d, yyyy').format(item.completedDate!)}',
-                style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               )
             : null,
         trailing: IconButton(
           icon: Icon(Icons.close_rounded,
-              size: 18, color: Colors.grey[400]),
+              size: 18, color: cs.onSurfaceVariant),
           onPressed: onDelete,
         ),
       ),
@@ -740,6 +744,7 @@ class _AddChecklistGroupPageState extends State<AddChecklistGroupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Checklist' : 'New Checklist'),
@@ -774,7 +779,7 @@ class _AddChecklistGroupPageState extends State<AddChecklistGroupPage> {
             ListTile(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: Colors.grey[400]!),
+                side: BorderSide(color: cs.outline),
               ),
               leading: const Icon(Icons.calendar_today_rounded),
               title: const Text('Target Date'),

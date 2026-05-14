@@ -14,24 +14,24 @@ class GoalListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GoalCubit, GoalState>(
-      builder: (context, state) {
-        final cubit = context.read<GoalCubit>();
-        return DefaultTabController(
-          length: 2,
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Goal Tracker'),
-              centerTitle: true,
-              elevation: 0,
-              bottom: const TabBar(
-                tabs: [
-                  Tab(text: 'Active'),
-                  Tab(text: 'Archived'),
-                ],
-              ),
-            ),
-            body: TabBarView(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Goal Tracker'),
+          centerTitle: true,
+          elevation: 0,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Active'),
+              Tab(text: 'Archived'),
+            ],
+          ),
+        ),
+        body: BlocBuilder<GoalCubit, GoalState>(
+          builder: (context, state) {
+            final cubit = context.read<GoalCubit>();
+            return TabBarView(
               children: [
                 _GoalTab(
                   goals: cubit.activeGoals,
@@ -44,25 +44,26 @@ class GoalListPage extends StatelessWidget {
                   emptyLabel: 'No archived goals',
                 ),
               ],
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () async {
-                final goal = await Navigator.push<Goal>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AddGoalPage(),
-                  ),
-                );
-                if (goal != null) {
-                  cubit.addGoal(goal);
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Goal'),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final cubit = context.read<GoalCubit>();
+            final goal = await Navigator.push<Goal>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AddGoalPage(),
+              ),
+            );
+            if (goal != null) {
+              cubit.addGoal(goal);
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Add Goal'),
+        ),
+      ),
     );
   }
 }
@@ -81,16 +82,17 @@ class _GoalTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     if (goals.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(emptyIcon, size: 64, color: Colors.grey[400]),
+            Icon(emptyIcon, size: 64, color: cs.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
               emptyLabel,
-              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
             ),
           ],
         ),
@@ -126,6 +128,7 @@ class _GoalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final cubit = context.read<GoalCubit>();
     final catColor = goal.category.color;
     final rate = (goal.successRate * 100).round();
@@ -147,9 +150,9 @@ class _GoalCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cs.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[300]!),
+          border: Border.all(color: cs.outline),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,12 +186,12 @@ class _GoalCard extends StatelessWidget {
                       Row(
                         children: [
                           Icon(goal.frequency.icon,
-                              size: 12, color: Colors.grey[500]),
+                              size: 12, color: cs.onSurfaceVariant),
                           const SizedBox(width: 4),
                           Text(
                             goal.frequency.label,
                             style: TextStyle(
-                                fontSize: 12, color: Colors.grey[500]),
+                                fontSize: 12, color: cs.onSurfaceVariant),
                           ),
                           if (goal.currentStreak > 0) ...[
                             const SizedBox(width: 8),
@@ -216,7 +219,7 @@ class _GoalCard extends StatelessWidget {
                       CircularProgressIndicator(
                         value: goal.successRate,
                         strokeWidth: 4,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: cs.surfaceContainerHighest,
                         valueColor:
                             AlwaysStoppedAnimation<Color>(Colors.green[600]!),
                       ),
@@ -379,6 +382,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<GoalCubit, GoalState>(
       builder: (context, state) {
         final cubit = context.read<GoalCubit>();
@@ -520,7 +524,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                           child: Center(
                             child: Text(d,
                                 style: TextStyle(
-                                    fontSize: 11, color: Colors.grey[500])),
+                                    fontSize: 11, color: cs.onSurfaceVariant)),
                           ),
                         ))
                     .toList(),
@@ -595,6 +599,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
   }
 
   Widget _buildCalendarGrid(Goal goal, GoalCubit cubit) {
+    final cs = Theme.of(context).colorScheme;
     final firstDay =
         DateTime(_viewMonth.year, _viewMonth.month, 1);
     final daysInMonth =
@@ -662,8 +667,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                     : isToday
                         ? Colors.blue[800]
                         : isDue
-                            ? Colors.grey[800]
-                            : Colors.grey[400],
+                            ? cs.onSurface
+                            : cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -709,12 +714,13 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -733,7 +739,7 @@ class _StatTile extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey[600],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
                   ],
@@ -743,7 +749,7 @@ class _StatTile extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(label,
-                style: TextStyle(fontSize: 11, color: Colors.grey[600])),
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
           ],
         ),
       ),
