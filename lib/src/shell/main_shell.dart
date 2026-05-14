@@ -6,6 +6,7 @@ import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
 import 'package:my_data_app/src/notifications/notification_service.dart';
 import 'package:my_data_app/src/notifications/notifications_page.dart';
+import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
@@ -15,7 +16,7 @@ import 'package:my_data_app/src/chits/chit_screen.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/checklist/checklist_page.dart';
 
-/// Top-level shell with bottom navigation: Home / My Events / Notifications.
+/// Top-level shell with bottom navigation: Home / My Events / Alerts / Profile.
 class MainShell extends StatefulWidget {
   /// The shared local notifications service. Tap callbacks are wired here.
   final LocalNotificationService notificationService;
@@ -96,6 +97,7 @@ class _MainShellState extends State<MainShell> {
       NotificationsPage(
         onOpen: (n) => _routeTo(n.sourceModule, n.sourceItemId, n.sourceDate),
       ),
+      const ProfilePage(),
     ];
 
     // Intercept the system / browser back button.
@@ -146,6 +148,11 @@ class _MainShellState extends State<MainShell> {
                   child: const Icon(Icons.notifications_rounded),
                 ),
                 label: 'Alerts',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.person_outline_rounded),
+                selectedIcon: Icon(Icons.person_rounded),
+                label: 'Profile',
               ),
             ],
           );

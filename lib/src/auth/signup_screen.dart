@@ -30,11 +30,14 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    await context.read<AuthCubit>().signUp(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-    if (mounted) setState(() => _isLoading = false);
+    try {
+      await context.read<AuthCubit>().signUp(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

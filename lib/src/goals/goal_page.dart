@@ -14,24 +14,24 @@ class GoalListPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GoalCubit, GoalState>(
-      builder: (context, state) {
-        final cubit = context.read<GoalCubit>();
-        return DefaultTabController(
-          length: 2,
-          child: Scaffold(
-            appBar: AppBar(
-              title: const Text('Goal Tracker'),
-              centerTitle: true,
-              elevation: 0,
-              bottom: const TabBar(
-                tabs: [
-                  Tab(text: 'Active'),
-                  Tab(text: 'Archived'),
-                ],
-              ),
-            ),
-            body: TabBarView(
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Goal Tracker'),
+          centerTitle: true,
+          elevation: 0,
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Active'),
+              Tab(text: 'Archived'),
+            ],
+          ),
+        ),
+        body: BlocBuilder<GoalCubit, GoalState>(
+          builder: (context, state) {
+            final cubit = context.read<GoalCubit>();
+            return TabBarView(
               children: [
                 _GoalTab(
                   goals: cubit.activeGoals,
@@ -44,25 +44,26 @@ class GoalListPage extends StatelessWidget {
                   emptyLabel: 'No archived goals',
                 ),
               ],
-            ),
-            floatingActionButton: FloatingActionButton.extended(
-              onPressed: () async {
-                final goal = await Navigator.push<Goal>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AddGoalPage(),
-                  ),
-                );
-                if (goal != null) {
-                  cubit.addGoal(goal);
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Goal'),
-            ),
-          ),
-        );
-      },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            final cubit = context.read<GoalCubit>();
+            final goal = await Navigator.push<Goal>(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AddGoalPage(),
+              ),
+            );
+            if (goal != null) {
+              cubit.addGoal(goal);
+            }
+          },
+          icon: const Icon(Icons.add),
+          label: const Text('Add Goal'),
+        ),
+      ),
     );
   }
 }

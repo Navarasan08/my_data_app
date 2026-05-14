@@ -28,11 +28,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
-    await context.read<AuthCubit>().signIn(
-          _emailController.text.trim(),
-          _passwordController.text,
-        );
-    if (mounted) setState(() => _isLoading = false);
+    try {
+      await context.read<AuthCubit>().signIn(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
