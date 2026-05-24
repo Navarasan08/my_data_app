@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
+import 'package:my_data_app/src/home/widgets/expense_io_sheet.dart';
 
 class HomeRecordSettingsPage extends StatelessWidget {
   const HomeRecordSettingsPage({Key? key}) : super(key: key);
@@ -304,6 +305,45 @@ class HomeRecordSettingsPage extends StatelessWidget {
                         ),
                       );
                     }),
+
+                  const Divider(height: 32),
+
+                  // Data export / import
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Data',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.ios_share_rounded,
+                          color: Colors.blue[700], size: 22),
+                    ),
+                    title: const Text(
+                      'Export & Import',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      'CSV, Excel, email — or import from a file',
+                      style: TextStyle(
+                          fontSize: 12, color: cs.onSurfaceVariant),
+                    ),
+                    trailing: Icon(Icons.chevron_right_rounded,
+                        color: cs.onSurfaceVariant),
+                    onTap: () => ExpenseIoSheet.show(context, cubit),
+                  ),
+
                   const SizedBox(height: 32),
                 ],
               ),

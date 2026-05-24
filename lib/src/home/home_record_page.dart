@@ -6,7 +6,6 @@ import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
 import 'package:my_data_app/src/home/home_record_settings_page.dart';
-import 'package:my_data_app/src/home/widgets/expense_io_sheet.dart';
 
 class HomeRecordPage extends StatelessWidget {
   const HomeRecordPage({Key? key}) : super(key: key);
@@ -35,11 +34,6 @@ class HomeRecordPage extends StatelessWidget {
                     ? 'List view'
                     : 'Calendar view',
                 onPressed: cubit.toggleCalendarView,
-              ),
-              IconButton(
-                icon: const Icon(Icons.ios_share_rounded),
-                tooltip: 'Export / Import',
-                onPressed: () => ExpenseIoSheet.show(context, cubit),
               ),
               IconButton(
                 icon: const Icon(Icons.bar_chart_rounded),
@@ -295,8 +289,10 @@ class HomeRecordPage extends StatelessWidget {
                   builder: (_) => BlocProvider.value(
                     value: cubit,
                     child: AddHomeRecordPage(
-                        categories: cubit.allCategories,
-                        paymentTypes: cubit.paymentTypes),
+                      categories: cubit.allCategories,
+                      paymentTypes: cubit.paymentTypes,
+                      initialDate: cubit.state.selectedDate,
+                    ),
                   ),
                 ),
               );
@@ -878,11 +874,17 @@ class AddHomeRecordPage extends StatefulWidget {
   final List<HomeCategory> categories;
   final List<PaymentType> paymentTypes;
 
+  /// Pre-fill the date field when opening the page in "add" mode (ignored in
+  /// edit mode — the existing record's date wins). Used when the user taps a
+  /// calendar cell and then hits "Add Record" so the form opens on that day.
+  final DateTime? initialDate;
+
   const AddHomeRecordPage({
     Key? key,
     this.record,
     required this.categories,
     this.paymentTypes = const [],
+    this.initialDate,
   }) : super(key: key);
 
   @override
@@ -919,6 +921,16 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       }
       _selectedUnit = widget.record!.unit;
       _selectedPaymentType = widget.record!.paymentType;
+    } else {
+      if (widget.initialDate != null) {
+        _selectedDate = widget.initialDate!;
+      }
+      // Default new records to UPI when it's available in the user's list.
+      // Falls back to null if the user has deleted UPI from settings.
+      final upiMatches = widget.paymentTypes.where((p) => p.id == 'upi');
+      if (upiMatches.isNotEmpty) {
+        _selectedPaymentType = upiMatches.first;
+      }
     }
   }
 

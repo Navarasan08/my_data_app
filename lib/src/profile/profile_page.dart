@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
 import 'package:my_data_app/src/auth/cubit/auth_state.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
 import 'package:my_data_app/src/settings/settings_page.dart';
 import 'package:my_data_app/src/theme/app_theme.dart';
 
@@ -191,6 +192,17 @@ class ProfilePage extends StatelessWidget {
                 await user?.updateDisplayName(newName);
                 if (context.mounted) {
                   await context.read<AuthCubit>().refreshUser();
+                }
+                // Propagate the new name to every group's members map so
+                // other members see the new label instead of the cached one.
+                // GroupCubit may not be in scope if Profile was opened from
+                // outside AuthenticatedShell — skip silently in that case.
+                if (context.mounted) {
+                  try {
+                    await context
+                        .read<GroupCubit>()
+                        .syncMyDisplayName(newName);
+                  } catch (_) {}
                 }
               }
               if (ctx.mounted) Navigator.pop(ctx);

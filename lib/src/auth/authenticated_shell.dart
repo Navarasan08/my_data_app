@@ -1,5 +1,9 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_settings_cubit.dart';
+import 'package:my_data_app/src/groups/repository/group_repository.dart';
 import 'package:my_data_app/src/reminder/repository/bill_repository.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
 import 'package:my_data_app/src/vehicle/repository/vehicle_repository.dart';
@@ -75,6 +79,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreProfileVaultRepository _vaultRepo;
   late final FirestoreLandRepository _landRepo;
   late final FirestoreEventRepository _eventRepo;
+  late final FirestoreGroupRepository _groupRepo;
   late final FirestoreInterestRepository _interestRepo;
   late final FirestoreActivityRepository _activityRepo;
   late final FirestoreDietRepository _dietRepo;
@@ -88,6 +93,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final ChecklistCubit _checklistCubit;
   ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
+  late final GroupSettingsCubit _groupSettingsCubit;
   bool _initialized = false;
 
   @override
@@ -108,6 +114,12 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
     _landRepo = FirestoreLandRepository(uid: widget.uid);
     _eventRepo = FirestoreEventRepository(uid: widget.uid);
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    _groupRepo = FirestoreGroupRepository(
+      uid: widget.uid,
+      email: firebaseUser?.email ?? '',
+      displayName: firebaseUser?.displayName,
+    );
     _interestRepo = FirestoreInterestRepository(uid: widget.uid);
     _activityRepo = FirestoreActivityRepository(uid: widget.uid);
     _dietRepo = FirestoreDietRepository(uid: widget.uid);
@@ -115,12 +127,14 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _notificationRepo = FirestoreNotificationRepository(uid: widget.uid);
     _notificationService = LocalNotificationService();
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
+    _groupSettingsCubit = GroupSettingsCubit(uid: widget.uid);
     _initRepos();
   }
 
   @override
   void dispose() {
     _reminderSweeper?.stop();
+    _groupRepo.dispose();
     super.dispose();
   }
 
@@ -144,6 +158,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _vaultRepo.init(),
         _landRepo.init(),
         _eventRepo.init(),
+        _groupRepo.init(),
         _interestRepo.init(),
         _activityRepo.init(),
         _dietRepo.init(),
@@ -151,6 +166,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _notificationRepo.init(),
         _notificationService.init(),
         _dashboardSettingsCubit.load(),
+        _groupSettingsCubit.load(),
       ]);
       // Build top-level cubits and start the reminder sweeper now that data
       // is loaded.
@@ -239,12 +255,16 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
         BlocProvider(create: (_) => LandCubit(_landRepo)),
         BlocProvider(create: (_) => EventCubit(_eventRepo)),
+        BlocProvider(
+          create: (_) => GroupCubit(_groupRepo, currentUid: widget.uid),
+        ),
         BlocProvider(create: (_) => InterestCubit(_interestRepo)),
         BlocProvider(create: (_) => ActivityCubit(_activityRepo)),
         BlocProvider(create: (_) => DietCubit(_dietRepo)),
         BlocProvider(create: (_) => DaysCounterCubit(_daysCounterRepo)),
         BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
+        BlocProvider.value(value: _groupSettingsCubit),
       ],
       child: MainShell(notificationService: _notificationService),
     );

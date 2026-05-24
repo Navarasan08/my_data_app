@@ -95,6 +95,7 @@ class Goal {
   final DateTime startDate;
   final DateTime? deadline;
   final bool isArchived;
+  final bool autoMarkFailures;
   final List<GoalLog> logs;
 
   const Goal({
@@ -107,6 +108,7 @@ class Goal {
     required this.startDate,
     this.deadline,
     this.isArchived = false,
+    this.autoMarkFailures = false,
     this.logs = const [],
   });
 
@@ -186,6 +188,16 @@ class Goal {
     return deadline!.difference(DateTime.now()).inDays;
   }
 
+  /// A goal is "completed" once its deadline has passed. Goals with no
+  /// deadline never auto-complete.
+  bool get isCompleted {
+    if (deadline == null) return false;
+    final now = DateTime.now();
+    final endOfDeadline =
+        DateTime(deadline!.year, deadline!.month, deadline!.day, 23, 59, 59);
+    return now.isAfter(endOfDeadline);
+  }
+
   static String dateKey(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
@@ -199,6 +211,7 @@ class Goal {
     DateTime? startDate,
     DateTime? deadline,
     bool? isArchived,
+    bool? autoMarkFailures,
     List<GoalLog>? logs,
   }) => Goal(
         id: id ?? this.id,
@@ -210,6 +223,7 @@ class Goal {
         startDate: startDate ?? this.startDate,
         deadline: deadline ?? this.deadline,
         isArchived: isArchived ?? this.isArchived,
+        autoMarkFailures: autoMarkFailures ?? this.autoMarkFailures,
         logs: logs ?? this.logs,
       );
 
@@ -223,6 +237,7 @@ class Goal {
         'startDate': startDate.toIso8601String(),
         'deadline': deadline?.toIso8601String(),
         'isArchived': isArchived,
+        'autoMarkFailures': autoMarkFailures,
         'logs': logs.map((l) => l.toJson()).toList(),
       };
 
@@ -240,6 +255,7 @@ class Goal {
             ? DateTime.parse(json['deadline'] as String)
             : null,
         isArchived: json['isArchived'] as bool? ?? false,
+        autoMarkFailures: json['autoMarkFailures'] as bool? ?? false,
         logs: (json['logs'] as List<dynamic>?)
                 ?.map((l) => GoalLog.fromJson(l as Map<String, dynamic>))
                 .toList() ??

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
+import 'package:my_data_app/src/home/home_record_page.dart' show AddHomeRecordPage;
 
 /// Quick-pick time window for the analysis page. A user-set [DateTimeRange]
 /// overrides this when present.
@@ -87,6 +88,67 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     return _period.label;
   }
 
+  /// Display string for the month navigator strip. Mirrors whatever filter
+  /// is currently active: a single full-month range collapses to "MMM yyyy",
+  /// a multi-day range becomes "d MMM – d MMM yyyy", year mode shows just
+  /// the year, and "All" mode shows "All Time".
+  String _navigatorLabel() {
+    if (_dateRange != null) {
+      final s = _dateRange!.start;
+      final e = _dateRange!.end;
+      final lastDayOfStartMonth = DateTime(s.year, s.month + 1, 0).day;
+      final isFullSingleMonth = s.day == 1 &&
+          e.day == lastDayOfStartMonth &&
+          s.year == e.year &&
+          s.month == e.month;
+      if (isFullSingleMonth) return DateFormat('MMM yyyy').format(s);
+      if (s.year == e.year) {
+        return '${DateFormat('d MMM').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
+      }
+      return '${DateFormat('d MMM yyyy').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
+    }
+    final now = DateTime.now();
+    switch (_period) {
+      case AnalysisPeriod.thisMonth:
+        return DateFormat('MMM yyyy').format(now);
+      case AnalysisPeriod.lastMonth:
+        return DateFormat('MMM yyyy')
+            .format(DateTime(now.year, now.month - 1));
+      case AnalysisPeriod.year:
+        return '${now.year}';
+      case AnalysisPeriod.all:
+        return 'All Time';
+    }
+  }
+
+  /// Move the active filter by [delta] months. Always switches into a custom
+  /// single-month range — easier to reason about than mutating segmented
+  /// period state.
+  void _shiftMonth(int delta) {
+    DateTime base;
+    if (_dateRange != null) {
+      base = DateTime(_dateRange!.start.year, _dateRange!.start.month);
+    } else {
+      final now = DateTime.now();
+      switch (_period) {
+        case AnalysisPeriod.thisMonth:
+          base = DateTime(now.year, now.month);
+        case AnalysisPeriod.lastMonth:
+          base = DateTime(now.year, now.month - 1);
+        case AnalysisPeriod.year:
+        case AnalysisPeriod.all:
+          base = DateTime(now.year, now.month);
+      }
+    }
+    final target = DateTime(base.year, base.month + delta);
+    setState(() {
+      _dateRange = DateTimeRange(
+        start: DateTime(target.year, target.month, 1),
+        end: DateTime(target.year, target.month + 1, 0, 23, 59, 59),
+      );
+    });
+  }
+
   Map<HomeCategory, double> _categoryTotals(HomeRecordCubit cubit) {
     final r = _activeRange();
     final base = r.allTime
@@ -153,7 +215,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
               final contentMaxWidth = isWide ? 1100.0 : double.infinity;
 
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(maxWidth: contentMaxWidth),
@@ -161,10 +223,6 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildSummaryCards(
-                              cubit, filteredTotal, categoryTotals),
-                          const SizedBox(height: 20),
-
                           _buildFilterControls(
                               context, cubit.categoriesByUsage),
                           const SizedBox(height: 20),
@@ -189,8 +247,13 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             _buildSectionTitle(
-                                                'Category Breakdown',
-                                                subtitle: _activeRangeLabel()),
+                                              'Category Breakdown',
+                                              subtitle: _navigatorLabel(),
+                                              trailing: _TotalExpenseLabel(
+                                                amount: cubit
+                                                    .formatAmount(filteredTotal),
+                                              ),
+                                            ),
                                             const SizedBox(height: 12),
                                             _buildPieChart(categoryTotals,
                                                 filteredTotal),
@@ -221,9 +284,15 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                     ],
                                   )
                                 else ...[
-                                  _buildSectionTitle('Category Breakdown',
-                                      subtitle: _activeRangeLabel()),
-                                  const SizedBox(height: 12),
+                                  _buildSectionTitle(
+                                    'Category Breakdown',
+                                    subtitle: _navigatorLabel(),
+                                    trailing: _TotalExpenseLabel(
+                                      amount: cubit
+                                          .formatAmount(filteredTotal),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 18),
                                   _buildPieChart(categoryTotals, filteredTotal),
                                   const SizedBox(height: 8),
                                   _buildPieLegend(
@@ -275,7 +344,8 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   // ── Section helpers ─────────────────────────────────────────────────────
 
-  Widget _buildSectionTitle(String title, {String? subtitle}) {
+  Widget _buildSectionTitle(String title,
+      {String? subtitle, Widget? trailing}) {
     final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -290,56 +360,29 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         ),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              '· $subtitle',
-              style: TextStyle(
-                fontSize: 12,
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                '· $subtitle',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
         ],
-      ],
-    );
-  }
-
-  Widget _buildSummaryCards(HomeRecordCubit cubit, double filteredTotal,
-      Map<HomeCategory, double> categoryTotals) {
-    final highest = categoryTotals.isNotEmpty
-        ? categoryTotals.entries.reduce((a, b) => a.value > b.value ? a : b)
-        : null;
-
-    return Row(
-      children: [
-        Expanded(
-          child: _SummaryCard(
-            icon: Icons.account_balance_wallet_rounded,
-            label: 'Total Spent',
-            value: cubit.formatAmount(filteredTotal),
-            color: Colors.green,
+        if (trailing != null) ...[
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 1),
+            child: trailing,
           ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _SummaryCard(
-            icon: Icons.trending_up_rounded,
-            label: 'Avg/Month',
-            value: cubit.formatAmount(cubit.averagePerMonth),
-            color: Colors.blue,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: _SummaryCard(
-            icon: Icons.star_rounded,
-            label: 'Top Category',
-            value: highest?.key.displayName ?? '-',
-            color: Colors.orange,
-          ),
-        ),
+        ],
       ],
     );
   }
@@ -392,49 +435,28 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.date_range, size: 18),
-                  label: Text(
-                    hasRange
-                        ? '${DateFormat('d MMM').format(_dateRange!.start)} – ${DateFormat('d MMM').format(_dateRange!.end)}'
-                        : 'Date Range',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                        hasRange ? Colors.blue[700] : null,
-                    side: hasRange
-                        ? BorderSide(color: Colors.blue[300]!)
-                        : null,
-                  ),
-                  onPressed: () async {
-                    final range = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                      initialDateRange: _dateRange,
-                    );
-                    if (range != null) {
-                      setState(() => _dateRange = range);
-                    }
-                  },
-                ),
-              ),
-              if (hasRange) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.clear, size: 18),
-                  onPressed: () => setState(() => _dateRange = null),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ],
+          // Unified month navigator + date range picker. Arrows shift by one
+          // month; tapping the center label opens the date range picker; the
+          // inline × clears a custom range. Coloring tints to blue when a
+          // custom range is active so it's visually distinct from a single
+          // month selection.
+          _PeriodNavigator(
+            label: _navigatorLabel(),
+            onPrev: () => _shiftMonth(-1),
+            onNext: () => _shiftMonth(1),
+            onPickRange: () async {
+              final range = await showDateRangePicker(
+                context: context,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                initialDateRange: _dateRange,
+              );
+              if (range != null) {
+                setState(() => _dateRange = range);
+              }
+            },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           DropdownButtonFormField<HomeCategory?>(
             initialValue: _filterCategory,
             decoration: const InputDecoration(
@@ -1040,8 +1062,35 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         itemCount: records.length,
                         separatorBuilder: (_, _) =>
                             const SizedBox(height: 6),
-                        itemBuilder: (_, i) =>
-                            _RecordListTile(record: records[i], cubit: cubit),
+                        itemBuilder: (_, i) {
+                          final r = records[i];
+                          return _RecordListTile(
+                            record: r,
+                            cubit: cubit,
+                            onTap: () async {
+                              // Close the sheet first — its cached `records`
+                              // list won't reflect the edit, so dismissing
+                              // avoids showing stale data.
+                              Navigator.pop(sheetCtx);
+                              final edited = await Navigator.push<HomeRecord>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: cubit,
+                                    child: AddHomeRecordPage(
+                                      record: r,
+                                      categories: cubit.allCategories,
+                                      paymentTypes: cubit.paymentTypes,
+                                    ),
+                                  ),
+                                ),
+                              );
+                              if (edited != null) {
+                                cubit.updateRecord(edited);
+                              }
+                            },
+                          );
+                        },
                       ),
               ),
             ],
@@ -1080,56 +1129,83 @@ class _FadeSlideIn extends StatelessWidget {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final IconData icon;
+/// Unified period control: a pill with month-shift arrows on the sides and
+/// a tappable label in the middle that opens a date range picker. Styling
+/// stays neutral whether a custom range is active or not — clearing happens
+/// implicitly when the user picks a segmented period.
+class _PeriodNavigator extends StatelessWidget {
   final String label;
-  final String value;
-  final Color color;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onPickRange;
 
-  const _SummaryCard({
-    Key? key,
-    required this.icon,
+  const _PeriodNavigator({
     required this.label,
-    required this.value,
-    required this.color,
-  }) : super(key: key);
+    required this.onPrev,
+    required this.onNext,
+    required this.onPickRange,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      height: 44,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: cs.outlineVariant),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 8),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 280),
-            child: Text(
-              value,
-              key: ValueKey(value),
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
+          _ArrowButton(
+            icon: Icons.chevron_left_rounded,
+            tooltip: 'Previous month',
+            onPressed: onPrev,
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: onPickRange,
+              borderRadius: BorderRadius.circular(22),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
+                  child: Row(
+                    key: ValueKey(label),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.event_rounded,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: color.withValues(alpha: 0.8),
-              fontWeight: FontWeight.w500,
-            ),
+          _ArrowButton(
+            icon: Icons.chevron_right_rounded,
+            tooltip: 'Next month',
+            onPressed: onNext,
           ),
         ],
       ),
@@ -1137,26 +1213,91 @@ class _SummaryCard extends StatelessWidget {
   }
 }
 
-/// Compact record tile used inside the records bottom sheet — read-only
-/// (edits happen in the main records page).
-class _RecordListTile extends StatelessWidget {
-  final HomeRecord record;
-  final HomeRecordCubit cubit;
-  const _RecordListTile({required this.record, required this.cubit});
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  const _ArrowButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
-      decoration: BoxDecoration(
-        color: record.category.color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border(
-          left: BorderSide(color: record.category.color, width: 3),
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(icon, size: 22, color: cs.onSurfaceVariant),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
+    );
+  }
+}
+
+/// Minimal trailing label for the Category Breakdown section title. Uses an
+/// expense-red treatment with a subtle down-arrow to make the "spent" framing
+/// obvious without taking visual weight away from the chart.
+class _TotalExpenseLabel extends StatelessWidget {
+  final String amount;
+  const _TotalExpenseLabel({required this.amount});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Colors.red.shade700;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Icon(Icons.arrow_downward_rounded, size: 14, color: color),
+        const SizedBox(width: 2),
+        Text(
+          amount,
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Compact record tile used inside the records bottom sheet. Tap to edit the
+/// underlying record — see [_showRecordsSheet] for the handler.
+class _RecordListTile extends StatelessWidget {
+  final HomeRecord record;
+  final HomeRecordCubit cubit;
+  final VoidCallback? onTap;
+  const _RecordListTile({
+    required this.record,
+    required this.cubit,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: record.category.color.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border(
+            left: BorderSide(color: record.category.color, width: 3),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
         children: [
           Icon(record.category.icon, size: 18, color: record.category.color),
           const SizedBox(width: 10),
@@ -1186,15 +1327,16 @@ class _RecordListTile extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            cubit.formatAmount(record.amount),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.red[700],
+            Text(
+              cubit.formatAmount(record.amount),
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.red[700],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
