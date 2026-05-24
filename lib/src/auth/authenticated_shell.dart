@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_settings_cubit.dart';
 import 'package:my_data_app/src/groups/repository/group_repository.dart';
 import 'package:my_data_app/src/reminder/repository/bill_repository.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
@@ -92,6 +93,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final ChecklistCubit _checklistCubit;
   ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
+  late final GroupSettingsCubit _groupSettingsCubit;
   bool _initialized = false;
 
   @override
@@ -125,6 +127,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _notificationRepo = FirestoreNotificationRepository(uid: widget.uid);
     _notificationService = LocalNotificationService();
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
+    _groupSettingsCubit = GroupSettingsCubit(uid: widget.uid);
     _initRepos();
   }
 
@@ -163,6 +166,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         _notificationRepo.init(),
         _notificationService.init(),
         _dashboardSettingsCubit.load(),
+        _groupSettingsCubit.load(),
       ]);
       // Build top-level cubits and start the reminder sweeper now that data
       // is loaded.
@@ -260,6 +264,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider(create: (_) => DaysCounterCubit(_daysCounterRepo)),
         BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
+        BlocProvider.value(value: _groupSettingsCubit),
       ],
       child: MainShell(notificationService: _notificationService),
     );

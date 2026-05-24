@@ -8,6 +8,7 @@ import 'package:my_data_app/src/events/cubit/event_state.dart';
 import 'package:my_data_app/src/events/event_finance_page.dart';
 import 'package:my_data_app/src/groups/create_group_page.dart';
 import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_settings_cubit.dart';
 import 'package:my_data_app/src/groups/cubit/group_state.dart';
 import 'package:my_data_app/src/groups/group_detail_page.dart';
 import 'package:my_data_app/src/groups/invitations_inbox_page.dart';
@@ -229,17 +230,36 @@ class MyEventsPage extends StatelessWidget {
                                           return _GroupGridCard(
                                             group: g,
                                             myBalance: myBal,
-                                            onTap: () => Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    BlocProvider.value(
-                                                  value: gcubit,
-                                                  child: GroupDetailPage(
-                                                      groupId: g.id),
+                                            onTap: () {
+                                              // Navigator.push mounts the new
+                                              // route on the root navigator,
+                                              // which sits ABOVE
+                                              // AuthenticatedShell's
+                                              // providers. Forward every
+                                              // cubit the destination tree
+                                              // touches — GroupDetailPage
+                                              // reads GroupSettingsCubit for
+                                              // the month-wise toggle and to
+                                              // open the settings page.
+                                              final settings = context
+                                                  .read<GroupSettingsCubit>();
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      MultiBlocProvider(
+                                                    providers: [
+                                                      BlocProvider.value(
+                                                          value: gcubit),
+                                                      BlocProvider.value(
+                                                          value: settings),
+                                                    ],
+                                                    child: GroupDetailPage(
+                                                        groupId: g.id),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
+                                              );
+                                            },
                                           );
                                         }),
                                         _AddGroupCard(

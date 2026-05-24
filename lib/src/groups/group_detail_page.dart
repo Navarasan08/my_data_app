@@ -3,7 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/groups/add_group_expense_page.dart';
 import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_settings_cubit.dart';
 import 'package:my_data_app/src/groups/cubit/group_state.dart';
+import 'package:my_data_app/src/groups/group_analysis_page.dart';
+import 'package:my_data_app/src/groups/group_settings_page.dart';
 import 'package:my_data_app/src/groups/model/group_model.dart';
 import 'package:my_data_app/src/groups/settle_up_page.dart';
 
@@ -63,6 +66,38 @@ class GroupDetailPage extends StatelessWidget {
               elevation: 0,
               backgroundColor: color.withValues(alpha: 0.1),
               actions: [
+                IconButton(
+                  icon: const Icon(Icons.insights_rounded),
+                  tooltip: 'Analysis',
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: cubit,
+                        child: GroupAnalysisPage(groupId: group.id),
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_rounded),
+                  tooltip: 'Settings',
+                  onPressed: () {
+                    // GroupSettingsCubit is shared across all groups, so we
+                    // forward the ambient instance instead of constructing
+                    // a fresh one.
+                    final settings = context.read<GroupSettingsCubit>();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: settings,
+                          child: const GroupSettingsPage(),
+                        ),
+                      ),
+                    );
+                  },
+                ),
                 IconButton(
                   icon: Icon(group.isArchived
                       ? Icons.unarchive_rounded
@@ -305,15 +340,103 @@ class _ExpensesTab extends StatelessWidget {
         ),
       );
     }
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
-      itemCount: expenses.length,
-      itemBuilder: (ctx, i) {
-        final e = expenses[i];
-        return _ExpenseTile(group: group, expense: e);
+
+    return BlocBuilder<GroupSettingsCubit, GroupSettingsState>(
+      builder: (context, settings) {
+        if (!settings.monthwiseListView) {
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+            itemCount: expenses.length,
+            itemBuilder: (ctx, i) =>
+                _ExpenseTile(group: group, expense: expenses[i]),
+          );
+        }
+        return _MonthGroupedList(group: group, expenses: expenses);
       },
     );
   }
+}
+
+/// Expenses chunked into month buckets with a sticky-style header showing
+/// the month label + subtotal. The repository already returns expenses
+/// sorted newest-first, so iterating in order produces newest-month-first
+/// buckets without extra sorting.
+class _MonthGroupedList extends StatelessWidget {
+  final GroupFund group;
+  final List<GroupExpense> expenses;
+  const _MonthGroupedList({required this.group, required this.expenses});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    // Build ordered buckets — LinkedHashMap preserves first-seen month order.
+    final buckets = <String, _MonthBucket>{};
+    for (final e in expenses) {
+      final key = DateFormat('yyyy-MM').format(e.date);
+      final bucket = buckets.putIfAbsent(
+        key,
+        () => _MonthBucket(
+          label: DateFormat('MMMM yyyy').format(e.date),
+          items: [],
+        ),
+      );
+      bucket.items.add(e);
+      bucket.total += e.amount;
+    }
+    final ordered = buckets.values.toList();
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 100),
+      itemCount: ordered.fold<int>(0, (s, b) => s + 1 + b.items.length),
+      itemBuilder: (ctx, idx) {
+        var cursor = 0;
+        for (final bucket in ordered) {
+          if (idx == cursor) {
+            return Padding(
+              padding: EdgeInsets.only(top: cursor == 0 ? 0 : 12, bottom: 6),
+              child: Row(
+                children: [
+                  Text(
+                    bucket.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: cs.onSurfaceVariant,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '₹${_money.format(bucket.total)}  ·  ${bucket.items.length}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: group.color,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          cursor++;
+          if (idx < cursor + bucket.items.length) {
+            return _ExpenseTile(
+              group: group,
+              expense: bucket.items[idx - cursor],
+            );
+          }
+          cursor += bucket.items.length;
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+class _MonthBucket {
+  final String label;
+  final List<GroupExpense> items;
+  double total = 0;
+  _MonthBucket({required this.label, required this.items});
 }
 
 class _ExpenseTile extends StatelessWidget {
