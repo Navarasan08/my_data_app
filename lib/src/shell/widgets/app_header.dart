@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/theme/app_theme.dart';
 
@@ -152,13 +153,19 @@ class AppHeader extends StatelessWidget {
 
   void _openProfile(BuildContext context) {
     final authCubit = context.read<AuthCubit>();
-    // DashboardSettingsCubit may not be in scope if the header is used
-    // somewhere outside AuthenticatedShell — fall back gracefully.
+    // DashboardSettingsCubit / GroupCubit may not be in scope if the header
+    // is used somewhere outside AuthenticatedShell — fall back gracefully.
     DashboardSettingsCubit? settingsCubit;
     try {
       settingsCubit = context.read<DashboardSettingsCubit>();
     } catch (_) {
       settingsCubit = null;
+    }
+    GroupCubit? groupCubit;
+    try {
+      groupCubit = context.read<GroupCubit>();
+    } catch (_) {
+      groupCubit = null;
     }
 
     Navigator.push(
@@ -169,6 +176,7 @@ class AppHeader extends StatelessWidget {
             BlocProvider.value(value: authCubit),
             if (settingsCubit != null)
               BlocProvider.value(value: settingsCubit),
+            if (groupCubit != null) BlocProvider.value(value: groupCubit),
           ],
           child: const ProfilePage(),
         ),

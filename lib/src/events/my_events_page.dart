@@ -6,6 +6,12 @@ import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/cubit/event_state.dart';
 import 'package:my_data_app/src/events/event_finance_page.dart';
+import 'package:my_data_app/src/groups/create_group_page.dart';
+import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
+import 'package:my_data_app/src/groups/cubit/group_state.dart';
+import 'package:my_data_app/src/groups/group_detail_page.dart';
+import 'package:my_data_app/src/groups/invitations_inbox_page.dart';
+import 'package:my_data_app/src/groups/model/group_model.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
 
 /// "My Events" tab — mirrors the Home dashboard's layout (blue gradient header
@@ -52,6 +58,52 @@ class MyEventsPage extends StatelessWidget {
               children: [
                 AppHeader(
                   actions: [
+                    BlocBuilder<GroupCubit, GroupState>(
+                      builder: (context, gs) {
+                        final count = gs.pendingInvitations.length;
+                        return Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            HeaderIconButton(
+                              icon: Icons.mark_email_unread_rounded,
+                              tooltip: 'Group invitations',
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => BlocProvider.value(
+                                    value: context.read<GroupCubit>(),
+                                    child: const InvitationsInboxPage(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (count > 0)
+                              Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: Colors.white, width: 1.5),
+                                  ),
+                                  child: Text(
+                                    '$count',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
                     HeaderIconButton(
                       icon: Icons.logout_rounded,
                       tooltip: 'Logout',
@@ -146,23 +198,69 @@ class MyEventsPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Placeholder categories for future expansion
-                          _SectionHeader(
-                            title: 'Tasks & Schedules',
-                            icon: Icons.schedule_rounded,
-                            color: Colors.grey,
-                            count: 0,
-                          ),
-                          const Padding(
-                            padding: EdgeInsets.fromLTRB(12, 4, 12, 16),
-                            child: Text(
-                              'Coming soon — per-event tasks and schedules',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
+                          // Groups (Splitwise-style shared expenses)
+                          BlocBuilder<GroupCubit, GroupState>(
+                            builder: (context, gs) {
+                              final gcubit = context.read<GroupCubit>();
+                              final groups = gcubit.activeGroups;
+                              return Column(
+                                children: [
+                                  _SectionHeader(
+                                    title: 'Groups',
+                                    icon: Icons.groups_rounded,
+                                    color: Colors.indigo,
+                                    count: groups.length,
+                                  ),
+                                  Padding(
+                                    padding:
+                                        const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                    child: GridView.count(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      crossAxisCount: gridCols,
+                                      mainAxisSpacing: 6,
+                                      crossAxisSpacing: 6,
+                                      childAspectRatio: 0.85,
+                                      children: [
+                                        ...groups.map((g) {
+                                          final myBal =
+                                              gcubit.myBalanceIn(g.id);
+                                          return _GroupGridCard(
+                                            group: g,
+                                            myBalance: myBal,
+                                            onTap: () => Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    BlocProvider.value(
+                                                  value: gcubit,
+                                                  child: GroupDetailPage(
+                                                      groupId: g.id),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
+                                        _AddGroupCard(
+                                          onTap: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  BlocProvider.value(
+                                                value: gcubit,
+                                                child:
+                                                    const CreateGroupPage(),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       );
@@ -341,6 +439,131 @@ class _AddEventCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'New Event',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: cs.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupGridCard extends StatelessWidget {
+  final GroupFund group;
+  final double myBalance;
+  final VoidCallback onTap;
+
+  const _GroupGridCard({
+    required this.group,
+    required this.myBalance,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final iAmOwed = myBalance > 0.01;
+    final iOwe = myBalance < -0.01;
+    final badgeColor = iAmOwed
+        ? Colors.green
+        : iOwe
+            ? Colors.red
+            : null;
+    final badgeText = iAmOwed
+        ? '+₹${_money.format(myBalance)}'
+        : iOwe
+            ? '-₹${_money.format(-myBalance)}'
+            : null;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: group.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(group.icon, size: 26, color: group.color),
+              ),
+              if (badgeText != null)
+                Positioned(
+                  top: -4,
+                  right: -6,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: badgeColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      badgeText,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            group.name,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AddGroupCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _AddGroupCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: cs.outline,
+                style: BorderStyle.solid,
+              ),
+            ),
+            child: Icon(Icons.group_add_rounded,
+                size: 26, color: cs.onSurfaceVariant),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'New Group',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w500,

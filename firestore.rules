@@ -1,0 +1,149 @@
+rules_version = '2';
+
+// Firestore security rules for my_data_app.
+//
+// IMPORTANT: This file is not deployed automatically. Deploy with:
+//   firebase deploy --only firestore:rules
+// (You may need to add `"firestore": { "rules": "firestore.rules" }` to
+// firebase.json before the first deploy.)
+//
+// Until these rules are deployed, the Splitwise-style "Groups" feature will
+// fail because cross-user reads of `groups/*` and `groupInvitations/*` are
+// not allowed by the default rules.
+//
+// Design notes:
+// - A group's `memberIds` is the gatekeeper. Members are the only people who
+//   can read or write group content.
+// - Invitations use a DETERMINISTIC document ID of the form
+//   `{groupId}_{lowercasedEmail}`. This lets the join-via-invite rule
+//   verify "a pending invite for this user + group exists" by constructing
+//   the path (rules cannot query). Only one pending invite per (group, email)
+//   is possible as a natural side effect.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Per-user private data ────────────────────────────────────────────
+    // All existing single-user collections (bills, vehicles, chits, …) plus
+    // the new `groupMemberships` index. Anyone signed-in can only touch
+    // their own doc tree.
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ── Shared groups ────────────────────────────────────────────────────
+    match /groups/{groupId} {
+
+      function isMember() {
+        return request.auth != null
+            && request.auth.uid in resource.data.memberIds;
+      }
+
+      // For the join-via-accept case: the user's own email-keyed invitation
+      // must exist and be pending. The token email is lowercased to match
+      // how invitations are stored.
+      function hasPendingInvite() {
+        return request.auth != null
+            && request.auth.token.email != null
+            && exists(/databases/$(database)/documents/groupInvitations/$(groupId + '_' + request.auth.token.email.lower()))
+            && get(/databases/$(database)/documents/groupInvitations/$(groupId + '_' + request.auth.token.email.lower())).data.status == 0;
+      }
+
+      // Create: any signed-in user, but only with themselves as the sole
+      // initial member. Adding others happens through the invitation flow.
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.memberIds is list
+        && request.resource.data.memberIds.size() == 1
+        && request.resource.data.memberIds[0] == request.auth.uid;
+
+      // Read: members only.
+      allow read: if isMember();
+
+      // Members removed by this update, excluding the caller themselves.
+      // If non-empty, the caller is trying to kick someone — disallowed.
+      function othersRemoved() {
+        return resource.data.memberIds.toSet()
+            .difference(request.resource.data.memberIds.toSet())
+            .difference([request.auth.uid].toSet());
+      }
+      // Members added by this update, excluding the caller themselves.
+      // If non-empty, the caller is trying to add someone arbitrarily —
+      // disallowed (real additions go through the accept-invite path).
+      function othersAdded() {
+        return request.resource.data.memberIds.toSet()
+            .difference(resource.data.memberIds.toSet())
+            .difference([request.auth.uid].toSet());
+      }
+
+      // Update has two legitimate shapes:
+      //
+      // 1. Member action (edit metadata, or leave): caller is currently a
+      //    member, and the only membership delta (if any) involves the
+      //    caller themselves — they may not add or remove other people.
+      //
+      // 2. Join-via-accept: caller is NOT yet a member but holds a valid
+      //    pending invitation for this group, and the only delta is adding
+      //    themselves.
+      allow update: if
+        (isMember()
+          && othersRemoved().size() == 0
+          && othersAdded().size() == 0)
+        || (hasPendingInvite()
+          && !(request.auth.uid in resource.data.memberIds)
+          && request.auth.uid in request.resource.data.memberIds
+          && othersRemoved().size() == 0);
+
+      // Delete: only the group creator. (Members leave via leaveGroup, which
+      // takes the Case 1b update path above, not delete.)
+      allow delete: if request.auth != null
+        && resource.data.createdBy == request.auth.uid;
+
+      match /expenses/{expenseId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid in
+              get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+      }
+
+      match /settlements/{settlementId} {
+        allow read, write: if request.auth != null
+          && request.auth.uid in
+              get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
+      }
+    }
+
+    // ── Invitations ──────────────────────────────────────────────────────
+    match /groupInvitations/{invitationId} {
+
+      function isInvitee() {
+        return request.auth != null
+            && request.auth.token.email != null
+            && request.auth.token.email.lower() == resource.data.inviteeEmail;
+      }
+      function isSender() {
+        return request.auth != null
+            && resource.data.invitedByUid == request.auth.uid;
+      }
+
+      allow read: if isSender() || isInvitee();
+
+      // Create: only an existing member of the target group may send invites.
+      // The document ID must match `{groupId}_{inviteeEmail}` to keep the
+      // join-via-accept rule's path construction sound.
+      allow create: if request.auth != null
+        && request.resource.data.invitedByUid == request.auth.uid
+        && invitationId == request.resource.data.groupId + '_' + request.resource.data.inviteeEmail
+        && request.auth.uid in
+            get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.memberIds;
+
+      // Update: invitee accepts/declines; sender cancels. Immutable identifying
+      // fields stay fixed; only status / inviteeUid / respondedAt move.
+      allow update: if (isInvitee() || isSender())
+        && request.resource.data.groupId == resource.data.groupId
+        && request.resource.data.inviteeEmail == resource.data.inviteeEmail
+        && request.resource.data.invitedByUid == resource.data.invitedByUid;
+
+      // Delete: sender only (optional cleanup of cancelled invites).
+      allow delete: if isSender();
+    }
+  }
+}
