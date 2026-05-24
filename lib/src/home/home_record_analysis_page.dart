@@ -88,6 +88,67 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
     return _period.label;
   }
 
+  /// Display string for the month navigator strip. Mirrors whatever filter
+  /// is currently active: a single full-month range collapses to "MMM yyyy",
+  /// a multi-day range becomes "d MMM – d MMM yyyy", year mode shows just
+  /// the year, and "All" mode shows "All Time".
+  String _navigatorLabel() {
+    if (_dateRange != null) {
+      final s = _dateRange!.start;
+      final e = _dateRange!.end;
+      final lastDayOfStartMonth = DateTime(s.year, s.month + 1, 0).day;
+      final isFullSingleMonth = s.day == 1 &&
+          e.day == lastDayOfStartMonth &&
+          s.year == e.year &&
+          s.month == e.month;
+      if (isFullSingleMonth) return DateFormat('MMM yyyy').format(s);
+      if (s.year == e.year) {
+        return '${DateFormat('d MMM').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
+      }
+      return '${DateFormat('d MMM yyyy').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
+    }
+    final now = DateTime.now();
+    switch (_period) {
+      case AnalysisPeriod.thisMonth:
+        return DateFormat('MMM yyyy').format(now);
+      case AnalysisPeriod.lastMonth:
+        return DateFormat('MMM yyyy')
+            .format(DateTime(now.year, now.month - 1));
+      case AnalysisPeriod.year:
+        return '${now.year}';
+      case AnalysisPeriod.all:
+        return 'All Time';
+    }
+  }
+
+  /// Move the active filter by [delta] months. Always switches into a custom
+  /// single-month range — easier to reason about than mutating segmented
+  /// period state.
+  void _shiftMonth(int delta) {
+    DateTime base;
+    if (_dateRange != null) {
+      base = DateTime(_dateRange!.start.year, _dateRange!.start.month);
+    } else {
+      final now = DateTime.now();
+      switch (_period) {
+        case AnalysisPeriod.thisMonth:
+          base = DateTime(now.year, now.month);
+        case AnalysisPeriod.lastMonth:
+          base = DateTime(now.year, now.month - 1);
+        case AnalysisPeriod.year:
+        case AnalysisPeriod.all:
+          base = DateTime(now.year, now.month);
+      }
+    }
+    final target = DateTime(base.year, base.month + delta);
+    setState(() {
+      _dateRange = DateTimeRange(
+        start: DateTime(target.year, target.month, 1),
+        end: DateTime(target.year, target.month + 1, 0, 23, 59, 59),
+      );
+    });
+  }
+
   Map<HomeCategory, double> _categoryTotals(HomeRecordCubit cubit) {
     final r = _activeRange();
     final base = r.allTime
@@ -187,7 +248,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                           children: [
                                             _buildSectionTitle(
                                               'Category Breakdown',
-                                              subtitle: _activeRangeLabel(),
+                                              subtitle: _navigatorLabel(),
                                               trailing: _TotalExpenseLabel(
                                                 amount: cubit
                                                     .formatAmount(filteredTotal),
@@ -225,7 +286,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                 else ...[
                                   _buildSectionTitle(
                                     'Category Breakdown',
-                                    subtitle: _activeRangeLabel(),
+                                    subtitle: _navigatorLabel(),
                                     trailing: _TotalExpenseLabel(
                                       amount: cubit
                                           .formatAmount(filteredTotal),
@@ -299,20 +360,24 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         ),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              '· $subtitle',
-              style: TextStyle(
-                fontSize: 12,
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text(
+                '· $subtitle',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
         ],
         if (trailing != null) ...[
-          const Spacer(),
+          const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.only(bottom: 1),
             child: trailing,
@@ -370,49 +435,28 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.date_range, size: 18),
-                  label: Text(
-                    hasRange
-                        ? '${DateFormat('d MMM').format(_dateRange!.start)} – ${DateFormat('d MMM').format(_dateRange!.end)}'
-                        : 'Date Range',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor:
-                        hasRange ? Colors.blue[700] : null,
-                    side: hasRange
-                        ? BorderSide(color: Colors.blue[300]!)
-                        : null,
-                  ),
-                  onPressed: () async {
-                    final range = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                      initialDateRange: _dateRange,
-                    );
-                    if (range != null) {
-                      setState(() => _dateRange = range);
-                    }
-                  },
-                ),
-              ),
-              if (hasRange) ...[
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.clear, size: 18),
-                  onPressed: () => setState(() => _dateRange = null),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ],
-            ],
+          // Unified month navigator + date range picker. Arrows shift by one
+          // month; tapping the center label opens the date range picker; the
+          // inline × clears a custom range. Coloring tints to blue when a
+          // custom range is active so it's visually distinct from a single
+          // month selection.
+          _PeriodNavigator(
+            label: _navigatorLabel(),
+            onPrev: () => _shiftMonth(-1),
+            onNext: () => _shiftMonth(1),
+            onPickRange: () async {
+              final range = await showDateRangePicker(
+                context: context,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2030),
+                initialDateRange: _dateRange,
+              );
+              if (range != null) {
+                setState(() => _dateRange = range);
+              }
+            },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           DropdownButtonFormField<HomeCategory?>(
             initialValue: _filterCategory,
             decoration: const InputDecoration(
@@ -1081,6 +1125,118 @@ class _FadeSlideIn extends StatelessWidget {
         );
       },
       child: child,
+    );
+  }
+}
+
+/// Unified period control: a pill with month-shift arrows on the sides and
+/// a tappable label in the middle that opens a date range picker. Styling
+/// stays neutral whether a custom range is active or not — clearing happens
+/// implicitly when the user picks a segmented period.
+class _PeriodNavigator extends StatelessWidget {
+  final String label;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onPickRange;
+
+  const _PeriodNavigator({
+    required this.label,
+    required this.onPrev,
+    required this.onNext,
+    required this.onPickRange,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          _ArrowButton(
+            icon: Icons.chevron_left_rounded,
+            tooltip: 'Previous month',
+            onPressed: onPrev,
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: onPickRange,
+              borderRadius: BorderRadius.circular(22),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  transitionBuilder: (child, anim) =>
+                      FadeTransition(opacity: anim, child: child),
+                  child: Row(
+                    key: ValueKey(label),
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.event_rounded,
+                        size: 16,
+                        color: cs.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w700,
+                            color: cs.onSurface,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          _ArrowButton(
+            icon: Icons.chevron_right_rounded,
+            tooltip: 'Next month',
+            onPressed: onNext,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ArrowButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  const _ArrowButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 44,
+          height: 44,
+          child: Icon(icon, size: 22, color: cs.onSurfaceVariant),
+        ),
+      ),
     );
   }
 }

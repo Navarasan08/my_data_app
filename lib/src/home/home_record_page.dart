@@ -6,7 +6,6 @@ import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
 import 'package:my_data_app/src/home/home_record_settings_page.dart';
-import 'package:my_data_app/src/home/widgets/expense_io_sheet.dart';
 
 class HomeRecordPage extends StatelessWidget {
   const HomeRecordPage({Key? key}) : super(key: key);
@@ -35,11 +34,6 @@ class HomeRecordPage extends StatelessWidget {
                     ? 'List view'
                     : 'Calendar view',
                 onPressed: cubit.toggleCalendarView,
-              ),
-              IconButton(
-                icon: const Icon(Icons.ios_share_rounded),
-                tooltip: 'Export / Import',
-                onPressed: () => ExpenseIoSheet.show(context, cubit),
               ),
               IconButton(
                 icon: const Icon(Icons.bar_chart_rounded),
