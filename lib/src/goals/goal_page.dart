@@ -15,7 +15,7 @@ class GoalListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Goal Tracker'),
@@ -24,6 +24,7 @@ class GoalListPage extends StatelessWidget {
           bottom: const TabBar(
             tabs: [
               Tab(text: 'Active'),
+              Tab(text: 'Completed'),
               Tab(text: 'Archived'),
             ],
           ),
@@ -37,6 +38,11 @@ class GoalListPage extends StatelessWidget {
                   goals: cubit.activeGoals,
                   emptyIcon: Icons.flag_outlined,
                   emptyLabel: 'No active goals yet',
+                ),
+                _GoalTab(
+                  goals: cubit.completedGoals,
+                  emptyIcon: Icons.emoji_events_outlined,
+                  emptyLabel: 'No completed goals yet',
                 ),
                 _GoalTab(
                   goals: cubit.archivedGoals,
@@ -133,6 +139,7 @@ class _GoalCard extends StatelessWidget {
     final catColor = goal.category.color;
     final rate = (goal.successRate * 100).round();
     final miniDays = _last7DueDates();
+    final completed = goal.isCompleted;
 
     return GestureDetector(
       onTap: () {
@@ -150,9 +157,14 @@ class _GoalCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: cs.surface,
+          color: completed
+              ? Colors.green.withValues(alpha: 0.06)
+              : cs.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cs.outline),
+          border: Border.all(
+            color: completed ? Colors.green.shade400 : cs.outline,
+            width: completed ? 1.2 : 1.0,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,6 +213,34 @@ class _GoalCard extends StatelessWidget {
                                 fontSize: 12,
                                 color: Colors.orange[700],
                                 fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                          if (completed) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade100,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.emoji_events_rounded,
+                                      size: 11,
+                                      color: Colors.green.shade800),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Completed',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.green.shade800,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -780,6 +820,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
   DateTime _startDate = DateTime.now();
   DateTime? _deadline;
   bool _hasDeadline = false;
+  bool _autoMarkFailures = false;
 
   bool get _isEditing => widget.goal != null;
 
@@ -796,6 +837,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
       _startDate = g.startDate;
       _deadline = g.deadline;
       _hasDeadline = g.deadline != null;
+      _autoMarkFailures = g.autoMarkFailures;
     }
   }
 
@@ -827,6 +869,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
       startDate: _startDate,
       deadline: _hasDeadline ? _deadline : null,
       isArchived: widget.goal?.isArchived ?? false,
+      autoMarkFailures: _autoMarkFailures,
       logs: widget.goal?.logs ?? [],
     );
 
@@ -991,6 +1034,19 @@ class _AddGoalPageState extends State<AddGoalPage> {
                   if (picked != null) setState(() => _deadline = picked);
                 },
               ),
+            const Divider(),
+
+            // Auto-mark missed days as failure
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Auto-mark missed days as failure'),
+              subtitle: const Text(
+                'Past due-dates that you forgot to log will be marked as failure automatically.',
+                style: TextStyle(fontSize: 12),
+              ),
+              value: _autoMarkFailures,
+              onChanged: (v) => setState(() => _autoMarkFailures = v),
+            ),
 
             const SizedBox(height: 32),
             ElevatedButton(
