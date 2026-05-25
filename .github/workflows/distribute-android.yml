@@ -63,7 +63,11 @@ jobs:
       - name: Decode upload keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
-        run: echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d -i > android/app/upload-keystore.jks
+          # Sanity check: a real JKS starts with 0xFE ED FE ED
+          head -c 4 android/app/upload-keystore.jks | xxd | grep -q 'feed feed' \
+            || { echo "::error::Decoded keystore is not a valid JKS file. Re-encode the keystore (see message below)."; exit 1; }
 
       - name: Write key.properties
         env:
