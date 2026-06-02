@@ -4,72 +4,80 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_data_app/src/reminder/model/bill_model.dart';
 
 abstract class BillRepository {
-  List<BillTask> getAll();
-  void add(BillTask task);
-  void update(BillTask task);
-  void delete(String taskId);
+  List<Bill> getAll();
+  void add(Bill bill);
+  void update(Bill bill);
+  void delete(String billId);
   Future<void> init();
 }
 
-class InMemoryBillRepository implements BillRepository {
-  final List<BillTask> _tasks;
+/// Seed bills with due dates in the current month, so a fresh install shows
+/// meaningful "days left" values.
+List<Bill> _seedBills() {
+  final now = DateTime.now();
+  DateTime due(int day) => DateTime(now.year, now.month, day);
+  return [
+    Bill(
+      id: '1',
+      name: 'Electricity Bill',
+      description: 'Monthly electricity payment',
+      amount: 120.50,
+      dueDate: due(5),
+      createdDate: now,
+    ),
+    Bill(
+      id: '2',
+      name: 'House Rent',
+      description: 'Monthly rent',
+      amount: 8000,
+      dueDate: due(1),
+      createdDate: now,
+    ),
+    Bill(
+      id: '3',
+      name: 'Internet',
+      description: 'Broadband subscription',
+      amount: 799,
+      dueDate: due(10),
+      createdDate: now,
+    ),
+  ];
+}
 
-  InMemoryBillRepository()
-      : _tasks = [
-          BillTask(
-            id: '1',
-            title: 'Electricity Bill',
-            description: 'Monthly electricity payment',
-            amount: 120.50,
-            recurrence: RecurrenceType.monthly,
-            createdDate: DateTime(2024, 1, 5),
-          ),
-          BillTask(
-            id: '2',
-            title: 'Gym Membership',
-            description: 'Weekly gym payment',
-            amount: 25.00,
-            recurrence: RecurrenceType.weekly,
-            createdDate: DateTime(2024, 1, 1),
-          ),
-          BillTask(
-            id: '3',
-            title: 'Take Vitamins',
-            description: 'Daily health routine',
-            recurrence: RecurrenceType.daily,
-            createdDate: DateTime.now(),
-          ),
-        ];
+class InMemoryBillRepository implements BillRepository {
+  final List<Bill> _bills;
+
+  InMemoryBillRepository() : _bills = _seedBills();
 
   @override
   Future<void> init() async {}
 
   @override
-  List<BillTask> getAll() => List.unmodifiable(_tasks);
+  List<Bill> getAll() => List.unmodifiable(_bills);
 
   @override
-  void add(BillTask task) {
-    _tasks.add(task);
+  void add(Bill bill) {
+    _bills.add(bill);
   }
 
   @override
-  void update(BillTask task) {
-    final index = _tasks.indexWhere((t) => t.id == task.id);
+  void update(Bill bill) {
+    final index = _bills.indexWhere((b) => b.id == bill.id);
     if (index != -1) {
-      _tasks[index] = task;
+      _bills[index] = bill;
     }
   }
 
   @override
-  void delete(String taskId) {
-    _tasks.removeWhere((t) => t.id == taskId);
+  void delete(String billId) {
+    _bills.removeWhere((b) => b.id == billId);
   }
 }
 
 class LocalStorageBillRepository implements BillRepository {
   static const String _storageKey = 'bills_data';
   final SharedPreferences _prefs;
-  List<BillTask> _tasks = [];
+  List<Bill> _bills = [];
 
   LocalStorageBillRepository(this._prefs);
 
@@ -82,66 +90,41 @@ class LocalStorageBillRepository implements BillRepository {
     final jsonString = _prefs.getString(_storageKey);
     if (jsonString != null) {
       final List<dynamic> jsonList = json.decode(jsonString);
-      _tasks = jsonList
-          .map((item) => BillTask.fromJson(item as Map<String, dynamic>))
+      _bills = jsonList
+          .map((item) => Bill.fromJson(item as Map<String, dynamic>))
           .toList();
     } else {
-      // Initialize with seed data if empty
-      _tasks = [
-        BillTask(
-          id: '1',
-          title: 'Electricity Bill',
-          description: 'Monthly electricity payment',
-          amount: 120.50,
-          recurrence: RecurrenceType.monthly,
-          createdDate: DateTime(2024, 1, 5),
-        ),
-        BillTask(
-          id: '2',
-          title: 'Gym Membership',
-          description: 'Weekly gym payment',
-          amount: 25.00,
-          recurrence: RecurrenceType.weekly,
-          createdDate: DateTime(2024, 1, 1),
-        ),
-        BillTask(
-          id: '3',
-          title: 'Take Vitamins',
-          description: 'Daily health routine',
-          recurrence: RecurrenceType.daily,
-          createdDate: DateTime.now(),
-        ),
-      ];
+      _bills = _seedBills();
       await _saveToStorage();
     }
   }
 
   Future<void> _saveToStorage() async {
-    final jsonList = _tasks.map((task) => task.toJson()).toList();
+    final jsonList = _bills.map((bill) => bill.toJson()).toList();
     await _prefs.setString(_storageKey, json.encode(jsonList));
   }
 
   @override
-  List<BillTask> getAll() => List.unmodifiable(_tasks);
+  List<Bill> getAll() => List.unmodifiable(_bills);
 
   @override
-  void add(BillTask task) {
-    _tasks.add(task);
+  void add(Bill bill) {
+    _bills.add(bill);
     _saveToStorage();
   }
 
   @override
-  void update(BillTask task) {
-    final index = _tasks.indexWhere((t) => t.id == task.id);
+  void update(Bill bill) {
+    final index = _bills.indexWhere((b) => b.id == bill.id);
     if (index != -1) {
-      _tasks[index] = task;
+      _bills[index] = bill;
       _saveToStorage();
     }
   }
 
   @override
-  void delete(String taskId) {
-    _tasks.removeWhere((t) => t.id == taskId);
+  void delete(String billId) {
+    _bills.removeWhere((b) => b.id == billId);
     _saveToStorage();
   }
 }
@@ -149,7 +132,7 @@ class LocalStorageBillRepository implements BillRepository {
 class FirestoreBillRepository implements BillRepository {
   final String uid;
   final FirebaseFirestore _firestore;
-  List<BillTask> _tasks = [];
+  List<Bill> _bills = [];
 
   FirestoreBillRepository({required this.uid, FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
@@ -160,32 +143,30 @@ class FirestoreBillRepository implements BillRepository {
   @override
   Future<void> init() async {
     final snapshot = await _collection.get();
-    _tasks = snapshot.docs
-        .map((doc) => BillTask.fromJson(doc.data()))
-        .toList();
+    _bills = snapshot.docs.map((doc) => Bill.fromJson(doc.data())).toList();
   }
 
   @override
-  List<BillTask> getAll() => List.unmodifiable(_tasks);
+  List<Bill> getAll() => List.unmodifiable(_bills);
 
   @override
-  void add(BillTask task) {
-    _tasks.add(task);
-    _collection.doc(task.id).set(task.toJson());
+  void add(Bill bill) {
+    _bills.add(bill);
+    _collection.doc(bill.id).set(bill.toJson());
   }
 
   @override
-  void update(BillTask task) {
-    final index = _tasks.indexWhere((t) => t.id == task.id);
+  void update(Bill bill) {
+    final index = _bills.indexWhere((b) => b.id == bill.id);
     if (index != -1) {
-      _tasks[index] = task;
-      _collection.doc(task.id).set(task.toJson());
+      _bills[index] = bill;
+      _collection.doc(bill.id).set(bill.toJson());
     }
   }
 
   @override
-  void delete(String taskId) {
-    _tasks.removeWhere((t) => t.id == taskId);
-    _collection.doc(taskId).delete();
+  void delete(String billId) {
+    _bills.removeWhere((b) => b.id == billId);
+    _collection.doc(billId).delete();
   }
 }

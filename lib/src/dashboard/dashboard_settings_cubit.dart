@@ -74,7 +74,7 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
   static List<FeatureItem> _defaultFeatures() => [
         FeatureItem(
           id: 'bills',
-          title: 'Bills & Tasks',
+          title: 'Bills',
           icon: Icons.receipt_long_rounded,
           gradient: [Colors.orange, Colors.deepOrange],
           order: 0,

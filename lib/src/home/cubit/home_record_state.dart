@@ -3,6 +3,19 @@ import 'package:my_data_app/src/home/home_record_model.dart';
 
 enum HomeViewMode { all, monthly }
 
+/// How to treat the monthly start date when it lands on a weekend.
+/// [exact] keeps the date as-is (default — plain calendar behaviour when the
+/// start day is 1). [previousFriday] / [followingMonday] shift a Sat/Sun start
+/// to the nearest weekday in that direction.
+enum WeekendAdjustment { exact, previousFriday, followingMonday }
+
+WeekendAdjustment weekendAdjustmentFromName(String? name) {
+  return WeekendAdjustment.values.firstWhere(
+    (w) => w.name == name,
+    orElse: () => WeekendAdjustment.exact,
+  );
+}
+
 class HomeCurrency {
   final String code;
   final String symbol;
@@ -76,6 +89,13 @@ class HomeRecordState {
   final HomeCurrency currency;
   final bool showMonthlyCalendar;
 
+  /// Day-of-month (1–31) on which a monthly cycle begins. 1 = plain calendar
+  /// month. Days beyond a month's length are clamped (e.g. 31 → 28 in Feb).
+  final int monthlyStartDay;
+
+  /// What to do when [monthlyStartDay] lands on a Saturday or Sunday.
+  final WeekendAdjustment weekendAdjustment;
+
   /// When true, the records list is replaced with a month-grid calendar where
   /// each day cell shows the total expense for that day. Toggled from the
   /// app bar.
@@ -90,6 +110,8 @@ class HomeRecordState {
     this.viewMode = HomeViewMode.monthly,
     this.currency = HomeCurrency.inr,
     this.showMonthlyCalendar = true,
+    this.monthlyStartDay = 1,
+    this.weekendAdjustment = WeekendAdjustment.exact,
     this.isCalendarView = false,
   });
 
@@ -102,6 +124,8 @@ class HomeRecordState {
     HomeViewMode? viewMode,
     HomeCurrency? currency,
     bool? showMonthlyCalendar,
+    int? monthlyStartDay,
+    WeekendAdjustment? weekendAdjustment,
     bool? isCalendarView,
   }) {
     return HomeRecordState(
@@ -113,6 +137,8 @@ class HomeRecordState {
       viewMode: viewMode ?? this.viewMode,
       currency: currency ?? this.currency,
       showMonthlyCalendar: showMonthlyCalendar ?? this.showMonthlyCalendar,
+      monthlyStartDay: monthlyStartDay ?? this.monthlyStartDay,
+      weekendAdjustment: weekendAdjustment ?? this.weekendAdjustment,
       isCalendarView: isCalendarView ?? this.isCalendarView,
     );
   }

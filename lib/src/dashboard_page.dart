@@ -39,6 +39,7 @@ import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
 import 'package:my_data_app/src/days_counter/days_counter_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
+import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
 import 'package:my_data_app/src/theme/theme_cubit.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -74,7 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
   String _getSubtitle(String id) {
     switch (id) {
       case 'bills':
-        return 'Bills & recurring tasks';
+        return 'Monthly bills & due dates';
       case 'vehicles':
         return 'Vehicles & expenses';
       case 'chits':
@@ -137,7 +138,7 @@ class _DashboardPageState extends State<DashboardPage> {
   ) {
     switch (id) {
       case 'bills':
-        return billState.tasks.length;
+        return billState.bills.length;
       case 'vehicles':
         return vehicleState.vehicles.length;
       case 'chits':
@@ -189,7 +190,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'bills':
         page = BlocProvider.value(
           value: context.read<BillCubit>(),
-          child: const BillTaskPage(),
+          child: const BillsPage(),
         );
         break;
       case 'vehicles':
@@ -636,6 +637,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           daysCounterState,
                         ),
                       ),
+              ),
+            ),
+
+            // App version / build number footer
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, top: 2),
+              child: AppVersionText(
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

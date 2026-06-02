@@ -18,6 +18,10 @@ abstract class HomeRecordRepository {
   void setCurrencyCode(String code);
   bool getShowMonthlyCalendar();
   void setShowMonthlyCalendar(bool value);
+  int getMonthlyStartDay();
+  void setMonthlyStartDay(int day);
+  String getWeekendAdjustment();
+  void setWeekendAdjustment(String value);
   bool getIsCalendarView();
   void setIsCalendarView(bool value);
   Future<void> init();
@@ -31,6 +35,8 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   List<PaymentType> _paymentTypes = [];
   String _currencyCode = 'INR';
   bool _showMonthlyCalendar = true;
+  int _monthlyStartDay = 1;
+  String _weekendAdjustment = 'exact';
   bool _isCalendarView = false;
 
   FirestoreHomeRecordRepository({
@@ -55,6 +61,10 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     if (settingsSnap.exists) {
       _currencyCode = (settingsSnap.data()?['currencyCode'] as String?) ?? 'INR';
       _showMonthlyCalendar = (settingsSnap.data()?['showMonthlyCalendar'] as bool?) ?? true;
+      _monthlyStartDay =
+          (settingsSnap.data()?['monthlyStartDay'] as int?) ?? 1;
+      _weekendAdjustment =
+          (settingsSnap.data()?['weekendAdjustment'] as String?) ?? 'exact';
       _isCalendarView =
           (settingsSnap.data()?['isCalendarView'] as bool?) ?? false;
       paymentTypesSeeded =
@@ -185,6 +195,24 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
   void setShowMonthlyCalendar(bool value) {
     _showMonthlyCalendar = value;
     _settingsDoc.set({'showMonthlyCalendar': value}, SetOptions(merge: true));
+  }
+
+  @override
+  int getMonthlyStartDay() => _monthlyStartDay;
+
+  @override
+  void setMonthlyStartDay(int day) {
+    _monthlyStartDay = day;
+    _settingsDoc.set({'monthlyStartDay': day}, SetOptions(merge: true));
+  }
+
+  @override
+  String getWeekendAdjustment() => _weekendAdjustment;
+
+  @override
+  void setWeekendAdjustment(String value) {
+    _weekendAdjustment = value;
+    _settingsDoc.set({'weekendAdjustment': value}, SetOptions(merge: true));
   }
 
   @override

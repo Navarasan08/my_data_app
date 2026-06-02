@@ -5,8 +5,15 @@ import 'package:my_data_app/src/reminder/model/bill_model.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_state.dart';
 
-class BillTaskPage extends StatelessWidget {
-  const BillTaskPage({Key? key}) : super(key: key);
+/// Indian-grouped currency, e.g. ₹1,23,456 or ₹8,000.
+final NumberFormat _moneyFormat = NumberFormat.decimalPattern('en_IN')
+  ..minimumFractionDigits = 0
+  ..maximumFractionDigits = 2;
+
+String _money(double value) => '₹${_moneyFormat.format(value)}';
+
+class BillsPage extends StatelessWidget {
+  const BillsPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,39 +21,38 @@ class BillTaskPage extends StatelessWidget {
       builder: (context, state) {
         final cs = Theme.of(context).colorScheme;
         final cubit = context.read<BillCubit>();
-        final monthYear = DateFormat('MMMM yyyy').format(state.selectedDate);
-        final tasksForMonth = cubit.tasksForSelectedMonth;
-        final stats = cubit.monthStatistics;
+        final month = state.selectedMonth;
+        final bills = cubit.billsForSelectedMonth;
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Bills & Tasks'),
+            title: const Text('Bills'),
             centerTitle: true,
             elevation: 0,
           ),
           body: Column(
             children: [
-              // Month Selector
+              // Month selector
               Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 color: cs.surface,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.chevron_left),
+                      icon: const Icon(Icons.chevron_left_rounded),
                       onPressed: () => cubit.changeMonth(-1),
                     ),
                     Text(
-                      monthYear,
+                      DateFormat('MMMM yyyy').format(month),
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.chevron_right),
+                      icon: const Icon(Icons.chevron_right_rounded),
                       onPressed: () => cubit.changeMonth(1),
                     ),
                   ],
@@ -54,148 +60,160 @@ class BillTaskPage extends StatelessWidget {
               ),
               const Divider(height: 1),
 
-              // Statistics Overview Bar
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                color: cs.surface,
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _StatCard(
-                            icon: Icons.cancel_outlined,
-                            label: 'Missed',
-                            count: stats['missed'],
-                            amount: stats['missedAmount'],
-                            color: Colors.red,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _StatCard(
-                            icon: Icons.pending_outlined,
-                            label: 'Pending',
-                            count: stats['pending'],
-                            amount: stats['pendingAmount'],
-                            color: Colors.orange,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: _StatCard(
-                            icon: Icons.check_circle_outline,
-                            label: 'Completed',
-                            count: stats['completed'],
-                            amount: null,
-                            color: Colors.green,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Summary bar
+              if (bills.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  color: cs.surface,
+                  child: Column(
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Icon(Icons.receipt_long,
-                                  color: Colors.blue[700], size: 18),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Total Amount',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.blue[900],
-                                ),
-                              ),
-                            ],
+                          Expanded(
+                            child: _SummaryCard(
+                              icon: Icons.error_outline_rounded,
+                              label: 'Overdue',
+                              count: cubit.overdueCount,
+                              color: Colors.red,
+                            ),
                           ),
-                          Text(
-                            '₹${stats['paidAmount'].toStringAsFixed(2)} / ₹${stats['totalAmount'].toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[900],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryCard(
+                              icon: Icons.schedule_rounded,
+                              label: 'Upcoming',
+                              count: cubit.pendingCount,
+                              color: Colors.orange,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryCard(
+                              icon: Icons.check_circle_outline_rounded,
+                              label: 'Paid',
+                              count: cubit.paidCount,
+                              color: Colors.green,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: Colors.blue.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.account_balance_wallet_rounded,
+                                    color: Colors.blue[700], size: 18),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Amount due',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.blue[900],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
+                              children: [
+                                Text(
+                                  _money(cubit.totalDue),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue[900],
+                                  ),
+                                ),
+                                Text(
+                                  ' / ${_money(cubit.totalAmount)}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.blue[400],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
               const Divider(height: 1),
 
-              // Tasks List
+              // Bills list
               Expanded(
-                child: tasksForMonth.isEmpty
+                child: bills.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inbox_outlined,
+                            Icon(Icons.receipt_long_outlined,
                                 size: 64, color: cs.onSurfaceVariant),
                             const SizedBox(height: 16),
                             Text(
-                              'No bills or tasks for this month',
+                              'No bills for this month',
                               style: TextStyle(
-                                fontSize: 16,
-                                color: cs.onSurfaceVariant,
-                              ),
+                                  fontSize: 16, color: cs.onSurfaceVariant),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tap + to add a bill',
+                              style: TextStyle(
+                                  fontSize: 13, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
-                        itemCount: tasksForMonth.length,
+                        itemCount: bills.length,
                         itemBuilder: (context, index) {
-                          final task = tasksForMonth[index];
-                          return TaskCard(
-                            task: task,
-                            selectedMonth: state.selectedDate,
-                            onToggle: (date) =>
-                                cubit.toggleCompletion(task.id, date),
+                          final bill = bills[index];
+                          return _BillCard(
+                            bill: bill,
+                            month: month,
+                            onTogglePaid: () =>
+                                cubit.togglePaidForMonth(bill.id, month),
                             onEdit: () async {
-                              final editedTask =
-                                  await Navigator.push<BillTask>(
+                              final edited = await Navigator.push<Bill>(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      AddTaskPage(task: task),
+                                  builder: (_) => AddBillPage(bill: bill),
                                 ),
                               );
-                              if (editedTask != null) {
-                                cubit.updateTask(editedTask);
-                              }
+                              if (edited != null) cubit.updateBill(edited);
                             },
                             onDelete: () async {
                               final confirmed = await showDialog<bool>(
                                 context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Delete Task'),
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Delete Bill'),
                                   content: Text(
-                                      'Are you sure you want to delete "${task.title}"?'),
+                                      'Are you sure you want to delete "${bill.name}"?'),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
-                                          Navigator.pop(context, false),
+                                          Navigator.pop(ctx, false),
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
                                       onPressed: () =>
-                                          Navigator.pop(context, true),
+                                          Navigator.pop(ctx, true),
                                       style: TextButton.styleFrom(
                                           foregroundColor: Colors.red),
                                       child: const Text('Delete'),
@@ -203,9 +221,7 @@ class BillTaskPage extends StatelessWidget {
                                   ],
                                 ),
                               );
-                              if (confirmed == true) {
-                                cubit.deleteTask(task.id);
-                              }
+                              if (confirmed == true) cubit.deleteBill(bill.id);
                             },
                           );
                         },
@@ -215,16 +231,14 @@ class BillTaskPage extends StatelessWidget {
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () async {
-              final newTask = await Navigator.push<BillTask>(
+              final newBill = await Navigator.push<Bill>(
                 context,
-                MaterialPageRoute(builder: (context) => const AddTaskPage()),
+                MaterialPageRoute(builder: (_) => const AddBillPage()),
               );
-              if (newTask != null) {
-                cubit.addTask(newTask);
-              }
+              if (newBill != null) cubit.addBill(newBill);
             },
             icon: const Icon(Icons.add),
-            label: const Text('Add Bill/Task'),
+            label: const Text('Add Bill'),
           ),
         );
       },
@@ -232,30 +246,29 @@ class BillTaskPage extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+// ─── Summary Card ────────────────────────────────────────────────────────────
+
+class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final int count;
-  final double? amount;
   final Color color;
 
-  const _StatCard({
-    Key? key,
+  const _SummaryCard({
     required this.icon,
     required this.label,
     required this.count,
-    this.amount,
     required this.color,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,7 +282,7 @@ class _StatCard extends StatelessWidget {
                   label,
                   style: TextStyle(
                     fontSize: 11,
-                    color: color.withOpacity(0.8),
+                    color: color.withValues(alpha: 0.85),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -278,165 +291,159 @@ class _StatCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            count.toString(),
+            '$count',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
-          if (amount != null && amount! > 0) ...[
-            const SizedBox(height: 2),
-            Text(
-              '₹${amount!.toStringAsFixed(2)}',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color.withOpacity(0.9),
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-class TaskCard extends StatelessWidget {
-  final BillTask task;
-  final DateTime selectedMonth;
-  final Function(DateTime) onToggle;
+// ─── Bill Card ───────────────────────────────────────────────────────────────
+
+class _BillCard extends StatelessWidget {
+  final Bill bill;
+  final DateTime month;
+  final VoidCallback onTogglePaid;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const TaskCard({
-    Key? key,
-    required this.task,
-    required this.selectedMonth,
-    required this.onToggle,
+  const _BillCard({
+    required this.bill,
+    required this.month,
+    required this.onTogglePaid,
     required this.onEdit,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
-  String _getRecurrenceText() {
-    switch (task.recurrence) {
-      case RecurrenceType.daily:
-        return 'Daily';
-      case RecurrenceType.weekly:
-        return 'Weekly (${DateFormat('EEEE').format(task.createdDate)})';
-      case RecurrenceType.monthly:
-        return 'Monthly (Day ${task.createdDate.day})';
-      case RecurrenceType.custom:
-        return 'Custom (Days: ${task.customDays?.join(', ')})';
+  /// (label, color) for the days-left status badge, relative to [month].
+  (String, Color) _status() {
+    if (bill.isPaidForMonth(month)) return ('Paid', Colors.green);
+    final d = bill.daysLeftInMonth(month);
+    if (d < 0) {
+      return ('Overdue by ${-d} day${d == -1 ? '' : 's'}', Colors.red);
     }
-  }
-
-  List<DateTime> _getDueDatesInMonth() {
-    final daysInMonth =
-        DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
-    final dueDates = <DateTime>[];
-
-    for (int day = 1; day <= daysInMonth; day++) {
-      final date = DateTime(selectedMonth.year, selectedMonth.month, day);
-      if (task.isDueForDate(date)) {
-        dueDates.add(date);
-      }
-    }
-    return dueDates;
+    if (d == 0) return ('Due today', Colors.red);
+    if (d == 1) return ('1 day left', Colors.orange);
+    if (d <= 3) return ('$d days left', Colors.orange);
+    return ('$d days left', Colors.blue);
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final dueDates = _getDueDatesInMonth();
-    final completedCount =
-        dueDates.where((date) => task.isCompletedForDate(date)).length;
-    final totalCount = dueDates.length;
+    final paid = bill.isPaidForMonth(month);
+    final overdue = bill.isOverdueInMonth(month);
+    final (statusLabel, statusColor) = _status();
 
-    final allCompleted = completedCount == totalCount && totalCount > 0;
-    final hasMissed = dueDates.any((date) =>
-        date.isBefore(DateTime.now()) && !task.isCompletedForDate(date));
-    final accentColor =
-        allCompleted ? Colors.green : hasMissed ? Colors.red : Colors.orange;
-    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
+    final total = bill.totalOccurrences;
+    final countLabel =
+        total != null ? '${bill.completedCount}/$total' : '${bill.completedCount}';
+
+    // Completed bills get a green-tinted card; overdue ones a soft red accent.
+    final Color cardColor = paid
+        ? Colors.green.withValues(alpha: 0.08)
+        : overdue
+            ? Colors.red.withValues(alpha: 0.04)
+            : cs.surface;
+    final Color borderColor = paid
+        ? Colors.green.withValues(alpha: 0.40)
+        : overdue
+            ? Colors.red.withValues(alpha: 0.30)
+            : cs.outlineVariant;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: borderColor),
       ),
-      child: Column(
-        children: [
-          // Header
-          InkWell(
-            onTap: onEdit,
-            borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: onEdit,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(6, 6, 8, 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Paid checkbox for this month
+              Checkbox(
+                value: paid,
+                onChanged: (_) => onTogglePaid(),
+                visualDensity: VisualDensity.compact,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                activeColor: Colors.green,
+              ),
+              const SizedBox(width: 4),
+              // Name + due date + status + progress
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 6),
+                    Text(
+                      bill.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: paid ? Colors.green[800] : cs.onSurface,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: Icon(Icons.receipt_long_rounded,
-                        size: 20, color: accentColor),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Text(
-                          task.title,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.repeat_rounded,
+                            Icon(Icons.event_rounded,
                                 size: 12, color: cs.onSurfaceVariant),
                             const SizedBox(width: 4),
                             Text(
-                              _getRecurrenceText(),
+                              'Due ${DateFormat('d MMM').format(bill.dueDateInMonth(month))}',
                               style: TextStyle(
-                                fontSize: 12,
-                                color: cs.onSurfaceVariant,
-                              ),
+                                  fontSize: 12, color: cs.onSurfaceVariant),
                             ),
                           ],
                         ),
+                        _Pill(label: statusLabel, color: statusColor),
+                        _Pill(
+                          label: countLabel,
+                          color: Colors.purple,
+                          icon: Icons.check_rounded,
+                        ),
                       ],
                     ),
-                  ),
-                  if (task.amount != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  if (bill.amount != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        '₹${task.amount!.toStringAsFixed(0)}',
+                        _money(bill.amount!),
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
+                          color: cs.onSurface,
                         ),
                       ),
                     ),
-                  const SizedBox(width: 4),
+                  const SizedBox(height: 6),
                   InkWell(
                     onTap: onDelete,
                     borderRadius: BorderRadius.circular(6),
@@ -452,104 +459,42 @@ class TaskCard extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-          // Progress bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 4,
-                      backgroundColor: cs.surfaceContainerHighest,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(accentColor),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  '$completedCount/$totalCount',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Date chips
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-            child: Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: dueDates.map((date) {
-                final isCompleted = task.isCompletedForDate(date);
-                final isPast =
-                    date.isBefore(DateTime.now()) && !isCompleted;
+        ),
+      ),
+    );
+  }
+}
 
-                return InkWell(
-                  onTap: () => onToggle(date),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? Colors.green[50]
-                          : isPast
-                              ? Colors.red[50]
-                              : cs.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: isCompleted
-                            ? Colors.green[300]!
-                            : isPast
-                                ? Colors.red[200]!
-                                : cs.outline,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isCompleted
-                              ? Icons.check_circle_rounded
-                              : isPast
-                                  ? Icons.cancel_rounded
-                                  : Icons.circle_outlined,
-                          size: 14,
-                          color: isCompleted
-                              ? Colors.green[600]
-                              : isPast
-                                  ? Colors.red[400]
-                                  : cs.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          DateFormat('d').format(date),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isCompleted
-                                ? Colors.green[700]
-                                : isPast
-                                    ? Colors.red[700]
-                                    : cs.onSurface,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+class _Pill extends StatelessWidget {
+  final String label;
+  final Color color;
+  final IconData? icon;
+
+  const _Pill({required this.label, required this.color, this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 2),
+          ],
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
             ),
           ),
         ],
@@ -558,83 +503,103 @@ class TaskCard extends StatelessWidget {
   }
 }
 
-class AddTaskPage extends StatefulWidget {
-  final BillTask? task;
+// ─── Add / Edit Bill Page ────────────────────────────────────────────────────
 
-  const AddTaskPage({Key? key, this.task}) : super(key: key);
+class AddBillPage extends StatefulWidget {
+  final Bill? bill;
+
+  const AddBillPage({Key? key, this.bill}) : super(key: key);
 
   @override
-  State<AddTaskPage> createState() => _AddTaskPageState();
+  State<AddBillPage> createState() => _AddBillPageState();
 }
 
-class _AddTaskPageState extends State<AddTaskPage> {
+class _AddBillPageState extends State<AddBillPage> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
+  final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
 
-  RecurrenceType _selectedRecurrence = RecurrenceType.monthly;
-  DateTime _selectedDate = DateTime.now();
-  List<int> _customDays = [];
+  late DateTime _dueDate;
+  DateTime? _deadline;
 
-  bool get _isEditing => widget.task != null;
+  bool get _isEditing => widget.bill != null;
 
   @override
   void initState() {
     super.initState();
-    if (widget.task != null) {
-      _titleController.text = widget.task!.title;
-      _descriptionController.text = widget.task!.description ?? '';
-      _amountController.text = widget.task!.amount?.toString() ?? '';
-      _selectedRecurrence = widget.task!.recurrence;
-      _selectedDate = widget.task!.createdDate;
-      _customDays = List<int>.from(widget.task!.customDays ?? []);
+    if (widget.bill != null) {
+      _nameController.text = widget.bill!.name;
+      _descriptionController.text = widget.bill!.description ?? '';
+      _amountController.text = widget.bill!.amount?.toString() ?? '';
+      _dueDate = widget.bill!.dueDate;
+      _deadline = widget.bill!.deadline;
+    } else {
+      final now = DateTime.now();
+      _dueDate = DateTime(now.year, now.month, now.day);
     }
   }
 
   @override
   void dispose() {
-    _titleController.dispose();
+    _nameController.dispose();
     _descriptionController.dispose();
     _amountController.dispose();
     super.dispose();
   }
 
-  void _saveTask() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedRecurrence == RecurrenceType.custom && _customDays.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  'Please select at least one day for custom recurrence')),
-        );
-        return;
-      }
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
 
-      final task = BillTask(
-        id: widget.task?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        amount: _amountController.text.isEmpty
-            ? null
-            : double.tryParse(_amountController.text),
-        recurrence: _selectedRecurrence,
-        customDays:
-            _selectedRecurrence == RecurrenceType.custom ? _customDays : null,
-        createdDate: _selectedDate,
-      );
+    final bill = Bill(
+      id: widget.bill?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text.trim(),
+      amount: _amountController.text.isEmpty
+          ? null
+          : double.tryParse(_amountController.text),
+      dueDate: _dueDate,
+      deadline: _deadline,
+      paidMonths: widget.bill?.paidMonths ?? const [],
+      createdDate: widget.bill?.createdDate ?? DateTime.now(),
+    );
+    Navigator.pop(context, bill);
+  }
 
-      Navigator.pop(context, task);
+  Future<void> _pickDueDate() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _dueDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+    );
+    if (date != null) {
+      setState(() => _dueDate = DateTime(date.year, date.month, date.day));
+    }
+  }
+
+  Future<void> _pickDeadline() async {
+    final date = await showDatePicker(
+      context: context,
+      initialDate: _deadline ?? _dueDate,
+      firstDate: _dueDate,
+      lastDate: DateTime(2040),
+      helpText: 'Select deadline month',
+    );
+    if (date != null) {
+      setState(() => _deadline = DateTime(date.year, date.month, date.day));
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Bill/Task' : 'Add Bill/Task'),
+        title: Text(_isEditing ? 'Edit Bill' : 'Add Bill'),
         elevation: 0,
       ),
       body: Form(
@@ -643,15 +608,15 @@ class _AddTaskPageState extends State<AddTaskPage> {
           padding: const EdgeInsets.all(16),
           children: [
             TextFormField(
-              controller: _titleController,
+              controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Title *',
+                labelText: 'Bill Name *',
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.title),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a title';
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a bill name';
                 }
                 return null;
               },
@@ -664,7 +629,7 @@ class _AddTaskPageState extends State<AddTaskPage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.description),
               ),
-              maxLines: 3,
+              maxLines: 2,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -672,95 +637,68 @@ class _AddTaskPageState extends State<AddTaskPage> {
               decoration: const InputDecoration(
                 labelText: 'Amount (optional)',
                 border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.attach_money),
+                prefixIcon: Icon(Icons.currency_rupee),
               ),
-              keyboardType: TextInputType.number,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Recurrence Pattern',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            const SizedBox(height: 16),
+            // Due date
+            ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: cs.outline),
+              ),
+              leading: Icon(Icons.event_rounded, color: cs.primary),
+              title: const Text('Due Date'),
+              subtitle: Text(
+                'Day ${_dueDate.day} · ${DateFormat('MMM yyyy').format(_dueDate)} onward',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(Icons.calendar_today, size: 18),
+              onTap: _pickDueDate,
             ),
             const SizedBox(height: 12),
-            ...RecurrenceType.values.map((type) {
-              return RadioListTile<RecurrenceType>(
-                title: Text(_getRecurrenceLabel(type)),
-                value: type,
-                groupValue: _selectedRecurrence,
-                onChanged: (value) {
-                  setState(() {
-                    _selectedRecurrence = value!;
-                  });
-                },
-              );
-            }),
-            if (_selectedRecurrence == RecurrenceType.weekly ||
-                _selectedRecurrence == RecurrenceType.monthly) ...[
-              const SizedBox(height: 16),
-              ListTile(
-                title: Text(
-                  _selectedRecurrence == RecurrenceType.weekly
-                      ? 'Select Day of Week'
-                      : 'Select Day of Month',
+            // Optional deadline
+            ListTile(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(color: cs.outline),
+              ),
+              leading: Icon(Icons.flag_rounded, color: cs.primary),
+              title: const Text('Deadline (optional)'),
+              subtitle: Text(
+                _deadline == null
+                    ? 'No deadline — ongoing monthly bill'
+                    : 'Until ${DateFormat('MMM yyyy').format(_deadline!)}',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: _deadline == null
+                  ? const Icon(Icons.add, size: 18)
+                  : IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () => setState(() => _deadline = null),
+                    ),
+              onTap: _pickDeadline,
+            ),
+            if (_deadline != null) ...[
+              const SizedBox(height: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  'Progress will show as completed / ${_monthsBetween(_dueDate, _deadline!)} months.',
+                  style:
+                      TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
-                subtitle: Text(
-                  _selectedRecurrence == RecurrenceType.weekly
-                      ? DateFormat('EEEE').format(_selectedDate)
-                      : 'Day ${_selectedDate.day}',
-                ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () async {
-                  final date = await showDatePicker(
-                    context: context,
-                    initialDate: _selectedDate,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2030),
-                  );
-                  if (date != null) {
-                    setState(() {
-                      _selectedDate = date;
-                    });
-                  }
-                },
               ),
             ],
-            if (_selectedRecurrence == RecurrenceType.custom) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Select Days of Month',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              ),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(31, (index) {
-                  final day = index + 1;
-                  final isSelected = _customDays.contains(day);
-                  return FilterChip(
-                    label: Text('$day'),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _customDays.add(day);
-                          _customDays.sort();
-                        } else {
-                          _customDays.remove(day);
-                        }
-                      });
-                    },
-                  );
-                }),
-              ),
-            ],
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
             ElevatedButton(
-              onPressed: _saveTask,
+              onPressed: _save,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Task' : 'Save Task',
+              child: Text(_isEditing ? 'Update Bill' : 'Save Bill',
                   style: const TextStyle(fontSize: 16)),
             ),
           ],
@@ -769,16 +707,8 @@ class _AddTaskPageState extends State<AddTaskPage> {
     );
   }
 
-  String _getRecurrenceLabel(RecurrenceType type) {
-    switch (type) {
-      case RecurrenceType.daily:
-        return 'Daily';
-      case RecurrenceType.weekly:
-        return 'Weekly';
-      case RecurrenceType.monthly:
-        return 'Monthly';
-      case RecurrenceType.custom:
-        return 'Custom Days';
-    }
+  int _monthsBetween(DateTime start, DateTime end) {
+    final n = (end.year - start.year) * 12 + (end.month - start.month) + 1;
+    return n < 1 ? 1 : n;
   }
 }

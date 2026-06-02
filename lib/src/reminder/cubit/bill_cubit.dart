@@ -8,115 +8,85 @@ class BillCubit extends Cubit<BillState> {
 
   BillCubit(this._repository)
       : super(BillState(
-          tasks: _repository.getAll(),
-          selectedDate: DateTime.now(),
+          bills: _repository.getAll(),
+          selectedMonth: DateTime(DateTime.now().year, DateTime.now().month),
         ));
 
-  void addTask(BillTask task) {
-    _repository.add(task);
-    emit(state.copyWith(tasks: _repository.getAll()));
+  void addBill(Bill bill) {
+    _repository.add(bill);
+    emit(state.copyWith(bills: _repository.getAll()));
   }
 
-  void updateTask(BillTask updatedTask) {
-    final existing = state.tasks.firstWhere((t) => t.id == updatedTask.id);
-    final merged = updatedTask.copyWith(
-      completedOccurrences: existing.completedOccurrences,
-    );
-    _repository.update(merged);
-    emit(state.copyWith(tasks: _repository.getAll()));
+  void updateBill(Bill bill) {
+    // Preserve the per-month paid history, which the edit form doesn't manage.
+    final existing = state.bills.firstWhere((b) => b.id == bill.id,
+        orElse: () => bill);
+    _repository.update(bill.copyWith(paidMonths: existing.paidMonths));
+    emit(state.copyWith(bills: _repository.getAll()));
   }
 
-  void deleteTask(String taskId) {
-    _repository.delete(taskId);
-    emit(state.copyWith(tasks: _repository.getAll()));
+  void deleteBill(String billId) {
+    _repository.delete(billId);
+    emit(state.copyWith(bills: _repository.getAll()));
   }
 
-  void toggleCompletion(String taskId, DateTime date) {
-    final task = state.tasks.firstWhere((t) => t.id == taskId);
-    final updatedOccurrences = List<DateTime>.from(task.completedOccurrences);
-
-    if (task.isCompletedForDate(date)) {
-      updatedOccurrences.removeWhere((d) =>
-          d.year == date.year && d.month == date.month && d.day == date.day);
+  /// Toggle whether [billId] is paid for [month] (normalised to year-month).
+  void togglePaidForMonth(String billId, DateTime month) {
+    final bill = state.bills.firstWhere((b) => b.id == billId);
+    final ym = DateTime(month.year, month.month);
+    final paid = List<DateTime>.from(bill.paidMonths);
+    if (bill.isPaidForMonth(ym)) {
+      paid.removeWhere((p) => p.year == ym.year && p.month == ym.month);
     } else {
-      updatedOccurrences.add(date);
+      paid.add(ym);
     }
-
-    _repository.update(task.copyWith(completedOccurrences: updatedOccurrences));
-    emit(state.copyWith(tasks: _repository.getAll()));
+    _repository.update(bill.copyWith(paidMonths: paid));
+    emit(state.copyWith(bills: _repository.getAll()));
   }
 
-  void changeMonth(int monthDelta) {
-    final current = state.selectedDate;
+  void changeMonth(int delta) {
+    final cur = state.selectedMonth;
     emit(state.copyWith(
-      selectedDate: DateTime(current.year, current.month + monthDelta, 1),
+      selectedMonth: DateTime(cur.year, cur.month + delta),
     ));
   }
 
-  List<BillTask> get tasksForSelectedMonth {
-    final sel = state.selectedDate;
-    return state.tasks.where((task) {
-      final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
-      for (int day = 1; day <= daysInMonth; day++) {
-        final date = DateTime(sel.year, sel.month, day);
-        if (task.isDueForDate(date)) return true;
-      }
-      return false;
-    }).toList();
+  /// Bills active in the selected month, ordered: unpaid first (soonest /
+  /// most overdue at the top), then paid underneath, both by due day.
+  List<Bill> get billsForSelectedMonth {
+    final month = state.selectedMonth;
+    final bills =
+        state.bills.where((b) => b.isActiveInMonth(month)).toList();
+    bills.sort((a, b) {
+      final ap = a.isPaidForMonth(month);
+      final bp = b.isPaidForMonth(month);
+      if (ap != bp) return ap ? 1 : -1;
+      return a.dueDateInMonth(month).compareTo(b.dueDateInMonth(month));
+    });
+    return bills;
   }
 
-  Map<String, dynamic> get monthStatistics {
-    final tasksForMonth = tasksForSelectedMonth;
-    final sel = state.selectedDate;
-    final now = DateTime.now();
+  int get overdueCount => billsForSelectedMonth
+      .where((b) => b.isOverdueInMonth(state.selectedMonth))
+      .length;
 
-    int totalOccurrences = 0;
-    int completedOccurrences = 0;
-    int missedOccurrences = 0;
-    int pendingOccurrences = 0;
-    double totalAmount = 0;
-    double paidAmount = 0;
-    double missedAmount = 0;
-    double pendingAmount = 0;
+  int get pendingCount => billsForSelectedMonth.where((b) {
+        final m = state.selectedMonth;
+        return !b.isPaidForMonth(m) && !b.isOverdueInMonth(m);
+      }).length;
 
-    for (var task in tasksForMonth) {
-      final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
+  int get paidCount => billsForSelectedMonth
+      .where((b) => b.isPaidForMonth(state.selectedMonth))
+      .length;
 
-      for (int day = 1; day <= daysInMonth; day++) {
-        final date = DateTime(sel.year, sel.month, day);
-        if (task.isDueForDate(date)) {
-          totalOccurrences++;
+  /// Total amount still owed in the selected month (active, unpaid bills).
+  /// Reduces as bills are marked paid.
+  double get totalDue => billsForSelectedMonth
+      .where((b) => !b.isPaidForMonth(state.selectedMonth))
+      .fold(0.0, (sum, b) => sum + (b.amount ?? 0));
 
-          if (task.isCompletedForDate(date)) {
-            completedOccurrences++;
-            if (task.amount != null) paidAmount += task.amount!;
-          } else {
-            final dateOnly = DateTime(date.year, date.month, date.day);
-            final nowOnly = DateTime(now.year, now.month, now.day);
-
-            if (dateOnly.isBefore(nowOnly)) {
-              missedOccurrences++;
-              if (task.amount != null) missedAmount += task.amount!;
-            } else {
-              pendingOccurrences++;
-              if (task.amount != null) pendingAmount += task.amount!;
-            }
-          }
-
-          if (task.amount != null) totalAmount += task.amount!;
-        }
-      }
-    }
-
-    return {
-      'total': totalOccurrences,
-      'completed': completedOccurrences,
-      'missed': missedOccurrences,
-      'pending': pendingOccurrences,
-      'totalAmount': totalAmount,
-      'paidAmount': paidAmount,
-      'missedAmount': missedAmount,
-      'pendingAmount': pendingAmount,
-    };
-  }
+  /// Total amount of all active bills in the selected month, regardless of
+  /// paid status. Stays fixed as bills are ticked.
+  double get totalAmount => billsForSelectedMonth
+      .fold(0.0, (sum, b) => sum + (b.amount ?? 0));
 }

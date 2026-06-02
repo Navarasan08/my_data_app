@@ -33,6 +33,7 @@ dependencies:
   file_picker: ^10.3.4
   flutter_email_sender: ^7.0.0
   flutter_animate: ^4.5.0
+  package_info_plus: ^8.0.0
 
 dev_dependencies:
   flutter_test:
