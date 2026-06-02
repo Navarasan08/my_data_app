@@ -75,7 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
   String _getSubtitle(String id) {
     switch (id) {
       case 'bills':
-        return 'Bills & recurring tasks';
+        return 'Monthly bills & due dates';
       case 'vehicles':
         return 'Vehicles & expenses';
       case 'chits':
@@ -138,7 +138,7 @@ class _DashboardPageState extends State<DashboardPage> {
   ) {
     switch (id) {
       case 'bills':
-        return billState.tasks.length;
+        return billState.bills.length;
       case 'vehicles':
         return vehicleState.vehicles.length;
       case 'chits':
@@ -190,7 +190,7 @@ class _DashboardPageState extends State<DashboardPage> {
       case 'bills':
         page = BlocProvider.value(
           value: context.read<BillCubit>(),
-          child: const BillTaskPage(),
+          child: const BillsPage(),
         );
         break;
       case 'vehicles':
