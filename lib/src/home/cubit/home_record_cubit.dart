@@ -233,6 +233,26 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return result;
   }
 
+  /// Like [monthlyTotals], but each bucket spans the custom monthly cycle
+  /// (effective start date → next cycle start). The map key stays the anchor
+  /// month (first-of-month) so callers label it as a plain month. When no
+  /// custom cycle is set this is identical to [monthlyTotals].
+  Map<DateTime, double> monthlyCycleTotals({int months = 12}) {
+    final now = DateTime.now();
+    final result = <DateTime, double>{};
+    for (int i = months - 1; i >= 0; i--) {
+      final anchor = DateTime(now.year, now.month - i, 1);
+      final start = effectiveCycleStart(anchor.year, anchor.month);
+      final end = effectiveCycleStart(anchor.year, anchor.month + 1);
+      final total = state.records.where((r) {
+        final d = DateTime(r.date.year, r.date.month, r.date.day);
+        return !d.isBefore(start) && d.isBefore(end);
+      }).fold(0.0, (sum, r) => sum + r.amount);
+      result[anchor] = total;
+    }
+    return result;
+  }
+
   Map<HomeCategory, double> allTimeCategoryTotals() {
     final map = <HomeCategory, double>{};
     for (final r in state.records) {

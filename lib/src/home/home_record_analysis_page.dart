@@ -37,14 +37,36 @@ class HomeRecordAnalysisPage extends StatefulWidget {
 
 class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   DateTimeRange? _dateRange;
+
+  /// A specific month selected via the navigator arrows. Cycle-aware: the
+  /// window honours the configured monthly start date, while the label stays
+  /// "MMM yyyy". Null unless the user has stepped to a particular month.
+  DateTime? _monthAnchor;
+
   HomeCategory? _filterCategory;
   AnalysisPeriod _period = AnalysisPeriod.thisMonth;
 
-  /// Resolved [start, end] window for the current selection. When the user
-  /// has picked a [DateTimeRange] explicitly it wins; otherwise we derive
-  /// the window from [_period]. The `allTime` flag tells the caller it can
-  /// short-circuit to the cubit's all-time aggregates.
-  ({DateTime start, DateTime end, bool allTime}) _activeRange() {
+  /// Cycle window for the month containing [anchor]: from the effective start
+  /// date of that month's cycle up to (but not including) the next cycle's
+  /// start. With no custom cycle this is just the plain calendar month.
+  ({DateTime start, DateTime end, bool allTime}) _monthWindow(
+      HomeRecordCubit cubit, DateTime anchor) {
+    final start = cubit.effectiveCycleStart(anchor.year, anchor.month);
+    final nextStart = cubit.effectiveCycleStart(anchor.year, anchor.month + 1);
+    return (
+      start: start,
+      end: nextStart.subtract(const Duration(seconds: 1)),
+      allTime: false,
+    );
+  }
+
+  /// Resolved [start, end] window for the current selection. An explicit
+  /// [DateTimeRange] wins; then a stepped [_monthAnchor]; otherwise the window
+  /// is derived from [_period]. Month-based windows are cycle-aware. The
+  /// `allTime` flag tells the caller it can short-circuit to the cubit's
+  /// all-time aggregates.
+  ({DateTime start, DateTime end, bool allTime}) _activeRange(
+      HomeRecordCubit cubit) {
     if (_dateRange != null) {
       // showDateRangePicker's end-date is the start-of-day — bump to
       // end-of-day so a same-day range matches all records that day.
@@ -52,20 +74,15 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           _dateRange!.end.day, 23, 59, 59);
       return (start: _dateRange!.start, end: end, allTime: false);
     }
+    if (_monthAnchor != null) {
+      return _monthWindow(cubit, _monthAnchor!);
+    }
     final now = DateTime.now();
     switch (_period) {
       case AnalysisPeriod.thisMonth:
-        return (
-          start: DateTime(now.year, now.month, 1),
-          end: DateTime(now.year, now.month + 1, 0, 23, 59, 59),
-          allTime: false,
-        );
+        return _monthWindow(cubit, DateTime(now.year, now.month));
       case AnalysisPeriod.lastMonth:
-        return (
-          start: DateTime(now.year, now.month - 1, 1),
-          end: DateTime(now.year, now.month, 0, 23, 59, 59),
-          allTime: false,
-        );
+        return _monthWindow(cubit, DateTime(now.year, now.month - 1));
       case AnalysisPeriod.year:
         return (
           start: DateTime(now.year, 1, 1),
@@ -84,6 +101,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   String _activeRangeLabel() {
     if (_dateRange != null) {
       return '${DateFormat('d MMM').format(_dateRange!.start)} – ${DateFormat('d MMM yyyy').format(_dateRange!.end)}';
+    }
+    if (_monthAnchor != null) {
+      return DateFormat('MMM yyyy').format(_monthAnchor!);
     }
     return _period.label;
   }
@@ -107,6 +127,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       }
       return '${DateFormat('d MMM yyyy').format(s)} – ${DateFormat('d MMM yyyy').format(e)}';
     }
+    if (_monthAnchor != null) {
+      return DateFormat('MMM yyyy').format(_monthAnchor!);
+    }
     final now = DateTime.now();
     switch (_period) {
       case AnalysisPeriod.thisMonth:
@@ -126,7 +149,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   /// period state.
   void _shiftMonth(int delta) {
     DateTime base;
-    if (_dateRange != null) {
+    if (_monthAnchor != null) {
+      base = _monthAnchor!;
+    } else if (_dateRange != null) {
       base = DateTime(_dateRange!.start.year, _dateRange!.start.month);
     } else {
       final now = DateTime.now();
@@ -140,17 +165,16 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           base = DateTime(now.year, now.month);
       }
     }
-    final target = DateTime(base.year, base.month + delta);
     setState(() {
-      _dateRange = DateTimeRange(
-        start: DateTime(target.year, target.month, 1),
-        end: DateTime(target.year, target.month + 1, 0, 23, 59, 59),
-      );
+      // A stepped month is cycle-aware (see [_monthWindow]); the label stays
+      // "MMM yyyy". Clear any explicit custom range.
+      _monthAnchor = DateTime(base.year, base.month + delta);
+      _dateRange = null;
     });
   }
 
   Map<HomeCategory, double> _categoryTotals(HomeRecordCubit cubit) {
-    final r = _activeRange();
+    final r = _activeRange(cubit);
     final base = r.allTime
         ? cubit.allTimeCategoryTotals()
         : cubit.categoryTotalsInRange(r.start, r.end);
@@ -162,7 +186,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Map<PaymentType, double> _paymentTotals(HomeRecordCubit cubit) {
-    final r = _activeRange();
+    final r = _activeRange(cubit);
     return cubit.paymentTotalsInRange(
       r.start,
       r.end,
@@ -171,7 +195,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   int _untaggedPaymentCount(HomeRecordCubit cubit) {
-    final r = _activeRange();
+    final r = _activeRange(cubit);
     return cubit.countUntaggedPaymentsInRange(
       r.start,
       r.end,
@@ -185,6 +209,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         _period,
         _dateRange?.start,
         _dateRange?.end,
+        _monthAnchor,
         _filterCategory?.id,
       );
 
@@ -200,7 +225,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         final paymentTotal =
             paymentTotals.values.fold<double>(0, (s, v) => s + v);
         final untaggedCount = _untaggedPaymentCount(cubit);
-        final monthlyData = cubit.monthlyTotals(months: 12);
+        final monthlyData = cubit.monthlyCycleTotals(months: 12);
 
         return Scaffold(
           appBar: AppBar(
@@ -390,7 +415,8 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   Widget _buildFilterControls(
       BuildContext context, List<HomeCategory> allCategories) {
     final cs = Theme.of(context).colorScheme;
-    final hasRange = _dateRange != null;
+    // No segment looks selected while a custom range or a stepped month is active.
+    final hasRange = _dateRange != null || _monthAnchor != null;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -420,6 +446,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 setState(() {
                   _period = values.first;
                   _dateRange = null;
+                  _monthAnchor = null;
                 });
               },
               style: ButtonStyle(
@@ -452,7 +479,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 initialDateRange: _dateRange,
               );
               if (range != null) {
-                setState(() => _dateRange = range);
+                setState(() {
+                  _dateRange = range;
+                  _monthAnchor = null;
+                });
               }
             },
           ),
@@ -933,7 +963,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   void _showCategoryRecords(
       BuildContext context, HomeRecordCubit cubit, HomeCategory cat) {
-    final r = _activeRange();
+    final r = _activeRange(cubit);
     final records = cubit.recordsInRange(r.start, r.end, category: cat);
     _showRecordsSheet(
       context,
@@ -948,7 +978,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   void _showPaymentTypeRecords(
       BuildContext context, HomeRecordCubit cubit, PaymentType type) {
-    final r = _activeRange();
+    final r = _activeRange(cubit);
     final records = cubit.recordsInRange(
       r.start,
       r.end,
