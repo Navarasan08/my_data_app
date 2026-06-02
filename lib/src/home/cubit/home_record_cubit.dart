@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
@@ -14,6 +15,9 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           paymentTypes: _repository.getPaymentTypes(),
           currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
           showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
+          monthlyStartDay: _repository.getMonthlyStartDay(),
+          weekendAdjustment:
+              weekendAdjustmentFromName(_repository.getWeekendAdjustment()),
           isCalendarView: _repository.getIsCalendarView(),
         ));
 
@@ -39,18 +43,6 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     final day = cur.day > daysInTarget ? daysInTarget : cur.day;
     emit(state.copyWith(
       selectedDate: DateTime(target.year, target.month, day),
-    ));
-  }
-
-  /// Select a specific day-of-month within the currently selected month.
-  /// Used by the calendar view to drive the records list shown below the
-  /// grid.
-  void selectDay(int day) {
-    final cur = state.selectedDate;
-    final daysIn = DateTime(cur.year, cur.month + 1, 0).day;
-    final safe = day.clamp(1, daysIn);
-    emit(state.copyWith(
-      selectedDate: DateTime(cur.year, cur.month, safe),
     ));
   }
 
@@ -105,11 +97,80 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  // ── Monthly cycle (custom start day + weekend adjustment) ────────────────
+
+  /// True when the user has customised the monthly cycle away from a plain
+  /// calendar month (start day other than 1, or any weekend shift on day 1).
+  bool get hasCustomCycle =>
+      state.monthlyStartDay != 1 ||
+      state.weekendAdjustment != WeekendAdjustment.exact;
+
+  /// The weekend-adjusted date on which the cycle anchored at (year, month)
+  /// begins. The nominal start is `monthlyStartDay` clamped to the month's
+  /// length; if that lands on a weekend it is shifted per [WeekendAdjustment].
+  DateTime effectiveCycleStart(int year, int month) {
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final day = state.monthlyStartDay.clamp(1, daysInMonth);
+    var d = DateTime(year, month, day);
+    switch (state.weekendAdjustment) {
+      case WeekendAdjustment.exact:
+        break;
+      case WeekendAdjustment.previousFriday:
+        if (d.weekday == DateTime.saturday) {
+          d = d.subtract(const Duration(days: 1));
+        } else if (d.weekday == DateTime.sunday) {
+          d = d.subtract(const Duration(days: 2));
+        }
+        break;
+      case WeekendAdjustment.followingMonday:
+        if (d.weekday == DateTime.saturday) {
+          d = d.add(const Duration(days: 2));
+        } else if (d.weekday == DateTime.sunday) {
+          d = d.add(const Duration(days: 1));
+        }
+        break;
+    }
+    return DateTime(d.year, d.month, d.day);
+  }
+
+  /// First-of-month marker of the cycle that [date] falls within. A date
+  /// earlier than its own month's cycle start belongs to the previous month's
+  /// cycle.
+  DateTime _anchorFor(DateTime date) {
+    final d = DateTime(date.year, date.month, date.day);
+    final thisStart = effectiveCycleStart(date.year, date.month);
+    if (d.isBefore(thisStart)) {
+      return DateTime(date.year, date.month - 1, 1);
+    }
+    return DateTime(date.year, date.month, 1);
+  }
+
+  /// Inclusive start of the currently selected cycle.
+  DateTime get selectedCycleStart {
+    final a = _anchorFor(state.selectedDate);
+    return effectiveCycleStart(a.year, a.month);
+  }
+
+  /// Exclusive end of the currently selected cycle (= start of the next one).
+  DateTime get selectedCycleEnd {
+    final a = _anchorFor(state.selectedDate);
+    return effectiveCycleStart(a.year, a.month + 1);
+  }
+
+  bool _inSelectedCycle(DateTime date) {
+    final d = DateTime(date.year, date.month, date.day);
+    return !d.isBefore(selectedCycleStart) && d.isBefore(selectedCycleEnd);
+  }
+
   List<HomeRecord> get recordsForSelectedMonth {
-    final sel = state.selectedDate;
-    return state.records
-        .where((r) => r.date.year == sel.year && r.date.month == sel.month)
-        .toList()
+    if (!hasCustomCycle) {
+      final sel = state.selectedDate;
+      return state.records
+          .where((r) => r.date.year == sel.year && r.date.month == sel.month)
+          .toList()
+        ..sort((a, b) => b.date.compareTo(a.date));
+    }
+    return state.records.where((r) => _inSelectedCycle(r.date)).toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
@@ -350,36 +411,63 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     emit(state.copyWith(showMonthlyCalendar: value));
   }
 
+  void setMonthlyStartDay(int day) {
+    final clamped = day.clamp(1, 31);
+    _repository.setMonthlyStartDay(clamped);
+    emit(state.copyWith(monthlyStartDay: clamped));
+  }
+
+  void setWeekendAdjustment(WeekendAdjustment adjustment) {
+    _repository.setWeekendAdjustment(adjustment.name);
+    emit(state.copyWith(weekendAdjustment: adjustment));
+  }
+
+  /// Label for the currently selected period shown in the month navigator.
+  /// Plain `MMM yyyy` for calendar months; an inclusive date range (e.g.
+  /// `25 Jun – 24 Jul`) when a custom cycle is active.
+  String get selectedPeriodLabel {
+    if (!hasCustomCycle) {
+      return DateFormat('MMM yyyy').format(state.selectedDate);
+    }
+    final start = selectedCycleStart;
+    final lastDay = selectedCycleEnd.subtract(const Duration(days: 1));
+    final sameYear = start.year == lastDay.year;
+    final startFmt = DateFormat(sameYear ? 'd MMM' : 'd MMM yyyy');
+    return '${startFmt.format(start)} – ${DateFormat('d MMM yyyy').format(lastDay)}';
+  }
+
   void toggleCalendarView() {
     final next = !state.isCalendarView;
     _repository.setIsCalendarView(next);
     emit(state.copyWith(isCalendarView: next));
   }
 
-  /// Totals grouped by day-of-month, restricted to the currently selected
-  /// month and respecting the active category filter. Used by the
-  /// month-grid calendar view.
-  Map<int, double> get dailyTotalsForSelectedMonth {
-    final sel = state.selectedDate;
+  /// Totals grouped by full date across the currently selected cycle,
+  /// respecting the active category filter. Used by the month-grid calendar
+  /// view, whose grid spans the cycle (which may cross calendar months when a
+  /// custom start day is set), so totals are keyed by date — not day-of-month,
+  /// which can repeat within a cycle.
+  Map<DateTime, double> get dailyTotalsForSelectedCycle {
     final selected = state.selectedCategoryIds;
-    final out = <int, double>{};
+    final start = selectedCycleStart;
+    final end = selectedCycleEnd;
+    final out = <DateTime, double>{};
     for (final r in state.records) {
-      if (r.date.year != sel.year || r.date.month != sel.month) continue;
+      final d = DateTime(r.date.year, r.date.month, r.date.day);
+      if (d.isBefore(start) || !d.isBefore(end)) continue;
       if (selected.isNotEmpty && !selected.contains(r.category.id)) continue;
-      out[r.date.day] = (out[r.date.day] ?? 0) + r.amount;
+      out[d] = (out[d] ?? 0) + r.amount;
     }
     return out;
   }
 
-  /// Records for a specific day within the selected month, respecting the
-  /// active category filter.
-  List<HomeRecord> recordsForDay(int day) {
-    final sel = state.selectedDate;
+  /// Records on a specific date, respecting the active category filter.
+  List<HomeRecord> recordsForDate(DateTime date) {
+    final target = DateTime(date.year, date.month, date.day);
     final selected = state.selectedCategoryIds;
     return state.records.where((r) {
-      if (r.date.year != sel.year ||
-          r.date.month != sel.month ||
-          r.date.day != day) return false;
+      final d = DateTime(r.date.year, r.date.month, r.date.day);
+      if (d != target) return false;
       if (selected.isNotEmpty && !selected.contains(r.category.id)) {
         return false;
       }
@@ -388,8 +476,16 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  /// Select a specific date (used by the calendar grid to drive the records
+  /// list shown below it).
+  void selectDate(DateTime date) {
+    emit(state.copyWith(
+      selectedDate: DateTime(date.year, date.month, date.day),
+    ));
+  }
+
   /// Records on the currently selected day. Drives the records list shown
   /// under the month-grid calendar.
   List<HomeRecord> get recordsForSelectedDay =>
-      recordsForDay(state.selectedDate.day);
+      recordsForDate(state.selectedDate);
 }

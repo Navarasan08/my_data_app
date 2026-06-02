@@ -94,8 +94,7 @@ class HomeRecordPage extends StatelessWidget {
                               ),
                               Expanded(
                                 child: Text(
-                                  DateFormat('MMM yyyy')
-                                      .format(state.selectedDate),
+                                  cubit.selectedPeriodLabel,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     fontSize: 16,
@@ -1327,17 +1326,21 @@ class _MonthCalendarView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final state = cubit.state;
-    final sel = state.selectedDate;
-    final firstOfMonth = DateTime(sel.year, sel.month, 1);
-    final daysInMonth = DateTime(sel.year, sel.month + 1, 0).day;
+    final sel = DateTime(state.selectedDate.year, state.selectedDate.month,
+        state.selectedDate.day);
+    // The grid spans the selected cycle, which begins on the configured
+    // monthly start date and may cross calendar months.
+    final start = cubit.selectedCycleStart;
+    final end = cubit.selectedCycleEnd;
+    // Days in the cycle, via hours/24 so a DST shift can't drop/add a day.
+    final totalDays = (end.difference(start).inHours / 24).round();
     // Monday=1 .. Sunday=7. Leading blanks put Monday at column 0.
-    final leading = firstOfMonth.weekday - 1;
-    final totalCells = ((leading + daysInMonth + 6) ~/ 7) * 7;
+    final leading = start.weekday - 1;
+    final totalCells = ((leading + totalDays + 6) ~/ 7) * 7;
     final rows = totalCells ~/ 7;
-    final dailyTotals = cubit.dailyTotalsForSelectedMonth;
-    final today = DateTime.now();
-    final isCurrentMonth =
-        today.year == sel.year && today.month == sel.month;
+    final dailyTotals = cubit.dailyTotalsForSelectedCycle;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
 
     const dowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -1392,21 +1395,22 @@ class _MonthCalendarView extends StatelessWidget {
                 ),
                 itemCount: totalCells,
                 itemBuilder: (context, i) {
-                  final dayNum = i - leading + 1;
-                  if (dayNum < 1 || dayNum > daysInMonth) {
+                  final offset = i - leading;
+                  if (offset < 0 || offset >= totalDays) {
                     return const SizedBox.shrink();
                   }
-                  final amount = dailyTotals[dayNum] ?? 0;
-                  final isToday =
-                      isCurrentMonth && today.day == dayNum;
-                  final isSelected = sel.day == dayNum;
+                  final date = DateTime(
+                      start.year, start.month, start.day + offset);
+                  final amount = dailyTotals[date] ?? 0;
+                  final isToday = date == today;
+                  final isSelected = date == sel;
                   return _DayCell(
-                    day: dayNum,
+                    day: date.day,
                     isToday: isToday,
                     isSelected: isSelected,
                     amountLabel:
                         amount > 0 ? cubit.formatAmount(amount) : '',
-                    onTap: () => cubit.selectDay(dayNum),
+                    onTap: () => cubit.selectDate(date),
                   );
                 },
               ),

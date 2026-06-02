@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
+import 'package:my_data_app/src/home/home_categories_page.dart';
+import 'package:my_data_app/src/home/home_payment_types_page.dart';
 import 'package:my_data_app/src/home/widgets/expense_io_sheet.dart';
 
 class HomeRecordSettingsPage extends StatelessWidget {
@@ -14,8 +15,6 @@ class HomeRecordSettingsPage extends StatelessWidget {
       builder: (context, state) {
         final cs = Theme.of(context).colorScheme;
         final cubit = context.read<HomeRecordCubit>();
-        final customCategories = state.customCategories;
-        final paymentTypes = state.paymentTypes;
 
         return Scaffold(
           appBar: AppBar(
@@ -28,320 +27,93 @@ class HomeRecordSettingsPage extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 600),
               child: ListView(
                 children: [
-                  // Currency selection
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text(
-                      'Currency',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: DropdownButtonFormField<HomeCurrency>(
-                      initialValue: state.currency,
-                      decoration: InputDecoration(
-                        border: const OutlineInputBorder(),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
-                        prefixIcon: Padding(
-                          padding: const EdgeInsets.only(left: 12, right: 4),
-                          child: Text(
-                            state.currency.symbol,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
-                            ),
-                          ),
-                        ),
-                        prefixIconConstraints:
-                            const BoxConstraints(minWidth: 0, minHeight: 0),
-                      ),
-                      items: HomeCurrency.all.map((c) {
-                        return DropdownMenuItem<HomeCurrency>(
-                          value: c,
-                          child: Text(
-                            '${c.symbol}  ${c.name} (${c.code})',
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (c) {
-                        if (c != null) cubit.setCurrency(c);
-                      },
-                    ),
-                  ),
                   const SizedBox(height: 8),
-                  const Divider(),
 
-                  // Monthly calendar toggle
+                  // Currency
+                  _SettingsTile(
+                    icon: Icons.attach_money_rounded,
+                    iconColor: Colors.green[700]!,
+                    title: 'Currency',
+                    subtitle:
+                        '${state.currency.symbol}  ${state.currency.name} (${state.currency.code})',
+                    onTap: () => _showCurrencyDialog(context, cubit, state),
+                  ),
+
+                  // Categories
+                  _SettingsTile(
+                    icon: Icons.category_rounded,
+                    iconColor: Colors.orange[700]!,
+                    title: 'Categories',
+                    subtitle: 'Default and custom expense categories',
+                    onTap: () => _push(
+                      context,
+                      cubit,
+                      const HomeCategoriesPage(),
+                    ),
+                  ),
+
+                  // Payment Types
+                  _SettingsTile(
+                    icon: Icons.account_balance_wallet_rounded,
+                    iconColor: Colors.purple[700]!,
+                    title: 'Payment Types',
+                    subtitle: 'Cash / UPI / card and more',
+                    onTap: () => _push(
+                      context,
+                      cubit,
+                      const HomePaymentTypesPage(),
+                    ),
+                  ),
+
+                  // Export & Import
+                  _SettingsTile(
+                    icon: Icons.ios_share_rounded,
+                    iconColor: Colors.blue[700]!,
+                    title: 'Export & Import',
+                    subtitle: 'CSV, Excel, email — or import from a file',
+                    onTap: () => ExpenseIoSheet.show(context, cubit),
+                  ),
+
+                  const Divider(height: 24),
+
+                  // Display preferences
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    child: Text(
+                      'Display',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                   SwitchListTile(
                     title: const Text('Month-wise calendar'),
                     subtitle: Text(
                       state.showMonthlyCalendar
                           ? 'Showing records by month with navigation'
                           : 'Showing all records in a single scrollable list',
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style:
+                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                     value: state.showMonthlyCalendar,
                     onChanged: (val) => cubit.setShowMonthlyCalendar(val),
                   ),
-                  const Divider(),
 
-                  // Default categories section
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text(
-                      'Default Categories',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 50,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      children: HomeCategory.defaults.map((cat) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
-                          child: Chip(
-                            avatar: Icon(cat.icon, size: 16, color: cat.color),
-                            label: Text(cat.displayName,
-                                style: const TextStyle(fontSize: 12)),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                  const Divider(),
-
-                  // Custom categories section
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Custom Categories',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: () =>
-                              _showCategoryDialog(context, cubit, null),
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  if (customCategories.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32),
-                      child: Center(
-                        child: Text(
-                          'No custom categories yet',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...customCategories.map((cat) {
-                      final inUse = cubit.isCategoryInUse(cat.id);
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: cat.color
-                                  .withValues(alpha: 0.1),
-                              borderRadius:
-                                  BorderRadius.circular(10),
-                            ),
-                            child: Icon(cat.icon,
-                                color: cat.color, size: 24),
-                          ),
-                          title: Text(
-                            cat.displayName,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: inUse
-                              ? const Text('In use',
-                                  style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.green))
-                              : null,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit_outlined,
-                                    color: Colors.blue[400]),
-                                onPressed: () =>
-                                    _showCategoryDialog(
-                                        context, cubit, cat),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete_outline,
-                                    color: Colors.red[400]),
-                                onPressed: () => _confirmDelete(
-                                    context, cubit, cat, inUse),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-
-                  const SizedBox(height: 16),
-                  const Divider(),
-
-                  // Payment Types section
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          'Payment Types',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: () =>
-                              _showPaymentTypeDialog(context, cubit, null),
-                          icon: const Icon(Icons.add, size: 18),
-                          label: const Text('Add'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Tag records with cash / UPI / card etc. Records keep their tag even if the type is later removed here.',
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (paymentTypes.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'No payment types yet',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: cs.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                    )
-                  else
-                    ...paymentTypes.map((t) {
-                      final inUse = cubit.isPaymentTypeInUse(t.id);
-                      return Card(
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
-                        child: ListTile(
-                          leading: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: t.color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(t.icon, color: t.color, size: 22),
-                          ),
-                          title: Text(
-                            t.displayName,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: inUse
-                              ? const Text('In use',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.green))
-                              : null,
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit_outlined,
-                                    color: Colors.blue[400]),
-                                onPressed: () => _showPaymentTypeDialog(
-                                    context, cubit, t),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete_outline,
-                                    color: Colors.red[400]),
-                                onPressed: () => _confirmDeletePaymentType(
-                                    context, cubit, t, inUse),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-
-                  const Divider(height: 32),
-
-                  // Data export / import
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Text(
-                      'Data',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                  ),
+                  // Monthly start date + weekend handling
                   ListTile(
-                    leading: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.ios_share_rounded,
-                          color: Colors.blue[700], size: 22),
-                    ),
-                    title: const Text(
-                      'Export & Import',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                    leading: const Icon(Icons.event_repeat_rounded),
+                    title: const Text('Monthly start date'),
                     subtitle: Text(
-                      'CSV, Excel, email — or import from a file',
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant),
+                      'Day ${state.monthlyStartDay} · '
+                      '${_weekendLabel(state.weekendAdjustment)}',
+                      style:
+                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
                     trailing: Icon(Icons.chevron_right_rounded,
                         color: cs.onSurfaceVariant),
-                    onTap: () => ExpenseIoSheet.show(context, cubit),
+                    onTap: () => _showMonthlyCycleDialog(context, cubit, state),
                   ),
 
                   const SizedBox(height: 32),
@@ -354,92 +126,70 @@ class HomeRecordSettingsPage extends StatelessWidget {
     );
   }
 
-  void _showPaymentTypeDialog(
-      BuildContext context, HomeRecordCubit cubit, PaymentType? existing) {
+  void _push(BuildContext context, HomeRecordCubit cubit, Widget page) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BlocProvider.value(value: cubit, child: page),
+      ),
+    );
+  }
+
+  void _showMonthlyCycleDialog(
+      BuildContext context, HomeRecordCubit cubit, HomeRecordState state) {
     showDialog(
       context: context,
-      builder: (ctx) => _PaymentTypeDialog(
-        existing: existing,
-        onSave: (t) {
-          if (existing != null) {
-            cubit.updatePaymentType(t);
-          } else {
-            cubit.addPaymentType(t);
-          }
+      builder: (ctx) => _MonthlyCycleDialog(
+        initialDay: state.monthlyStartDay,
+        initialAdjustment: state.weekendAdjustment,
+        onSave: (day, adjustment) {
+          cubit.setMonthlyStartDay(day);
+          cubit.setWeekendAdjustment(adjustment);
         },
       ),
     );
   }
 
-  void _confirmDeletePaymentType(BuildContext context, HomeRecordCubit cubit,
-      PaymentType type, bool inUse) {
+  void _showCurrencyDialog(
+      BuildContext context, HomeRecordCubit cubit, HomeRecordState state) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Payment Type'),
-        content: Text(
-          inUse
-              ? '"${type.displayName}" is used by some records. They will keep showing this label, but it won\'t appear in the picker. Delete?'
-              : 'Are you sure you want to delete "${type.displayName}"?',
+        title: const Text('Currency'),
+        content: SizedBox(
+          width: 350,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: HomeCurrency.all.map((c) {
+                final selected = c.code == state.currency.code;
+                return ListTile(
+                  leading: Text(
+                    c.symbol,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                  title: Text('${c.name} (${c.code})',
+                      style: const TextStyle(fontSize: 14)),
+                  trailing: selected
+                      ? const Icon(Icons.check, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    cubit.setCurrency(c);
+                    Navigator.pop(ctx);
+                  },
+                );
+              }).toList(),
+            ),
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              cubit.deletePaymentType(type.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCategoryDialog(
-      BuildContext context, HomeRecordCubit cubit, HomeCategory? existing) {
-    showDialog(
-      context: context,
-      builder: (ctx) => _CategoryDialog(
-        existing: existing,
-        onSave: (category) {
-          if (existing != null) {
-            cubit.updateCustomCategory(category);
-          } else {
-            cubit.addCustomCategory(category);
-          }
-        },
-      ),
-    );
-  }
-
-  void _confirmDelete(BuildContext context, HomeRecordCubit cubit,
-      HomeCategory category, bool inUse) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: Text(
-          inUse
-              ? '"${category.displayName}" is used by some records. Records will show a fallback category. Delete anyway?'
-              : 'Are you sure you want to delete "${category.displayName}"?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              cubit.deleteCustomCategory(category.id);
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('Close'),
           ),
         ],
       ),
@@ -447,263 +197,87 @@ class HomeRecordSettingsPage extends StatelessWidget {
   }
 }
 
-class _CategoryDialog extends StatefulWidget {
-  final HomeCategory? existing;
-  final ValueChanged<HomeCategory> onSave;
+class _SettingsTile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
-  const _CategoryDialog({
+  const _SettingsTile({
     Key? key,
-    this.existing,
-    required this.onSave,
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
   }) : super(key: key);
 
   @override
-  State<_CategoryDialog> createState() => _CategoryDialogState();
-}
-
-class _CategoryDialogState extends State<_CategoryDialog> {
-  final _nameController = TextEditingController();
-  int _selectedIconIndex = 10;
-  int _selectedColorIndex = 0;
-
-  bool get _isEditing => widget.existing != null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.existing != null) {
-      _nameController.text = widget.existing!.displayName;
-      _selectedIconIndex = widget.existing!.iconIndex;
-      _selectedColorIndex = widget.existing!.colorIndex;
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final previewIcon =
-        HomeCategory.availableIcons[_selectedIconIndex];
-    final previewColor =
-        HomeCategory.availableColors[_selectedColorIndex];
-
-    return AlertDialog(
-      title: Text(_isEditing ? 'Edit Category' : 'Add Category'),
-      content: SizedBox(
-        width: 350,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Preview
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: previewColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(previewIcon, color: previewColor, size: 28),
-                      const SizedBox(width: 10),
-                      Text(
-                        _nameController.text.isEmpty
-                            ? 'Preview'
-                            : _nameController.text,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: previewColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Name field
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Category Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.label),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 16),
-
-              // Icon selector
-              Text('Icon',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 120,
-                child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    mainAxisSpacing: 6,
-                    crossAxisSpacing: 6,
-                  ),
-                  itemCount: HomeCategory.availableIcons.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedIconIndex == index;
-                    return InkWell(
-                      onTap: () =>
-                          setState(() => _selectedIconIndex = index),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? previewColor.withValues(alpha: 0.15)
-                              : cs.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(8),
-                          border: isSelected
-                              ? Border.all(color: previewColor, width: 2)
-                              : null,
-                        ),
-                        child: Icon(
-                          HomeCategory.availableIcons[index],
-                          size: 20,
-                          color: isSelected
-                              ? previewColor
-                              : cs.onSurfaceVariant,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Color selector
-              Text('Color',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(
-                    HomeCategory.availableColors.length, (index) {
-                  final color = HomeCategory.availableColors[index];
-                  final isSelected = _selectedColorIndex == index;
-                  return InkWell(
-                    onTap: () =>
-                        setState(() => _selectedColorIndex = index),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: Colors.black, width: 3)
-                            : Border.all(
-                                color: cs.outline, width: 1),
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 18)
-                          : null,
-                    ),
-                  );
-                }),
-              ),
-            ],
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: Icon(icon, color: iconColor, size: 22),
         ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+        ),
+        trailing: Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+        onTap: onTap,
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _nameController.text.trim().isEmpty
-              ? null
-              : () {
-                  final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
-                      'custom_${DateTime.now().millisecondsSinceEpoch}';
-                  final category = HomeCategory(
-                    id: id,
-                    displayName: name,
-                    iconIndex: _selectedIconIndex,
-                    colorIndex: _selectedColorIndex,
-                    isCustom: true,
-                  );
-                  widget.onSave(category);
-                  Navigator.pop(context);
-                },
-          child: Text(_isEditing ? 'Update' : 'Add'),
-        ),
-      ],
     );
   }
 }
 
-class _PaymentTypeDialog extends StatefulWidget {
-  final PaymentType? existing;
-  final ValueChanged<PaymentType> onSave;
-
-  const _PaymentTypeDialog({this.existing, required this.onSave});
-
-  @override
-  State<_PaymentTypeDialog> createState() => _PaymentTypeDialogState();
+String _weekendLabel(WeekendAdjustment adjustment) {
+  switch (adjustment) {
+    case WeekendAdjustment.exact:
+      return 'Keep exact date';
+    case WeekendAdjustment.previousFriday:
+      return 'Previous Friday';
+    case WeekendAdjustment.followingMonday:
+      return 'Following Monday';
+  }
 }
 
-class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
-  final _nameController = TextEditingController();
-  int _selectedIconIndex = 0;
-  int _selectedColorIndex = 0;
+class _MonthlyCycleDialog extends StatefulWidget {
+  final int initialDay;
+  final WeekendAdjustment initialAdjustment;
+  final void Function(int day, WeekendAdjustment adjustment) onSave;
 
-  bool get _isEditing => widget.existing != null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.existing != null) {
-      _nameController.text = widget.existing!.displayName;
-      _selectedIconIndex = widget.existing!.iconIndex;
-      _selectedColorIndex = widget.existing!.colorIndex;
-    }
-  }
+  const _MonthlyCycleDialog({
+    required this.initialDay,
+    required this.initialAdjustment,
+    required this.onSave,
+  });
 
   @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
+  State<_MonthlyCycleDialog> createState() => _MonthlyCycleDialogState();
+}
+
+class _MonthlyCycleDialogState extends State<_MonthlyCycleDialog> {
+  late int _day = widget.initialDay.clamp(1, 31);
+  late WeekendAdjustment _adjustment = widget.initialAdjustment;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final previewIcon = PaymentType.availableIcons[_selectedIconIndex];
-    final previewColor = PaymentType.availableColors[_selectedColorIndex];
 
     return AlertDialog(
-      title: Text(_isEditing ? 'Edit Payment Type' : 'Add Payment Type'),
+      title: const Text('Monthly start date'),
       content: SizedBox(
         width: 350,
         child: SingleChildScrollView(
@@ -711,131 +285,66 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: previewColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
+              Text(
+                'The day each monthly cycle begins. Days beyond a short month '
+                '(e.g. 31 in February) fall back to that month\'s last day.',
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Text('Start day',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Spacer(),
+                  DropdownButton<int>(
+                    value: _day,
+                    items: List.generate(31, (i) => i + 1)
+                        .map((d) => DropdownMenuItem<int>(
+                              value: d,
+                              child: Text('$d'),
+                            ))
+                        .toList(),
+                    onChanged: (d) {
+                      if (d != null) setState(() => _day = d);
+                    },
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(previewIcon, color: previewColor, size: 24),
-                      const SizedBox(width: 10),
-                      Text(
-                        _nameController.text.isEmpty
-                            ? 'Preview'
-                            : _nameController.text,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: previewColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                ],
+              ),
+              const Divider(height: 24),
+              Text(
+                'If it falls on a weekend',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
                 ),
               ),
-              const SizedBox(height: 18),
-
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  hintText: 'e.g. Bank Transfer',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.label),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 14),
-
-              Text('Icon',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
-              const SizedBox(height: 6),
-              SizedBox(
-                height: 96,
-                child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    mainAxisSpacing: 6,
-                    crossAxisSpacing: 6,
-                  ),
-                  itemCount: PaymentType.availableIcons.length,
-                  itemBuilder: (context, index) {
-                    final isSelected = _selectedIconIndex == index;
-                    return InkWell(
-                      onTap: () =>
-                          setState(() => _selectedIconIndex = index),
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? previewColor.withValues(alpha: 0.15)
-                              : cs.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(8),
-                          border: isSelected
-                              ? Border.all(color: previewColor, width: 2)
-                              : null,
-                        ),
-                        child: Icon(
-                          PaymentType.availableIcons[index],
-                          size: 20,
-                          color: isSelected
-                              ? previewColor
-                              : cs.onSurfaceVariant,
-                        ),
-                      ),
+              const SizedBox(height: 4),
+              RadioGroup<WeekendAdjustment>(
+                groupValue: _adjustment,
+                onChanged: (val) {
+                  if (val != null) setState(() => _adjustment = val);
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: WeekendAdjustment.values.map((w) {
+                    return RadioListTile<WeekendAdjustment>(
+                      value: w,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text(_weekendLabel(w)),
+                      subtitle: w == WeekendAdjustment.exact
+                          ? null
+                          : Text(
+                              w == WeekendAdjustment.previousFriday
+                                  ? 'Move the start back to the previous Friday'
+                                  : 'Move the start forward to the next Monday',
+                              style: TextStyle(
+                                  fontSize: 11, color: cs.onSurfaceVariant),
+                            ),
                     );
-                  },
+                  }).toList(),
                 ),
-              ),
-              const SizedBox(height: 14),
-
-              Text('Color',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: List.generate(
-                    PaymentType.availableColors.length, (index) {
-                  final color = PaymentType.availableColors[index];
-                  final isSelected = _selectedColorIndex == index;
-                  return InkWell(
-                    onTap: () =>
-                        setState(() => _selectedColorIndex = index),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: Colors.black, width: 3)
-                            : Border.all(
-                                color: cs.outline, width: 1),
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
-                          : null,
-                    ),
-                  );
-                }),
               ),
             ],
           ),
@@ -847,22 +356,11 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          onPressed: _nameController.text.trim().isEmpty
-              ? null
-              : () {
-                  final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
-                      'pt_${DateTime.now().millisecondsSinceEpoch}';
-                  final type = PaymentType(
-                    id: id,
-                    displayName: name,
-                    iconIndex: _selectedIconIndex,
-                    colorIndex: _selectedColorIndex,
-                  );
-                  widget.onSave(type);
-                  Navigator.pop(context);
-                },
-          child: Text(_isEditing ? 'Update' : 'Add'),
+          onPressed: () {
+            widget.onSave(_day, _adjustment);
+            Navigator.pop(context);
+          },
+          child: const Text('Save'),
         ),
       ],
     );

@@ -130,6 +130,7 @@ class PeriodTrackerPage extends StatelessWidget {
               else
                 ...recentEntries.map((entry) => _PeriodEntryCard(
                       entry: entry,
+                      gapDays: cubit.cycleGapForEntry(entry),
                       onEdit: () async {
                         final edited = await Navigator.push<PeriodEntry>(
                           context,
@@ -484,11 +485,16 @@ class _StatCard extends StatelessWidget {
 
 class _PeriodEntryCard extends StatelessWidget {
   final PeriodEntry entry;
+
+  /// Days since the previous period started (cycle gap). Null for the first
+  /// logged period.
+  final int? gapDays;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
   const _PeriodEntryCard({
     required this.entry,
+    required this.gapDays,
     required this.onEdit,
     required this.onDelete,
   });
@@ -526,6 +532,25 @@ class _PeriodEntryCard extends StatelessWidget {
                       '${entry.periodLength} days${entry.notes != null && entry.notes!.isNotEmpty ? '  ·  ${entry.notes}' : ''}',
                       style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     ),
+                    if (gapDays != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.loop_rounded,
+                              size: 13, color: Colors.purple[400]),
+                          const SizedBox(width: 4),
+                          Text(
+                            '$gapDays days since previous period',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.purple[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -574,7 +599,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
       _notesController.text = widget.entry!.notes ?? '';
     } else {
       _startDate = DateTime.now();
-      _endDate = DateTime.now().add(const Duration(days: 4));
+      _endDate = DateTime.now().add(const Duration(days: 2));
     }
   }
 
@@ -615,7 +640,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
         if (isStart) {
           _startDate = date;
           if (_endDate.isBefore(_startDate)) {
-            _endDate = _startDate.add(const Duration(days: 4));
+            _endDate = _startDate.add(const Duration(days: 2));
           }
         } else {
           _endDate = date;

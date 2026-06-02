@@ -39,6 +39,7 @@ import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
 import 'package:my_data_app/src/days_counter/days_counter_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
+import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
 import 'package:my_data_app/src/theme/theme_cubit.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -636,6 +637,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           daysCounterState,
                         ),
                       ),
+              ),
+            ),
+
+            // App version / build number footer
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, top: 2),
+              child: AppVersionText(
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],

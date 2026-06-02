@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -16,7 +17,9 @@ class SplashScreen extends StatelessWidget {
           ),
         ),
         child: SafeArea(
-          child: Center(
+          child: Stack(
+            children: [
+              Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -89,6 +92,21 @@ class SplashScreen extends StatelessWidget {
                 ).animate().fadeIn(delay: 900.ms, duration: 400.ms),
               ],
             ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: AppVersionText(
+                    style: TextStyle(
+                      fontSize: 12,
+                      letterSpacing: 0.5,
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ).animate().fadeIn(delay: 1100.ms, duration: 400.ms),
+                ),
+              ),
+            ],
           ),
         ),
       ),

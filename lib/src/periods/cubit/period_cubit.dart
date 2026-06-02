@@ -41,6 +41,22 @@ class PeriodCubit extends Cubit<PeriodState> {
     return sorted;
   }
 
+  /// Number of days from the previous (chronologically earlier) period's
+  /// start to [entry]'s start — i.e. the cycle gap leading up to this entry.
+  /// Returns null for the earliest logged entry, which has nothing before it.
+  int? cycleGapForEntry(PeriodEntry entry) {
+    final sorted = List<PeriodEntry>.from(state.entries)
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+    final index = sorted.indexWhere((e) => e.id == entry.id);
+    if (index <= 0) return null;
+    final prev = sorted[index - 1];
+    final curStart =
+        DateTime(entry.startDate.year, entry.startDate.month, entry.startDate.day);
+    final prevStart =
+        DateTime(prev.startDate.year, prev.startDate.month, prev.startDate.day);
+    return curStart.difference(prevStart).inDays;
+  }
+
   /// Average cycle length in days (gap between consecutive period starts)
   int get averageCycleLength {
     final sorted = List<PeriodEntry>.from(state.entries);
