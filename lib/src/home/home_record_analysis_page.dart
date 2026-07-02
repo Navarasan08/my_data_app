@@ -6,6 +6,7 @@ import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_page.dart' show AddHomeRecordPage;
+import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 
 /// Quick-pick time window for the analysis page. A user-set [DateTimeRange]
 /// overrides this when present.
@@ -46,16 +47,16 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   HomeCategory? _filterCategory;
   AnalysisPeriod _period = AnalysisPeriod.thisMonth;
 
-  /// Cycle window for the month containing [anchor]: from the effective start
-  /// date of that month's cycle up to (but not including) the next cycle's
-  /// start. With no custom cycle this is just the plain calendar month.
+  /// Cycle window for the financial month labelled by [anchor]. The label
+  /// follows the month the cycle mostly falls within, so with a late start
+  /// day (e.g. 30) "July" runs 30 Jun → 29 Jul rather than 30 Jul → 29 Aug.
+  /// With no custom cycle this is just the plain calendar month.
   ({DateTime start, DateTime end, bool allTime}) _monthWindow(
       HomeRecordCubit cubit, DateTime anchor) {
-    final start = cubit.effectiveCycleStart(anchor.year, anchor.month);
-    final nextStart = cubit.effectiveCycleStart(anchor.year, anchor.month + 1);
+    final w = cubit.cycleWindowForMonth(anchor.year, anchor.month);
     return (
-      start: start,
-      end: nextStart.subtract(const Duration(seconds: 1)),
+      start: w.start,
+      end: w.end.subtract(const Duration(seconds: 1)),
       allTime: false,
     );
   }
@@ -1111,6 +1112,12 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                       record: r,
                                       categories: cubit.allCategories,
                                       paymentTypes: cubit.paymentTypes,
+                                      groups: context
+                                          .read<EventCubit>()
+                                          .activeEvents,
+                                      groupTotals: context
+                                          .read<EventCubit>()
+                                          .activeEventTotals,
                                     ),
                                   ),
                                 ),

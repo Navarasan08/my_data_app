@@ -341,6 +341,13 @@ class HomeRecord {
   /// user's managed list.
   final PaymentType? paymentType;
 
+  /// Optional link to an event/group fund (an `EventFund` in the Events →
+  /// Finance section). [eventId] drives navigation from this record to the
+  /// group; [eventName] is a snapshot so the link still labels correctly even
+  /// if the event is later archived or removed.
+  final String? eventId;
+  final String? eventName;
+
   const HomeRecord({
     required this.id,
     required this.title,
@@ -352,6 +359,8 @@ class HomeRecord {
     this.quantity,
     this.unit,
     this.paymentType,
+    this.eventId,
+    this.eventName,
   });
 
   String get quantityLabel {
@@ -375,6 +384,9 @@ class HomeRecord {
     bool clearQuantity = false,
     PaymentType? paymentType,
     bool clearPaymentType = false,
+    String? eventId,
+    String? eventName,
+    bool clearEvent = false,
   }) {
     return HomeRecord(
       id: id ?? this.id,
@@ -388,6 +400,8 @@ class HomeRecord {
       unit: clearQuantity ? null : (unit ?? this.unit),
       paymentType:
           clearPaymentType ? null : (paymentType ?? this.paymentType),
+      eventId: clearEvent ? null : (eventId ?? this.eventId),
+      eventName: clearEvent ? null : (eventName ?? this.eventName),
     );
   }
 
@@ -403,6 +417,8 @@ class HomeRecord {
       if (quantity != null) 'quantity': quantity,
       if (unit != null) 'unit': unit!.name,
       if (paymentType != null) 'paymentType': paymentType!.toJson(),
+      if (eventId != null) 'eventId': eventId,
+      if (eventName != null) 'eventName': eventName,
     };
   }
 
@@ -438,6 +454,8 @@ class HomeRecord {
           ? MeasureUnit.fromName(json['unit'] as String)
           : null,
       paymentType: paymentType,
+      eventId: json['eventId'] as String?,
+      eventName: json['eventName'] as String?,
     );
   }
 }

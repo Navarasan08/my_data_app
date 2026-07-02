@@ -6,6 +6,26 @@ import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
 import 'package:my_data_app/src/home/home_record_settings_page.dart';
+import 'package:my_data_app/src/events/cubit/event_cubit.dart';
+import 'package:my_data_app/src/events/model/event_model.dart';
+import 'package:my_data_app/src/events/event_finance_page.dart' show EventDetailPage;
+
+/// Push the [EventDetailPage] for [eventId], re-providing [EventCubit] since
+/// the target route sits above the shell's provider scope. No-op if the event
+/// no longer exists (e.g. it was deleted after the record was linked).
+void _openLinkedEvent(BuildContext context, String eventId) {
+  final eventCubit = context.read<EventCubit>();
+  if (eventCubit.getEvent(eventId) == null) return;
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => BlocProvider.value(
+        value: eventCubit,
+        child: EventDetailPage(eventId: eventId),
+      ),
+    ),
+  );
+}
 
 class HomeRecordPage extends StatelessWidget {
   const HomeRecordPage({Key? key}) : super(key: key);
@@ -41,8 +61,12 @@ class HomeRecordPage extends StatelessWidget {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: cubit,
+                    builder: (_) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider.value(value: cubit),
+                        BlocProvider.value(
+                            value: context.read<EventCubit>()),
+                      ],
                       child: const HomeRecordAnalysisPage(),
                     ),
                   ),
@@ -290,6 +314,9 @@ class HomeRecordPage extends StatelessWidget {
                     child: AddHomeRecordPage(
                       categories: cubit.allCategories,
                       paymentTypes: cubit.paymentTypes,
+                      groups: context.read<EventCubit>().activeEvents,
+                      groupTotals:
+                          context.read<EventCubit>().activeEventTotals,
                       initialDate: cubit.state.selectedDate,
                     ),
                   ),
@@ -455,7 +482,9 @@ class HomeRecordPage extends StatelessWidget {
             builder: (_) => AddHomeRecordPage(
                 record: record,
                 categories: cubit.allCategories,
-                paymentTypes: cubit.paymentTypes),
+                paymentTypes: cubit.paymentTypes,
+                groups: context.read<EventCubit>().activeEvents,
+                groupTotals: context.read<EventCubit>().activeEventTotals),
           ),
         );
         if (edited != null) {
@@ -785,6 +814,11 @@ class _RecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    // Resolve the linked event (if any) for the navigation chip. Falls back to
+    // the stored name when the event was archived/removed after linking.
+    final linkedEvent = record.eventId != null
+        ? context.read<EventCubit>().getEvent(record.eventId!)
+        : null;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       decoration: BoxDecoration(
@@ -835,6 +869,17 @@ class _RecordCard extends StatelessWidget {
                         color: cs.onSurfaceVariant,
                       ),
                     ),
+                    if (record.eventId != null) ...[
+                      const SizedBox(height: 4),
+                      _LinkedEventChip(
+                        event: linkedEvent,
+                        fallbackName: record.eventName,
+                        onTap: linkedEvent != null
+                            ? () => _openLinkedEvent(
+                                context, record.eventId!)
+                            : null,
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -868,10 +913,80 @@ class _RecordCard extends StatelessWidget {
   }
 }
 
+/// Small pill on a record showing the event/group it's linked to. Tapping it
+/// navigates to that event's detail page (via [onTap]); when the event no
+/// longer exists [onTap] is null and the chip renders as a muted, static tag.
+class _LinkedEventChip extends StatelessWidget {
+  final EventFund? event;
+  final String? fallbackName;
+  final VoidCallback? onTap;
+
+  const _LinkedEventChip({
+    required this.event,
+    required this.fallbackName,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final color = event?.color ?? cs.onSurfaceVariant;
+    final label = event?.name ?? fallbackName ?? 'Linked event';
+    final icon = event?.icon ?? Icons.event_busy_rounded;
+
+    final chip = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ),
+          if (onTap != null) ...[
+            const SizedBox(width: 2),
+            Icon(Icons.chevron_right_rounded, size: 13, color: color),
+          ],
+        ],
+      ),
+    );
+
+    if (onTap == null) return chip;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: chip,
+    );
+  }
+}
+
 class AddHomeRecordPage extends StatefulWidget {
   final HomeRecord? record;
   final List<HomeCategory> categories;
   final List<PaymentType> paymentTypes;
+
+  /// Active event funds the record can be linked to. Shown as an optional
+  /// picker; passed in (like [categories]) so the form doesn't depend on
+  /// [EventCubit] being in its route's provider scope.
+  final List<EventFund> groups;
+
+  /// Total spent per event id. When the user links the record to an event,
+  /// the amount field is auto-filled with that event's total.
+  final Map<String, double> groupTotals;
 
   /// Pre-fill the date field when opening the page in "add" mode (ignored in
   /// edit mode — the existing record's date wins). Used when the user taps a
@@ -883,6 +998,8 @@ class AddHomeRecordPage extends StatefulWidget {
     this.record,
     required this.categories,
     this.paymentTypes = const [],
+    this.groups = const [],
+    this.groupTotals = const {},
     this.initialDate,
   }) : super(key: key);
 
@@ -902,6 +1019,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
   DateTime _selectedDate = DateTime.now();
   MeasureUnit? _selectedUnit;
   PaymentType? _selectedPaymentType;
+  String? _selectedEventId;
 
   bool get _isEditing => widget.record != null;
 
@@ -920,6 +1038,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       }
       _selectedUnit = widget.record!.unit;
       _selectedPaymentType = widget.record!.paymentType;
+      _selectedEventId = widget.record!.eventId;
     } else {
       if (widget.initialDate != null) {
         _selectedDate = widget.initialDate!;
@@ -943,11 +1062,37 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
     super.dispose();
   }
 
+  /// Handle a change in the linked event. Picking an event auto-fills the
+  /// amount with that event's total spent (whole numbers shown without a
+  /// trailing `.0`); clearing the link leaves the amount untouched.
+  void _onEventChanged(String? id) {
+    setState(() {
+      _selectedEventId = id;
+      if (id != null) {
+        final total = widget.groupTotals[id];
+        if (total != null) {
+          _amountController.text = total % 1 == 0
+              ? total.toInt().toString()
+              : total.toString();
+        }
+      }
+    });
+  }
+
   HomeRecord? _buildRecord() {
     if (!_formKey.currentState!.validate()) return null;
     final qty = _quantityController.text.isNotEmpty
         ? double.tryParse(_quantityController.text)
         : null;
+    // Resolve the linked event's name for a resilient snapshot. Falls back to
+    // the record's existing name if the event isn't in the passed list (e.g.
+    // it was archived after linking).
+    String? eventName;
+    if (_selectedEventId != null) {
+      final match = widget.groups.where((g) => g.id == _selectedEventId);
+      eventName =
+          match.isNotEmpty ? match.first.name : widget.record?.eventName;
+    }
     return HomeRecord(
       id: widget.record?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
@@ -962,6 +1107,8 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       quantity: qty,
       unit: qty != null ? (_selectedUnit ?? MeasureUnit.piece) : null,
       paymentType: _selectedPaymentType,
+      eventId: _selectedEventId,
+      eventName: eventName,
     );
   }
 
@@ -1080,6 +1227,34 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
+                // Date Picker
+                ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                    side: BorderSide(color: cs.outline),
+                  ),
+                  leading: const Icon(Icons.calendar_today),
+                  title: const Text('Date'),
+                  subtitle: Text(
+                    DateFormat('EEEE, MMM d, yyyy')
+                        .format(_selectedDate),
+                  ),
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: _selectedDate,
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                    );
+                    if (date != null) {
+                      setState(() => _selectedDate = date);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+
                 // Quantity & Unit row
                 Row(
                   children: [
@@ -1130,33 +1305,19 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Date Picker
-                ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                    side: BorderSide(color: cs.outline),
+                // Event / group link (optional). Hidden entirely when there
+                // are no events to link to — unless this record already has a
+                // link (e.g. to an archived event) that we must keep editable.
+                if (widget.groups.isNotEmpty ||
+                    _selectedEventId != null) ...[
+                  _EventGroupPicker(
+                    groups: widget.groups,
+                    selectedId: _selectedEventId,
+                    fallbackName: widget.record?.eventName,
+                    onChanged: _onEventChanged,
                   ),
-                  leading: const Icon(Icons.calendar_today),
-                  title: const Text('Date'),
-                  subtitle: Text(
-                    DateFormat('EEEE, MMM d, yyyy')
-                        .format(_selectedDate),
-                  ),
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2030),
-                    );
-                    if (date != null) {
-                      setState(() => _selectedDate = date);
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                ],
 
                 TextFormField(
                   controller: _descriptionController,
@@ -1310,6 +1471,82 @@ class _PaymentTypePicker extends StatelessWidget {
             ],
           ),
       ],
+    );
+  }
+}
+
+/// Optional dropdown linking a record to an event/group fund (`EventFund`).
+///
+/// The list is "No event" plus each active event. If the record is linked to
+/// an event that isn't in the active list (e.g. it was archived after
+/// linking), that link is kept as an extra item using the stored
+/// [fallbackName] so editing a record never silently drops it.
+class _EventGroupPicker extends StatelessWidget {
+  final List<EventFund> groups;
+  final String? selectedId;
+  final String? fallbackName;
+  final ValueChanged<String?> onChanged;
+
+  const _EventGroupPicker({
+    required this.groups,
+    required this.selectedId,
+    required this.fallbackName,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final selectedInList =
+        selectedId != null && groups.any((g) => g.id == selectedId);
+
+    return DropdownButtonFormField<String?>(
+      initialValue: selectedId,
+      isExpanded: true,
+      decoration: const InputDecoration(
+        labelText: 'Link to event (optional)',
+        border: OutlineInputBorder(),
+        prefixIcon: Icon(Icons.event_note_rounded),
+      ),
+      items: [
+        const DropdownMenuItem<String?>(
+          value: null,
+          child: Text('No event'),
+        ),
+        ...groups.map((g) {
+          return DropdownMenuItem<String?>(
+            value: g.id,
+            child: Row(
+              children: [
+                Icon(g.icon, size: 18, color: g.color),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(g.name, overflow: TextOverflow.ellipsis),
+                ),
+              ],
+            ),
+          );
+        }),
+        // Keep a link to an archived / removed event visible & selectable.
+        if (selectedId != null && !selectedInList)
+          DropdownMenuItem<String?>(
+            value: selectedId,
+            child: Row(
+              children: [
+                Icon(Icons.event_busy_rounded,
+                    size: 18, color: cs.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    fallbackName ?? 'Linked event',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+      onChanged: onChanged,
     );
   }
 }
@@ -1492,6 +1729,11 @@ class _MonthCalendarView extends StatelessWidget {
                                   record: r,
                                   categories: cubit.allCategories,
                                   paymentTypes: cubit.paymentTypes,
+                                  groups:
+                                      context.read<EventCubit>().activeEvents,
+                                  groupTotals: context
+                                      .read<EventCubit>()
+                                      .activeEventTotals,
                                 ),
                               ),
                             );

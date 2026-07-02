@@ -81,6 +81,11 @@ class EventCubit extends Cubit<EventState> {
   double totalSpentFor(String eventId) =>
       expensesFor(eventId).fold(0.0, (s, e) => s + e.amount);
 
+  /// Total spent per active event, keyed by event id. Used to auto-fill the
+  /// amount when a home record is linked to an event.
+  Map<String, double> get activeEventTotals =>
+      {for (final e in activeEvents) e.id: totalSpentFor(e.id)};
+
   /// Sum grouped by category for an event.
   Map<String, double> categoryBreakdown(String eventId) {
     final map = <String, double>{};

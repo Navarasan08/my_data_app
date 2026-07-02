@@ -14,6 +14,14 @@ class EventFund {
   final DateTime? eventDate;
   final bool isArchived;
 
+  /// Detail-page view preference. When true the expenses are shown as a
+  /// month calendar (per-day totals); when false as a date-grouped list.
+  final bool showCalendar;
+
+  /// In list view, also insert a per-day header under each month header
+  /// (in addition to the month separators). Ignored in calendar view.
+  final bool showDateSeparators;
+
   const EventFund({
     required this.id,
     required this.name,
@@ -25,6 +33,8 @@ class EventFund {
     required this.updatedAt,
     this.eventDate,
     this.isArchived = false,
+    this.showCalendar = false,
+    this.showDateSeparators = false,
   });
 
   IconData get icon =>
@@ -83,6 +93,8 @@ class EventFund {
     DateTime? updatedAt,
     DateTime? eventDate,
     bool? isArchived,
+    bool? showCalendar,
+    bool? showDateSeparators,
     bool clearBudget = false,
     bool clearEventDate = false,
   }) {
@@ -97,6 +109,8 @@ class EventFund {
       updatedAt: updatedAt ?? this.updatedAt,
       eventDate: clearEventDate ? null : (eventDate ?? this.eventDate),
       isArchived: isArchived ?? this.isArchived,
+      showCalendar: showCalendar ?? this.showCalendar,
+      showDateSeparators: showDateSeparators ?? this.showDateSeparators,
     );
   }
 
@@ -111,6 +125,8 @@ class EventFund {
         'updatedAt': updatedAt.toIso8601String(),
         'eventDate': eventDate?.toIso8601String(),
         'isArchived': isArchived,
+        'showCalendar': showCalendar,
+        'showDateSeparators': showDateSeparators,
       };
 
   factory EventFund.fromJson(Map<String, dynamic> json) => EventFund(
@@ -126,6 +142,8 @@ class EventFund {
             ? DateTime.parse(json['eventDate'] as String)
             : null,
         isArchived: json['isArchived'] as bool? ?? false,
+        showCalendar: json['showCalendar'] as bool? ?? false,
+        showDateSeparators: json['showDateSeparators'] as bool? ?? false,
       );
 }
 

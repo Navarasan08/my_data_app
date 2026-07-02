@@ -145,6 +145,23 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return DateTime(date.year, date.month, 1);
   }
 
+  /// Cycle window for the "financial month" labelled [year]-[month].
+  ///
+  /// The label follows the month the cycle *mostly* falls within, not the one
+  /// it starts in: we anchor on whichever cycle contains the 15th of the
+  /// month. So with a late start day (e.g. 30) the July window runs
+  /// 30 Jun → 30 Jul (exclusive) instead of 30 Jul → 30 Aug — i.e. "this
+  /// month" begins on the 30th of the *previous* month. Returns the inclusive
+  /// start and the exclusive end (= the next cycle's start). With no custom
+  /// cycle this is just the plain calendar month.
+  ({DateTime start, DateTime end}) cycleWindowForMonth(int year, int month) {
+    final anchor = _anchorFor(DateTime(year, month, 15));
+    return (
+      start: effectiveCycleStart(anchor.year, anchor.month),
+      end: effectiveCycleStart(anchor.year, anchor.month + 1),
+    );
+  }
+
   /// Inclusive start of the currently selected cycle.
   DateTime get selectedCycleStart {
     final a = _anchorFor(state.selectedDate);
@@ -242,11 +259,10 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     final result = <DateTime, double>{};
     for (int i = months - 1; i >= 0; i--) {
       final anchor = DateTime(now.year, now.month - i, 1);
-      final start = effectiveCycleStart(anchor.year, anchor.month);
-      final end = effectiveCycleStart(anchor.year, anchor.month + 1);
+      final w = cycleWindowForMonth(anchor.year, anchor.month);
       final total = state.records.where((r) {
         final d = DateTime(r.date.year, r.date.month, r.date.day);
-        return !d.isBefore(start) && d.isBefore(end);
+        return !d.isBefore(w.start) && d.isBefore(w.end);
       }).fold(0.0, (sum, r) => sum + r.amount);
       result[anchor] = total;
     }
