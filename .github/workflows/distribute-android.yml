@@ -64,14 +64,22 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: |
-          # Strip whitespace, then normalise URL-safe base64 (-_ → +/) so the
-          # secret decodes whether it was produced with standard or url-safe
-          # base64. If decoding still fails, the secret itself is malformed
-          # (not base64, or truncated) — regenerate it, don't --ignore-garbage.
-          printf '%s' "$KEYSTORE_BASE64" \
-            | tr -d '[:space:]' \
-            | tr '_-' '/+' \
-            | base64 -d > android/app/upload-keystore.jks
+          # Strip whitespace, normalise URL-safe base64 (-_ → +/), then re-pad
+          # to a multiple of 4 with '='. base64url output commonly drops its
+          # padding, and GNU `base64 -d` rejects an unpadded string as
+          # "invalid input" — re-padding lets it decode either form. If it
+          # still fails after this, the secret is genuinely malformed (not
+          # base64, or truncated) — regenerate it, don't --ignore-garbage.
+          b64=$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | tr '_-' '/+')
+          case $(( ${#b64} % 4 )) in
+            2) b64="${b64}==" ;;
+            3) b64="${b64}=" ;;
+            1)
+              echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 has an invalid length for base64 (len mod 4 == 1). The secret is truncated or corrupted. Regenerate it with: base64 -w0 upload-keystore.jks"
+              exit 1
+              ;;
+          esac
+          printf '%s' "$b64" | base64 -d > android/app/upload-keystore.jks
           if [ ! -s android/app/upload-keystore.jks ]; then
             echo "::error::base64 decode produced an empty file — the ANDROID_UPLOAD_KEYSTORE_BASE64 secret is not valid base64. Regenerate it with: base64 -w0 upload-keystore.jks"
             exit 1
