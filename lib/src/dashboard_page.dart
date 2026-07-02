@@ -13,6 +13,7 @@ import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/period_page.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/home_record_page.dart';
+import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/schedule_page.dart';
 import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
@@ -218,8 +219,13 @@ class _DashboardPageState extends State<DashboardPage> {
         );
         break;
       case 'home':
-        page = BlocProvider.value(
-          value: context.read<HomeRecordCubit>(),
+        // Provide EventCubit alongside HomeRecordCubit so records can be
+        // linked to event/group funds and navigate to them.
+        page = MultiBlocProvider(
+          providers: [
+            BlocProvider.value(value: context.read<HomeRecordCubit>()),
+            BlocProvider.value(value: context.read<EventCubit>()),
+          ],
           child: const HomeRecordPage(),
         );
         break;
