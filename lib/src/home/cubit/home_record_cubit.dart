@@ -21,6 +21,21 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           isCalendarView: _repository.getIsCalendarView(),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      records: _repository.getAll(),
+      customCategories: _repository.getCustomCategories(),
+      paymentTypes: _repository.getPaymentTypes(),
+      currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
+      showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
+      monthlyStartDay: _repository.getMonthlyStartDay(),
+      weekendAdjustment:
+          weekendAdjustmentFromName(_repository.getWeekendAdjustment()),
+      isCalendarView: _repository.getIsCalendarView(),
+    ));
+  }
+
   void addRecord(HomeRecord record) {
     _repository.add(record);
     emit(state.copyWith(records: _repository.getAll()));
@@ -72,8 +87,11 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     emit(state.copyWith(viewMode: mode));
   }
 
-  List<HomeCategory> get allCategories =>
-      [...HomeCategory.defaults, ...state.customCategories];
+  List<HomeCategory> get allCategories => [
+        ...HomeCategory.defaults,
+        ...HomeCategory.incomeDefaults,
+        ...state.customCategories,
+      ];
 
   /// Categories sorted by usage (most-used first). Ties keep their declared
   /// order so the strip stays stable when counts are equal.
@@ -206,17 +224,30 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
         .toList();
   }
 
+  /// Total spent (expenses only) across the records in the current view.
   double get displayTotal {
-    return _baseRecords.fold(0.0, (sum, r) => sum + r.amount);
+    return _baseRecords
+        .where((r) => !r.isIncome)
+        .fold(0.0, (sum, r) => sum + r.amount);
+  }
+
+  /// Total received (income only) across the records in the current view.
+  double get displayIncomeTotal {
+    return _baseRecords
+        .where((r) => r.isIncome)
+        .fold(0.0, (sum, r) => sum + r.amount);
   }
 
   double get totalAmount {
-    return state.records.fold(0.0, (sum, r) => sum + r.amount);
+    return state.records
+        .where((r) => !r.isIncome)
+        .fold(0.0, (sum, r) => sum + r.amount);
   }
 
   Map<HomeCategory, double> get categoryTotals {
     final map = <HomeCategory, double>{};
     for (final r in _baseRecords) {
+      if (r.isIncome) continue;
       map[r.category] = (map[r.category] ?? 0) + r.amount;
     }
     return map;
@@ -227,6 +258,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   Map<HomeCategory, Map<MeasureUnit, double>> get categoryQuantities {
     final map = <HomeCategory, Map<MeasureUnit, double>>{};
     for (final r in _baseRecords) {
+      if (r.isIncome) continue;
       if (r.quantity != null && r.unit != null) {
         map.putIfAbsent(r.category, () => {});
         map[r.category]![r.unit!] =
@@ -242,8 +274,10 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     for (int i = months - 1; i >= 0; i--) {
       final month = DateTime(now.year, now.month - i, 1);
       final total = state.records
-          .where(
-              (r) => r.date.year == month.year && r.date.month == month.month)
+          .where((r) =>
+              !r.isIncome &&
+              r.date.year == month.year &&
+              r.date.month == month.month)
           .fold(0.0, (sum, r) => sum + r.amount);
       result[month] = total;
     }
@@ -261,6 +295,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       final anchor = DateTime(now.year, now.month - i, 1);
       final w = cycleWindowForMonth(anchor.year, anchor.month);
       final total = state.records.where((r) {
+        if (r.isIncome) return false;
         final d = DateTime(r.date.year, r.date.month, r.date.day);
         return !d.isBefore(w.start) && d.isBefore(w.end);
       }).fold(0.0, (sum, r) => sum + r.amount);
@@ -272,6 +307,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   Map<HomeCategory, double> allTimeCategoryTotals() {
     final map = <HomeCategory, double>{};
     for (final r in state.records) {
+      if (r.isIncome) continue;
       map[r.category] = (map[r.category] ?? 0) + r.amount;
     }
     return map;
@@ -281,6 +317,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       DateTime start, DateTime end) {
     final map = <HomeCategory, double>{};
     for (final r in state.records) {
+      if (r.isIncome) continue;
       if (!r.date.isBefore(start) && !r.date.isAfter(end)) {
         map[r.category] = (map[r.category] ?? 0) + r.amount;
       }
@@ -298,6 +335,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     String? paymentTypeId,
   }) {
     final list = state.records.where((r) {
+      if (r.isIncome) return false;
       if (r.date.isBefore(start) || r.date.isAfter(end)) return false;
       if (category != null && r.category.id != category.id) return false;
       if (paymentTypeId != null && r.paymentType?.id != paymentTypeId) {
@@ -318,6 +356,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }) {
     final map = <PaymentType, double>{};
     for (final r in state.records) {
+      if (r.isIncome) continue;
       if (r.date.isBefore(start) || r.date.isAfter(end)) continue;
       if (category != null && r.category.id != category.id) continue;
       final pt = r.paymentType;
@@ -337,6 +376,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }) {
     int n = 0;
     for (final r in state.records) {
+      if (r.isIncome) continue;
       if (r.date.isBefore(start) || r.date.isAfter(end)) continue;
       if (category != null && r.category.id != category.id) continue;
       if (r.paymentType == null) n++;
@@ -344,8 +384,9 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return n;
   }
 
-  double get allTimeTotal =>
-      state.records.fold(0.0, (sum, r) => sum + r.amount);
+  double get allTimeTotal => state.records
+      .where((r) => !r.isIncome)
+      .fold(0.0, (sum, r) => sum + r.amount);
 
   double get averagePerMonth {
     if (state.records.isEmpty) return 0;
@@ -489,6 +530,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     final end = selectedCycleEnd;
     final out = <DateTime, double>{};
     for (final r in state.records) {
+      if (r.isIncome) continue;
       final d = DateTime(r.date.year, r.date.month, r.date.day);
       if (d.isBefore(start) || !d.isBefore(end)) continue;
       if (selected.isNotEmpty && !selected.contains(r.category.id)) continue;

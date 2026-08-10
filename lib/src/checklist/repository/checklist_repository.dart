@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_data_app/src/checklist/model/checklist_model.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 
 abstract class ChecklistRepository {
   List<ChecklistGroup> getAll();
@@ -23,7 +24,15 @@ class FirestoreChecklistRepository implements ChecklistRepository {
 
   @override
   Future<void> init() async {
-    final snapshot = await _collection.get();
+    _load(await readQueryCacheFirst(_collection));
+  }
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() async {
+    _load(await _collection.get());
+  }
+
+  void _load(QuerySnapshot<Map<String, dynamic>> snapshot) {
     _checklists =
         snapshot.docs.map((doc) => ChecklistGroup.fromJson(doc.data())).toList();
   }

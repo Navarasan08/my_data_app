@@ -9,6 +9,11 @@ class LoanCubit extends Cubit<LoanState> {
   LoanCubit(this._repository)
       : super(LoanState(loans: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(loans: _repository.getAll()));
+  }
+
   /// Split an EMI into principal & interest using amortization formula
   static ({double principal, double interest}) _splitEmi(
       double balance, double annualRate, double emi) {

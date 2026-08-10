@@ -12,6 +12,11 @@ class PeriodCubit extends Cubit<PeriodState> {
           selectedMonth: DateTime.now(),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(entries: _repository.getAll()));
+  }
+
   void addEntry(PeriodEntry entry) {
     _repository.add(entry);
     emit(state.copyWith(entries: _repository.getAll()));

@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/medical/model/medical_model.dart';
 
 abstract class MedicalRepository {
@@ -31,12 +32,21 @@ class FirestoreMedicalRepository implements MedicalRepository {
       _firestore.collection('users').doc(uid).collection('medical_records');
 
   @override
-  Future<void> init() async {
-    final memberSnapshot = await _membersCollection.get();
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
+    final memberSnapshot = cacheFirst
+        ? await readQueryCacheFirst(_membersCollection)
+        : await _membersCollection.get();
     _members = memberSnapshot.docs
         .map((doc) => FamilyMember.fromJson(doc.data()))
         .toList();
-    final recordSnapshot = await _recordsCollection.get();
+    final recordSnapshot = cacheFirst
+        ? await readQueryCacheFirst(_recordsCollection)
+        : await _recordsCollection.get();
     _records = recordSnapshot.docs
         .map((doc) => MedicalRecord.fromJson(doc.data()))
         .toList();

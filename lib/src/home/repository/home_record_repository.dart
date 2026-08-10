@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 
 abstract class HomeRecordRepository {
@@ -54,9 +55,16 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
       _firestore.collection('users').doc(uid).collection('home_payment_types');
 
   @override
-  Future<void> init() async {
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
     // Load settings
-    final settingsSnap = await _settingsDoc.get();
+    final settingsSnap = cacheFirst
+        ? await readDocCacheFirst(_settingsDoc)
+        : await _settingsDoc.get();
     bool paymentTypesSeeded = false;
     if (settingsSnap.exists) {
       _currencyCode = (settingsSnap.data()?['currencyCode'] as String?) ?? 'INR';
@@ -72,7 +80,9 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     }
 
     // Load custom categories first so records can reference them
-    final catSnapshot = await _categoryCollection.get();
+    final catSnapshot = cacheFirst
+        ? await readQueryCacheFirst(_categoryCollection)
+        : await _categoryCollection.get();
     _customCategories = catSnapshot.docs
         .map((doc) => HomeCategory.fromJson(doc.data()))
         .toList();
@@ -81,7 +91,9 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
     // default trio (cash / upi / card). After that, the user is free to add
     // or remove anything — we won't re-seed on subsequent launches even if
     // they delete them all.
-    final ptSnapshot = await _paymentTypeCollection.get();
+    final ptSnapshot = cacheFirst
+        ? await readQueryCacheFirst(_paymentTypeCollection)
+        : await _paymentTypeCollection.get();
     _paymentTypes = ptSnapshot.docs
         .map((doc) => PaymentType.fromJson(doc.data()))
         .toList();
@@ -96,7 +108,9 @@ class FirestoreHomeRecordRepository implements HomeRecordRepository {
       );
     }
 
-    final snapshot = await _collection.get();
+    final snapshot = cacheFirst
+        ? await readQueryCacheFirst(_collection)
+        : await _collection.get();
     _records = snapshot.docs
         .map((doc) =>
             HomeRecord.fromJson(doc.data(), customCategories: _customCategories))

@@ -12,6 +12,11 @@ class BillCubit extends Cubit<BillState> {
           selectedMonth: DateTime(DateTime.now().year, DateTime.now().month),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(bills: _repository.getAll()));
+  }
+
   void addBill(Bill bill) {
     _repository.add(bill);
     emit(state.copyWith(bills: _repository.getAll()));

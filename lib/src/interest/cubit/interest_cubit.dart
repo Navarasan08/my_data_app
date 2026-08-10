@@ -9,6 +9,9 @@ class InterestCubit extends Cubit<InterestState> {
   InterestCubit(this._repository)
       : super(InterestState(records: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() => _emit();
+
   // ── Records ─────────────────────────────────────────────────────────────
 
   void addRecord(InterestRecord r) {

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:my_data_app/src/chits/model/chit_model.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 
 abstract class ChitRepository {
   List<ChitFund> getAll();
@@ -189,7 +190,15 @@ class FirestoreChitRepository implements ChitRepository {
 
   @override
   Future<void> init() async {
-    final snapshot = await _collection.get();
+    _load(await readQueryCacheFirst(_collection));
+  }
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() async {
+    _load(await _collection.get());
+  }
+
+  void _load(QuerySnapshot<Map<String, dynamic>> snapshot) {
     _chitFunds = snapshot.docs
         .map((doc) => ChitFund.fromJson(doc.data()))
         .toList();

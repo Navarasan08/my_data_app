@@ -9,6 +9,11 @@ class ChecklistCubit extends Cubit<ChecklistState> {
   ChecklistCubit(this._repository)
       : super(ChecklistState(checklists: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(checklists: _repository.getAll()));
+  }
+
   void addChecklist(ChecklistGroup group) {
     _repository.add(group);
     emit(state.copyWith(checklists: _repository.getAll()));

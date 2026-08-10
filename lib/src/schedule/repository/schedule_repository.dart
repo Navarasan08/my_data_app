@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/schedule/model/schedule_model.dart';
 
 abstract class ScheduleRepository {
@@ -35,14 +36,23 @@ class FirestoreScheduleRepository implements ScheduleRepository {
       .collection('schedule_categories');
 
   @override
-  Future<void> init() async {
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
     // Load custom categories first so entries can reference them
-    final catSnapshot = await _categoryCollection.get();
+    final catSnapshot = cacheFirst
+        ? await readQueryCacheFirst(_categoryCollection)
+        : await _categoryCollection.get();
     _customCategories = catSnapshot.docs
         .map((doc) => ScheduleCategory.fromJson(doc.data()))
         .toList();
 
-    final snapshot = await _collection.get();
+    final snapshot = cacheFirst
+        ? await readQueryCacheFirst(_collection)
+        : await _collection.get();
     _entries = snapshot.docs
         .map((doc) => ScheduleEntry.fromJson(doc.data(),
             customCategories: _customCategories))

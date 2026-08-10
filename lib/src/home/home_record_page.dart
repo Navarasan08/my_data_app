@@ -38,52 +38,116 @@ class HomeRecordPage extends StatelessWidget {
         final cubit = context.read<HomeRecordCubit>();
         final filteredRecords = cubit.filteredRecords;
         final displayTotal = cubit.displayTotal;
+        final displayIncome = cubit.displayIncomeTotal;
 
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Expense Tracker'),
             centerTitle: true,
             elevation: 0,
+            title: const Text('Expense Tracker'),
             actions: [
-              IconButton(
-                icon: Icon(state.isCalendarView
-                    ? Icons.view_list_rounded
-                    : Icons.calendar_month_rounded),
-                tooltip: state.isCalendarView
-                    ? 'List view'
-                    : 'Calendar view',
-                onPressed: cubit.toggleCalendarView,
-              ),
-              IconButton(
-                icon: const Icon(Icons.bar_chart_rounded),
-                tooltip: 'Analysis',
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => MultiBlocProvider(
-                      providers: [
-                        BlocProvider.value(value: cubit),
-                        BlocProvider.value(
-                            value: context.read<EventCubit>()),
+              // Everything lives in the overflow menu to keep the header
+              // compact. The badge shows the active filter count.
+              PopupMenuButton<String>(
+                tooltip: 'Menu',
+                icon: Badge(
+                  isLabelVisible: state.selectedCategoryIds.isNotEmpty,
+                  label: Text('${state.selectedCategoryIds.length}'),
+                  child: const Icon(Icons.more_vert_rounded),
+                ),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'filters':
+                      _openMultiSelectSheet(
+                          context, cubit, state.selectedCategoryIds);
+                      break;
+                    case 'view':
+                      cubit.toggleCalendarView();
+                      break;
+                    case 'analysis':
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MultiBlocProvider(
+                            providers: [
+                              BlocProvider.value(value: cubit),
+                              BlocProvider.value(
+                                  value: context.read<EventCubit>()),
+                            ],
+                            child: const HomeRecordAnalysisPage(),
+                          ),
+                        ),
+                      );
+                      break;
+                    case 'settings':
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => BlocProvider.value(
+                            value: cubit,
+                            child: const HomeRecordSettingsPage(),
+                          ),
+                        ),
+                      );
+                      break;
+                  }
+                },
+                itemBuilder: (_) => [
+                  PopupMenuItem(
+                    value: 'filters',
+                    child: Row(
+                      children: [
+                        Icon(Icons.filter_list_rounded,
+                            size: 18, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 10),
+                        Text(state.selectedCategoryIds.isEmpty
+                            ? 'Filters'
+                            : 'Filters (${state.selectedCategoryIds.length})'),
                       ],
-                      child: const HomeRecordAnalysisPage(),
                     ),
                   ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings_rounded),
-                tooltip: 'Category Settings',
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: cubit,
-                      child: const HomeRecordSettingsPage(),
+                  PopupMenuItem(
+                    value: 'view',
+                    child: Row(
+                      children: [
+                        Icon(
+                          state.isCalendarView
+                              ? Icons.view_list_rounded
+                              : Icons.calendar_month_rounded,
+                          size: 18,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(state.isCalendarView
+                            ? 'List view'
+                            : 'Calendar view'),
+                      ],
                     ),
                   ),
-                ),
+                  PopupMenuItem(
+                    value: 'analysis',
+                    child: Row(
+                      children: [
+                        Icon(Icons.bar_chart_rounded,
+                            size: 18, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 10),
+                        const Text('Analysis'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'settings',
+                    child: Row(
+                      children: [
+                        Icon(Icons.settings_rounded,
+                            size: 18, color: cs.onSurfaceVariant),
+                        const SizedBox(width: 10),
+                        const Text('Settings'),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -97,141 +161,65 @@ class HomeRecordPage extends StatelessWidget {
 
               return Column(
                 children: [
-                  // Month nav — shown whenever the user is browsing by month
-                  // (the existing monthly-list mode or the new calendar view).
+                  // Income / Expenses / Overall — the page's main totals
+                  // line now that the header carries only the title.
+                  Center(
+                    child: ConstrainedBox(
+                      constraints:
+                          BoxConstraints(maxWidth: contentMaxWidth),
+                      child: _KindSummaryBar(
+                        formattedIncome:
+                            '+${cubit.formatAmount(displayIncome)}',
+                        formattedExpense:
+                            cubit.formatAmount(displayTotal),
+                        overall: displayIncome - displayTotal,
+                        formatAmount: cubit.formatAmount,
+                      ),
+                    ),
+                  ),
+
+                  // Date range + month navigation, directly under the
+                  // summary line. Applies to list and calendar view alike.
                   if (state.showMonthlyCalendar || state.isCalendarView)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: _PeriodNavBar(
+                        label: cubit.selectedPeriodLabel,
+                        count: filteredRecords.length,
+                        onPrevious: () => cubit.changeMonth(-1),
+                        onNext: () => cubit.changeMonth(1),
+                        onJumpToToday: () =>
+                            cubit.selectDate(DateTime.now()),
+                      ),
+                    ),
+
+                  // Active-filter pill — only rendered when a filter is
+                  // applied, since the chips strip moved into the menu's
+                  // Filters popup.
+                  if (state.selectedCategoryIds.isNotEmpty)
                     Center(
                       child: ConstrainedBox(
                         constraints:
                             BoxConstraints(maxWidth: contentMaxWidth),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
+                          padding:
+                              const EdgeInsets.fromLTRB(12, 6, 12, 0),
                           child: Row(
                             children: [
-                              IconButton(
-                                icon: const Icon(
-                                    Icons.chevron_left_rounded),
-                                onPressed: () =>
-                                    cubit.changeMonth(-1),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              Expanded(
-                                child: Text(
-                                  cubit.selectedPeriodLabel,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                              _ActiveFilterChip(
+                                count: state.selectedCategoryIds.length,
+                                onTap: () => _openMultiSelectSheet(
+                                  context,
+                                  cubit,
+                                  state.selectedCategoryIds,
                                 ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                    Icons.chevron_right_rounded),
-                                onPressed: () =>
-                                    cubit.changeMonth(1),
-                                visualDensity: VisualDensity.compact,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                cubit.formatAmount(displayTotal),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red[700],
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '(${filteredRecords.length})',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: cs.onSurfaceVariant,
-                                ),
+                                onClear: cubit.clearCategoryFilter,
                               ),
                             ],
                           ),
                         ),
                       ),
                     ),
-
-                  // Category Filter Chips (multi-select) + filter icon
-                  Center(
-                    child: ConstrainedBox(
-                      constraints:
-                          BoxConstraints(maxWidth: contentMaxWidth),
-                      child: SizedBox(
-                        height: 38,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 12),
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: ChoiceChip(
-                                label: const Text('All',
-                                    style: TextStyle(fontSize: 12)),
-                                selected:
-                                    state.selectedCategoryIds.isEmpty,
-                                onSelected: (_) =>
-                                    cubit.clearCategoryFilter(),
-                                selectedColor: Colors.green[100],
-                                showCheckmark: false,
-                                visualDensity: VisualDensity.compact,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 4),
-                              ),
-                            ),
-                            ...cubit.categoriesByUsage.map((cat) {
-                              final isSelected = state
-                                  .selectedCategoryIds
-                                  .contains(cat.id);
-                              return Padding(
-                                padding:
-                                    const EdgeInsets.only(right: 6),
-                                child: ChoiceChip(
-                                  avatar: Icon(cat.icon,
-                                      size: 14, color: cat.color),
-                                  label: Text(cat.displayName,
-                                      style: const TextStyle(
-                                          fontSize: 12)),
-                                  selected: isSelected,
-                                  onSelected: (_) =>
-                                      cubit.toggleCategory(cat),
-                                  selectedColor: cat.color
-                                      .withValues(alpha: 0.2),
-                                  showCheckmark: false,
-                                  visualDensity: VisualDensity.compact,
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 4),
-                                ),
-                              );
-                            }),
-                            // Trailing multi-select filter icon
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 4, right: 6, top: 4, bottom: 4),
-                              child: _FilterIconButton(
-                                activeCount:
-                                    state.selectedCategoryIds.length,
-                                onTap: () => _openMultiSelectSheet(
-                                  context,
-                                  cubit,
-                                  state.selectedCategoryIds,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 4),
 
                   // Records List / Grid / Calendar
@@ -350,8 +338,12 @@ class HomeRecordPage extends StatelessWidget {
       itemBuilder: (context, index) {
         final key = sortedKeys[index];
         final monthRecords = grouped[key]!;
-        final monthTotal =
-            monthRecords.fold(0.0, (sum, r) => sum + r.amount);
+        final monthTotal = monthRecords
+            .where((r) => !r.isIncome)
+            .fold(0.0, (sum, r) => sum + r.amount);
+        final monthIncome = monthRecords
+            .where((r) => r.isIncome)
+            .fold(0.0, (sum, r) => sum + r.amount);
         final monthDate = DateTime.parse('$key-01');
 
         return Column(
@@ -376,6 +368,17 @@ class HomeRecordPage extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
+                  if (monthIncome > 0) ...[
+                    Text(
+                      '+${cubit.formatAmount(monthIncome)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   Text(
                     cubit.formatAmount(monthTotal),
                     style: TextStyle(
@@ -438,8 +441,12 @@ class HomeRecordPage extends StatelessWidget {
 
     for (final ws in sortedWeeks) {
       final weekRecords = grouped[ws]!;
-      final weekTotal =
-          weekRecords.fold(0.0, (sum, r) => sum + r.amount);
+      final weekTotal = weekRecords
+          .where((r) => !r.isIncome)
+          .fold(0.0, (sum, r) => sum + r.amount);
+      final weekIncome = weekRecords
+          .where((r) => r.isIncome)
+          .fold(0.0, (sum, r) => sum + r.amount);
 
       slivers.add(
         SliverPersistentHeader(
@@ -448,6 +455,8 @@ class HomeRecordPage extends StatelessWidget {
             label: _weekLabel(ws, now),
             count: weekRecords.length,
             formattedTotal: cubit.formatAmount(weekTotal),
+            formattedIncome:
+                weekIncome > 0 ? '+${cubit.formatAmount(weekIncome)}' : null,
           ),
         ),
       );
@@ -651,60 +660,225 @@ class HomeRecordPage extends StatelessWidget {
   }
 }
 
-class _FilterIconButton extends StatelessWidget {
-  final int activeCount;
-  final VoidCallback onTap;
+/// Pill-style period navigator shown under the summary line:
+/// `‹  📅 1 Aug – 31 Aug  (12)  ›`. Chevrons step a month back/forward;
+/// tapping the centre label jumps back to the current month.
+class _PeriodNavBar extends StatelessWidget {
+  final String label;
+  final int count;
+  final VoidCallback onPrevious;
+  final VoidCallback onNext;
+  final VoidCallback onJumpToToday;
 
-  const _FilterIconButton({required this.activeCount, required this.onTap});
+  const _PeriodNavBar({
+    required this.label,
+    required this.count,
+    required this.onPrevious,
+    required this.onNext,
+    required this.onJumpToToday,
+  });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final hasFilter = activeCount > 0;
+
+    Widget chevron(IconData icon, String tooltip, VoidCallback onTap) =>
+        Tooltip(
+          message: tooltip,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const CircleBorder(),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Icon(icon, size: 20, color: cs.onSurface),
+            ),
+          ),
+        );
+
     return Material(
-      color: hasFilter ? Colors.green[600] : cs.surfaceContainerLow,
-      shape: const CircleBorder(),
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 30,
-          height: 30,
-          child: Stack(
-            alignment: Alignment.center,
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                Icons.filter_list_rounded,
-                size: 16,
-                color: hasFilter ? Colors.white : cs.onSurface,
-              ),
-              if (hasFilter)
-                Positioned(
-                  top: -2,
-                  right: -2,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 4, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      borderRadius: BorderRadius.circular(8),
-                      border:
-                          Border.all(color: Colors.white, width: 1),
-                    ),
-                    constraints:
-                        const BoxConstraints(minWidth: 14, minHeight: 14),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$activeCount',
+      color: cs.surfaceContainerLow,
+      shape: StadiumBorder(side: BorderSide(color: cs.outlineVariant)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          chevron(Icons.chevron_left_rounded, 'Previous month', onPrevious),
+          Tooltip(
+            message: 'Jump to current month',
+            child: InkWell(
+              onTap: onJumpToToday,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.calendar_month_rounded,
+                        size: 14, color: cs.primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 1.5),
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: cs.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          chevron(Icons.chevron_right_rounded, 'Next month', onNext),
+        ],
+      ),
+    );
+  }
+}
+
+/// Compact three-column summary line — Income (green), Expenses (red) and
+/// Overall (income − expenses, green when positive) — for the records shown
+/// in the current period. Rendered below the category filter chips in both
+/// the list and calendar views.
+class _KindSummaryBar extends StatelessWidget {
+  final String formattedIncome;
+  final String formattedExpense;
+  final double overall;
+  final String Function(double amount, {int decimals}) formatAmount;
+
+  const _KindSummaryBar({
+    required this.formattedIncome,
+    required this.formattedExpense,
+    required this.overall,
+    required this.formatAmount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final overallColor = overall >= 0 ? Colors.green[700]! : Colors.red[700]!;
+    final overallText = overall >= 0
+        ? '+${formatAmount(overall)}'
+        : '-${formatAmount(-overall)}';
+
+    Widget item(String label, String value, Color color) => Expanded(
+          child: Column(
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 2),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: color,
                   ),
                 ),
+              ),
+            ],
+          ),
+        );
+
+    final divider = Container(
+      width: 1,
+      height: 26,
+      color: cs.outlineVariant,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cs.outlineVariant),
+        ),
+        child: Row(
+          children: [
+            item('Income', formattedIncome, Colors.green[700]!),
+            divider,
+            item('Expenses', formattedExpense, Colors.red[700]!),
+            divider,
+            item('Overall', overallText, overallColor),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small pill shown in the totals strip when a category filter is active,
+/// now that the filter chips strip lives inside the menu's Filters popup.
+/// Tapping the pill reopens the filter sheet; the trailing × clears it.
+class _ActiveFilterChip extends StatelessWidget {
+  final int count;
+  final VoidCallback onTap;
+  final VoidCallback onClear;
+
+  const _ActiveFilterChip({
+    required this.count,
+    required this.onTap,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.green.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.filter_list_rounded,
+                  size: 14, color: Colors.green[800]),
+              const SizedBox(width: 5),
+              Text(
+                '$count filter${count == 1 ? '' : 's'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green[800],
+                ),
+              ),
+              const SizedBox(width: 4),
+              InkWell(
+                onTap: onClear,
+                borderRadius: BorderRadius.circular(10),
+                child: Icon(Icons.close_rounded,
+                    size: 14, color: Colors.green[800]),
+              ),
             ],
           ),
         ),
@@ -718,10 +892,15 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int count;
   final String formattedTotal;
 
+  /// Pre-formatted income total (with leading `+`), or null when the week
+  /// has no income records.
+  final String? formattedIncome;
+
   _WeekHeaderDelegate({
     required this.label,
     required this.count,
     required this.formattedTotal,
+    this.formattedIncome,
   });
 
   static const double _height = 52;
@@ -777,6 +956,17 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
               ),
             ),
             const Spacer(),
+            if (formattedIncome != null) ...[
+              Text(
+                formattedIncome!,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.green[700],
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             Text(
               formattedTotal,
               style: TextStyle(
@@ -795,7 +985,8 @@ class _WeekHeaderDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant _WeekHeaderDelegate oldDelegate) {
     return oldDelegate.label != label ||
         oldDelegate.count != count ||
-        oldDelegate.formattedTotal != formattedTotal;
+        oldDelegate.formattedTotal != formattedTotal ||
+        oldDelegate.formattedIncome != formattedIncome;
   }
 }
 
@@ -884,11 +1075,14 @@ class _RecordCard extends StatelessWidget {
                 ),
               ),
               Text(
-                context.read<HomeRecordCubit>().formatAmount(record.amount),
+                (record.isIncome ? '+' : '') +
+                    context
+                        .read<HomeRecordCubit>()
+                        .formatAmount(record.amount),
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.red,
+                  color: record.isIncome ? Colors.green[700] : Colors.red,
                 ),
               ),
               const SizedBox(width: 8),
@@ -1020,13 +1214,40 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
   MeasureUnit? _selectedUnit;
   PaymentType? _selectedPaymentType;
   String? _selectedEventId;
+  bool _isIncome = false;
 
   bool get _isEditing => widget.record != null;
+
+  /// Categories matching the currently selected kind (expense vs income),
+  /// plus the record's own category if it's missing from that list (e.g. a
+  /// legacy custom category) so editing never silently drops it.
+  List<HomeCategory> get _kindCategories {
+    final list =
+        widget.categories.where((c) => c.isIncome == _isIncome).toList();
+    if (!list.any((c) => c.id == _selectedCategory.id)) {
+      list.add(_selectedCategory);
+    }
+    return list;
+  }
+
+  void _setKind(bool income) {
+    if (income == _isIncome) return;
+    setState(() {
+      _isIncome = income;
+      // Snap the category to the first default of the new kind unless the
+      // current one already matches (legacy/custom edge cases).
+      if (_selectedCategory.isIncome != income) {
+        _selectedCategory =
+            income ? HomeCategory.salary : HomeCategory.groceries;
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     if (widget.record != null) {
+      _isIncome = widget.record!.isIncome;
       _titleController.text = widget.record!.title;
       _amountController.text = widget.record!.amount.toString();
       _descriptionController.text = widget.record!.description ?? '';
@@ -1081,9 +1302,11 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
 
   HomeRecord? _buildRecord() {
     if (!_formKey.currentState!.validate()) return null;
-    final qty = _quantityController.text.isNotEmpty
+    // Quantity/unit and event links only apply to expenses.
+    final qty = !_isIncome && _quantityController.text.isNotEmpty
         ? double.tryParse(_quantityController.text)
         : null;
+    if (_isIncome) _selectedEventId = null;
     // Resolve the linked event's name for a resilient snapshot. Falls back to
     // the record's existing name if the event isn't in the passed list (e.g.
     // it was archived after linking).
@@ -1109,6 +1332,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       paymentType: _selectedPaymentType,
       eventId: _selectedEventId,
       eventName: eventName,
+      isIncome: _isIncome,
     );
   }
 
@@ -1131,7 +1355,9 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
       _descriptionController.clear();
       _notesController.clear();
       _quantityController.clear();
-      _selectedCategory = HomeCategory.groceries;
+      // Keep the current kind so multi-entry of the same type stays fast.
+      _selectedCategory =
+          _isIncome ? HomeCategory.salary : HomeCategory.groceries;
       _selectedUnit = null;
       _selectedPaymentType = null;
       // _selectedDate is intentionally preserved.
@@ -1163,6 +1389,32 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
+                // Expense / Income kind toggle
+                SegmentedButton<bool>(
+                  segments: const [
+                    ButtonSegment(
+                      value: false,
+                      icon: Icon(Icons.arrow_upward_rounded, size: 16),
+                      label: Text('Expense'),
+                    ),
+                    ButtonSegment(
+                      value: true,
+                      icon: Icon(Icons.arrow_downward_rounded, size: 16),
+                      label: Text('Income'),
+                    ),
+                  ],
+                  selected: {_isIncome},
+                  onSelectionChanged: (sel) => _setKind(sel.first),
+                  style: SegmentedButton.styleFrom(
+                    selectedBackgroundColor: _isIncome
+                        ? Colors.green.withValues(alpha: 0.15)
+                        : Colors.red.withValues(alpha: 0.12),
+                    selectedForegroundColor:
+                        _isIncome ? Colors.green[800] : Colors.red[700],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(
@@ -1179,15 +1431,16 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Category Dropdown
+                // Category Dropdown (filtered to the selected kind)
                 DropdownButtonFormField<HomeCategory>(
+                  key: ValueKey(_isIncome),
                   initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.category),
                   ),
-                  items: widget.categories.map((cat) {
+                  items: _kindCategories.map((cat) {
                     return DropdownMenuItem(
                       value: cat,
                       child: Row(
@@ -1255,7 +1508,8 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Quantity & Unit row
+                // Quantity & Unit row (expenses only)
+                if (!_isIncome)
                 Row(
                   children: [
                     Expanded(
@@ -1294,7 +1548,7 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                if (!_isIncome) const SizedBox(height: 16),
 
                 // Payment type picker (optional)
                 _PaymentTypePicker(
@@ -1305,11 +1559,12 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Event / group link (optional). Hidden entirely when there
-                // are no events to link to — unless this record already has a
-                // link (e.g. to an archived event) that we must keep editable.
-                if (widget.groups.isNotEmpty ||
-                    _selectedEventId != null) ...[
+                // Event / group link (optional, expenses only). Hidden when
+                // there are no events to link to — unless this record already
+                // has a link (e.g. to an archived event) to keep editable.
+                if (!_isIncome &&
+                    (widget.groups.isNotEmpty ||
+                        _selectedEventId != null)) ...[
                   _EventGroupPicker(
                     groups: widget.groups,
                     selectedId: _selectedEventId,
@@ -1582,7 +1837,12 @@ class _MonthCalendarView extends StatelessWidget {
     const dowLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     final dayRecords = cubit.recordsForSelectedDay;
-    final dayTotal = dayRecords.fold<double>(0, (s, r) => s + r.amount);
+    final dayTotal = dayRecords
+        .where((r) => !r.isIncome)
+        .fold<double>(0, (s, r) => s + r.amount);
+    final dayIncome = dayRecords
+        .where((r) => r.isIncome)
+        .fold<double>(0, (s, r) => s + r.amount);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -1672,6 +1932,17 @@ class _MonthCalendarView extends StatelessWidget {
                     ),
                   ),
                   if (dayRecords.isNotEmpty) ...[
+                    if (dayIncome > 0) ...[
+                      Text(
+                        '+${cubit.formatAmount(dayIncome)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                    ],
                     Text(
                       cubit.formatAmount(dayTotal),
                       style: TextStyle(

@@ -9,6 +9,11 @@ class ProfileVaultCubit extends Cubit<ProfileVaultState> {
   ProfileVaultCubit(this._repository)
       : super(ProfileVaultState(entries: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(entries: _repository.getAll()));
+  }
+
   void addEntry(VaultEntry entry) {
     _repository.add(entry);
     emit(state.copyWith(entries: _repository.getAll()));

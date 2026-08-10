@@ -16,6 +16,9 @@ class NotificationCubit extends Cubit<NotificationState> {
   NotificationCubit(this._repository, this._local)
       : super(NotificationState(items: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() => _emit();
+
   // ── Public API used by other modules ────────────────────────────────────
 
   /// Add or refresh a notification. If a notification with the same

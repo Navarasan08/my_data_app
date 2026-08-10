@@ -12,6 +12,14 @@ class EventCubit extends Cubit<EventState> {
           expensesByEvent: _buildMap(_repository),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      events: _repository.getAllEvents(),
+      expensesByEvent: _buildMap(_repository),
+    ));
+  }
+
   static Map<String, List<EventExpense>> _buildMap(EventRepository repo) {
     final map = <String, List<EventExpense>>{};
     for (final e in repo.getAllEvents()) {

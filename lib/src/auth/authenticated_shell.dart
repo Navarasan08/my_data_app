@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -87,14 +89,30 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreNotificationRepository _notificationRepo;
   late final LocalNotificationService _notificationService;
   late final NotificationCubit _notificationCubit;
+  late final BillCubit _billCubit;
+  late final VehicleCubit _vehicleCubit;
   late final ScheduleCubit _scheduleCubit;
   late final LoanCubit _loanCubit;
   late final ChitCubit _chitCubit;
   late final ChecklistCubit _checklistCubit;
+  late final PeriodCubit _periodCubit;
+  late final HomeRecordCubit _homeRecordCubit;
+  late final FoodMenuCubit _foodMenuCubit;
+  late final GoalCubit _goalCubit;
+  late final MoneyOweCubit _moneyOweCubit;
+  late final MedicalCubit _medicalCubit;
+  late final ProfileVaultCubit _vaultCubit;
+  late final LandCubit _landCubit;
+  late final EventCubit _eventCubit;
+  late final InterestCubit _interestCubit;
+  late final ActivityCubit _activityCubit;
+  late final DietCubit _dietCubit;
+  late final DaysCounterCubit _daysCounterCubit;
   ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   late final GroupSettingsCubit _groupSettingsCubit;
   bool _initialized = false;
+  bool _cubitsCreated = false;
 
   @override
   void initState() {
@@ -135,6 +153,30 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   void dispose() {
     _reminderSweeper?.stop();
     _groupRepo.dispose();
+    if (_cubitsCreated) {
+      _billCubit.close();
+      _vehicleCubit.close();
+      _chitCubit.close();
+      _checklistCubit.close();
+      _periodCubit.close();
+      _homeRecordCubit.close();
+      _scheduleCubit.close();
+      _foodMenuCubit.close();
+      _loanCubit.close();
+      _goalCubit.close();
+      _moneyOweCubit.close();
+      _medicalCubit.close();
+      _vaultCubit.close();
+      _landCubit.close();
+      _eventCubit.close();
+      _interestCubit.close();
+      _activityCubit.close();
+      _dietCubit.close();
+      _daysCounterCubit.close();
+      _notificationCubit.close();
+    }
+    _dashboardSettingsCubit.close();
+    _groupSettingsCubit.close();
     super.dispose();
   }
 
@@ -142,6 +184,9 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
 
   Future<void> _initRepos() async {
     try {
+      // Cache-first: each repo reads Firestore's local cache and only goes to
+      // the network when the cache is empty (first launch on a device), so
+      // this stays fast no matter how much data has accumulated.
       await Future.wait([
         _billRepo.init(),
         _vehicleRepo.init(),
@@ -172,10 +217,26 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       // is loaded.
       _notificationCubit =
           NotificationCubit(_notificationRepo, _notificationService);
+      _billCubit = BillCubit(_billRepo);
+      _vehicleCubit = VehicleCubit(_vehicleRepo);
       _scheduleCubit = ScheduleCubit(_scheduleRepo);
       _loanCubit = LoanCubit(_loanRepo);
       _chitCubit = ChitCubit(_chitRepo);
       _checklistCubit = ChecklistCubit(_checklistRepo);
+      _periodCubit = PeriodCubit(_periodRepo);
+      _homeRecordCubit = HomeRecordCubit(_homeRecordRepo);
+      _foodMenuCubit = FoodMenuCubit(_foodMenuRepo);
+      _goalCubit = GoalCubit(_goalRepo);
+      _moneyOweCubit = MoneyOweCubit(_moneyOweRepo);
+      _medicalCubit = MedicalCubit(_medicalRepo);
+      _vaultCubit = ProfileVaultCubit(_vaultRepo);
+      _landCubit = LandCubit(_landRepo);
+      _eventCubit = EventCubit(_eventRepo);
+      _interestCubit = InterestCubit(_interestRepo);
+      _activityCubit = ActivityCubit(_activityRepo);
+      _dietCubit = DietCubit(_dietRepo);
+      _daysCounterCubit = DaysCounterCubit(_daysCounterRepo);
+      _cubitsCreated = true;
       // Generic reminder pipeline. Add new modules by appending another
       // ReminderSource to the `sources` list — no other wiring needed.
       _reminderSweeper = ReminderSweeper(
@@ -188,9 +249,65 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         ],
       )..start();
       if (mounted) setState(() => _initialized = true);
+      // What's on screen came from the local cache; now pull the latest from
+      // the server in the background so edits made on other devices show up.
+      unawaited(_refreshFromServer());
     } catch (e) {
       if (mounted) setState(() => _initError = e.toString());
     }
+  }
+
+  /// Re-reads every repo from the server and re-emits the fresh data through
+  /// the cubits. Failures are ignored — the cached data already on screen
+  /// simply stays until the next successful refresh.
+  Future<void> _refreshFromServer() async {
+    try {
+      await Future.wait([
+        _billRepo.refresh(),
+        _vehicleRepo.refresh(),
+        _chitRepo.refresh(),
+        _checklistRepo.refresh(),
+        _periodRepo.refresh(),
+        _homeRecordRepo.refresh(),
+        _scheduleRepo.refresh(),
+        _foodMenuRepo.refresh(),
+        _loanRepo.refresh(),
+        _goalRepo.refresh(),
+        _moneyOweRepo.refresh(),
+        _medicalRepo.refresh(),
+        _vaultRepo.refresh(),
+        _landRepo.refresh(),
+        _eventRepo.refresh(),
+        _interestRepo.refresh(),
+        _activityRepo.refresh(),
+        _dietRepo.refresh(),
+        _daysCounterRepo.refresh(),
+        _notificationRepo.refresh(),
+      ]);
+    } catch (_) {
+      return;
+    }
+    if (!mounted || !_cubitsCreated) return;
+    _billCubit.reloadFromRepository();
+    _vehicleCubit.reloadFromRepository();
+    _chitCubit.reloadFromRepository();
+    _checklistCubit.reloadFromRepository();
+    _periodCubit.reloadFromRepository();
+    _homeRecordCubit.reloadFromRepository();
+    _scheduleCubit.reloadFromRepository();
+    _foodMenuCubit.reloadFromRepository();
+    _loanCubit.reloadFromRepository();
+    _goalCubit.reloadFromRepository();
+    _moneyOweCubit.reloadFromRepository();
+    _medicalCubit.reloadFromRepository();
+    _vaultCubit.reloadFromRepository();
+    _landCubit.reloadFromRepository();
+    _eventCubit.reloadFromRepository();
+    _interestCubit.reloadFromRepository();
+    _activityCubit.reloadFromRepository();
+    _dietCubit.reloadFromRepository();
+    _daysCounterCubit.reloadFromRepository();
+    _notificationCubit.reloadFromRepository();
   }
 
   @override
@@ -240,28 +357,28 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
 
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => BillCubit(_billRepo)),
-        BlocProvider(create: (_) => VehicleCubit(_vehicleRepo)),
+        BlocProvider.value(value: _billCubit),
+        BlocProvider.value(value: _vehicleCubit),
         BlocProvider.value(value: _chitCubit),
         BlocProvider.value(value: _checklistCubit),
-        BlocProvider(create: (_) => PeriodCubit(_periodRepo)),
-        BlocProvider(create: (_) => HomeRecordCubit(_homeRecordRepo)),
+        BlocProvider.value(value: _periodCubit),
+        BlocProvider.value(value: _homeRecordCubit),
         BlocProvider.value(value: _scheduleCubit),
-        BlocProvider(create: (_) => FoodMenuCubit(_foodMenuRepo)),
+        BlocProvider.value(value: _foodMenuCubit),
         BlocProvider.value(value: _loanCubit),
-        BlocProvider(create: (_) => GoalCubit(_goalRepo)),
-        BlocProvider(create: (_) => MoneyOweCubit(_moneyOweRepo)),
-        BlocProvider(create: (_) => MedicalCubit(_medicalRepo)),
-        BlocProvider(create: (_) => ProfileVaultCubit(_vaultRepo)),
-        BlocProvider(create: (_) => LandCubit(_landRepo)),
-        BlocProvider(create: (_) => EventCubit(_eventRepo)),
+        BlocProvider.value(value: _goalCubit),
+        BlocProvider.value(value: _moneyOweCubit),
+        BlocProvider.value(value: _medicalCubit),
+        BlocProvider.value(value: _vaultCubit),
+        BlocProvider.value(value: _landCubit),
+        BlocProvider.value(value: _eventCubit),
         BlocProvider(
           create: (_) => GroupCubit(_groupRepo, currentUid: widget.uid),
         ),
-        BlocProvider(create: (_) => InterestCubit(_interestRepo)),
-        BlocProvider(create: (_) => ActivityCubit(_activityRepo)),
-        BlocProvider(create: (_) => DietCubit(_dietRepo)),
-        BlocProvider(create: (_) => DaysCounterCubit(_daysCounterRepo)),
+        BlocProvider.value(value: _interestCubit),
+        BlocProvider.value(value: _activityCubit),
+        BlocProvider.value(value: _dietCubit),
+        BlocProvider.value(value: _daysCounterCubit),
         BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
         BlocProvider.value(value: _groupSettingsCubit),

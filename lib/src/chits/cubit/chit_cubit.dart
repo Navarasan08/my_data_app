@@ -9,6 +9,11 @@ class ChitCubit extends Cubit<ChitState> {
   ChitCubit(this._repository)
       : super(ChitState(chitFunds: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(chitFunds: _repository.getAll()));
+  }
+
   void addChitFund(ChitFund chitFund) {
     _repository.add(chitFund);
     emit(state.copyWith(chitFunds: _repository.getAll()));

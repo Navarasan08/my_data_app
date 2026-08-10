@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/days_counter/model/days_counter_model.dart';
 
 abstract class DaysCounterRepository {
@@ -43,13 +44,22 @@ class FirestoreDaysCounterRepository implements DaysCounterRepository {
       .doc('prefs');
 
   @override
-  Future<void> init() async {
-    final settingsSnap = await _settingsDoc.get();
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
+    final settingsSnap = cacheFirst
+        ? await readDocCacheFirst(_settingsDoc)
+        : await _settingsDoc.get();
     bool seeded =
         (settingsSnap.data()?['typesSeeded'] as bool?) ?? false;
 
     // Event types — seed defaults the very first time.
-    final typeSnap = await _typesCol.get();
+    final typeSnap = cacheFirst
+        ? await readQueryCacheFirst(_typesCol)
+        : await _typesCol.get();
     _types = typeSnap.docs
         .map((d) => DaysCounterEventType.fromJson(d.data()))
         .toList();
@@ -61,7 +71,9 @@ class FirestoreDaysCounterRepository implements DaysCounterRepository {
       _settingsDoc.set({'typesSeeded': true}, SetOptions(merge: true));
     }
 
-    final eventSnap = await _eventsCol.get();
+    final eventSnap = cacheFirst
+        ? await readQueryCacheFirst(_eventsCol)
+        : await _eventsCol.get();
     _events = eventSnap.docs
         .map((d) => DaysCounterEvent.fromJson(d.data()))
         .toList();

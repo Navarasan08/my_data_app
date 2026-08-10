@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/diet/model/diet_model.dart';
 
 abstract class DietRepository {
@@ -33,11 +34,20 @@ class FirestoreDietRepository implements DietRepository {
       _firestore.collection('users').doc(uid).collection('diet_entries');
 
   @override
-  Future<void> init() async {
-    final itemsSnap = await _itemsCol.get();
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
+    final itemsSnap = cacheFirst
+        ? await readQueryCacheFirst(_itemsCol)
+        : await _itemsCol.get();
     _items =
         itemsSnap.docs.map((d) => FoodItem.fromJson(d.data())).toList();
-    final entriesSnap = await _entriesCol.get();
+    final entriesSnap = cacheFirst
+        ? await readQueryCacheFirst(_entriesCol)
+        : await _entriesCol.get();
     _entries =
         entriesSnap.docs.map((d) => FoodEntry.fromJson(d.data())).toList();
   }

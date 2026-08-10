@@ -21,6 +21,14 @@ class ScheduleCubit extends Cubit<ScheduleState> {
           customCategories: _repository.getCustomCategories(),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      entries: _repository.getAll(),
+      customCategories: _repository.getCustomCategories(),
+    ));
+  }
+
   void addEntry(ScheduleEntry entry) {
     _repository.add(entry);
     emit(state.copyWith(entries: _repository.getAll()));

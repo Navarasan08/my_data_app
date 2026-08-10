@@ -9,6 +9,11 @@ class VehicleCubit extends Cubit<VehicleState> {
   VehicleCubit(this._repository)
       : super(VehicleState(vehicles: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(vehicles: _repository.getAll()));
+  }
+
   void addVehicle(Vehicle vehicle) {
     _repository.add(vehicle);
     emit(state.copyWith(vehicles: _repository.getAll()));

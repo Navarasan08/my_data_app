@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 
 abstract class EventRepository {
@@ -34,13 +35,22 @@ class FirestoreEventRepository implements EventRepository {
       _eventsCollection.doc(eventId).collection('expenses');
 
   @override
-  Future<void> init() async {
-    final evSnap = await _eventsCollection.get();
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
+    final evSnap = cacheFirst
+        ? await readQueryCacheFirst(_eventsCollection)
+        : await _eventsCollection.get();
     _events = evSnap.docs.map((d) => EventFund.fromJson(d.data())).toList();
 
     // Lazy-load expenses in parallel for each event
     await Future.wait(_events.map((e) async {
-      final expSnap = await _expensesCollection(e.id).get();
+      final expSnap = cacheFirst
+          ? await readQueryCacheFirst(_expensesCollection(e.id))
+          : await _expensesCollection(e.id).get();
       _expenses[e.id] =
           expSnap.docs.map((d) => EventExpense.fromJson(d.data())).toList();
     }));

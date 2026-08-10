@@ -36,6 +36,7 @@ class ExpenseIoService {
     'Payment Type',
     'Description',
     'Notes',
+    'Type', // 'Expense' | 'Income' — appended last so older files still import
   ];
 
   static final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
@@ -74,6 +75,7 @@ class ExpenseIoService {
         r.paymentType?.displayName ?? '',
         r.description ?? '',
         r.notes ?? '',
+        r.isIncome ? 'Income' : 'Expense',
       ]);
     }
     return rows;
@@ -244,6 +246,7 @@ class ExpenseIoService {
     final cPayment = idx('Payment Type');
     final cDescription = idx('Description');
     final cNotes = idx('Notes');
+    final cType = idx('Type');
 
     if (cDate == -1 || cTitle == -1 || cAmount == -1) {
       return const ImportResult(
@@ -300,11 +303,15 @@ class ExpenseIoService {
           continue;
         }
 
+        // Missing/blank Type column (older files) means expense.
+        final isIncome = cell(cType).toLowerCase() == 'income';
+
+        final fallbackCategory =
+            isIncome ? HomeCategory.otherIncome : HomeCategory.groceries;
         final categoryRaw = cell(cCategory);
         final category = categoryRaw.isEmpty
-            ? HomeCategory.groceries
-            : (catByName[categoryRaw.toLowerCase()] ??
-                HomeCategory.groceries);
+            ? fallbackCategory
+            : (catByName[categoryRaw.toLowerCase()] ?? fallbackCategory);
 
         final qtyStr = cell(cQuantity);
         final qty = qtyStr.isEmpty ? null : double.tryParse(qtyStr);
@@ -333,6 +340,7 @@ class ExpenseIoService {
           quantity: qty,
           unit: unit,
           paymentType: paymentType,
+          isIncome: isIncome,
         );
         if (dupKeys.contains(key)) {
           duplicates.add(record);

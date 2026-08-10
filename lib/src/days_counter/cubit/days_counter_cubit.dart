@@ -12,6 +12,14 @@ class DaysCounterCubit extends Cubit<DaysCounterState> {
           eventTypes: _repository.getEventTypes(),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      events: _repository.getEvents(),
+      eventTypes: _repository.getEventTypes(),
+    ));
+  }
+
   // ── Events ───────────────────────────────────────────────────────────────
 
   void addEvent(DaysCounterEvent e) {

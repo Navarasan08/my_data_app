@@ -36,7 +36,7 @@ class HomeCategoriesPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Text(
-                      'Default Categories',
+                      'Default Expense Categories',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -50,6 +50,38 @@ class HomeCategoriesPage extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       children: HomeCategory.defaults.map((cat) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 8),
+                          child: Chip(
+                            avatar: Icon(cat.icon, size: 16, color: cat.color),
+                            label: Text(cat.displayName,
+                                style: const TextStyle(fontSize: 12)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
+
+                  // Default income categories section
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Default Income Categories',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      children: HomeCategory.incomeDefaults.map((cat) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4, vertical: 8),
@@ -109,11 +141,18 @@ class HomeCategoriesPage extends StatelessWidget {
                             style:
                                 const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          subtitle: inUse
-                              ? const Text('In use',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.green))
-                              : null,
+                          subtitle: Text(
+                            [
+                              cat.isIncome ? 'Income' : 'Expense',
+                              if (inUse) 'In use',
+                            ].join('  ·  '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: inUse
+                                  ? Colors.green
+                                  : cs.onSurfaceVariant,
+                            ),
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -208,6 +247,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   final _nameController = TextEditingController();
   int _selectedIconIndex = 10;
   int _selectedColorIndex = 0;
+  bool _isIncome = false;
 
   bool get _isEditing => widget.existing != null;
 
@@ -218,6 +258,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
       _nameController.text = widget.existing!.displayName;
       _selectedIconIndex = widget.existing!.iconIndex;
       _selectedColorIndex = widget.existing!.colorIndex;
+      _isIncome = widget.existing!.isIncome;
     }
   }
 
@@ -272,6 +313,20 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                 ),
               ),
               const SizedBox(height: 20),
+
+              // Expense / Income kind. Locked when editing so existing
+              // records that reference this category keep a matching kind.
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Expense')),
+                  ButtonSegment(value: true, label: Text('Income')),
+                ],
+                selected: {_isIncome},
+                onSelectionChanged: _isEditing
+                    ? null
+                    : (sel) => setState(() => _isIncome = sel.first),
+              ),
+              const SizedBox(height: 16),
 
               // Name field
               TextField(
@@ -392,6 +447,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     iconIndex: _selectedIconIndex,
                     colorIndex: _selectedColorIndex,
                     isCustom: true,
+                    isIncome: _isIncome,
                   );
                   widget.onSave(category);
                   Navigator.pop(context);

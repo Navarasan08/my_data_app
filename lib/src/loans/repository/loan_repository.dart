@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/firestore_read.dart';
 import 'package:my_data_app/src/loans/model/loan_model.dart';
 
 abstract class LoanRepository {
@@ -23,8 +24,15 @@ class FirestoreLoanRepository implements LoanRepository {
       _firestore.collection('users').doc(uid).collection('loans');
 
   @override
-  Future<void> init() async {
-    final snapshot = await _collection.get();
+  Future<void> init() => _load(cacheFirst: true);
+
+  /// Re-reads from the server, replacing the cache-first data from [init].
+  Future<void> refresh() => _load(cacheFirst: false);
+
+  Future<void> _load({required bool cacheFirst}) async {
+    final snapshot = cacheFirst
+        ? await readQueryCacheFirst(_collection)
+        : await _collection.get();
     _loans = snapshot.docs
         .map((doc) => Loan.fromJson(doc.data()))
         .toList();

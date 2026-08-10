@@ -9,6 +9,11 @@ class MoneyOweCubit extends Cubit<MoneyOweState> {
   MoneyOweCubit(this._repository)
       : super(MoneyOweState(entries: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(entries: _repository.getAll()));
+  }
+
   void addEntry(DebtEntry entry) {
     _repository.add(entry);
     emit(state.copyWith(entries: _repository.getAll()));

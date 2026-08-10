@@ -12,6 +12,11 @@ class FoodMenuCubit extends Cubit<FoodMenuState> {
           selectedWeekday: DateTime.now().weekday,
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(entries: _repository.getAll()));
+  }
+
   void selectWeekday(int weekday) {
     emit(state.copyWith(selectedWeekday: weekday));
   }

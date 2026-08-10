@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/cubit/event_state.dart';
+import 'package:my_data_app/src/events/event_analysis_page.dart';
 
 final _fmt = NumberFormat('#,##,###', 'en_IN');
 
@@ -295,6 +296,19 @@ class EventDetailPage extends StatelessWidget {
                 tooltip: event.showCalendar ? 'List view' : 'Month view',
                 onPressed: () => cubit.updateEvent(
                     event.copyWith(showCalendar: !event.showCalendar)),
+              ),
+              IconButton(
+                icon: const Icon(Icons.pie_chart_rounded),
+                tooltip: 'Analysis',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: cubit,
+                      child: EventAnalysisPage(eventId: event.id),
+                    ),
+                  ),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.settings_rounded),

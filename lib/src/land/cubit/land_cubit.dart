@@ -9,6 +9,11 @@ class LandCubit extends Cubit<LandState> {
   LandCubit(this._repository)
       : super(LandState(records: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(records: _repository.getAll()));
+  }
+
   void addRecord(LandRecord record) {
     _repository.add(record);
     emit(state.copyWith(records: _repository.getAll()));

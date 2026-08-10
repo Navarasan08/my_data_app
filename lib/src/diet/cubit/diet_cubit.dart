@@ -13,6 +13,14 @@ class DietCubit extends Cubit<DietState> {
           selectedMonth: DateTime(DateTime.now().year, DateTime.now().month, 1),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      items: _repository.getItems(),
+      entries: _repository.getEntries(),
+    ));
+  }
+
   // ── Food items ──────────────────────────────────────────────────────────
 
   void addItem(FoodItem item) {

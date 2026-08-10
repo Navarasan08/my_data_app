@@ -9,6 +9,9 @@ class ActivityCubit extends Cubit<ActivityState> {
   ActivityCubit(this._repository)
       : super(ActivityState(records: _repository.getAll()));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() => _emit();
+
   void addRecord(ActivityRecord r) {
     _repository.add(r);
     _emit();

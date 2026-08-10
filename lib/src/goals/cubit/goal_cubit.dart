@@ -11,6 +11,11 @@ class GoalCubit extends Cubit<GoalState> {
     autoMarkMissedFailures();
   }
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(goals: _repository.getAll()));
+  }
+
   void addGoal(Goal goal) {
     _repository.add(goal);
     emit(state.copyWith(goals: _repository.getAll()));

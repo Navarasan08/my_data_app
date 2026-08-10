@@ -12,6 +12,14 @@ class MedicalCubit extends Cubit<MedicalState> {
           records: _repository.getAllRecords(),
         ));
 
+  /// Re-emits state from the repository after a background server refresh.
+  void reloadFromRepository() {
+    emit(state.copyWith(
+      members: _repository.getAllMembers(),
+      records: _repository.getAllRecords(),
+    ));
+  }
+
   // ── Members ──────────────────────────────────────────────────────────
 
   void addMember(FamilyMember member) {
