@@ -52,6 +52,7 @@ import 'package:my_data_app/src/schedule/schedule_reminder_source.dart';
 import 'package:my_data_app/src/loans/loan_reminder_source.dart';
 import 'package:my_data_app/src/chits/chit_reminder_source.dart';
 import 'package:my_data_app/src/checklist/checklist_reminder_source.dart';
+import 'package:my_data_app/src/capture/cubit/capture_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/main_shell.dart';
 import 'package:my_data_app/src/splash/branded_loader.dart';
@@ -111,6 +112,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   ReminderSweeper? _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   late final GroupSettingsCubit _groupSettingsCubit;
+  late final CaptureCubit _captureCubit;
   bool _initialized = false;
   bool _cubitsCreated = false;
 
@@ -146,6 +148,11 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _notificationService = LocalNotificationService();
     _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
     _groupSettingsCubit = GroupSettingsCubit(uid: widget.uid);
+    // Device-local payment auto-capture (Android sideload builds only —
+    // no-op elsewhere, see capture_config.dart). Independent of Firestore,
+    // so it initialises outside _initRepos.
+    _captureCubit = CaptureCubit();
+    unawaited(_captureCubit.init());
     _initRepos();
   }
 
@@ -177,6 +184,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     }
     _dashboardSettingsCubit.close();
     _groupSettingsCubit.close();
+    _captureCubit.close();
     super.dispose();
   }
 
@@ -382,6 +390,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider.value(value: _notificationCubit),
         BlocProvider.value(value: _dashboardSettingsCubit),
         BlocProvider.value(value: _groupSettingsCubit),
+        BlocProvider.value(value: _captureCubit),
       ],
       child: MainShell(notificationService: _notificationService),
     );

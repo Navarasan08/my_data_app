@@ -34,6 +34,10 @@ dependencies:
   flutter_email_sender: ^7.0.0
   flutter_animate: ^4.5.0
   package_info_plus: ^8.0.0
+  # Android-only: reads payment notifications (GPay/PhonePe/banks) for the
+  # auto-capture feature. Gated behind --dart-define=AUTO_CAPTURE (see
+  # lib/src/capture/README.md) so store builds can exclude it.
+  notification_listener_service: ^0.3.4
 
 dev_dependencies:
   flutter_test:

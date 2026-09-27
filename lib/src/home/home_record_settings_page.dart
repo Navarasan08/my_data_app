@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/capture/capture_config.dart';
+import 'package:my_data_app/src/capture/cubit/capture_cubit.dart';
+import 'package:my_data_app/src/capture/cubit/capture_state.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_categories_page.dart';
@@ -115,6 +118,83 @@ class HomeRecordSettingsPage extends StatelessWidget {
                         color: cs.onSurfaceVariant),
                     onTap: () => _showMonthlyCycleDialog(context, cubit, state),
                   ),
+
+                  // Automation — only on Android builds compiled with
+                  // AUTO_CAPTURE (sideload). Store/web builds never show it.
+                  if (autoCaptureSupported) ...[
+                    const Divider(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                      child: Text(
+                        'Automation',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                    BlocBuilder<CaptureCubit, CaptureState>(
+                      builder: (context, capState) {
+                        final capCubit = context.read<CaptureCubit>();
+                        return Column(
+                          children: [
+                            SwitchListTile(
+                              title: const Text('Auto-capture payments'),
+                              subtitle: Text(
+                                capState.enabled
+                                    ? (capState.permissionGranted
+                                        ? 'Watching GPay / PhonePe / Paytm '
+                                            'notifications for payments'
+                                        : 'Paused — notification access not '
+                                            'granted yet')
+                                    : 'Detect UPI payments from notifications '
+                                        'and suggest expense records',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                              value: capState.enabled,
+                              onChanged: (val) async {
+                                final running =
+                                    await capCubit.setEnabled(val);
+                                if (val && !running && context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      behavior: SnackBarBehavior.floating,
+                                      content: Text(
+                                        'Allow notification access for this '
+                                        'app in the system screen, then come '
+                                        'back and tap "Re-check".',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                            if (capState.enabled &&
+                                !capState.permissionGranted)
+                              ListTile(
+                                leading: Icon(Icons.refresh_rounded,
+                                    color: Colors.amber[800]),
+                                title:
+                                    const Text('Re-check notification access'),
+                                subtitle: Text(
+                                  'Capture stays paused until access is '
+                                  'granted',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                                onTap: () => capCubit.refreshPermission(),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
 
                   const SizedBox(height: 32),
                 ],

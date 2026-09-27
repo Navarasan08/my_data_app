@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:my_data_app/src/capture/capture_config.dart';
+import 'package:my_data_app/src/capture/cubit/capture_cubit.dart';
+import 'package:my_data_app/src/capture/cubit/capture_state.dart';
+import 'package:my_data_app/src/capture/widgets/capture_review_sheet.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
@@ -104,8 +108,14 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
                 onPressed: () => Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: cubit,
+                    // CaptureCubit rides along for the auto-capture toggle
+                    // (the pushed route sits above the shell's providers).
+                    builder: (_) => MultiBlocProvider(
+                      providers: [
+                        BlocProvider.value(value: cubit),
+                        BlocProvider.value(
+                            value: context.read<CaptureCubit>()),
+                      ],
                       child: const HomeRecordSettingsPage(),
                     ),
                   ),
@@ -203,6 +213,81 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
                             ),
                           ),
                         ),
+                      ),
+                    // Auto-captured payments banner (Android sideload builds
+                    // only). Tapping opens the review sheet.
+                    if (autoCaptureSupported)
+                      BlocBuilder<CaptureCubit, CaptureState>(
+                        builder: (context, capState) {
+                          if (capState.pending.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          return Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: contentMaxWidth,
+                              ),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                                child: Material(
+                                  color:
+                                      Colors.amber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: InkWell(
+                                    onTap: () => CaptureReviewSheet.show(
+                                      context,
+                                      cubit,
+                                      context.read<CaptureCubit>(),
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 9,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons
+                                                .notifications_active_rounded,
+                                            size: 16,
+                                            color: Colors.amber[900],
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              '${capState.pending.length} '
+                                              'payment${capState.pending.length == 1 ? '' : 's'} detected',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w600,
+                                                color: Colors.amber[900],
+                                              ),
+                                            ),
+                                          ),
+                                          Text(
+                                            'Review',
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.amber[900],
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.chevron_right_rounded,
+                                            size: 18,
+                                            color: Colors.amber[900],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     const SizedBox(height: 4),
 
@@ -1263,6 +1348,13 @@ class AddHomeRecordPage extends StatefulWidget {
   /// calendar cell and then hits "Add Record" so the form opens on that day.
   final DateTime? initialDate;
 
+  /// Optional prefill values for "add" mode (ignored when editing). Used by
+  /// the auto-capture review flow to open the form with the detected
+  /// payment's data already filled in.
+  final String? prefillTitle;
+  final double? prefillAmount;
+  final bool prefillIsIncome;
+
   const AddHomeRecordPage({
     Key? key,
     this.record,
@@ -1271,6 +1363,9 @@ class AddHomeRecordPage extends StatefulWidget {
     this.groups = const [],
     this.groupTotals = const {},
     this.initialDate,
+    this.prefillTitle,
+    this.prefillAmount,
+    this.prefillIsIncome = false,
   }) : super(key: key);
 
   @override
@@ -1341,6 +1436,18 @@ class _AddHomeRecordPageState extends State<AddHomeRecordPage> {
     } else {
       if (widget.initialDate != null) {
         _selectedDate = widget.initialDate!;
+      }
+      // Auto-capture prefill (add mode only).
+      _isIncome = widget.prefillIsIncome;
+      if (_isIncome) _selectedCategory = HomeCategory.salary;
+      if (widget.prefillTitle != null) {
+        _titleController.text = widget.prefillTitle!;
+      }
+      final amount = widget.prefillAmount;
+      if (amount != null) {
+        _amountController.text = amount % 1 == 0
+            ? amount.toInt().toString()
+            : amount.toStringAsFixed(2);
       }
       // Default new records to UPI when it's available in the user's list.
       // Falls back to null if the user has deleted UPI from settings.
