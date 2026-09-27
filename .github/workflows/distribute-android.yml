@@ -70,7 +70,15 @@ jobs:
           # "invalid input" — re-padding lets it decode either form. If it
           # still fails after this, the secret is genuinely malformed (not
           # base64, or truncated) — regenerate it, don't --ignore-garbage.
-          b64=$(printf '%s' "$KEYSTORE_BASE64" | tr -d '[:space:]' | tr '_-' '/+')
+          # certutil -encode (Windows) wraps its output in PEM-style header and
+          # footer lines; drop any such lines before normalising.
+          b64=$(printf '%s' "$KEYSTORE_BASE64" | grep -v -- '-----' | tr -d '[:space:]' | tr '_-' '/+')
+          # Diagnose stray characters without echoing the secret itself.
+          bad=$(printf '%s' "$b64" | tr -d 'A-Za-z0-9+/=' | wc -c)
+          if [ "$bad" -gt 0 ]; then
+            echo "::error::ANDROID_UPLOAD_KEYSTORE_BASE64 contains $bad character(s) outside the base64 alphabet (length ${#b64}). It was probably pasted from a wrapped or hex dump. Regenerate it with: base64 -w0 upload-keystore.jks (Linux/macOS) or [Convert]::ToBase64String([IO.File]::ReadAllBytes('upload-keystore.jks')) (PowerShell), then paste the single line as the secret."
+            exit 1
+          fi
           case $(( ${#b64} % 4 )) in
             2) b64="${b64}==" ;;
             3) b64="${b64}=" ;;
