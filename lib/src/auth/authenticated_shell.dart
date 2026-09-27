@@ -18,6 +18,9 @@ import 'package:my_data_app/src/checklist/repository/checklist_repository.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/periods/repository/period_repository.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
+import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/pregnancy/pregnancy_reminder_source.dart';
+import 'package:my_data_app/src/pregnancy/repository/pregnancy_repository.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
@@ -85,6 +88,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreChitRepository _chitRepo;
   late final FirestoreChecklistRepository _checklistRepo;
   late final FirestorePeriodRepository _periodRepo;
+  late final FirestorePregnancyRepository _pregnancyRepo;
   late final FirestoreHomeRecordRepository _homeRecordRepo;
   late final FirestoreScheduleRepository _scheduleRepo;
   late final FirestoreFoodMenuRepository _foodMenuRepo;
@@ -110,6 +114,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final ChitCubit _chitCubit;
   late final ChecklistCubit _checklistCubit;
   late final PeriodCubit _periodCubit;
+  late final PregnancyCubit _pregnancyCubit;
   late final HomeRecordCubit _homeRecordCubit;
   late final FoodMenuCubit _foodMenuCubit;
   late final GoalCubit _goalCubit;
@@ -140,6 +145,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _chitRepo = FirestoreChitRepository(uid: uid);
     _checklistRepo = FirestoreChecklistRepository(uid: uid);
     _periodRepo = FirestorePeriodRepository(uid: uid);
+    _pregnancyRepo = FirestorePregnancyRepository(uid: uid);
     _homeRecordRepo = FirestoreHomeRecordRepository(uid: uid);
     _scheduleRepo = FirestoreScheduleRepository(uid: uid);
     _foodMenuRepo = FirestoreFoodMenuRepository(uid: uid);
@@ -176,6 +182,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _chitRepo,
       _checklistRepo,
       _periodRepo,
+      _pregnancyRepo,
       _scheduleRepo,
       _foodMenuRepo,
       _loanRepo,
@@ -208,6 +215,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _chitCubit = ChitCubit(_chitRepo);
     _checklistCubit = ChecklistCubit(_checklistRepo);
     _periodCubit = PeriodCubit(_periodRepo);
+    _pregnancyCubit = PregnancyCubit(_pregnancyRepo);
     _homeRecordCubit = HomeRecordCubit(_homeRecordRepo);
     _foodMenuCubit = FoodMenuCubit(_foodMenuRepo);
     _goalCubit = GoalCubit(_goalRepo);
@@ -230,6 +238,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         LoanReminderSource(cubit: _loanCubit),
         ChitReminderSource(cubit: _chitCubit),
         ChecklistReminderSource(cubit: _checklistCubit),
+        PregnancyReminderSource(cubit: _pregnancyCubit),
       ],
     );
 
@@ -267,6 +276,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _chitCubit.close();
     _checklistCubit.close();
     _periodCubit.close();
+    _pregnancyCubit.close();
     _homeRecordCubit.close();
     _scheduleCubit.close();
     _foodMenuCubit.close();
@@ -297,6 +307,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider.value(value: _chitCubit),
         BlocProvider.value(value: _checklistCubit),
         BlocProvider.value(value: _periodCubit),
+        BlocProvider.value(value: _pregnancyCubit),
         BlocProvider.value(value: _homeRecordCubit),
         BlocProvider.value(value: _scheduleCubit),
         BlocProvider.value(value: _foodMenuCubit),

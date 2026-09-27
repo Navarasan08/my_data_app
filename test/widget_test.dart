@@ -38,6 +38,8 @@ import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/money_owe/repository/money_owe_repository.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/repository/period_repository.dart';
+import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/pregnancy/repository/pregnancy_repository.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
 import 'package:my_data_app/src/profile_vault/repository/profile_vault_repository.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
@@ -120,6 +122,8 @@ void main() {
       firestore: fs,
     )..start();
 
+    final pregnancyRepo = FirestorePregnancyRepository(uid: uid, firestore: fs)
+      ..start();
     final dashboardSettings = DashboardSettingsCubit(uid: uid, firestore: fs)
       ..start();
 
@@ -145,6 +149,7 @@ void main() {
           BlocProvider(create: (_) => ActivityCubit(activityRepo)),
           BlocProvider(create: (_) => DietCubit(dietRepo)),
           BlocProvider(create: (_) => DaysCounterCubit(daysCounterRepo)),
+          BlocProvider(create: (_) => PregnancyCubit(pregnancyRepo)),
           BlocProvider.value(value: dashboardSettings),
           BlocProvider<AuthCubit>(create: (_) => _FakeAuthCubit()),
           BlocProvider(create: (_) => ThemeCubit()),

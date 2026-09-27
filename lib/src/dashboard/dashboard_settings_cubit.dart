@@ -222,6 +222,13 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
       gradient: [Colors.pink, Colors.deepPurple],
       order: 17,
     ),
+    FeatureItem(
+      id: 'pregnancy',
+      title: 'Pregnancy Assist',
+      icon: Icons.pregnant_woman_rounded,
+      gradient: [Colors.pink, Colors.purple],
+      order: 18,
+    ),
   ];
 
   void _apply(Map<String, dynamic>? data) {

@@ -18,6 +18,8 @@ import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
 import 'package:my_data_app/src/chits/chit_screen.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/checklist/checklist_page.dart';
+import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/pregnancy/pregnancy_page.dart';
 
 /// Top-level shell with bottom navigation: Home / My Events / Alerts / Profile.
 class MainShell extends StatefulWidget {
@@ -88,6 +90,14 @@ class _MainShellState extends State<MainShell> {
           (ctx) => BlocProvider.value(
             value: ctx.read<ChecklistCubit>(),
             child: ChecklistDetailPage(groupId: itemId),
+          ),
+        );
+        break;
+      case 'pregnancy':
+        _pushOnHome(
+          (ctx) => BlocProvider.value(
+            value: ctx.read<PregnancyCubit>(),
+            child: const PregnancyPage(),
           ),
         );
         break;

@@ -39,6 +39,8 @@ import 'package:my_data_app/src/diet/diet_page.dart';
 import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
 import 'package:my_data_app/src/days_counter/days_counter_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
+import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/pregnancy/pregnancy_page.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
 import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
 import 'package:my_data_app/src/theme/theme_cubit.dart';
@@ -62,7 +64,7 @@ class _DashboardPageState extends State<DashboardPage> {
       'diet',
       'days_counter',
     ],
-    'Health': ['periods', 'medical'],
+    'Health': ['periods', 'pregnancy', 'medical'],
     'Personal': ['vehicles', 'vault', 'land'],
   };
 
@@ -97,6 +99,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'Track habits & goals';
       case 'money_owe':
         return 'Lend & borrow tracker';
+      case 'pregnancy':
+        return 'Week-by-week checks & guidance';
       case 'medical':
         return 'Medical records & health';
       case 'vault':
@@ -136,6 +140,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     switch (id) {
       case 'bills':
@@ -180,6 +185,8 @@ class _DashboardPageState extends State<DashboardPage> {
             .length;
       case 'days_counter':
         return (daysCounterState.events as List).length;
+      case 'pregnancy':
+        return (pregnancyState.checks as List).where((c) => !c.done).length;
       default:
         return 0;
     }
@@ -259,6 +266,12 @@ class _DashboardPageState extends State<DashboardPage> {
           child: const MoneyOwePage(),
         );
         break;
+      case 'pregnancy':
+        page = BlocProvider.value(
+          value: context.read<PregnancyCubit>(),
+          child: const PregnancyPage(),
+        );
+        break;
       case 'medical':
         page = BlocProvider.value(
           value: context.read<MedicalCubit>(),
@@ -328,6 +341,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -381,6 +395,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         );
                         return _FeatureRow(
                           icon: f.icon,
@@ -430,6 +445,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -500,6 +516,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               activityState,
                               dietState,
                               daysCounterState,
+                              pregnancyState,
                             );
                             return _FeatureGridCard(
                               icon: f.icon,
@@ -549,6 +566,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final activityState = context.watch<ActivityCubit>().state;
     final dietState = context.watch<DietCubit>().state;
     final daysCounterState = context.watch<DaysCounterCubit>().state;
+    final pregnancyState = context.watch<PregnancyCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
     final isGrid = dashSettings.isGridView;
@@ -564,9 +582,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       ? Icons.view_list_rounded
                       : Icons.grid_view_rounded,
                   tooltip: isGrid ? 'List view' : 'Grid view',
-                  onPressed: () => context
-                      .read<DashboardSettingsCubit>()
-                      .toggleViewMode(),
+                  onPressed: () =>
+                      context.read<DashboardSettingsCubit>().toggleViewMode(),
                 ),
                 BlocBuilder<ThemeCubit, ThemeMode>(
                   builder: (context, themeMode) {
@@ -576,8 +593,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ? Icons.light_mode_rounded
                           : Icons.dark_mode_rounded,
                       tooltip: isDark ? 'Light mode' : 'Dark mode',
-                      onPressed: () =>
-                          context.read<ThemeCubit>().toggle(),
+                      onPressed: () => context.read<ThemeCubit>().toggle(),
                     );
                   },
                 ),
@@ -616,6 +632,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         ),
                       )
                     : KeyedSubtree(
@@ -641,6 +658,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         ),
                       ),
               ),
@@ -662,7 +680,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -904,4 +921,3 @@ class _AnimatedCount extends StatelessWidget {
     );
   }
 }
-
