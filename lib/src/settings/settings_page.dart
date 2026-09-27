@@ -482,7 +482,7 @@ Future<void> _pickLandingTab(
                 ShellTab.notes => Icons.sticky_note_2_rounded,
                 ShellTab.module => second?.icon ?? Icons.apps_rounded,
                 ShellTab.dashboard => Icons.dashboard_rounded,
-                ShellTab.alerts => Icons.notifications_rounded,
+                ShellTab.groups => Icons.group_rounded,
               }),
               title: Text(
                 t == ShellTab.module ? (second?.title ?? t.label) : t.label,

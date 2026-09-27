@@ -85,6 +85,12 @@ class AppHeader extends StatelessWidget {
           ),
           Row(
             children: [
+              HeaderIconButton(
+                icon: Icons.menu_rounded,
+                tooltip: 'Menu',
+                onPressed: () => openShellDrawer(context),
+              ),
+              const SizedBox(width: 10),
               _HeaderAvatar(
                 initial: userInitial,
                 hasOtherAccounts: hasOtherAccounts,

@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_page.dart';
-import 'package:my_data_app/src/events/my_events_page.dart';
 import 'package:my_data_app/src/profile/profile_page.dart';
 import 'package:my_data_app/src/settings/settings_page.dart';
 import 'package:my_data_app/src/shell/feature_pages.dart';
@@ -38,8 +37,7 @@ class ShellMenuButton extends StatelessWidget {
   }
 }
 
-/// Left side drawer: the user's profile entry point plus the pages that
-/// used to have their own bottom tab.
+/// Left side drawer: the user's profile entry point plus settings.
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -61,6 +59,7 @@ class AppDrawer extends StatelessWidget {
     final initial = label.isNotEmpty ? label[0].toUpperCase() : '?';
     final isDark = context.watch<ThemeCubit>().state == ThemeMode.dark;
     final dashCubit = context.read<DashboardSettingsCubit>();
+    final isGrid = context.watch<DashboardSettingsCubit>().state.isGridView;
 
     return Drawer(
       child: SafeArea(
@@ -147,11 +146,6 @@ class AppDrawer extends StatelessWidget {
                     title: const Text('Profile'),
                     onTap: () => _push(context, const ProfilePage()),
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.event_rounded),
-                    title: const Text('My Events'),
-                    onTap: () => _push(context, const MyEventsPage()),
-                  ),
                   const Divider(),
                   ListTile(
                     leading: const Icon(Icons.dashboard_customize_rounded),
@@ -169,6 +163,17 @@ class AppDrawer extends StatelessWidget {
                     leading: const Icon(Icons.settings_rounded),
                     title: const Text('Settings'),
                     onTap: () => _push(context, const SettingsPage()),
+                  ),
+                  SwitchListTile(
+                    secondary: Icon(
+                      isGrid
+                          ? Icons.grid_view_rounded
+                          : Icons.view_list_rounded,
+                    ),
+                    title: const Text('Dashboard grid view'),
+                    subtitle: Text(isGrid ? 'Tiles' : 'List'),
+                    value: isGrid,
+                    onChanged: (_) => dashCubit.toggleViewMode(),
                   ),
                   SwitchListTile(
                     secondary: Icon(

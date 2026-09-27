@@ -5,25 +5,16 @@ import 'package:my_data_app/src/core/sync/sync_indicator.dart';
 import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
-import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
-import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
+import 'package:my_data_app/src/events/my_events_page.dart';
 import 'package:my_data_app/src/notifications/notification_service.dart';
-import 'package:my_data_app/src/notifications/notifications_page.dart';
 import 'package:my_data_app/src/quick_notes/quick_notes_page.dart';
-import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
-import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
-import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
-import 'package:my_data_app/src/loans/loan_page.dart';
-import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
-import 'package:my_data_app/src/chits/chit_screen.dart';
-import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
-import 'package:my_data_app/src/checklist/checklist_page.dart';
 import 'package:my_data_app/src/shell/app_drawer.dart';
 import 'package:my_data_app/src/shell/feature_pages.dart';
 
-/// Top-level shell: a left drawer (profile, events, settings) and four
-/// bottom tabs — Quick Notes, a user-chosen module (Expense Tracker by
-/// default), the Dashboard, and Alerts. Which tab opens first is a setting.
+/// Top-level shell: a left drawer (profile, settings) and four bottom tabs —
+/// Quick Notes, a user-chosen module (Expense Tracker by default), the
+/// Dashboard, and Groups. Alerts live behind the bell on the Dashboard
+/// header. Which tab opens first is a setting.
 class MainShell extends StatefulWidget {
   /// The shared local notifications service. Tap callbacks are wired here.
   final LocalNotificationService notificationService;
@@ -46,7 +37,7 @@ class _MainShellState extends State<MainShell> {
   static const _notesIndex = 0;
   static const _moduleIndex = 1;
   static const _dashboardIndex = 2;
-  static const _alertsIndex = 3;
+  static const _groupsIndex = 3;
 
   late int _index;
 
@@ -74,7 +65,7 @@ class _MainShellState extends State<MainShell> {
     ShellTab.notes => _notesIndex,
     ShellTab.module => _moduleIndex,
     ShellTab.dashboard => _dashboardIndex,
-    ShellTab.alerts => _alertsIndex,
+    ShellTab.groups => _groupsIndex,
   };
 
   void _select(int i) {
@@ -82,51 +73,16 @@ class _MainShellState extends State<MainShell> {
     setState(() => _index = i);
   }
 
-  /// Open the right module for a tapped notification (in-app or OS).
+  /// Open the right page for a tapped OS notification.
   void _routeTo(String module, String itemId, String? dateStr) {
-    switch (module) {
-      case 'schedule':
-        _pushOnDashboard(
-          (ctx) => BlocProvider.value(
-            value: ctx.read<ScheduleCubit>(),
-            child: ScheduleDetailPage(entryId: itemId),
-          ),
-        );
-        break;
-      case 'loans':
-        _pushOnDashboard(
-          (ctx) => BlocProvider.value(
-            value: ctx.read<LoanCubit>(),
-            child: LoanDetailPage(loanId: itemId),
-          ),
-        );
-        break;
-      case 'chits':
-        _pushOnDashboard(
-          (ctx) => BlocProvider.value(
-            value: ctx.read<ChitCubit>(),
-            child: ChitFundDetailsPage(chitFundId: itemId),
-          ),
-        );
-        break;
-      case 'checklists':
-        _pushOnDashboard(
-          (ctx) => BlocProvider.value(
-            value: ctx.read<ChecklistCubit>(),
-            child: ChecklistDetailPage(groupId: itemId),
-          ),
-        );
-        break;
-      case 'pregnancy':
-        _pushOnDashboard((ctx) => buildFeaturePage(ctx, 'pregnancy')!);
-        break;
-      default:
-        _select(_alertsIndex);
-    }
+    _pushOnDashboard((ctx) {
+      return buildNotificationTarget(ctx, module, itemId) ??
+          buildNotificationsRoute(ctx);
+    });
   }
 
-  /// Switch to the Dashboard tab and push a detail page on the next frame,
-  /// so the page builder can read cubits from the freshly-active context.
+  /// Switch to the Dashboard tab and push a page on the next frame, so the
+  /// page builder can read cubits from the freshly-active context.
   void _pushOnDashboard(Widget Function(BuildContext) builder) {
     _select(_dashboardIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -140,6 +96,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<DashboardSettingsCubit>().state;
+    final cs = Theme.of(context).colorScheme;
     if (!_userNavigated) {
       final wanted = _indexFor(settings.landingTab);
       if (wanted != _index) _index = wanted;
@@ -155,9 +112,7 @@ class _MainShellState extends State<MainShell> {
       // Keyed by module id so switching the setting rebuilds the tab.
       KeyedSubtree(key: ValueKey('tab_$moduleId'), child: modulePage),
       const DashboardPage(),
-      NotificationsPage(
-        onOpen: (n) => _routeTo(n.sourceModule, n.sourceItemId, n.sourceDate),
-      ),
+      const MyEventsPage(),
     ];
 
     // Intercept the system / browser back button.
@@ -181,61 +136,46 @@ class _MainShellState extends State<MainShell> {
             ),
           ],
         ),
-        bottomNavigationBar: BlocBuilder<NotificationCubit, NotificationState>(
-          builder: (context, state) {
-            final unread = context.read<NotificationCubit>().unreadCount;
-            final cs = Theme.of(context).colorScheme;
-            // Wrap the NavigationBar so it has a soft top edge separating it
-            // from the content above (M3 doesn't ship one by default).
-            return DecoratedBox(
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: cs.outlineVariant, width: 0.6),
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: cs.outlineVariant, width: 0.6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, -2),
+              ),
+            ],
+          ),
+          child: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: _select,
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.sticky_note_2_outlined),
+                selectedIcon: Icon(Icons.sticky_note_2_rounded),
+                label: 'Notes',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                  moduleFeature?.icon ?? Icons.account_balance_wallet_rounded,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
-                    blurRadius: 16,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+                label: _shortTitle(moduleFeature?.title ?? 'Expenses'),
               ),
-              child: NavigationBar(
-                selectedIndex: _index,
-                onDestinationSelected: _select,
-                destinations: [
-                  const NavigationDestination(
-                    icon: Icon(Icons.sticky_note_2_outlined),
-                    selectedIcon: Icon(Icons.sticky_note_2_rounded),
-                    label: 'Notes',
-                  ),
-                  NavigationDestination(
-                    icon: Icon(
-                      moduleFeature?.icon ??
-                          Icons.account_balance_wallet_rounded,
-                    ),
-                    label: _shortTitle(moduleFeature?.title ?? 'Expenses'),
-                  ),
-                  const NavigationDestination(
-                    icon: Icon(Icons.dashboard_outlined),
-                    selectedIcon: Icon(Icons.dashboard_rounded),
-                    label: 'Dashboard',
-                  ),
-                  NavigationDestination(
-                    icon: _NotificationIcon(
-                      unread: unread,
-                      icon: Icons.notifications_outlined,
-                    ),
-                    selectedIcon: _NotificationIcon(
-                      unread: unread,
-                      icon: Icons.notifications_rounded,
-                    ),
-                    label: 'Alerts',
-                  ),
-                ],
+              const NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard_rounded),
+                label: 'Dashboard',
               ),
-            );
-          },
+              const NavigationDestination(
+                icon: Icon(Icons.group_outlined),
+                selectedIcon: Icon(Icons.group_rounded),
+                label: 'Groups',
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -249,52 +189,5 @@ class _MainShellState extends State<MainShell> {
       if (t.endsWith(d)) t = t.substring(0, t.length - d.length);
     }
     return t;
-  }
-}
-
-/// Notification icon with a refined unread badge. Cleaner than the default
-/// Material `Badge` — smaller, tighter, and color-correct for both light
-/// and dark themes.
-class _NotificationIcon extends StatelessWidget {
-  final int unread;
-  final IconData icon;
-
-  const _NotificationIcon({required this.unread, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(icon),
-        if (unread > 0)
-          Positioned(
-            top: -4,
-            right: -6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-              decoration: BoxDecoration(
-                color: Colors.red[500],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surface,
-                  width: 1.4,
-                ),
-              ),
-              child: Text(
-                unread > 99 ? '99+' : '$unread',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
   }
 }

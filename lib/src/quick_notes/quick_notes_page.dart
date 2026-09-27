@@ -90,30 +90,29 @@ class QuickNotesPage extends StatelessWidget {
 
   Future<void> _newNote(BuildContext context, QuickNoteCubit cubit) async {
     final cs = Theme.of(context).colorScheme;
+    // A short sheet: two one-line choices, nothing more.
     final checklist = await showModalBottomSheet<bool>(
       context: context,
       showDragHandle: true,
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: Row(
             children: [
               Expanded(
                 child: _NewChoice(
                   icon: Icons.notes_rounded,
                   color: cs.primary,
-                  title: 'Note',
-                  subtitle: 'Free text',
+                  label: 'Note',
                   onTap: () => Navigator.pop(context, false),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: _NewChoice(
                   icon: Icons.checklist_rounded,
                   color: Colors.teal,
-                  title: 'Checklist',
-                  subtitle: 'Tick things off',
+                  label: 'Checklist',
                   onTap: () => Navigator.pop(context, true),
                 ),
               ),
@@ -130,46 +129,37 @@ class QuickNotesPage extends StatelessWidget {
 class _NewChoice extends StatelessWidget {
   final IconData icon;
   final Color color;
-  final String title;
-  final String subtitle;
+  final String label;
   final VoidCallback onTap;
   const _NewChoice({
     required this.icon,
     required this.color,
-    required this.title,
-    required this.subtitle,
+    required this.label,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Material(
-      color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(16),
+      color: color.withValues(alpha: 0.10),
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 18),
-          child: Column(
+        child: SizedBox(
+          height: 52,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: color.withValues(alpha: 0.15),
-                child: Icon(icon, color: color, size: 26),
-              ),
-              const SizedBox(height: 10),
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 8),
               Text(
-                title,
-                style: const TextStyle(
+                label,
+                style: TextStyle(
+                  color: color,
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                 ),
-              ),
-              Text(
-                subtitle,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -479,7 +469,7 @@ class _NoteCard extends StatelessWidget {
                           ),
                           if (note.items.length > visibleItems.length)
                             Padding(
-                              padding: const EdgeInsets.only(left: 30, top: 2),
+                              padding: const EdgeInsets.only(left: 32, top: 2),
                               child: Text(
                                 '+${note.items.length - visibleItems.length} more',
                                 style: TextStyle(
@@ -560,11 +550,16 @@ class _ItemLine extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            _CheckCircle(done: item.done, accent: accent, size: 18),
-            const SizedBox(width: 10),
+            SizedBox(
+              width: 24,
+              child: Center(
+                child: _CheckCircle(done: item.done, accent: accent, size: 18),
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 item.text,
@@ -657,6 +652,37 @@ class _SwipeBackground extends StatelessWidget {
 
 // ─── Editor ──────────────────────────────────────────────────────────────────
 
+/// Styles the first line of the note as its title, the way iOS Notes does,
+/// without a separate title field. Everything after the first newline is
+/// plain body text.
+class _FirstLineTitleController extends TextEditingController {
+  final TextStyle titleStyle;
+  _FirstLineTitleController({super.text, required this.titleStyle});
+
+  @override
+  TextSpan buildTextSpan({
+    required BuildContext context,
+    TextStyle? style,
+    required bool withComposing,
+  }) {
+    final t = text;
+    final nl = t.indexOf('\n');
+    if (nl < 0) {
+      return TextSpan(text: t, style: style?.merge(titleStyle) ?? titleStyle);
+    }
+    return TextSpan(
+      style: style,
+      children: [
+        TextSpan(
+          text: t.substring(0, nl),
+          style: style?.merge(titleStyle) ?? titleStyle,
+        ),
+        TextSpan(text: t.substring(nl)),
+      ],
+    );
+  }
+}
+
 /// Full-screen editor. Saves automatically when the user leaves, and
 /// discards a note that is still empty, like a notes app should.
 class QuickNoteEditorPage extends StatefulWidget {
@@ -668,8 +694,8 @@ class QuickNoteEditorPage extends StatefulWidget {
 }
 
 class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
-  late final TextEditingController _title;
-  late final TextEditingController _body;
+  late final _FirstLineTitleController _body;
+  final _bodyFocus = FocusNode();
   late List<_ItemRow> _items;
   late bool _pinned;
   bool _deleted = false;
@@ -677,22 +703,39 @@ class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
   @override
   void initState() {
     super.initState();
-    _title = TextEditingController(text: widget.note.title);
-    _body = TextEditingController(text: widget.note.body);
+    // A legacy note with a separate title folds it into the first line.
+    final legacyTitle = widget.note.title.trim();
+    final initial = legacyTitle.isEmpty
+        ? widget.note.body
+        : (widget.note.body.trim().isEmpty
+              ? legacyTitle
+              : '$legacyTitle\n${widget.note.body}');
+    _body = _FirstLineTitleController(
+      text: initial,
+      titleStyle: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w800,
+        height: 1.3,
+      ),
+    );
     _items = widget.note.items.map(_ItemRow.fromItem).toList();
     _pinned = widget.note.pinned;
-    // A brand-new checklist opens with the cursor in its first line.
-    if (widget.note.items.length == 1 && widget.note.items.first.text.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _items.isNotEmpty) _items.first.focus.requestFocus();
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // New note: cursor in the body. New checklist: cursor in its first line.
+      if (widget.note.isEmpty && _items.isEmpty) {
+        _bodyFocus.requestFocus();
+      } else if (widget.note.items.length == 1 &&
+          widget.note.items.first.text.isEmpty) {
+        _items.first.focus.requestFocus();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _title.dispose();
     _body.dispose();
+    _bodyFocus.dispose();
     for (final r in _items) {
       r.dispose();
     }
@@ -700,7 +743,7 @@ class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
   }
 
   QuickNote _current() => widget.note.copyWith(
-    title: _title.text,
+    title: '',
     body: _body.text,
     items: _items.map((r) => r.toItem()).toList(),
     pinned: _pinned,
@@ -830,23 +873,30 @@ class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
                 children: [
+                  // One field: the first line is the title, the rest is body.
                   TextField(
-                    controller: _title,
+                    controller: _body,
+                    focusNode: _bodyFocus,
                     textCapitalization: TextCapitalization.sentences,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      height: 1.25,
-                    ),
+                    maxLines: null,
+                    minLines: isChecklist ? 1 : 14,
+                    keyboardType: TextInputType.multiline,
+                    style: const TextStyle(fontSize: 16, height: 1.5),
                     decoration: InputDecoration(
-                      hintText: 'Title',
-                      hintStyle: TextStyle(color: cs.outline),
+                      hintText: isChecklist ? 'Title' : 'Start writing…',
+                      hintStyle: TextStyle(
+                        color: cs.outline,
+                        fontSize: isChecklist ? 22 : 16,
+                        fontWeight: isChecklist
+                            ? FontWeight.w800
+                            : FontWeight.w400,
+                      ),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  if (isChecklist) const SizedBox(height: 8),
                   for (var i = 0; i < _items.length; i++)
                     _ChecklistRow(
                       row: _items[i],
@@ -855,9 +905,6 @@ class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
                           setState(() => _items[i].done = !_items[i].done),
                       onSubmitted: () => _addItem(after: i),
                       onRemove: () => _removeItem(i),
-                      onEmptyBackspace: () {
-                        if (_items.length > 1) _removeItem(i);
-                      },
                     ),
                   if (isChecklist)
                     InkWell(
@@ -884,22 +931,6 @@ class _QuickNoteEditorPageState extends State<QuickNoteEditorPage> {
                         ),
                       ),
                     ),
-                  if (isChecklist) const SizedBox(height: 12),
-                  TextField(
-                    controller: _body,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: null,
-                    minLines: isChecklist ? 2 : 14,
-                    keyboardType: TextInputType.multiline,
-                    style: const TextStyle(fontSize: 16, height: 1.5),
-                    decoration: InputDecoration(
-                      hintText: isChecklist ? 'Add a note…' : 'Start writing…',
-                      hintStyle: TextStyle(color: cs.outline),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.zero,
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1013,33 +1044,35 @@ class _ChecklistRow extends StatelessWidget {
   final VoidCallback onToggle;
   final VoidCallback onSubmitted;
   final VoidCallback onRemove;
-  final VoidCallback onEmptyBackspace;
   const _ChecklistRow({
     required this.row,
     required this.accent,
     required this.onToggle,
     required this.onSubmitted,
     required this.onRemove,
-    required this.onEmptyBackspace,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+    // Fixed row height keeps the circle, text and remove button on one
+    // baseline instead of each bringing its own padding.
+    return SizedBox(
+      height: 40,
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           InkWell(
             onTap: onToggle,
             customBorder: const CircleBorder(),
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: _CheckCircle(done: row.done, accent: accent),
+            child: SizedBox(
+              width: 32,
+              height: 40,
+              child: Center(
+                child: _CheckCircle(done: row.done, accent: accent),
+              ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Expanded(
             child: TextField(
               controller: row.controller,
@@ -1047,13 +1080,8 @@ class _ChecklistRow extends StatelessWidget {
               textCapitalization: TextCapitalization.sentences,
               textInputAction: TextInputAction.next,
               onSubmitted: (_) => onSubmitted(),
-              onChanged: (v) {
-                // Backspace on an empty line removes it, like Notes does.
-                if (v.isEmpty && row.controller.text.isEmpty) return;
-              },
               style: TextStyle(
                 fontSize: 16,
-                height: 1.4,
                 color: row.done ? cs.outline : cs.onSurface,
                 decoration: row.done ? TextDecoration.lineThrough : null,
                 decorationColor: cs.outline,
@@ -1063,15 +1091,18 @@ class _ChecklistRow extends StatelessWidget {
                 hintStyle: TextStyle(color: cs.outline),
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                contentPadding: EdgeInsets.zero,
               ),
             ),
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Remove',
-            onPressed: onRemove,
-            icon: Icon(Icons.close_rounded, size: 18, color: cs.outline),
+          InkWell(
+            onTap: onRemove,
+            customBorder: const CircleBorder(),
+            child: SizedBox(
+              width: 32,
+              height: 40,
+              child: Icon(Icons.close_rounded, size: 18, color: cs.outline),
+            ),
           ),
         ],
       ),

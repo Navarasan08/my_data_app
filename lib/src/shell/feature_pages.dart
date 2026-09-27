@@ -31,6 +31,8 @@ import 'package:my_data_app/src/medical/medical_page.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/money_owe/money_owe_page.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
+import 'package:my_data_app/src/notifications/model/app_notification.dart';
+import 'package:my_data_app/src/notifications/notifications_page.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/period_page.dart';
 import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
@@ -41,6 +43,7 @@ import 'package:my_data_app/src/quick_notes/cubit/quick_note_cubit.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
 import 'package:my_data_app/src/reminder/reminder_page.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
+import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
 import 'package:my_data_app/src/schedule/schedule_page.dart';
 import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
 import 'package:my_data_app/src/vehicle/vehicle_manager_page.dart';
@@ -140,4 +143,57 @@ Widget? buildFeaturePage(BuildContext context, String id) {
     default:
       return null;
   }
+}
+
+/// The detail page a notification from [module] about [itemId] should open,
+/// with its cubit re-provided. Falls back to the module's main page, or
+/// null when the module is unknown.
+Widget? buildNotificationTarget(
+  BuildContext context,
+  String module,
+  String itemId,
+) {
+  switch (module) {
+    case 'schedule':
+      return BlocProvider.value(
+        value: context.read<ScheduleCubit>(),
+        child: ScheduleDetailPage(entryId: itemId),
+      );
+    case 'loans':
+      return BlocProvider.value(
+        value: context.read<LoanCubit>(),
+        child: LoanDetailPage(loanId: itemId),
+      );
+    case 'chits':
+      return BlocProvider.value(
+        value: context.read<ChitCubit>(),
+        child: ChitFundDetailsPage(chitFundId: itemId),
+      );
+    case 'checklists':
+      return BlocProvider.value(
+        value: context.read<ChecklistCubit>(),
+        child: ChecklistDetailPage(groupId: itemId),
+      );
+    default:
+      return buildFeaturePage(context, module);
+  }
+}
+
+/// Opens the notification's target page; if the module has none, stays put.
+void openNotification(BuildContext context, AppNotification n) {
+  final page = buildNotificationTarget(context, n.sourceModule, n.sourceItemId);
+  if (page == null) return;
+  Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+}
+
+/// The Alerts page as a pushed route (it used to be a tab), with every shell
+/// cubit available to it and to the pages it opens.
+Widget buildNotificationsRoute(BuildContext context) {
+  return withShellCubits(
+    context,
+    Builder(
+      builder: (ctx) =>
+          NotificationsPage(onOpen: (n) => openNotification(ctx, n)),
+    ),
+  );
 }

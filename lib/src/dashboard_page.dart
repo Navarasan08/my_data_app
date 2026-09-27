@@ -21,10 +21,11 @@ import 'package:my_data_app/src/diet/cubit/diet_cubit.dart';
 import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
 import 'package:my_data_app/src/shell/feature_pages.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
 import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
-import 'package:my_data_app/src/theme/theme_cubit.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -434,30 +435,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: SafeArea(
         child: Column(
           children: [
-            AppHeader(
-              actions: [
-                HeaderIconButton(
-                  icon: isGrid
-                      ? Icons.view_list_rounded
-                      : Icons.grid_view_rounded,
-                  tooltip: isGrid ? 'List view' : 'Grid view',
-                  onPressed: () =>
-                      context.read<DashboardSettingsCubit>().toggleViewMode(),
-                ),
-                BlocBuilder<ThemeCubit, ThemeMode>(
-                  builder: (context, themeMode) {
-                    final isDark = themeMode == ThemeMode.dark;
-                    return HeaderIconButton(
-                      icon: isDark
-                          ? Icons.light_mode_rounded
-                          : Icons.dark_mode_rounded,
-                      tooltip: isDark ? 'Light mode' : 'Dark mode',
-                      onPressed: () => context.read<ThemeCubit>().toggle(),
-                    );
-                  },
-                ),
-              ],
-            ),
+            AppHeader(actions: [const _AlertsButton()]),
 
             // Scrollable content — crossfades between list and grid view.
             Expanded(
@@ -777,6 +755,67 @@ class _AnimatedCount extends StatelessWidget {
         ),
       ),
       child: Text('$value', key: ValueKey<int>(value), style: style),
+    );
+  }
+}
+
+/// Bell in the dashboard header with the unread count; opens Alerts.
+class _AlertsButton extends StatelessWidget {
+  const _AlertsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<NotificationCubit, NotificationState>(
+      builder: (context, _) {
+        final unread = context.read<NotificationCubit>().unreadCount;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            HeaderIconButton(
+              icon: Icons.notifications_rounded,
+              tooltip: 'Alerts',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => buildNotificationsRoute(context),
+                ),
+              ),
+            ),
+            if (unread > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red[500],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 1.4),
+                    ),
+                    child: Text(
+                      unread > 99 ? '99+' : '$unread',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

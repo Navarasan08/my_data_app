@@ -43,7 +43,7 @@ enum ShellTab {
   notes('Quick Notes'),
   module('Second tab module'),
   dashboard('Dashboard'),
-  alerts('Alerts');
+  groups('Groups');
 
   final String label;
   const ShellTab(this.label);

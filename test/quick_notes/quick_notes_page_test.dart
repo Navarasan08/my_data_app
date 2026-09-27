@@ -39,6 +39,10 @@ void main() {
     // indeterminate progress bar is animating (pumpAndSettle would never
     // settle otherwise).
     await pumpEventQueue();
+    // Let the fake deliver its first snapshot so the cubit is live and no
+    // indeterminate progress bar is animating (pumpAndSettle would never
+    // settle otherwise).
+    await pumpEventQueue();
     await tester.pumpWidget(app(const QuickNotesPage()));
     await tester.pumpAndSettle();
     expect(find.text('Your notes live here'), findsOneWidget);
@@ -89,8 +93,13 @@ void main() {
     // indeterminate progress bar is animating (pumpAndSettle would never
     // settle otherwise).
     await pumpEventQueue();
+    // Let the fake deliver its first snapshot so the cubit is live and no
+    // indeterminate progress bar is animating (pumpAndSettle would never
+    // settle otherwise).
+    await pumpEventQueue();
     await tester.pumpWidget(app(const QuickNotesPage()));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
 
     // Open a fresh note editor directly.
     final note = cubit.newNote();
@@ -118,21 +127,29 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(find.text('Start writing…'), findsOneWidget);
 
     // Leave without typing: nothing is saved.
     await tester.pageBack();
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
     expect(cubit.state.notes, isEmpty);
 
-    // Type a title, leave: it is saved.
+    // Type something, leave: it is saved and the first line is the title.
     await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, 'Title'), 'Ideas');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Start writing…'),
+      'Ideas\nBuy a whiteboard',
+    );
     await tester.pageBack();
-    await tester.pumpAndSettle();
-    expect(cubit.state.notes.single.title, 'Ideas');
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(cubit.state.notes.single.displayTitle, 'Ideas');
+    expect(cubit.state.notes.single.preview, 'Buy a whiteboard');
     expect(tester.takeException(), isNull);
   });
 }
