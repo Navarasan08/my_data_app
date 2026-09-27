@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/medical/model/medical_model.dart';
 import 'package:my_data_app/src/medical/repository/medical_repository.dart';
@@ -5,31 +7,47 @@ import 'package:my_data_app/src/medical/cubit/medical_state.dart';
 
 class MedicalCubit extends Cubit<MedicalState> {
   final MedicalRepository _repository;
+  StreamSubscription<void>? _sub;
 
   MedicalCubit(this._repository)
-      : super(MedicalState(
+    : super(
+        MedicalState(
           members: _repository.getAllMembers(),
           records: _repository.getAllRecords(),
-        ));
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(
-      members: _repository.getAllMembers(),
-      records: _repository.getAllRecords(),
-    ));
+  /// Pulls the repository's current lists and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        members: _repository.getAllMembers(),
+        records: _repository.getAllRecords(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   // ── Members ──────────────────────────────────────────────────────────
 
   void addMember(FamilyMember member) {
     _repository.addMember(member);
-    emit(state.copyWith(members: _repository.getAllMembers()));
+    _sync();
   }
 
   void updateMember(FamilyMember member) {
     _repository.updateMember(member);
-    emit(state.copyWith(members: _repository.getAllMembers()));
+    _sync();
   }
 
   void deleteMember(String id) {
@@ -39,10 +57,7 @@ class MedicalCubit extends Cubit<MedicalState> {
       _repository.deleteRecord(r.id);
     }
     _repository.deleteMember(id);
-    emit(state.copyWith(
-      members: _repository.getAllMembers(),
-      records: _repository.getAllRecords(),
-    ));
+    _sync();
   }
 
   FamilyMember? getMemberById(String id) {
@@ -54,17 +69,17 @@ class MedicalCubit extends Cubit<MedicalState> {
 
   void addRecord(MedicalRecord record) {
     _repository.addRecord(record);
-    emit(state.copyWith(records: _repository.getAllRecords()));
+    _sync();
   }
 
   void updateRecord(MedicalRecord record) {
     _repository.updateRecord(record);
-    emit(state.copyWith(records: _repository.getAllRecords()));
+    _sync();
   }
 
   void deleteRecord(String id) {
     _repository.deleteRecord(id);
-    emit(state.copyWith(records: _repository.getAllRecords()));
+    _sync();
   }
 
   // ── Queries ──────────────────────────────────────────────────────────
@@ -77,13 +92,22 @@ class MedicalCubit extends Cubit<MedicalState> {
       state.records.where((r) => r.type == type).toList()
         ..sort((a, b) => b.date.compareTo(a.date));
 
-  List<MedicalRecord> recordsForMemberByType(String memberId, RecordType type) =>
-      state.records.where((r) => r.memberId == memberId && r.type == type).toList()
+  List<MedicalRecord> recordsForMemberByType(
+    String memberId,
+    RecordType type,
+  ) =>
+      state.records
+          .where((r) => r.memberId == memberId && r.type == type)
+          .toList()
         ..sort((a, b) => b.date.compareTo(a.date));
 
   /// All active medications across all members
-  List<({FamilyMember member, Medication medication, MedicalRecord record})> get activeMedications {
-    final result = <({FamilyMember member, Medication medication, MedicalRecord record})>[];
+  List<({FamilyMember member, Medication medication, MedicalRecord record})>
+  get activeMedications {
+    final result =
+        <
+          ({FamilyMember member, Medication medication, MedicalRecord record})
+        >[];
     for (final record in state.records) {
       final member = getMemberById(record.memberId);
       if (member == null) continue;
@@ -108,7 +132,9 @@ class MedicalCubit extends Cubit<MedicalState> {
         }
       }
     }
-    result.sort((a, b) => a.record.followUpDate!.compareTo(b.record.followUpDate!));
+    result.sort(
+      (a, b) => a.record.followUpDate!.compareTo(b.record.followUpDate!),
+    );
     return result;
   }
 
@@ -116,10 +142,9 @@ class MedicalCubit extends Cubit<MedicalState> {
   double get totalExpenses =>
       state.records.fold(0.0, (sum, r) => sum + (r.amount ?? 0));
 
-  double expensesForMember(String memberId) =>
-      state.records
-          .where((r) => r.memberId == memberId)
-          .fold(0.0, (sum, r) => sum + (r.amount ?? 0));
+  double expensesForMember(String memberId) => state.records
+      .where((r) => r.memberId == memberId)
+      .fold(0.0, (sum, r) => sum + (r.amount ?? 0));
 
   /// Expense by record type
   Map<RecordType, double> get expensesByType {

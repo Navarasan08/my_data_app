@@ -46,12 +46,11 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
     );
   }
 
-  List<HomeRecord> get _filtered =>
-      ExpenseIoService.recordsInRange(
-        widget.cubit.state.records,
-        _range.start,
-        _range.end,
-      );
+  List<HomeRecord> get _filtered => ExpenseIoService.recordsInRange(
+    widget.cubit.state.records,
+    _range.start,
+    _range.end,
+  );
 
   String get _rangeLabel =>
       '${DateFormat('d MMM yyyy').format(_range.start)} – ${DateFormat('d MMM yyyy').format(_range.end)}';
@@ -74,10 +73,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
     try {
       final path = await ExpenseIoService.exportToCsv(_filtered);
       await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(path)],
-          text: 'Expenses · $_rangeLabel',
-        ),
+        ShareParams(files: [XFile(path)], text: 'Expenses · $_rangeLabel'),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -90,10 +86,7 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
     try {
       final path = await ExpenseIoService.exportToExcel(_filtered);
       await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(path)],
-          text: 'Expenses · $_rangeLabel',
-        ),
+        ShareParams(files: [XFile(path)], text: 'Expenses · $_rangeLabel'),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -109,14 +102,16 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
     try {
       final path = await ExpenseIoService.exportToExcel(_filtered);
       try {
-        await FlutterEmailSender.send(Email(
-          subject: 'Expense report · $_rangeLabel',
-          body:
-              'Attached is the expense report for $_rangeLabel (${_filtered.length} records).',
-          recipients: [email],
-          attachmentPaths: [path],
-          isHTML: false,
-        ));
+        await FlutterEmailSender.send(
+          Email(
+            subject: 'Expense report · $_rangeLabel',
+            body:
+                'Attached is the expense report for $_rangeLabel (${_filtered.length} records).',
+            recipients: [email],
+            attachmentPaths: [path],
+            isHTML: false,
+          ),
+        );
       } catch (e) {
         // No native mail client (desktop / web) — fall back to share sheet.
         if (!mounted) return;
@@ -201,50 +196,50 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return AlertDialog(
-        title: const Text('Send by email'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Excel report · $_rangeLabel\n${_filtered.length} record${_filtered.length == 1 ? '' : 's'}',
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: controller,
-              autofocus: true,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Recipient email',
-                hintText: 'name@example.com',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.email_rounded),
+          title: const Text('Send by email'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Excel report · $_rangeLabel\n${_filtered.length} record${_filtered.length == 1 ? '' : 's'}',
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
               ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(
+                  labelText: 'Recipient email',
+                  hintText: 'name@example.com',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.email_rounded),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                final v = controller.text.trim();
+                if (v.isEmpty || !v.contains('@')) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(content: Text('Enter a valid email.')),
+                  );
+                  return;
+                }
+                Navigator.pop(ctx, v);
+              },
+              icon: const Icon(Icons.send_rounded, size: 16),
+              label: const Text('Continue'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              final v = controller.text.trim();
-              if (v.isEmpty || !v.contains('@')) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  const SnackBar(content: Text('Enter a valid email.')),
-                );
-                return;
-              }
-              Navigator.pop(ctx, v);
-            },
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Continue'),
-          ),
-        ],
-      );
+        );
       },
     );
   }
@@ -307,8 +302,10 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                     padding: const EdgeInsets.only(top: 4),
                     child: Text(
                       '… and ${outcome.errors.length - 5} more',
-                      style:
-                          TextStyle(fontSize: 11, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
               ],
@@ -321,8 +318,9 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed:
-                outcome.newCount == 0 ? null : () => Navigator.pop(ctx, true),
+            onPressed: outcome.newCount == 0
+                ? null
+                : () => Navigator.pop(ctx, true),
             child: Text('Import ${outcome.newCount}'),
           ),
         ],
@@ -387,7 +385,9 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                 borderRadius: BorderRadius.circular(10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 10),
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(10),
@@ -395,8 +395,11 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.date_range_rounded,
-                          size: 18, color: cs.onSurface),
+                      Icon(
+                        Icons.date_range_rounded,
+                        size: 18,
+                        color: cs.onSurface,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
@@ -405,18 +408,25 @@ class _ExpenseIoSheetState extends State<ExpenseIoSheet> {
                             Text(
                               _rangeLabel,
                               style: const TextStyle(
-                                  fontSize: 13, fontWeight: FontWeight.w700),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             Text(
                               '$count record${count == 1 ? '' : 's'} in range',
                               style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant),
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.edit_calendar_rounded,
-                          size: 18, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.edit_calendar_rounded,
+                        size: 18,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ],
                   ),
                 ),
@@ -509,7 +519,9 @@ class _ActionTile extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w700),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(

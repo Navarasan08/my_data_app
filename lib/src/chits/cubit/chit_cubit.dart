@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/chits/model/chit_model.dart';
 import 'package:my_data_app/src/chits/repository/chit_repository.dart';
@@ -5,35 +7,55 @@ import 'package:my_data_app/src/chits/cubit/chit_state.dart';
 
 class ChitCubit extends Cubit<ChitState> {
   final ChitRepository _repository;
+  StreamSubscription<void>? _sub;
 
   ChitCubit(this._repository)
-      : super(ChitState(chitFunds: _repository.getAll()));
+    : super(
+        ChitState(
+          chitFunds: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        chitFunds: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   void addChitFund(ChitFund chitFund) {
     _repository.add(chitFund);
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void updateChitFund(ChitFund chitFund) {
     _repository.update(chitFund);
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void deleteChitFund(String chitFundId) {
     _repository.delete(chitFundId);
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void addMember(String chitFundId, Member member) {
     final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
     final updatedMembers = List<Member>.from(chitFund.members)..add(member);
     _repository.update(chitFund.copyWith(members: updatedMembers));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void updateMember(String chitFundId, Member member) {
@@ -44,15 +66,14 @@ class ChitCubit extends Cubit<ChitState> {
       updatedMembers[index] = member;
     }
     _repository.update(chitFund.copyWith(members: updatedMembers));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void addAuction(String chitFundId, Auction auction) {
     final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
-    final updatedAuctions = List<Auction>.from(chitFund.auctions)
-      ..add(auction);
+    final updatedAuctions = List<Auction>.from(chitFund.auctions)..add(auction);
     _repository.update(chitFund.copyWith(auctions: updatedAuctions));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   void updateAuction(String chitFundId, Auction auction) {
@@ -63,7 +84,7 @@ class ChitCubit extends Cubit<ChitState> {
       updatedAuctions[index] = auction;
     }
     _repository.update(chitFund.copyWith(auctions: updatedAuctions));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+    _sync();
   }
 
   List<ChitFund> getByStatus(ChitStatus status) {
@@ -88,8 +109,9 @@ class ChitCubit extends Cubit<ChitState> {
     );
     final updatedMember = member.copyWith(payments: payments);
     _repository.update(
-        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+      chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]),
+    );
+    _sync();
   }
 
   /// Mark payment as paid with auction details (for participant view)
@@ -114,12 +136,15 @@ class ChitCubit extends Cubit<ChitState> {
       auctionDiscount: auctionDiscount,
       isWonByMe: isWonByMe,
       auctionWinner: auctionWinner,
-      totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
+      totalMembers: chitFund.totalMembers > 0
+          ? chitFund.totalMembers
+          : chitFund.durationMonths,
     );
     final updatedMember = member.copyWith(payments: payments);
     _repository.update(
-        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+      chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]),
+    );
+    _sync();
   }
 
   /// Mark payment as unpaid (undo)
@@ -139,12 +164,17 @@ class ChitCubit extends Cubit<ChitState> {
     );
     final updatedMember = member.copyWith(payments: payments);
     _repository.update(
-        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+      chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]),
+    );
+    _sync();
   }
 
   /// Update auction discount for a specific payment month
-  void updatePaymentDiscount(String chitFundId, String paymentId, double auctionDiscount) {
+  void updatePaymentDiscount(
+    String chitFundId,
+    String paymentId,
+    double auctionDiscount,
+  ) {
     final chitFund = state.chitFunds.firstWhere((c) => c.id == chitFundId);
     if (chitFund.members.isEmpty) return;
     final member = chitFund.members.first;
@@ -153,12 +183,15 @@ class ChitCubit extends Cubit<ChitState> {
     if (idx == -1) return;
     payments[idx] = payments[idx].copyWith(
       auctionDiscount: auctionDiscount,
-      totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
+      totalMembers: chitFund.totalMembers > 0
+          ? chitFund.totalMembers
+          : chitFund.durationMonths,
     );
     final updatedMember = member.copyWith(payments: payments);
     _repository.update(
-        chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]));
-    emit(state.copyWith(chitFunds: _repository.getAll()));
+      chitFund.copyWith(members: [updatedMember, ...chitFund.members.skip(1)]),
+    );
+    _sync();
   }
 
   ChitFund? getChitFundById(String chitFundId) {

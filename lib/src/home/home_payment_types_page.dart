@@ -37,7 +37,9 @@ class HomePaymentTypesPage extends StatelessWidget {
                     child: Text(
                       'Tag records with cash / UPI / card etc. Records keep their tag even if the type is later removed here.',
                       style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant),
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -59,7 +61,9 @@ class HomePaymentTypesPage extends StatelessWidget {
                       final inUse = cubit.isPaymentTypeInUse(t.id);
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
@@ -71,28 +75,39 @@ class HomePaymentTypesPage extends StatelessWidget {
                           ),
                           title: Text(
                             t.displayName,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: inUse
-                              ? const Text('In use',
+                              ? const Text(
+                                  'In use',
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.green))
+                                    fontSize: 12,
+                                    color: Colors.green,
+                                  ),
+                                )
                               : null,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit_outlined,
-                                    color: Colors.blue[400]),
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.blue[400],
+                                ),
                                 onPressed: () =>
                                     _showPaymentTypeDialog(context, cubit, t),
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete_outline,
-                                    color: Colors.red[400]),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red[400],
+                                ),
                                 onPressed: () => _confirmDeletePaymentType(
-                                    context, cubit, t, inUse),
+                                  context,
+                                  cubit,
+                                  t,
+                                  inUse,
+                                ),
                               ),
                             ],
                           ),
@@ -109,7 +124,10 @@ class HomePaymentTypesPage extends StatelessWidget {
   }
 
   void _showPaymentTypeDialog(
-      BuildContext context, HomeRecordCubit cubit, PaymentType? existing) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    PaymentType? existing,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => _PaymentTypeDialog(
@@ -125,8 +143,12 @@ class HomePaymentTypesPage extends StatelessWidget {
     );
   }
 
-  void _confirmDeletePaymentType(BuildContext context, HomeRecordCubit cubit,
-      PaymentType type, bool inUse) {
+  void _confirmDeletePaymentType(
+    BuildContext context,
+    HomeRecordCubit cubit,
+    PaymentType type,
+    bool inUse,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -210,7 +232,8 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                     color: previewColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
+                      color: previewColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -245,18 +268,19 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
               ),
               const SizedBox(height: 14),
 
-              Text('Icon',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
+              Text(
+                'Icon',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               SizedBox(
                 height: 96,
                 child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 6,
                     mainAxisSpacing: 6,
                     crossAxisSpacing: 6,
@@ -265,8 +289,7 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                   itemBuilder: (context, index) {
                     final isSelected = _selectedIconIndex == index;
                     return InkWell(
-                      onTap: () =>
-                          setState(() => _selectedIconIndex = index),
+                      onTap: () => setState(() => _selectedIconIndex = index),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         decoration: BoxDecoration(
@@ -292,23 +315,25 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
               ),
               const SizedBox(height: 14),
 
-              Text('Color',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
+              Text(
+                'Color',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: List.generate(
-                    PaymentType.availableColors.length, (index) {
+                children: List.generate(PaymentType.availableColors.length, (
+                  index,
+                ) {
                   final color = PaymentType.availableColors[index];
                   final isSelected = _selectedColorIndex == index;
                   return InkWell(
-                    onTap: () =>
-                        setState(() => _selectedColorIndex = index),
+                    onTap: () => setState(() => _selectedColorIndex = index),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 30,
@@ -321,8 +346,11 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
                             : Border.all(color: cs.outline, width: 1),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 16,
+                            )
                           : null,
                     ),
                   );
@@ -342,7 +370,8 @@ class _PaymentTypeDialogState extends State<_PaymentTypeDialog> {
               ? null
               : () {
                   final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
+                  final id =
+                      widget.existing?.id ??
                       'pt_${DateTime.now().millisecondsSinceEpoch}';
                   final type = PaymentType(
                     id: id,

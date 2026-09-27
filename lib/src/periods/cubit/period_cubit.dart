@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/periods/model/period_model.dart';
 import 'package:my_data_app/src/periods/repository/period_repository.dart';
@@ -5,38 +7,58 @@ import 'package:my_data_app/src/periods/cubit/period_state.dart';
 
 class PeriodCubit extends Cubit<PeriodState> {
   final PeriodRepository _repository;
+  StreamSubscription<void>? _sub;
 
   PeriodCubit(this._repository)
-      : super(PeriodState(
+    : super(
+        PeriodState(
           entries: _repository.getAll(),
           selectedMonth: DateTime.now(),
-        ));
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(entries: _repository.getAll()));
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        entries: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   void addEntry(PeriodEntry entry) {
     _repository.add(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void updateEntry(PeriodEntry entry) {
     _repository.update(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void deleteEntry(String entryId) {
     _repository.delete(entryId);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void changeMonth(int delta) {
     final current = state.selectedMonth;
-    emit(state.copyWith(
-      selectedMonth: DateTime(current.year, current.month + delta, 1),
-    ));
+    emit(
+      state.copyWith(
+        selectedMonth: DateTime(current.year, current.month + delta, 1),
+      ),
+    );
   }
 
   /// Entries sorted by start date (most recent first)
@@ -55,10 +77,16 @@ class PeriodCubit extends Cubit<PeriodState> {
     final index = sorted.indexWhere((e) => e.id == entry.id);
     if (index <= 0) return null;
     final prev = sorted[index - 1];
-    final curStart =
-        DateTime(entry.startDate.year, entry.startDate.month, entry.startDate.day);
-    final prevStart =
-        DateTime(prev.startDate.year, prev.startDate.month, prev.startDate.day);
+    final curStart = DateTime(
+      entry.startDate.year,
+      entry.startDate.month,
+      entry.startDate.day,
+    );
+    final prevStart = DateTime(
+      prev.startDate.year,
+      prev.startDate.month,
+      prev.startDate.day,
+    );
     return curStart.difference(prevStart).inDays;
   }
 
@@ -71,7 +99,9 @@ class PeriodCubit extends Cubit<PeriodState> {
     int totalDays = 0;
     int count = 0;
     for (int i = 1; i < sorted.length; i++) {
-      totalDays += sorted[i].startDate.difference(sorted[i - 1].startDate).inDays;
+      totalDays += sorted[i].startDate
+          .difference(sorted[i - 1].startDate)
+          .inDays;
       count++;
     }
     return (totalDays / count).round();
@@ -80,8 +110,7 @@ class PeriodCubit extends Cubit<PeriodState> {
   /// Average period duration in days
   int get averagePeriodLength {
     if (state.entries.isEmpty) return 5;
-    final total =
-        state.entries.fold<int>(0, (sum, e) => sum + e.periodLength);
+    final total = state.entries.fold<int>(0, (sum, e) => sum + e.periodLength);
     return (total / state.entries.length).round();
   }
 
@@ -118,10 +147,16 @@ class PeriodCubit extends Cubit<PeriodState> {
   bool isPeriodDay(DateTime date) {
     final d = DateTime(date.year, date.month, date.day);
     for (final entry in state.entries) {
-      final start =
-          DateTime(entry.startDate.year, entry.startDate.month, entry.startDate.day);
-      final end =
-          DateTime(entry.endDate.year, entry.endDate.month, entry.endDate.day);
+      final start = DateTime(
+        entry.startDate.year,
+        entry.startDate.month,
+        entry.startDate.day,
+      );
+      final end = DateTime(
+        entry.endDate.year,
+        entry.endDate.month,
+        entry.endDate.day,
+      );
       if (!d.isBefore(start) && !d.isAfter(end)) return true;
     }
     return false;
@@ -152,8 +187,6 @@ class PeriodCubit extends Cubit<PeriodState> {
   bool isOvulationDay(DateTime date) {
     final ov = ovulationDate;
     if (ov == null) return false;
-    return date.year == ov.year &&
-        date.month == ov.month &&
-        date.day == ov.day;
+    return date.year == ov.year && date.month == ov.month && date.day == ov.day;
   }
 }

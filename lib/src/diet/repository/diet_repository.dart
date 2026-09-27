@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/firestore_list_store.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/diet/model/diet_model.dart';
 
-abstract class DietRepository {
+abstract class DietRepository implements SyncNode {
   List<FoodItem> getItems();
   void addItem(FoodItem item);
   void updateItem(FoodItem item);
@@ -12,98 +13,74 @@ abstract class DietRepository {
   void addEntry(FoodEntry entry);
   void updateEntry(FoodEntry entry);
   void deleteEntry(String entryId);
-
-  Future<void> init();
 }
 
-class FirestoreDietRepository implements DietRepository {
+/// Realtime Firestore implementation over the food-items and food-entries
+/// collections.
+class FirestoreDietRepository extends CompositeSyncNode
+    implements DietRepository {
   final String uid;
-  final FirebaseFirestore _firestore;
-  List<FoodItem> _items = [];
-  List<FoodEntry> _entries = [];
+  final FirestoreListStore<FoodItem> _items;
+  final FirestoreListStore<FoodEntry> _entries;
 
-  FirestoreDietRepository({
-    required this.uid,
+  factory FirestoreDietRepository({
+    required String uid,
     FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _itemsCol =>
-      _firestore.collection('users').doc(uid).collection('diet_items');
-
-  CollectionReference<Map<String, dynamic>> get _entriesCol =>
-      _firestore.collection('users').doc(uid).collection('diet_entries');
-
-  @override
-  Future<void> init() => _load(cacheFirst: true);
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() => _load(cacheFirst: false);
-
-  Future<void> _load({required bool cacheFirst}) async {
-    final itemsSnap = cacheFirst
-        ? await readQueryCacheFirst(_itemsCol)
-        : await _itemsCol.get();
-    _items =
-        itemsSnap.docs.map((d) => FoodItem.fromJson(d.data())).toList();
-    final entriesSnap = cacheFirst
-        ? await readQueryCacheFirst(_entriesCol)
-        : await _entriesCol.get();
-    _entries =
-        entriesSnap.docs.map((d) => FoodEntry.fromJson(d.data())).toList();
+  }) {
+    final user = (firestore ?? FirebaseFirestore.instance)
+        .collection('users')
+        .doc(uid);
+    return FirestoreDietRepository._(
+      uid,
+      FirestoreListStore<FoodItem>(
+        collection: user.collection('diet_items'),
+        fromDoc: (json, _) => FoodItem.fromJson(json),
+        toJson: (i) => i.toJson(),
+        idOf: (i) => i.id,
+        debugLabel: 'diet_items',
+      ),
+      FirestoreListStore<FoodEntry>(
+        collection: user.collection('diet_entries'),
+        fromDoc: (json, _) => FoodEntry.fromJson(json),
+        toJson: (e) => e.toJson(),
+        idOf: (e) => e.id,
+        debugLabel: 'diet_entries',
+      ),
+    );
   }
 
-  @override
-  List<FoodItem> getItems() => List.unmodifiable(_items);
+  FirestoreDietRepository._(this.uid, this._items, this._entries)
+    : super([_items, _entries]);
+
+  // ── Food items ──────────────────────────────────────────────────────────
 
   @override
-  void addItem(FoodItem item) {
-    _items.add(item);
-    _itemsCol.doc(item.id).set(item.toJson());
-  }
+  List<FoodItem> getItems() => _items.items;
 
   @override
-  void updateItem(FoodItem item) {
-    final i = _items.indexWhere((x) => x.id == item.id);
-    if (i != -1) {
-      _items[i] = item;
-      _itemsCol.doc(item.id).set(item.toJson());
-    }
-  }
+  void addItem(FoodItem item) => _items.save(item);
+
+  @override
+  void updateItem(FoodItem item) => _items.save(item);
 
   @override
   void deleteItem(String itemId) {
-    _items.removeWhere((x) => x.id == itemId);
-    _itemsCol.doc(itemId).delete();
+    _items.remove(itemId);
     // Cascade: remove all entries linked to this item.
-    final orphans =
-        _entries.where((e) => e.foodItemId == itemId).map((e) => e.id).toList();
     _entries.removeWhere((e) => e.foodItemId == itemId);
-    for (final id in orphans) {
-      _entriesCol.doc(id).delete();
-    }
   }
 
-  @override
-  List<FoodEntry> getEntries() => List.unmodifiable(_entries);
+  // ── Food entries ────────────────────────────────────────────────────────
 
   @override
-  void addEntry(FoodEntry entry) {
-    _entries.add(entry);
-    _entriesCol.doc(entry.id).set(entry.toJson());
-  }
+  List<FoodEntry> getEntries() => _entries.items;
 
   @override
-  void updateEntry(FoodEntry entry) {
-    final i = _entries.indexWhere((x) => x.id == entry.id);
-    if (i != -1) {
-      _entries[i] = entry;
-      _entriesCol.doc(entry.id).set(entry.toJson());
-    }
-  }
+  void addEntry(FoodEntry entry) => _entries.save(entry);
 
   @override
-  void deleteEntry(String entryId) {
-    _entries.removeWhere((x) => x.id == entryId);
-    _entriesCol.doc(entryId).delete();
-  }
+  void updateEntry(FoodEntry entry) => _entries.save(entry);
+
+  @override
+  void deleteEntry(String entryId) => _entries.remove(entryId);
 }

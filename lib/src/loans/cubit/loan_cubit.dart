@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/loans/model/loan_model.dart';
 import 'package:my_data_app/src/loans/repository/loan_repository.dart';
@@ -5,18 +7,41 @@ import 'package:my_data_app/src/loans/cubit/loan_state.dart';
 
 class LoanCubit extends Cubit<LoanState> {
   final LoanRepository _repository;
+  StreamSubscription<void>? _sub;
 
   LoanCubit(this._repository)
-      : super(LoanState(loans: _repository.getAll()));
+    : super(
+        LoanState(
+          loans: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(loans: _repository.getAll()));
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        loans: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   /// Split an EMI into principal & interest using amortization formula
   static ({double principal, double interest}) _splitEmi(
-      double balance, double annualRate, double emi) {
+    double balance,
+    double annualRate,
+    double emi,
+  ) {
     if (annualRate == 0) {
       return (principal: emi, interest: 0.0);
     }
@@ -29,8 +54,10 @@ class LoanCubit extends Cubit<LoanState> {
   void addLoan(Loan loan) {
     // Auto-generate past EMIs if start date is before this month
     final now = DateTime.now();
-    final elapsed = (now.year - loan.startDate.year) * 12 +
-        now.month - loan.startDate.month;
+    final elapsed =
+        (now.year - loan.startDate.year) * 12 +
+        now.month -
+        loan.startDate.month;
     if (elapsed > 0 && loan.repayments.isEmpty) {
       final autoCount = elapsed.clamp(0, loan.tenureMonths);
       double balance = loan.principalAmount;
@@ -38,30 +65,37 @@ class LoanCubit extends Cubit<LoanState> {
       for (int i = 0; i < autoCount; i++) {
         final monthNum = i + 1;
         final paidDate = DateTime(
-            loan.startDate.year, loan.startDate.month + monthNum, loan.startDate.day);
+          loan.startDate.year,
+          loan.startDate.month + monthNum,
+          loan.startDate.day,
+        );
         final split = _splitEmi(balance, loan.interestRate, loan.emiAmount);
         balance -= split.principal;
-        autoRepayments.add(Repayment(
-          id: '${loan.id}_auto_$monthNum',
-          monthNumber: monthNum,
-          amount: loan.emiAmount,
-          principalPortion: split.principal,
-          interestPortion: split.interest,
-          paidDate: paidDate,
-          notes: 'Auto-generated',
-        ));
+        autoRepayments.add(
+          Repayment(
+            id: '${loan.id}_auto_$monthNum',
+            monthNumber: monthNum,
+            amount: loan.emiAmount,
+            principalPortion: split.principal,
+            interestPortion: split.interest,
+            paidDate: paidDate,
+            notes: 'Auto-generated',
+          ),
+        );
       }
       final loanWithEmis = loan.copyWith(repayments: autoRepayments);
       _repository.add(loanWithEmis);
     } else {
       _repository.add(loan);
     }
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   void updateLoan(Loan loan) {
-    final existing = state.loans.firstWhere((l) => l.id == loan.id,
-        orElse: () => loan);
+    final existing = state.loans.firstWhere(
+      (l) => l.id == loan.id,
+      orElse: () => loan,
+    );
 
     final startChanged = existing.startDate != loan.startDate;
 
@@ -70,11 +104,13 @@ class LoanCubit extends Cubit<LoanState> {
     if (startChanged) {
       // Rebuild the EMI schedule to span exactly from the new startDate to
       // today. Keep part-payments untouched (they track real cash events).
-      final partPayments =
-          loan.repayments.where((r) => r.isPartPayment).toList();
+      final partPayments = loan.repayments
+          .where((r) => r.isPartPayment)
+          .toList();
 
       final now = DateTime.now();
-      final elapsed = (now.year - loan.startDate.year) * 12 +
+      final elapsed =
+          (now.year - loan.startDate.year) * 12 +
           (now.month - loan.startDate.month);
       final target = elapsed.clamp(0, loan.tenureMonths);
 
@@ -83,7 +119,10 @@ class LoanCubit extends Cubit<LoanState> {
 
       for (int m = 1; m <= target; m++) {
         final paidDate = DateTime(
-            loan.startDate.year, loan.startDate.month + m, loan.startDate.day);
+          loan.startDate.year,
+          loan.startDate.month + m,
+          loan.startDate.day,
+        );
 
         // Reduce balance by any part-payments that fall on/before this EMI's
         // due date so the amortization stays realistic.
@@ -95,18 +134,23 @@ class LoanCubit extends Cubit<LoanState> {
                 .clamp(0.0, loan.principalAmount)
                 .toDouble();
 
-        final split =
-            _splitEmi(effectiveBalance, loan.interestRate, loan.emiAmount);
+        final split = _splitEmi(
+          effectiveBalance,
+          loan.interestRate,
+          loan.emiAmount,
+        );
         balance = effectiveBalance - split.principal;
-        rebuiltEmis.add(Repayment(
-          id: '${loan.id}_auto_${DateTime.now().millisecondsSinceEpoch}_$m',
-          monthNumber: m,
-          amount: loan.emiAmount,
-          principalPortion: split.principal,
-          interestPortion: split.interest,
-          paidDate: paidDate,
-          notes: 'Auto-generated',
-        ));
+        rebuiltEmis.add(
+          Repayment(
+            id: '${loan.id}_auto_${DateTime.now().millisecondsSinceEpoch}_$m',
+            monthNumber: m,
+            amount: loan.emiAmount,
+            principalPortion: split.principal,
+            interestPortion: split.interest,
+            paidDate: paidDate,
+            notes: 'Auto-generated',
+          ),
+        );
       }
 
       // Unused local suppression; keep for clarity of intent
@@ -116,7 +160,7 @@ class LoanCubit extends Cubit<LoanState> {
     }
 
     _repository.update(toSave);
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   double _paidSoFar(List<Repayment> emis) =>
@@ -124,14 +168,15 @@ class LoanCubit extends Cubit<LoanState> {
 
   void deleteLoan(String id) {
     _repository.delete(id);
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   void addRepayment(String loanId, Repayment repayment) {
     final loan = state.loans.firstWhere((l) => l.id == loanId);
     // Auto-calculate principal/interest split if not provided
     Repayment finalRepayment = repayment;
-    if (repayment.principalPortion == null && repayment.interestPortion == null) {
+    if (repayment.principalPortion == null &&
+        repayment.interestPortion == null) {
       final balance = loan.outstandingBalance;
       final split = _splitEmi(balance, loan.interestRate, repayment.amount);
       finalRepayment = repayment.copyWith(
@@ -143,7 +188,7 @@ class LoanCubit extends Cubit<LoanState> {
       repayments: [...loan.repayments, finalRepayment],
     );
     _repository.update(updated);
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   void deleteRepayment(String loanId, String repaymentId) {
@@ -152,47 +197,71 @@ class LoanCubit extends Cubit<LoanState> {
       repayments: loan.repayments.where((r) => r.id != repaymentId).toList(),
     );
     _repository.update(updated);
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
-  void addPartPayment(String loanId, Repayment partPayment, PartPaymentStrategy strategy, {double? newEmi}) {
+  void addPartPayment(
+    String loanId,
+    Repayment partPayment,
+    PartPaymentStrategy strategy, {
+    double? newEmi,
+  }) {
     final loan = state.loans.firstWhere((l) => l.id == loanId);
-    final updatedRepayments = [...loan.repayments, partPayment.copyWith(isPartPayment: true, strategy: strategy)];
+    final updatedRepayments = [
+      ...loan.repayments,
+      partPayment.copyWith(isPartPayment: true, strategy: strategy),
+    ];
 
-    final remainingPrincipal = (loan.principalAmount -
-        updatedRepayments.where((r) => r.isPartPayment).fold(0.0, (sum, r) => sum + r.amount) -
-        updatedRepayments.where((r) => !r.isPartPayment).fold(0.0, (sum, r) => sum + (r.principalPortion ?? 0))
-    ).clamp(0.0, double.infinity).toDouble();
+    final remainingPrincipal =
+        (loan.principalAmount -
+                updatedRepayments
+                    .where((r) => r.isPartPayment)
+                    .fold(0.0, (sum, r) => sum + r.amount) -
+                updatedRepayments
+                    .where((r) => !r.isPartPayment)
+                    .fold(0.0, (sum, r) => sum + (r.principalPortion ?? 0)))
+            .clamp(0.0, double.infinity)
+            .toDouble();
 
     final remainingEmis = loan.tenureMonths - loan.emiRepayments.length;
 
     Loan updated;
     if (strategy == PartPaymentStrategy.reduceEmi) {
-        // Recalculate EMI with same remaining tenure
-        final calculatedEmi = newEmi ?? Loan.calculateNewEmi(
-            remainingPrincipal, loan.interestRate, remainingEmis > 0 ? remainingEmis : 1);
-        updated = loan.copyWith(
-            repayments: updatedRepayments,
-            emiAmount: calculatedEmi,
-        );
+      // Recalculate EMI with same remaining tenure
+      final calculatedEmi =
+          newEmi ??
+          Loan.calculateNewEmi(
+            remainingPrincipal,
+            loan.interestRate,
+            remainingEmis > 0 ? remainingEmis : 1,
+          );
+      updated = loan.copyWith(
+        repayments: updatedRepayments,
+        emiAmount: calculatedEmi,
+      );
     } else {
-        // Reduce tenure, keep same EMI
-        final newTenure = loan.paidEmiCount + Loan.calculateNewTenure(
-            remainingPrincipal, loan.interestRate, loan.emiAmount);
-        updated = loan.copyWith(
-            repayments: updatedRepayments,
-            tenureMonths: newTenure,
-        );
+      // Reduce tenure, keep same EMI
+      final newTenure =
+          loan.paidEmiCount +
+          Loan.calculateNewTenure(
+            remainingPrincipal,
+            loan.interestRate,
+            loan.emiAmount,
+          );
+      updated = loan.copyWith(
+        repayments: updatedRepayments,
+        tenureMonths: newTenure,
+      );
     }
 
     _repository.update(updated);
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   void closeLoan(String loanId) {
     final loan = state.loans.firstWhere((l) => l.id == loanId);
     _repository.update(loan.copyWith(isClosed: true, endDate: DateTime.now()));
-    emit(state.copyWith(loans: _repository.getAll()));
+    _sync();
   }
 
   Loan? getLoanById(String id) {
@@ -200,11 +269,9 @@ class LoanCubit extends Cubit<LoanState> {
     return matches.isNotEmpty ? matches.first : null;
   }
 
-  List<Loan> get activeLoans =>
-      state.loans.where((l) => !l.isClosed).toList();
+  List<Loan> get activeLoans => state.loans.where((l) => !l.isClosed).toList();
 
-  List<Loan> get closedLoans =>
-      state.loans.where((l) => l.isClosed).toList();
+  List<Loan> get closedLoans => state.loans.where((l) => l.isClosed).toList();
 
   List<Loan> get borrowedLoans =>
       state.loans.where((l) => l.direction == LoanDirection.borrowed).toList();

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/activities/cubit/activity_state.dart';
 import 'package:my_data_app/src/activities/model/activity_model.dart';
@@ -5,26 +7,48 @@ import 'package:my_data_app/src/activities/repository/activity_repository.dart';
 
 class ActivityCubit extends Cubit<ActivityState> {
   final ActivityRepository _repository;
+  StreamSubscription<void>? _sub;
 
   ActivityCubit(this._repository)
-      : super(ActivityState(records: _repository.getAll()));
+    : super(
+        ActivityState(
+          records: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() => _emit();
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        records: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   void addRecord(ActivityRecord r) {
     _repository.add(r);
-    _emit();
+    _sync();
   }
 
   void updateRecord(ActivityRecord r) {
     _repository.update(r.copyWith(updatedAt: DateTime.now()));
-    _emit();
+    _sync();
   }
 
   void deleteRecord(String id) {
     _repository.delete(id);
-    _emit();
+    _sync();
   }
 
   ActivityRecord? getById(String id) {
@@ -61,9 +85,10 @@ class ActivityCubit extends Cubit<ActivityState> {
 
   int get currentMonthCount {
     final now = DateTime.now();
-    return state.records.where((r) =>
-        r.startDate.year == now.year && r.startDate.month == now.month).length;
+    return state.records
+        .where(
+          (r) => r.startDate.year == now.year && r.startDate.month == now.month,
+        )
+        .length;
   }
-
-  void _emit() => emit(state.copyWith(records: _repository.getAll()));
 }

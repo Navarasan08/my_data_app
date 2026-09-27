@@ -1,61 +1,58 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 
+/// Holds expense-tracker UI state (selected month, filters, view mode) on top
+/// of the repository's realtime data. Data fields are only ever written from
+/// the repository stream, so the cubit never has to keep a copy in step:
+/// every write goes to the repository and comes back through the listener.
 class HomeRecordCubit extends Cubit<HomeRecordState> {
   final HomeRecordRepository _repository;
+  StreamSubscription<HomeRecordData>? _sub;
 
   HomeRecordCubit(this._repository)
     : super(
-        HomeRecordState(
-          records: _repository.getAll(),
-          selectedDate: DateTime.now(),
-          customCategories: _repository.getCustomCategories(),
-          paymentTypes: _repository.getPaymentTypes(),
-          currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
-          showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
-          monthlyStartDay: _repository.getMonthlyStartDay(),
-          weekendAdjustment: weekendAdjustmentFromName(
-            _repository.getWeekendAdjustment(),
-          ),
-          isCalendarView: _repository.getIsCalendarView(),
+        _withData(
+          HomeRecordState(records: const [], selectedDate: DateTime.now()),
+          _repository.current,
         ),
-      );
+      ) {
+    _sub = _repository.stream.listen((data) => emit(_withData(state, data)));
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(
-      state.copyWith(
-        records: _repository.getAll(),
-        customCategories: _repository.getCustomCategories(),
-        paymentTypes: _repository.getPaymentTypes(),
-        currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
-        showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
-        monthlyStartDay: _repository.getMonthlyStartDay(),
-        weekendAdjustment: weekendAdjustmentFromName(
-          _repository.getWeekendAdjustment(),
-        ),
-        isCalendarView: _repository.getIsCalendarView(),
-      ),
+  /// Copies the repository's data fields onto [base], leaving the UI-only
+  /// fields (selected date, filters, view mode) untouched.
+  static HomeRecordState _withData(HomeRecordState base, HomeRecordData data) {
+    final s = data.settings;
+    return base.copyWith(
+      records: data.records,
+      customCategories: data.customCategories,
+      paymentTypes: data.paymentTypes,
+      currency: HomeCurrency.fromCode(s.currencyCode),
+      showMonthlyCalendar: s.showMonthlyCalendar,
+      monthlyStartDay: s.monthlyStartDay,
+      weekendAdjustment: weekendAdjustmentFromName(s.weekendAdjustment),
+      isCalendarView: s.isCalendarView,
+      syncStatus: data.status,
+      hasPendingWrites: data.hasPendingWrites,
     );
   }
 
-  void addRecord(HomeRecord record) {
-    _repository.add(record);
-    emit(state.copyWith(records: _repository.getAll()));
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
-  void updateRecord(HomeRecord record) {
-    _repository.update(record);
-    emit(state.copyWith(records: _repository.getAll()));
-  }
+  void addRecord(HomeRecord record) => _repository.add(record);
 
-  void deleteRecord(String recordId) {
-    _repository.delete(recordId);
-    emit(state.copyWith(records: _repository.getAll()));
-  }
+  void updateRecord(HomeRecord record) => _repository.update(record);
+
+  void deleteRecord(String recordId) => _repository.delete(recordId);
 
   void changeMonth(int monthDelta) {
     final cur = state.selectedDate;
@@ -413,33 +410,17 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return totals.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
 
-  // Custom category management
-  void addCustomCategory(HomeCategory category) {
-    _repository.addCustomCategory(category);
-    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
-  }
+  // Custom category management. Records store the category by id and are
+  // re-parsed by the repository whenever categories change, so a rename or
+  // recolour reaches every record without touching them here.
+  void addCustomCategory(HomeCategory category) =>
+      _repository.addCustomCategory(category);
 
-  void updateCustomCategory(HomeCategory category) {
-    _repository.updateCustomCategory(category);
-    // Update records that use this category so they reflect new name/icon/color
-    final updatedRecords = state.records.map((r) {
-      if (r.category.id == category.id) {
-        return r.copyWith(category: category);
-      }
-      return r;
-    }).toList();
-    emit(
-      state.copyWith(
-        customCategories: _repository.getCustomCategories(),
-        records: updatedRecords,
-      ),
-    );
-  }
+  void updateCustomCategory(HomeCategory category) =>
+      _repository.updateCustomCategory(category);
 
-  void deleteCustomCategory(String categoryId) {
-    _repository.deleteCustomCategory(categoryId);
-    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
-  }
+  void deleteCustomCategory(String categoryId) =>
+      _repository.deleteCustomCategory(categoryId);
 
   bool isCategoryInUse(String categoryId) {
     return state.records.any((r) => r.category.id == categoryId);
@@ -453,38 +434,24 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return state.records.any((r) => r.paymentType?.id == typeId);
   }
 
-  void addPaymentType(PaymentType type) {
-    _repository.addPaymentType(type);
-    emit(state.copyWith(paymentTypes: _repository.getPaymentTypes()));
-  }
+  void addPaymentType(PaymentType type) => _repository.addPaymentType(type);
 
   /// Updating a payment type also rewrites the embedded snapshot on every
   /// record currently using that id, so existing records reflect the new
   /// name / icon / color rather than a stale copy.
   void updatePaymentType(PaymentType type) {
     _repository.updatePaymentType(type);
-    final updatedRecords = state.records.map((r) {
+    for (final r in state.records) {
       if (r.paymentType?.id == type.id) {
-        final updated = r.copyWith(paymentType: type);
-        _repository.update(updated);
-        return updated;
+        _repository.update(r.copyWith(paymentType: type));
       }
-      return r;
-    }).toList();
-    emit(
-      state.copyWith(
-        paymentTypes: _repository.getPaymentTypes(),
-        records: updatedRecords,
-      ),
-    );
+    }
   }
 
   /// Removes the type from the user's managed list. Existing records keep
   /// the type snapshot they were saved with — they don't lose their label.
-  void deletePaymentType(String typeId) {
-    _repository.deletePaymentType(typeId);
-    emit(state.copyWith(paymentTypes: _repository.getPaymentTypes()));
-  }
+  void deletePaymentType(String typeId) =>
+      _repository.deletePaymentType(typeId);
 
   String get currencySymbol => state.currency.symbol;
 
@@ -493,26 +460,19 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   String formatAmount(double amount, {int decimals = 0}) =>
       state.currency.format(amount, decimals: decimals);
 
-  void setCurrency(HomeCurrency currency) {
-    _repository.setCurrencyCode(currency.code);
-    emit(state.copyWith(currency: currency));
-  }
+  // Settings. Each write lands in the local cache at once and the settings
+  // listener echoes it back, so the UI still flips immediately.
+  void setCurrency(HomeCurrency currency) =>
+      _repository.setCurrencyCode(currency.code);
 
-  void setShowMonthlyCalendar(bool value) {
-    _repository.setShowMonthlyCalendar(value);
-    emit(state.copyWith(showMonthlyCalendar: value));
-  }
+  void setShowMonthlyCalendar(bool value) =>
+      _repository.setShowMonthlyCalendar(value);
 
-  void setMonthlyStartDay(int day) {
-    final clamped = day.clamp(1, 31);
-    _repository.setMonthlyStartDay(clamped);
-    emit(state.copyWith(monthlyStartDay: clamped));
-  }
+  void setMonthlyStartDay(int day) =>
+      _repository.setMonthlyStartDay(day.clamp(1, 31));
 
-  void setWeekendAdjustment(WeekendAdjustment adjustment) {
-    _repository.setWeekendAdjustment(adjustment.name);
-    emit(state.copyWith(weekendAdjustment: adjustment));
-  }
+  void setWeekendAdjustment(WeekendAdjustment adjustment) =>
+      _repository.setWeekendAdjustment(adjustment.name);
 
   /// Label for the currently selected period shown in the month navigator.
   /// Plain `MMM yyyy` for calendar months; an inclusive date range (e.g.
@@ -528,11 +488,8 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     return '${startFmt.format(start)} – ${DateFormat('d MMM yyyy').format(lastDay)}';
   }
 
-  void toggleCalendarView() {
-    final next = !state.isCalendarView;
-    _repository.setIsCalendarView(next);
-    emit(state.copyWith(isCalendarView: next));
-  }
+  void toggleCalendarView() =>
+      _repository.setIsCalendarView(!state.isCalendarView);
 
   /// Totals grouped by full date across the currently selected cycle,
   /// respecting the active category filter. Used by the month-grid calendar

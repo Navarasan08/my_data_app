@@ -1,8 +1,10 @@
 import 'dart:async';
-
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
+import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
 import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
 import 'package:my_data_app/src/groups/cubit/group_settings_cubit.dart';
 import 'package:my_data_app/src/groups/repository/group_repository.dart';
@@ -54,8 +56,14 @@ import 'package:my_data_app/src/chits/chit_reminder_source.dart';
 import 'package:my_data_app/src/checklist/checklist_reminder_source.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/shell/main_shell.dart';
-import 'package:my_data_app/src/splash/branded_loader.dart';
 
+/// Owns every module's repository and cubit for the signed-in user.
+///
+/// Nothing here waits on the network. Each repository attaches a Firestore
+/// listener the moment it is created: the local cache renders on the first
+/// frame and server changes (including edits from other devices) stream in
+/// as they arrive. The only awaited work is platform setup for local
+/// notifications, and that runs in the background.
 class AuthenticatedShell extends StatefulWidget {
   final String uid;
 
@@ -63,6 +71,12 @@ class AuthenticatedShell extends StatefulWidget {
 
   @override
   State<AuthenticatedShell> createState() => _AuthenticatedShellState();
+}
+
+/// All module repositories as one node: one `start()`, one `dispose()`, and
+/// a combined sync status for the global activity bar.
+class _RepoBundle extends CompositeSyncNode {
+  _RepoBundle(super.nodes);
 }
 
 class _AuthenticatedShellState extends State<AuthenticatedShell> {
@@ -108,253 +122,174 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final ActivityCubit _activityCubit;
   late final DietCubit _dietCubit;
   late final DaysCounterCubit _daysCounterCubit;
-  ReminderSweeper? _reminderSweeper;
+  late final ReminderSweeper _reminderSweeper;
   late final DashboardSettingsCubit _dashboardSettingsCubit;
   late final GroupSettingsCubit _groupSettingsCubit;
-  bool _initialized = false;
-  bool _cubitsCreated = false;
+
+  late final _RepoBundle _repos;
+  final _syncStatus = ValueNotifier<SyncStatus>(SyncStatus.loading);
+  StreamSubscription<void>? _syncSub;
 
   @override
   void initState() {
     super.initState();
-    _billRepo = FirestoreBillRepository(uid: widget.uid);
-    _vehicleRepo = FirestoreVehicleRepository(uid: widget.uid);
-    _chitRepo = FirestoreChitRepository(uid: widget.uid);
-    _checklistRepo = FirestoreChecklistRepository(uid: widget.uid);
-    _periodRepo = FirestorePeriodRepository(uid: widget.uid);
-    _homeRecordRepo = FirestoreHomeRecordRepository(uid: widget.uid);
-    _scheduleRepo = FirestoreScheduleRepository(uid: widget.uid);
-    _foodMenuRepo = FirestoreFoodMenuRepository(uid: widget.uid);
-    _loanRepo = FirestoreLoanRepository(uid: widget.uid);
-    _goalRepo = FirestoreGoalRepository(uid: widget.uid);
-    _moneyOweRepo = FirestoreMoneyOweRepository(uid: widget.uid);
-    _medicalRepo = FirestoreMedicalRepository(uid: widget.uid);
-    _vaultRepo = FirestoreProfileVaultRepository(uid: widget.uid);
-    _landRepo = FirestoreLandRepository(uid: widget.uid);
-    _eventRepo = FirestoreEventRepository(uid: widget.uid);
+    final uid = widget.uid;
+
+    _billRepo = FirestoreBillRepository(uid: uid);
+    _vehicleRepo = FirestoreVehicleRepository(uid: uid);
+    _chitRepo = FirestoreChitRepository(uid: uid);
+    _checklistRepo = FirestoreChecklistRepository(uid: uid);
+    _periodRepo = FirestorePeriodRepository(uid: uid);
+    _homeRecordRepo = FirestoreHomeRecordRepository(uid: uid);
+    _scheduleRepo = FirestoreScheduleRepository(uid: uid);
+    _foodMenuRepo = FirestoreFoodMenuRepository(uid: uid);
+    _loanRepo = FirestoreLoanRepository(uid: uid);
+    _goalRepo = FirestoreGoalRepository(uid: uid);
+    _moneyOweRepo = FirestoreMoneyOweRepository(uid: uid);
+    _medicalRepo = FirestoreMedicalRepository(uid: uid);
+    _vaultRepo = FirestoreProfileVaultRepository(uid: uid);
+    _landRepo = FirestoreLandRepository(uid: uid);
+    _eventRepo = FirestoreEventRepository(uid: uid);
+    _interestRepo = FirestoreInterestRepository(uid: uid);
+    _activityRepo = FirestoreActivityRepository(uid: uid);
+    _dietRepo = FirestoreDietRepository(uid: uid);
+    _daysCounterRepo = FirestoreDaysCounterRepository(uid: uid);
+    _notificationRepo = FirestoreNotificationRepository(uid: uid);
+
     final firebaseUser = FirebaseAuth.instance.currentUser;
     _groupRepo = FirestoreGroupRepository(
-      uid: widget.uid,
+      uid: uid,
       email: firebaseUser?.email ?? '',
       displayName: firebaseUser?.displayName,
     );
-    _interestRepo = FirestoreInterestRepository(uid: widget.uid);
-    _activityRepo = FirestoreActivityRepository(uid: widget.uid);
-    _dietRepo = FirestoreDietRepository(uid: widget.uid);
-    _daysCounterRepo = FirestoreDaysCounterRepository(uid: widget.uid);
-    _notificationRepo = FirestoreNotificationRepository(uid: widget.uid);
     _notificationService = LocalNotificationService();
-    _dashboardSettingsCubit = DashboardSettingsCubit(uid: widget.uid);
-    _groupSettingsCubit = GroupSettingsCubit(uid: widget.uid);
-    _initRepos();
+    _dashboardSettingsCubit = DashboardSettingsCubit(uid: uid)..start();
+    _groupSettingsCubit = GroupSettingsCubit(uid: uid)..start();
+
+    // Order matters: Firestore serves listener registrations in sequence,
+    // so the largest, most-visited collection (expense records) goes first
+    // and gets the earliest snapshot instead of queueing behind 19 others.
+    _repos = _RepoBundle([
+      _homeRecordRepo,
+      _billRepo,
+      _vehicleRepo,
+      _chitRepo,
+      _checklistRepo,
+      _periodRepo,
+      _scheduleRepo,
+      _foodMenuRepo,
+      _loanRepo,
+      _goalRepo,
+      _moneyOweRepo,
+      _medicalRepo,
+      _vaultRepo,
+      _landRepo,
+      _eventRepo,
+      _interestRepo,
+      _activityRepo,
+      _dietRepo,
+      _daysCounterRepo,
+      _notificationRepo,
+    ]);
+    _syncSub = _repos.changes.listen((_) {
+      final s = _repos.syncStatus;
+      if (_syncStatus.value != s) _syncStatus.value = s;
+    });
+    _repos.start();
+
+    _notificationCubit = NotificationCubit(
+      _notificationRepo,
+      _notificationService,
+    );
+    _billCubit = BillCubit(_billRepo);
+    _vehicleCubit = VehicleCubit(_vehicleRepo);
+    _scheduleCubit = ScheduleCubit(_scheduleRepo);
+    _loanCubit = LoanCubit(_loanRepo);
+    _chitCubit = ChitCubit(_chitRepo);
+    _checklistCubit = ChecklistCubit(_checklistRepo);
+    _periodCubit = PeriodCubit(_periodRepo);
+    _homeRecordCubit = HomeRecordCubit(_homeRecordRepo);
+    _foodMenuCubit = FoodMenuCubit(_foodMenuRepo);
+    _goalCubit = GoalCubit(_goalRepo);
+    _moneyOweCubit = MoneyOweCubit(_moneyOweRepo);
+    _medicalCubit = MedicalCubit(_medicalRepo);
+    _vaultCubit = ProfileVaultCubit(_vaultRepo);
+    _landCubit = LandCubit(_landRepo);
+    _eventCubit = EventCubit(_eventRepo);
+    _interestCubit = InterestCubit(_interestRepo);
+    _activityCubit = ActivityCubit(_activityRepo);
+    _dietCubit = DietCubit(_dietRepo);
+    _daysCounterCubit = DaysCounterCubit(_daysCounterRepo);
+
+    // Generic reminder pipeline. Add new modules by appending another
+    // ReminderSource to the `sources` list — no other wiring needed.
+    _reminderSweeper = ReminderSweeper(
+      notificationCubit: _notificationCubit,
+      sources: [
+        ScheduleReminderSource(scheduleCubit: _scheduleCubit),
+        LoanReminderSource(cubit: _loanCubit),
+        ChitReminderSource(cubit: _chitCubit),
+        ChecklistReminderSource(cubit: _checklistCubit),
+      ],
+    );
+
+    unawaited(_initServices());
+  }
+
+  /// Background setup that must not hold up the first frame.
+  Future<void> _initServices() async {
+    // Groups attach their own listeners inside init() and then do a first
+    // server read; a failure there (offline first launch) is not fatal — the
+    // listeners still deliver once the connection is back.
+    unawaited(
+      _groupRepo.init().catchError((Object e) {
+        if (kDebugMode) debugPrint('groups init failed: $e');
+      }),
+    );
+    // The reminder sweeper posts OS notifications, so the platform plugin
+    // must be ready before it runs.
+    try {
+      await _notificationService.init();
+    } catch (e) {
+      if (kDebugMode) debugPrint('notification service init failed: $e');
+    }
+    if (mounted) _reminderSweeper.start();
   }
 
   @override
   void dispose() {
-    _reminderSweeper?.stop();
+    _reminderSweeper.stop();
+    _syncSub?.cancel();
+    _syncStatus.dispose();
     _groupRepo.dispose();
-    if (_cubitsCreated) {
-      _billCubit.close();
-      _vehicleCubit.close();
-      _chitCubit.close();
-      _checklistCubit.close();
-      _periodCubit.close();
-      _homeRecordCubit.close();
-      _scheduleCubit.close();
-      _foodMenuCubit.close();
-      _loanCubit.close();
-      _goalCubit.close();
-      _moneyOweCubit.close();
-      _medicalCubit.close();
-      _vaultCubit.close();
-      _landCubit.close();
-      _eventCubit.close();
-      _interestCubit.close();
-      _activityCubit.close();
-      _dietCubit.close();
-      _daysCounterCubit.close();
-      _notificationCubit.close();
-    }
+    _billCubit.close();
+    _vehicleCubit.close();
+    _chitCubit.close();
+    _checklistCubit.close();
+    _periodCubit.close();
+    _homeRecordCubit.close();
+    _scheduleCubit.close();
+    _foodMenuCubit.close();
+    _loanCubit.close();
+    _goalCubit.close();
+    _moneyOweCubit.close();
+    _medicalCubit.close();
+    _vaultCubit.close();
+    _landCubit.close();
+    _eventCubit.close();
+    _interestCubit.close();
+    _activityCubit.close();
+    _dietCubit.close();
+    _daysCounterCubit.close();
+    _notificationCubit.close();
     _dashboardSettingsCubit.close();
     _groupSettingsCubit.close();
+    _repos.dispose();
     super.dispose();
-  }
-
-  String? _initError;
-
-  Future<void> _initRepos() async {
-    try {
-      // Cache-first: each repo reads Firestore's local cache and only goes to
-      // the network when the cache is empty (first launch on a device), so
-      // this stays fast no matter how much data has accumulated.
-      await Future.wait([
-        _billRepo.init(),
-        _vehicleRepo.init(),
-        _chitRepo.init(),
-        _checklistRepo.init(),
-        _periodRepo.init(),
-        _homeRecordRepo.init(),
-        _scheduleRepo.init(),
-        _foodMenuRepo.init(),
-        _loanRepo.init(),
-        _goalRepo.init(),
-        _moneyOweRepo.init(),
-        _medicalRepo.init(),
-        _vaultRepo.init(),
-        _landRepo.init(),
-        _eventRepo.init(),
-        _groupRepo.init(),
-        _interestRepo.init(),
-        _activityRepo.init(),
-        _dietRepo.init(),
-        _daysCounterRepo.init(),
-        _notificationRepo.init(),
-        _notificationService.init(),
-        _dashboardSettingsCubit.load(),
-        _groupSettingsCubit.load(),
-      ]);
-      // Build top-level cubits and start the reminder sweeper now that data
-      // is loaded.
-      _notificationCubit =
-          NotificationCubit(_notificationRepo, _notificationService);
-      _billCubit = BillCubit(_billRepo);
-      _vehicleCubit = VehicleCubit(_vehicleRepo);
-      _scheduleCubit = ScheduleCubit(_scheduleRepo);
-      _loanCubit = LoanCubit(_loanRepo);
-      _chitCubit = ChitCubit(_chitRepo);
-      _checklistCubit = ChecklistCubit(_checklistRepo);
-      _periodCubit = PeriodCubit(_periodRepo);
-      _homeRecordCubit = HomeRecordCubit(_homeRecordRepo);
-      _foodMenuCubit = FoodMenuCubit(_foodMenuRepo);
-      _goalCubit = GoalCubit(_goalRepo);
-      _moneyOweCubit = MoneyOweCubit(_moneyOweRepo);
-      _medicalCubit = MedicalCubit(_medicalRepo);
-      _vaultCubit = ProfileVaultCubit(_vaultRepo);
-      _landCubit = LandCubit(_landRepo);
-      _eventCubit = EventCubit(_eventRepo);
-      _interestCubit = InterestCubit(_interestRepo);
-      _activityCubit = ActivityCubit(_activityRepo);
-      _dietCubit = DietCubit(_dietRepo);
-      _daysCounterCubit = DaysCounterCubit(_daysCounterRepo);
-      _cubitsCreated = true;
-      // Generic reminder pipeline. Add new modules by appending another
-      // ReminderSource to the `sources` list — no other wiring needed.
-      _reminderSweeper = ReminderSweeper(
-        notificationCubit: _notificationCubit,
-        sources: [
-          ScheduleReminderSource(scheduleCubit: _scheduleCubit),
-          LoanReminderSource(cubit: _loanCubit),
-          ChitReminderSource(cubit: _chitCubit),
-          ChecklistReminderSource(cubit: _checklistCubit),
-        ],
-      )..start();
-      if (mounted) setState(() => _initialized = true);
-      // What's on screen came from the local cache; now pull the latest from
-      // the server in the background so edits made on other devices show up.
-      unawaited(_refreshFromServer());
-    } catch (e) {
-      if (mounted) setState(() => _initError = e.toString());
-    }
-  }
-
-  /// Re-reads every repo from the server and re-emits the fresh data through
-  /// the cubits. Failures are ignored — the cached data already on screen
-  /// simply stays until the next successful refresh.
-  Future<void> _refreshFromServer() async {
-    try {
-      await Future.wait([
-        _billRepo.refresh(),
-        _vehicleRepo.refresh(),
-        _chitRepo.refresh(),
-        _checklistRepo.refresh(),
-        _periodRepo.refresh(),
-        _homeRecordRepo.refresh(),
-        _scheduleRepo.refresh(),
-        _foodMenuRepo.refresh(),
-        _loanRepo.refresh(),
-        _goalRepo.refresh(),
-        _moneyOweRepo.refresh(),
-        _medicalRepo.refresh(),
-        _vaultRepo.refresh(),
-        _landRepo.refresh(),
-        _eventRepo.refresh(),
-        _interestRepo.refresh(),
-        _activityRepo.refresh(),
-        _dietRepo.refresh(),
-        _daysCounterRepo.refresh(),
-        _notificationRepo.refresh(),
-      ]);
-    } catch (_) {
-      return;
-    }
-    if (!mounted || !_cubitsCreated) return;
-    _billCubit.reloadFromRepository();
-    _vehicleCubit.reloadFromRepository();
-    _chitCubit.reloadFromRepository();
-    _checklistCubit.reloadFromRepository();
-    _periodCubit.reloadFromRepository();
-    _homeRecordCubit.reloadFromRepository();
-    _scheduleCubit.reloadFromRepository();
-    _foodMenuCubit.reloadFromRepository();
-    _loanCubit.reloadFromRepository();
-    _goalCubit.reloadFromRepository();
-    _moneyOweCubit.reloadFromRepository();
-    _medicalCubit.reloadFromRepository();
-    _vaultCubit.reloadFromRepository();
-    _landCubit.reloadFromRepository();
-    _eventCubit.reloadFromRepository();
-    _interestCubit.reloadFromRepository();
-    _activityCubit.reloadFromRepository();
-    _dietCubit.reloadFromRepository();
-    _daysCounterCubit.reloadFromRepository();
-    _notificationCubit.reloadFromRepository();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_initError != null) {
-      return Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.cloud_off, size: 48, color: Colors.grey),
-                const SizedBox(height: 16),
-                const Text(
-                  'Unable to connect',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Please check your internet connection and try again.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _initError = null;
-                      _initialized = false;
-                    });
-                    _initRepos();
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (!_initialized) {
-      return const BrandedLoader(message: 'Loading your data…');
-    }
-
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _billCubit),
@@ -383,7 +318,10 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider.value(value: _dashboardSettingsCubit),
         BlocProvider.value(value: _groupSettingsCubit),
       ],
-      child: MainShell(notificationService: _notificationService),
+      child: MainShell(
+        notificationService: _notificationService,
+        syncStatus: _syncStatus,
+      ),
     );
   }
 }

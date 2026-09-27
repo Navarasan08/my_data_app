@@ -1,63 +1,30 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/single_collection_repository.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/goals/model/goal_model.dart';
 
-abstract class GoalRepository {
+abstract class GoalRepository implements SyncNode {
   List<Goal> getAll();
   void add(Goal goal);
   void update(Goal goal);
   void delete(String id);
-  Future<void> init();
 }
 
-class FirestoreGoalRepository implements GoalRepository {
-  final String uid;
-  final FirebaseFirestore _firestore;
-  List<Goal> _goals = [];
-
-  FirestoreGoalRepository({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(uid).collection('goals');
+class FirestoreGoalRepository extends SingleCollectionRepository<Goal>
+    implements GoalRepository {
+  FirestoreGoalRepository({required super.uid, super.firestore})
+    : super(
+        collectionName: 'goals',
+        fromDoc: (json, _) => Goal.fromJson(json),
+        toJson: (g) => g.toJson(),
+        idOf: (g) => g.id,
+      );
 
   @override
-  Future<void> init() async {
-    _load(await readQueryCacheFirst(_collection));
-  }
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() async {
-    _load(await _collection.get());
-  }
-
-  void _load(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    _goals = snapshot.docs.map((doc) => Goal.fromJson(doc.data())).toList();
-  }
+  void add(Goal goal) => store.save(goal);
 
   @override
-  List<Goal> getAll() => List.unmodifiable(_goals);
+  void update(Goal goal) => store.save(goal);
 
   @override
-  void add(Goal goal) {
-    _goals.add(goal);
-    _collection.doc(goal.id).set(goal.toJson());
-  }
-
-  @override
-  void update(Goal goal) {
-    final index = _goals.indexWhere((g) => g.id == goal.id);
-    if (index != -1) {
-      _goals[index] = goal;
-      _collection.doc(goal.id).set(goal.toJson());
-    }
-  }
-
-  @override
-  void delete(String id) {
-    _goals.removeWhere((g) => g.id == id);
-    _collection.doc(id).delete();
-  }
+  void delete(String id) => store.remove(id);
 }

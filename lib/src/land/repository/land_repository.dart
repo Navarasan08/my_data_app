@@ -1,65 +1,30 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/single_collection_repository.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/land/model/land_model.dart';
 
-abstract class LandRepository {
+abstract class LandRepository implements SyncNode {
   List<LandRecord> getAll();
   void add(LandRecord record);
   void update(LandRecord record);
   void delete(String id);
-  Future<void> init();
 }
 
-class FirestoreLandRepository implements LandRepository {
-  final String uid;
-  final FirebaseFirestore _firestore;
-  List<LandRecord> _records = [];
-
-  FirestoreLandRepository({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(uid).collection('lands');
+class FirestoreLandRepository extends SingleCollectionRepository<LandRecord>
+    implements LandRepository {
+  FirestoreLandRepository({required super.uid, super.firestore})
+    : super(
+        collectionName: 'lands',
+        fromDoc: (json, _) => LandRecord.fromJson(json),
+        toJson: (r) => r.toJson(),
+        idOf: (r) => r.id,
+      );
 
   @override
-  Future<void> init() async {
-    _load(await readQueryCacheFirst(_collection));
-  }
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() async {
-    _load(await _collection.get());
-  }
-
-  void _load(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    _records = snapshot.docs
-        .map((doc) => LandRecord.fromJson(doc.data()))
-        .toList();
-  }
+  void add(LandRecord record) => store.save(record);
 
   @override
-  List<LandRecord> getAll() => List.unmodifiable(_records);
+  void update(LandRecord record) => store.save(record);
 
   @override
-  void add(LandRecord record) {
-    _records.add(record);
-    _collection.doc(record.id).set(record.toJson());
-  }
-
-  @override
-  void update(LandRecord record) {
-    final index = _records.indexWhere((r) => r.id == record.id);
-    if (index != -1) {
-      _records[index] = record;
-      _collection.doc(record.id).set(record.toJson());
-    }
-  }
-
-  @override
-  void delete(String id) {
-    _records.removeWhere((r) => r.id == id);
-    _collection.doc(id).delete();
-  }
+  void delete(String id) => store.remove(id);
 }

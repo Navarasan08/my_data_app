@@ -1,63 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_data_app/src/checklist/model/checklist_model.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/single_collection_repository.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 
-abstract class ChecklistRepository {
+abstract class ChecklistRepository implements SyncNode {
   List<ChecklistGroup> getAll();
   void add(ChecklistGroup group);
   void update(ChecklistGroup group);
   void delete(String groupId);
-  Future<void> init();
 }
 
-class FirestoreChecklistRepository implements ChecklistRepository {
-  final String uid;
-  final FirebaseFirestore _firestore;
-  List<ChecklistGroup> _checklists = [];
-
-  FirestoreChecklistRepository(
-      {required this.uid, FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(uid).collection('checklists');
-
-  @override
-  Future<void> init() async {
-    _load(await readQueryCacheFirst(_collection));
-  }
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() async {
-    _load(await _collection.get());
-  }
-
-  void _load(QuerySnapshot<Map<String, dynamic>> snapshot) {
-    _checklists =
-        snapshot.docs.map((doc) => ChecklistGroup.fromJson(doc.data())).toList();
-  }
+class FirestoreChecklistRepository
+    extends SingleCollectionRepository<ChecklistGroup>
+    implements ChecklistRepository {
+  FirestoreChecklistRepository({required super.uid, super.firestore})
+    : super(
+        collectionName: 'checklists',
+        fromDoc: (json, _) => ChecklistGroup.fromJson(json),
+        toJson: (g) => g.toJson(),
+        idOf: (g) => g.id,
+      );
 
   @override
-  List<ChecklistGroup> getAll() => List.unmodifiable(_checklists);
+  void add(ChecklistGroup group) => store.save(group);
 
   @override
-  void add(ChecklistGroup group) {
-    _checklists.add(group);
-    _collection.doc(group.id).set(group.toJson());
-  }
+  void update(ChecklistGroup group) => store.save(group);
 
   @override
-  void update(ChecklistGroup group) {
-    final index = _checklists.indexWhere((c) => c.id == group.id);
-    if (index != -1) {
-      _checklists[index] = group;
-      _collection.doc(group.id).set(group.toJson());
-    }
-  }
-
-  @override
-  void delete(String groupId) {
-    _checklists.removeWhere((c) => c.id == groupId);
-    _collection.doc(groupId).delete();
-  }
+  void delete(String groupId) => store.remove(groupId);
 }

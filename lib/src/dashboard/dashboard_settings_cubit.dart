@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/sync/firestore_document_source.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,19 +23,19 @@ class FeatureItem {
   });
 
   FeatureItem copyWith({bool? visible, int? order}) => FeatureItem(
-        id: id,
-        title: title,
-        icon: icon,
-        gradient: gradient,
-        visible: visible ?? this.visible,
-        order: order ?? this.order,
-      );
+    id: id,
+    title: title,
+    icon: icon,
+    gradient: gradient,
+    visible: visible ?? this.visible,
+    order: order ?? this.order,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'visible': visible,
-        'order': order,
-      };
+    'id': id,
+    'visible': visible,
+    'order': order,
+  };
 }
 
 class DashboardSettingsState {
@@ -51,166 +54,183 @@ class DashboardSettingsState {
   DashboardSettingsState copyWith({
     List<FeatureItem>? features,
     bool? isGridView,
-  }) =>
-      DashboardSettingsState(
-        features: features ?? this.features,
-        isGridView: isGridView ?? this.isGridView,
-      );
+  }) => DashboardSettingsState(
+    features: features ?? this.features,
+    isGridView: isGridView ?? this.isGridView,
+  );
 }
 
 class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
   final String uid;
   final FirebaseFirestore _firestore;
+  late final FirestoreDocumentSource<Map<String, dynamic>?> _source;
+  StreamSubscription<void>? _sub;
 
-  DashboardSettingsCubit({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        super(DashboardSettingsState(features: _defaultFeatures()));
+  DashboardSettingsCubit({required this.uid, FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      super(DashboardSettingsState(features: _defaultFeatures())) {
+    _source = FirestoreDocumentSource<Map<String, dynamic>?>(
+      ref: _settingsDoc,
+      fromDoc: (json) => json,
+      initial: null,
+      debugLabel: 'dashboard_settings',
+    );
+    _sub = _source.stream.listen((snap) => _apply(snap.data));
+  }
 
-  DocumentReference<Map<String, dynamic>> get _settingsDoc =>
-      _firestore.collection('users').doc(uid).collection('settings').doc('dashboard');
+  DocumentReference<Map<String, dynamic>> get _settingsDoc => _firestore
+      .collection('users')
+      .doc(uid)
+      .collection('settings')
+      .doc('dashboard');
+
+  /// Attaches the realtime listener: the cached layout applies at once and
+  /// changes made on another device follow. Idempotent.
+  void start() => _source.start();
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    await _source.dispose();
+    return super.close();
+  }
 
   static List<FeatureItem> _defaultFeatures() => [
-        FeatureItem(
-          id: 'bills',
-          title: 'Bills',
-          icon: Icons.receipt_long_rounded,
-          gradient: [Colors.orange, Colors.deepOrange],
-          order: 0,
-        ),
-        FeatureItem(
-          id: 'vehicles',
-          title: 'Vehicles',
-          icon: Icons.directions_car_rounded,
-          gradient: [Colors.blue, Colors.indigo],
-          order: 1,
-        ),
-        FeatureItem(
-          id: 'chits',
-          title: 'Chit Funds',
-          icon: Icons.group_work_rounded,
-          gradient: [Colors.purple, Colors.deepPurple],
-          order: 2,
-        ),
-        FeatureItem(
-          id: 'checklists',
-          title: 'Checklists',
-          icon: Icons.checklist_rounded,
-          gradient: [Colors.teal, Colors.green],
-          order: 3,
-        ),
-        FeatureItem(
-          id: 'periods',
-          title: 'Period Tracker',
-          icon: Icons.favorite_rounded,
-          gradient: [Colors.pink, Colors.pink],
-          order: 4,
-        ),
-        FeatureItem(
-          id: 'home',
-          title: 'Expense Tracker',
-          icon: Icons.account_balance_wallet_rounded,
-          gradient: [Colors.green, Colors.green],
-          order: 5,
-        ),
-        FeatureItem(
-          id: 'schedules',
-          title: 'Schedules',
-          icon: Icons.calendar_month_rounded,
-          gradient: [Colors.cyan, Colors.blue],
-          order: 6,
-        ),
-        FeatureItem(
-          id: 'food_menu',
-          title: 'Food Menu',
-          icon: Icons.restaurant_menu_rounded,
-          gradient: [Colors.deepOrange, Colors.red],
-          order: 7,
-        ),
-        FeatureItem(
-          id: 'loans',
-          title: 'Loans',
-          icon: Icons.account_balance_rounded,
-          gradient: [Colors.blueGrey, Colors.indigo],
-          order: 8,
-        ),
-        FeatureItem(
-          id: 'goals',
-          title: 'Goal Tracker',
-          icon: Icons.track_changes_rounded,
-          gradient: [Colors.teal, Colors.green],
-          order: 9,
-        ),
-        FeatureItem(
-          id: 'money_owe',
-          title: 'Lend & Owe',
-          icon: Icons.handshake_rounded,
-          gradient: [Colors.amber, Colors.orange],
-          order: 10,
-        ),
-        FeatureItem(
-          id: 'medical',
-          title: 'Medical',
-          icon: Icons.medical_services_rounded,
-          gradient: [Colors.red, Colors.pink],
-          order: 11,
-        ),
-        FeatureItem(
-          id: 'vault',
-          title: 'Profile Vault',
-          icon: Icons.folder_special_rounded,
-          gradient: [Colors.indigo, Colors.deepPurple],
-          order: 12,
-        ),
-        FeatureItem(
-          id: 'land',
-          title: 'My Lands',
-          icon: Icons.landscape_rounded,
-          gradient: [Colors.green, Colors.brown],
-          order: 13,
-        ),
-        FeatureItem(
-          id: 'interest',
-          title: 'Interest',
-          icon: Icons.percent_rounded,
-          gradient: [Colors.amber, Colors.orange],
-          order: 14,
-        ),
-        FeatureItem(
-          id: 'activities',
-          title: 'Activity Log',
-          icon: Icons.history_rounded,
-          gradient: [Colors.blue, Colors.indigo],
-          order: 15,
-        ),
-        FeatureItem(
-          id: 'diet',
-          title: 'Diet Tracker',
-          icon: Icons.restaurant_menu_rounded,
-          gradient: [Colors.green, Colors.teal],
-          order: 16,
-        ),
-        FeatureItem(
-          id: 'days_counter',
-          title: 'Days Counter',
-          icon: Icons.hourglass_top_rounded,
-          gradient: [Colors.pink, Colors.deepPurple],
-          order: 17,
-        ),
-      ];
+    FeatureItem(
+      id: 'bills',
+      title: 'Bills',
+      icon: Icons.receipt_long_rounded,
+      gradient: [Colors.orange, Colors.deepOrange],
+      order: 0,
+    ),
+    FeatureItem(
+      id: 'vehicles',
+      title: 'Vehicles',
+      icon: Icons.directions_car_rounded,
+      gradient: [Colors.blue, Colors.indigo],
+      order: 1,
+    ),
+    FeatureItem(
+      id: 'chits',
+      title: 'Chit Funds',
+      icon: Icons.group_work_rounded,
+      gradient: [Colors.purple, Colors.deepPurple],
+      order: 2,
+    ),
+    FeatureItem(
+      id: 'checklists',
+      title: 'Checklists',
+      icon: Icons.checklist_rounded,
+      gradient: [Colors.teal, Colors.green],
+      order: 3,
+    ),
+    FeatureItem(
+      id: 'periods',
+      title: 'Period Tracker',
+      icon: Icons.favorite_rounded,
+      gradient: [Colors.pink, Colors.pink],
+      order: 4,
+    ),
+    FeatureItem(
+      id: 'home',
+      title: 'Expense Tracker',
+      icon: Icons.account_balance_wallet_rounded,
+      gradient: [Colors.green, Colors.green],
+      order: 5,
+    ),
+    FeatureItem(
+      id: 'schedules',
+      title: 'Schedules',
+      icon: Icons.calendar_month_rounded,
+      gradient: [Colors.cyan, Colors.blue],
+      order: 6,
+    ),
+    FeatureItem(
+      id: 'food_menu',
+      title: 'Food Menu',
+      icon: Icons.restaurant_menu_rounded,
+      gradient: [Colors.deepOrange, Colors.red],
+      order: 7,
+    ),
+    FeatureItem(
+      id: 'loans',
+      title: 'Loans',
+      icon: Icons.account_balance_rounded,
+      gradient: [Colors.blueGrey, Colors.indigo],
+      order: 8,
+    ),
+    FeatureItem(
+      id: 'goals',
+      title: 'Goal Tracker',
+      icon: Icons.track_changes_rounded,
+      gradient: [Colors.teal, Colors.green],
+      order: 9,
+    ),
+    FeatureItem(
+      id: 'money_owe',
+      title: 'Lend & Owe',
+      icon: Icons.handshake_rounded,
+      gradient: [Colors.amber, Colors.orange],
+      order: 10,
+    ),
+    FeatureItem(
+      id: 'medical',
+      title: 'Medical',
+      icon: Icons.medical_services_rounded,
+      gradient: [Colors.red, Colors.pink],
+      order: 11,
+    ),
+    FeatureItem(
+      id: 'vault',
+      title: 'Profile Vault',
+      icon: Icons.folder_special_rounded,
+      gradient: [Colors.indigo, Colors.deepPurple],
+      order: 12,
+    ),
+    FeatureItem(
+      id: 'land',
+      title: 'My Lands',
+      icon: Icons.landscape_rounded,
+      gradient: [Colors.green, Colors.brown],
+      order: 13,
+    ),
+    FeatureItem(
+      id: 'interest',
+      title: 'Interest',
+      icon: Icons.percent_rounded,
+      gradient: [Colors.amber, Colors.orange],
+      order: 14,
+    ),
+    FeatureItem(
+      id: 'activities',
+      title: 'Activity Log',
+      icon: Icons.history_rounded,
+      gradient: [Colors.blue, Colors.indigo],
+      order: 15,
+    ),
+    FeatureItem(
+      id: 'diet',
+      title: 'Diet Tracker',
+      icon: Icons.restaurant_menu_rounded,
+      gradient: [Colors.green, Colors.teal],
+      order: 16,
+    ),
+    FeatureItem(
+      id: 'days_counter',
+      title: 'Days Counter',
+      icon: Icons.hourglass_top_rounded,
+      gradient: [Colors.pink, Colors.deepPurple],
+      order: 17,
+    ),
+  ];
 
-  Future<void> load() async {
-    final snap = await _settingsDoc.get();
-    if (!snap.exists) return;
-
-    final data = snap.data();
+  void _apply(Map<String, dynamic>? data) {
     if (data == null) return;
 
     final features = List<FeatureItem>.from(state.features);
     if (data['features'] != null) {
-      final saved =
-          (data['features'] as List<dynamic>).cast<Map<String, dynamic>>();
+      final saved = (data['features'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
       for (final s in saved) {
         final idx = features.indexWhere((f) => f.id == s['id']);
         if (idx != -1) {

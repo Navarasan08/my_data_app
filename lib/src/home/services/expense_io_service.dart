@@ -69,8 +69,8 @@ class ExpenseIoService {
         r.quantity == null
             ? ''
             : (r.quantity! % 1 == 0
-                ? r.quantity!.toInt().toString()
-                : r.quantity!.toString()),
+                  ? r.quantity!.toInt().toString()
+                  : r.quantity!.toString()),
         r.unit?.name ?? '',
         r.paymentType?.displayName ?? '',
         r.description ?? '',
@@ -90,8 +90,7 @@ class ExpenseIoService {
   }) async {
     final csv = const ListToCsvConverter().convert(_rows(records));
     final dir = await getTemporaryDirectory();
-    final path =
-        '${dir.path}/${filenameSlug}_${_stampNow()}.csv';
+    final path = '${dir.path}/${filenameSlug}_${_stampNow()}.csv';
     final file = File(path);
     await file.writeAsString(csv);
     return path;
@@ -112,8 +111,9 @@ class ExpenseIoService {
     final rows = _rows(records);
     // Header row with bold styling.
     for (int c = 0; c < rows[0].length; c++) {
-      final cell = sheet.cell(CellIndex.indexByColumnRow(
-          columnIndex: c, rowIndex: 0));
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0),
+      );
       cell.value = TextCellValue(rows[0][c]);
       cell.cellStyle = CellStyle(
         bold: true,
@@ -124,8 +124,9 @@ class ExpenseIoService {
     // can sum / filter them directly.
     for (int r = 1; r < rows.length; r++) {
       for (int c = 0; c < rows[r].length; c++) {
-        final cell = sheet.cell(CellIndex.indexByColumnRow(
-            columnIndex: c, rowIndex: r));
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: c, rowIndex: r),
+        );
         final value = rows[r][c];
         if (c == 3) {
           // Amount column
@@ -146,8 +147,7 @@ class ExpenseIoService {
       throw Exception('Failed to encode Excel workbook');
     }
     final dir = await getTemporaryDirectory();
-    final path =
-        '${dir.path}/${filenameSlug}_${_stampNow()}.xlsx';
+    final path = '${dir.path}/${filenameSlug}_${_stampNow()}.xlsx';
     final file = File(path);
     await file.writeAsBytes(bytes, flush: true);
     return path;
@@ -208,8 +208,9 @@ class ExpenseIoService {
           return d % 1 == 0 ? d.toInt().toString() : d.toString();
         }
         if (v is DateCellValue) {
-          return DateFormat('yyyy-MM-dd')
-              .format(DateTime(v.year, v.month, v.day));
+          return DateFormat(
+            'yyyy-MM-dd',
+          ).format(DateTime(v.year, v.month, v.day));
         }
         return v.toString();
       }).toList();
@@ -253,7 +254,7 @@ class ExpenseIoService {
         imported: [],
         duplicatesSkipped: [],
         errors: [
-          'Missing required columns. Need at least Date, Title, Amount.'
+          'Missing required columns. Need at least Date, Title, Amount.',
         ],
       );
     }
@@ -278,8 +279,7 @@ class ExpenseIoService {
 
     for (int i = 1; i < rows.length; i++) {
       final row = rows[i];
-      String cell(int c) =>
-          (c >= 0 && c < row.length) ? row[c].trim() : '';
+      String cell(int c) => (c >= 0 && c < row.length) ? row[c].trim() : '';
 
       try {
         final dateStr = cell(cDate);
@@ -306,8 +306,9 @@ class ExpenseIoService {
         // Missing/blank Type column (older files) means expense.
         final isIncome = cell(cType).toLowerCase() == 'income';
 
-        final fallbackCategory =
-            isIncome ? HomeCategory.otherIncome : HomeCategory.groceries;
+        final fallbackCategory = isIncome
+            ? HomeCategory.otherIncome
+            : HomeCategory.groceries;
         final categoryRaw = cell(cCategory);
         final category = categoryRaw.isEmpty
             ? fallbackCategory
@@ -321,14 +322,14 @@ class ExpenseIoService {
             : (unitByName[unitName.toLowerCase()] ?? MeasureUnit.piece);
 
         final paymentName = cell(cPayment);
-        final paymentType =
-            paymentName.isEmpty ? null : paymentByName[paymentName.toLowerCase()];
+        final paymentType = paymentName.isEmpty
+            ? null
+            : paymentByName[paymentName.toLowerCase()];
 
         final description = cell(cDescription);
         final notes = cell(cNotes);
 
-        final key =
-            '${_dateFormat.format(date)}|${title.toLowerCase().trim()}';
+        final key = '${_dateFormat.format(date)}|${title.toLowerCase().trim()}';
         final record = HomeRecord(
           id: '${DateTime.now().millisecondsSinceEpoch}_$i',
           title: title,

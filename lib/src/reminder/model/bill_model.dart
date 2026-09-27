@@ -125,15 +125,15 @@ class Bill {
   /// `isPaid`. Both are migrated rather than dropped.
   factory Bill.fromJson(Map<String, dynamic> json) {
     final createdRaw = json['createdDate'] as String?;
-    final created =
-        createdRaw != null ? DateTime.parse(createdRaw) : DateTime.now();
+    final created = createdRaw != null
+        ? DateTime.parse(createdRaw)
+        : DateTime.now();
     final dueRaw = json['dueDate'] as String?;
     final due = dueRaw != null ? DateTime.parse(dueRaw) : created;
 
     final paidRaw = json['paidMonths'] as List<dynamic>?;
-    var paid = paidRaw
-            ?.map((e) => DateTime.parse(e as String))
-            .toList() ??
+    var paid =
+        paidRaw?.map((e) => DateTime.parse(e as String)).toList() ??
         <DateTime>[];
     // Migrate a legacy single isPaid=true into the due month being paid.
     if (paid.isEmpty && (json['isPaid'] as bool?) == true) {

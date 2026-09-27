@@ -36,6 +36,7 @@ dependencies:
   package_info_plus: ^8.0.0
 
 dev_dependencies:
+  fake_cloud_firestore: ^4.3.0
   flutter_test:
     sdk: flutter
 

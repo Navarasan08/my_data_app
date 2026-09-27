@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/money_owe/model/money_owe_model.dart';
 import 'package:my_data_app/src/money_owe/repository/money_owe_repository.dart';
@@ -5,28 +7,48 @@ import 'package:my_data_app/src/money_owe/cubit/money_owe_state.dart';
 
 class MoneyOweCubit extends Cubit<MoneyOweState> {
   final MoneyOweRepository _repository;
+  StreamSubscription<void>? _sub;
 
   MoneyOweCubit(this._repository)
-      : super(MoneyOweState(entries: _repository.getAll()));
+    : super(
+        MoneyOweState(
+          entries: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(entries: _repository.getAll()));
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        entries: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   void addEntry(DebtEntry entry) {
     _repository.add(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void updateEntry(DebtEntry entry) {
     _repository.update(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void deleteEntry(String id) {
     _repository.delete(id);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void addSettlement(String entryId, DebtSettlement settlement) {
@@ -36,20 +58,21 @@ class MoneyOweCubit extends Cubit<MoneyOweState> {
       isSettled: entry.pendingAmount - settlement.amount <= 0,
     );
     _repository.update(updated);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void markSettled(String entryId) {
     final entry = state.entries.firstWhere((e) => e.id == entryId);
     _repository.update(entry.copyWith(isSettled: true));
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   List<DebtEntry> get lentEntries =>
       state.entries.where((e) => e.direction == DebtDirection.lent).toList();
 
-  List<DebtEntry> get borrowedEntries =>
-      state.entries.where((e) => e.direction == DebtDirection.borrowed).toList();
+  List<DebtEntry> get borrowedEntries => state.entries
+      .where((e) => e.direction == DebtDirection.borrowed)
+      .toList();
 
   List<DebtEntry> get pendingEntries =>
       state.entries.where((e) => !e.isFullySettled && !e.isSettled).toList();

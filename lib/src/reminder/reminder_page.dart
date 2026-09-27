@@ -34,8 +34,10 @@ class BillsPage extends StatelessWidget {
             children: [
               // Month selector
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 color: cs.surface,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -100,20 +102,26 @@ class BillsPage extends StatelessWidget {
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withValues(alpha: 0.06),
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(
-                              color: Colors.blue.withValues(alpha: 0.2)),
+                            color: Colors.blue.withValues(alpha: 0.2),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Row(
                               children: [
-                                Icon(Icons.account_balance_wallet_rounded,
-                                    color: Colors.blue[700], size: 18),
+                                Icon(
+                                  Icons.account_balance_wallet_rounded,
+                                  color: Colors.blue[700],
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Amount due',
@@ -162,19 +170,26 @@ class BillsPage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.receipt_long_outlined,
-                                size: 64, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              size: 64,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               'No bills for this month',
                               style: TextStyle(
-                                  fontSize: 16, color: cs.onSurfaceVariant),
+                                fontSize: 16,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Tap + to add a bill',
                               style: TextStyle(
-                                  fontSize: 13, color: cs.onSurfaceVariant),
+                                fontSize: 13,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -204,7 +219,8 @@ class BillsPage extends StatelessWidget {
                                 builder: (ctx) => AlertDialog(
                                   title: const Text('Delete Bill'),
                                   content: Text(
-                                      'Are you sure you want to delete "${bill.name}"?'),
+                                    'Are you sure you want to delete "${bill.name}"?',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -212,10 +228,10 @@ class BillsPage extends StatelessWidget {
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, true),
+                                      onPressed: () => Navigator.pop(ctx, true),
                                       style: TextButton.styleFrom(
-                                          foregroundColor: Colors.red),
+                                        foregroundColor: Colors.red,
+                                      ),
                                       child: const Text('Delete'),
                                     ),
                                   ],
@@ -342,20 +358,21 @@ class _BillCard extends StatelessWidget {
     final (statusLabel, statusColor) = _status();
 
     final total = bill.totalOccurrences;
-    final countLabel =
-        total != null ? '${bill.completedCount}/$total' : '${bill.completedCount}';
+    final countLabel = total != null
+        ? '${bill.completedCount}/$total'
+        : '${bill.completedCount}';
 
     // Completed bills get a green-tinted card; overdue ones a soft red accent.
     final Color cardColor = paid
         ? Colors.green.withValues(alpha: 0.08)
         : overdue
-            ? Colors.red.withValues(alpha: 0.04)
-            : cs.surface;
+        ? Colors.red.withValues(alpha: 0.04)
+        : cs.surface;
     final Color borderColor = paid
         ? Colors.green.withValues(alpha: 0.40)
         : overdue
-            ? Colors.red.withValues(alpha: 0.30)
-            : cs.outlineVariant;
+        ? Colors.red.withValues(alpha: 0.30)
+        : cs.outlineVariant;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -406,13 +423,18 @@ class _BillCard extends StatelessWidget {
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.event_rounded,
-                                size: 12, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.event_rounded,
+                              size: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               'Due ${DateFormat('d MMM').format(bill.dueDateInMonth(month))}',
                               style: TextStyle(
-                                  fontSize: 12, color: cs.onSurfaceVariant),
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -453,8 +475,11 @@ class _BillCard extends StatelessWidget {
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(Icons.delete_outline_rounded,
-                          size: 16, color: Colors.red[300]),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 16,
+                        color: Colors.red[300],
+                      ),
                     ),
                   ),
                 ],
@@ -639,8 +664,9 @@ class _AddBillPageState extends State<AddBillPage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.currency_rupee),
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
             ),
             const SizedBox(height: 16),
             // Due date
@@ -687,8 +713,7 @@ class _AddBillPageState extends State<AddBillPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 4),
                 child: Text(
                   'Progress will show as completed / ${_monthsBetween(_dueDate, _deadline!)} months.',
-                  style:
-                      TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                 ),
               ),
             ],
@@ -698,8 +723,10 @@ class _AddBillPageState extends State<AddBillPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Bill' : 'Save Bill',
-                  style: const TextStyle(fontSize: 16)),
+              child: Text(
+                _isEditing ? 'Update Bill' : 'Save Bill',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),

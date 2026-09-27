@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/firestore_list_store.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 
-abstract class EventRepository {
+abstract class EventRepository implements SyncNode {
   List<EventFund> getAllEvents();
   void addEvent(EventFund event);
   void updateEvent(EventFund event);
@@ -12,106 +15,121 @@ abstract class EventRepository {
   void addExpense(EventExpense expense);
   void updateExpense(EventExpense expense);
   void deleteExpense(String eventId, String expenseId);
-
-  Future<void> init();
 }
 
-class FirestoreEventRepository implements EventRepository {
+/// Listener-based Firestore implementation.
+///
+/// One realtime store for `events`, plus one store per event for its
+/// `events/{id}/expenses` sub-collection. The expense stores are attached
+/// and detached as events appear in and disappear from the event list, so
+/// the set of listeners always mirrors the data.
+class FirestoreEventRepository extends CompositeSyncNode
+    implements EventRepository {
   final String uid;
-  final FirebaseFirestore _firestore;
+  final CollectionReference<Map<String, dynamic>> _eventsCollection;
+  final FirestoreListStore<EventFund> _events;
+  final Map<String, FirestoreListStore<EventExpense>> _expenses = {};
 
-  List<EventFund> _events = [];
-  final Map<String, List<EventExpense>> _expenses = {};
-
-  FirestoreEventRepository({
-    required this.uid,
+  factory FirestoreEventRepository({
+    required String uid,
     FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+  }) {
+    final collection = (firestore ?? FirebaseFirestore.instance)
+        .collection('users')
+        .doc(uid)
+        .collection('events');
+    final events = FirestoreListStore<EventFund>(
+      collection: collection,
+      fromDoc: (json, _) => EventFund.fromJson(json),
+      toJson: (e) => e.toJson(),
+      idOf: (e) => e.id,
+      debugLabel: 'events',
+    );
+    return FirestoreEventRepository._(uid, collection, events);
+  }
 
-  CollectionReference<Map<String, dynamic>> get _eventsCollection =>
-      _firestore.collection('users').doc(uid).collection('events');
-
-  CollectionReference<Map<String, dynamic>> _expensesCollection(String eventId) =>
-      _eventsCollection.doc(eventId).collection('expenses');
+  FirestoreEventRepository._(this.uid, this._eventsCollection, this._events)
+    : super([_events]);
 
   @override
-  Future<void> init() => _load(cacheFirst: true);
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() => _load(cacheFirst: false);
-
-  Future<void> _load({required bool cacheFirst}) async {
-    final evSnap = cacheFirst
-        ? await readQueryCacheFirst(_eventsCollection)
-        : await _eventsCollection.get();
-    _events = evSnap.docs.map((d) => EventFund.fromJson(d.data())).toList();
-
-    // Lazy-load expenses in parallel for each event
-    await Future.wait(_events.map((e) async {
-      final expSnap = cacheFirst
-          ? await readQueryCacheFirst(_expensesCollection(e.id))
-          : await _expensesCollection(e.id).get();
-      _expenses[e.id] =
-          expSnap.docs.map((d) => EventExpense.fromJson(d.data())).toList();
-    }));
+  void start() {
+    super.start();
+    _reconcile();
   }
 
   @override
-  List<EventFund> getAllEvents() => List.unmodifiable(_events);
+  void onNodeChanged() => _reconcile();
 
-  @override
-  void addEvent(EventFund event) {
-    _events.add(event);
-    _expenses[event.id] = [];
-    _eventsCollection.doc(event.id).set(event.toJson());
+  /// Returns the expense store for [eventId], creating and registering it
+  /// on demand so a write issued before the event listener has caught up
+  /// still lands in the right place.
+  FirestoreListStore<EventExpense> _storeFor(String eventId) {
+    return _expenses.putIfAbsent(eventId, () {
+      final store = FirestoreListStore<EventExpense>(
+        collection: _eventsCollection.doc(eventId).collection('expenses'),
+        fromDoc: (json, _) => EventExpense.fromJson(json),
+        toJson: (e) => e.toJson(),
+        idOf: (e) => e.id,
+        debugLabel: 'events/$eventId/expenses',
+      );
+      addNode(store);
+      return store;
+    });
   }
 
-  @override
-  void updateEvent(EventFund event) {
-    final i = _events.indexWhere((e) => e.id == event.id);
-    if (i != -1) {
-      _events[i] = event;
-      _eventsCollection.doc(event.id).set(event.toJson());
+  /// Keeps one expense store per known event: attaches stores for new
+  /// events and drops the stores of events that no longer exist.
+  void _reconcile() {
+    final ids = _events.items.map((e) => e.id).toSet();
+    for (final id in ids) {
+      _storeFor(id);
+    }
+    for (final id in _expenses.keys.where((k) => !ids.contains(k)).toList()) {
+      final store = _expenses.remove(id)!;
+      unawaited(removeNode(store));
     }
   }
+
+  @override
+  Future<void> dispose() async {
+    await super.dispose();
+    _expenses.clear();
+  }
+
+  // ── Events ──────────────────────────────────────────────────────────────
+
+  @override
+  List<EventFund> getAllEvents() => _events.items;
+
+  @override
+  void addEvent(EventFund event) => _events.save(event);
+
+  @override
+  void updateEvent(EventFund event) => _events.save(event);
 
   @override
   void deleteEvent(String eventId) {
-    _events.removeWhere((e) => e.id == eventId);
-    final ex = _expenses.remove(eventId) ?? const [];
-    _eventsCollection.doc(eventId).delete();
-    // Delete nested expenses best-effort
-    for (final e in ex) {
-      _expensesCollection(eventId).doc(e.id).delete();
-    }
+    // Delete nested expenses first; the store is detached by the next
+    // reconcile once the event is gone from the list.
+    _expenses[eventId]?.removeWhere((_) => true);
+    _events.remove(eventId);
   }
+
+  // ── Expenses ────────────────────────────────────────────────────────────
 
   @override
   List<EventExpense> getExpensesFor(String eventId) =>
-      List.unmodifiable(_expenses[eventId] ?? const []);
+      _expenses[eventId]?.items ?? const [];
 
   @override
-  void addExpense(EventExpense expense) {
-    (_expenses[expense.eventId] ??= []).add(expense);
-    _expensesCollection(expense.eventId).doc(expense.id).set(expense.toJson());
-  }
+  void addExpense(EventExpense expense) =>
+      _storeFor(expense.eventId).save(expense);
 
   @override
-  void updateExpense(EventExpense expense) {
-    final list = _expenses[expense.eventId];
-    if (list == null) return;
-    final i = list.indexWhere((e) => e.id == expense.id);
-    if (i != -1) {
-      list[i] = expense;
-      _expensesCollection(expense.eventId)
-          .doc(expense.id)
-          .set(expense.toJson());
-    }
-  }
+  void updateExpense(EventExpense expense) =>
+      _storeFor(expense.eventId).save(expense);
 
   @override
-  void deleteExpense(String eventId, String expenseId) {
-    _expenses[eventId]?.removeWhere((e) => e.id == expenseId);
-    _expensesCollection(eventId).doc(expenseId).delete();
-  }
+  void deleteExpense(String eventId, String expenseId) =>
+      _storeFor(eventId).remove(expenseId);
 }

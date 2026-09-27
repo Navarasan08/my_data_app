@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/core/sync/firestore_document_source.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 
 /// Per-user UI preferences for the Groups feature. Persisted to
 /// `users/{uid}/settings/groups` (same pattern as DashboardSettingsCubit) —
@@ -10,18 +14,13 @@ class GroupSettingsState {
   /// subtotals instead of a flat date-sorted list.
   final bool monthwiseListView;
 
-  const GroupSettingsState({
-    this.monthwiseListView = false,
-  });
+  const GroupSettingsState({this.monthwiseListView = false});
 
-  GroupSettingsState copyWith({bool? monthwiseListView}) =>
-      GroupSettingsState(
-        monthwiseListView: monthwiseListView ?? this.monthwiseListView,
-      );
+  GroupSettingsState copyWith({bool? monthwiseListView}) => GroupSettingsState(
+    monthwiseListView: monthwiseListView ?? this.monthwiseListView,
+  );
 
-  Map<String, dynamic> toJson() => {
-        'monthwiseListView': monthwiseListView,
-      };
+  Map<String, dynamic> toJson() => {'monthwiseListView': monthwiseListView};
 
   factory GroupSettingsState.fromJson(Map<String, dynamic> json) =>
       GroupSettingsState(
@@ -32,12 +31,22 @@ class GroupSettingsState {
 class GroupSettingsCubit extends Cubit<GroupSettingsState> {
   final String uid;
   final FirebaseFirestore _firestore;
+  late final FirestoreDocumentSource<GroupSettingsState> _source;
+  StreamSubscription<void>? _sub;
 
-  GroupSettingsCubit({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        super(const GroupSettingsState());
+  GroupSettingsCubit({required this.uid, FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      super(const GroupSettingsState()) {
+    _source = FirestoreDocumentSource<GroupSettingsState>(
+      ref: _doc,
+      fromDoc: (json) => json == null
+          ? const GroupSettingsState()
+          : GroupSettingsState.fromJson(json),
+      initial: const GroupSettingsState(),
+      debugLabel: 'group_settings',
+    );
+    _sub = _source.stream.listen((snap) => emit(snap.data));
+  }
 
   DocumentReference<Map<String, dynamic>> get _doc => _firestore
       .collection('users')
@@ -45,14 +54,22 @@ class GroupSettingsCubit extends Cubit<GroupSettingsState> {
       .collection('settings')
       .doc('groups');
 
-  Future<void> load() async {
-    final snap = await _doc.get();
-    final data = snap.data();
-    if (data != null) emit(GroupSettingsState.fromJson(data));
+  /// Attaches the realtime listener. Idempotent.
+  void start() => _source.start();
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    await _source.dispose();
+    return super.close();
   }
 
-  Future<void> setMonthwiseListView(bool enabled) async {
-    emit(state.copyWith(monthwiseListView: enabled));
-    await _doc.set(state.toJson(), SetOptions(merge: true));
+  void setMonthwiseListView(bool enabled) {
+    final next = state.copyWith(monthwiseListView: enabled);
+    emit(next);
+    fireAndForget(
+      _doc.set(next.toJson(), SetOptions(merge: true)),
+      label: 'group_settings',
+    );
   }
 }

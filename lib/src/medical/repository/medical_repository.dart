@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/firestore_list_store.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/medical/model/medical_model.dart';
 
-abstract class MedicalRepository {
+abstract class MedicalRepository implements SyncNode {
   List<FamilyMember> getAllMembers();
   List<MedicalRecord> getAllRecords();
   void addMember(FamilyMember member);
@@ -11,92 +12,66 @@ abstract class MedicalRepository {
   void addRecord(MedicalRecord record);
   void updateRecord(MedicalRecord record);
   void deleteRecord(String id);
-  Future<void> init();
 }
 
-class FirestoreMedicalRepository implements MedicalRepository {
+/// Realtime Firestore implementation over the family-members and
+/// medical-records collections.
+class FirestoreMedicalRepository extends CompositeSyncNode
+    implements MedicalRepository {
   final String uid;
-  final FirebaseFirestore _firestore;
-  List<FamilyMember> _members = [];
-  List<MedicalRecord> _records = [];
+  final FirestoreListStore<FamilyMember> _members;
+  final FirestoreListStore<MedicalRecord> _records;
 
-  FirestoreMedicalRepository({
-    required this.uid,
+  factory FirestoreMedicalRepository({
+    required String uid,
     FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _membersCollection =>
-      _firestore.collection('users').doc(uid).collection('family_members');
-
-  CollectionReference<Map<String, dynamic>> get _recordsCollection =>
-      _firestore.collection('users').doc(uid).collection('medical_records');
-
-  @override
-  Future<void> init() => _load(cacheFirst: true);
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() => _load(cacheFirst: false);
-
-  Future<void> _load({required bool cacheFirst}) async {
-    final memberSnapshot = cacheFirst
-        ? await readQueryCacheFirst(_membersCollection)
-        : await _membersCollection.get();
-    _members = memberSnapshot.docs
-        .map((doc) => FamilyMember.fromJson(doc.data()))
-        .toList();
-    final recordSnapshot = cacheFirst
-        ? await readQueryCacheFirst(_recordsCollection)
-        : await _recordsCollection.get();
-    _records = recordSnapshot.docs
-        .map((doc) => MedicalRecord.fromJson(doc.data()))
-        .toList();
+  }) {
+    final user = (firestore ?? FirebaseFirestore.instance)
+        .collection('users')
+        .doc(uid);
+    return FirestoreMedicalRepository._(
+      uid,
+      FirestoreListStore<FamilyMember>(
+        collection: user.collection('family_members'),
+        fromDoc: (json, _) => FamilyMember.fromJson(json),
+        toJson: (m) => m.toJson(),
+        idOf: (m) => m.id,
+        debugLabel: 'family_members',
+      ),
+      FirestoreListStore<MedicalRecord>(
+        collection: user.collection('medical_records'),
+        fromDoc: (json, _) => MedicalRecord.fromJson(json),
+        toJson: (r) => r.toJson(),
+        idOf: (r) => r.id,
+        debugLabel: 'medical_records',
+      ),
+    );
   }
 
-  @override
-  List<FamilyMember> getAllMembers() => List.unmodifiable(_members);
+  FirestoreMedicalRepository._(this.uid, this._members, this._records)
+    : super([_members, _records]);
 
   @override
-  List<MedicalRecord> getAllRecords() => List.unmodifiable(_records);
+  List<FamilyMember> getAllMembers() => _members.items;
 
   @override
-  void addMember(FamilyMember member) {
-    _members.add(member);
-    _membersCollection.doc(member.id).set(member.toJson());
-  }
+  List<MedicalRecord> getAllRecords() => _records.items;
 
   @override
-  void updateMember(FamilyMember member) {
-    final index = _members.indexWhere((m) => m.id == member.id);
-    if (index != -1) {
-      _members[index] = member;
-      _membersCollection.doc(member.id).set(member.toJson());
-    }
-  }
+  void addMember(FamilyMember member) => _members.save(member);
 
   @override
-  void deleteMember(String id) {
-    _members.removeWhere((m) => m.id == id);
-    _membersCollection.doc(id).delete();
-  }
+  void updateMember(FamilyMember member) => _members.save(member);
 
   @override
-  void addRecord(MedicalRecord record) {
-    _records.add(record);
-    _recordsCollection.doc(record.id).set(record.toJson());
-  }
+  void deleteMember(String id) => _members.remove(id);
 
   @override
-  void updateRecord(MedicalRecord record) {
-    final index = _records.indexWhere((r) => r.id == record.id);
-    if (index != -1) {
-      _records[index] = record;
-      _recordsCollection.doc(record.id).set(record.toJson());
-    }
-  }
+  void addRecord(MedicalRecord record) => _records.save(record);
 
   @override
-  void deleteRecord(String id) {
-    _records.removeWhere((r) => r.id == id);
-    _recordsCollection.doc(id).delete();
-  }
+  void updateRecord(MedicalRecord record) => _records.save(record);
+
+  @override
+  void deleteRecord(String id) => _records.remove(id);
 }

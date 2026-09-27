@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/firebase_options.dart';
@@ -11,7 +14,31 @@ import 'package:my_data_app/src/theme/theme_cubit.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // The app is offline-first: every screen renders from the local Firestore
+  // cache and listeners stream server changes in. Make persistence explicit
+  // (it is off by default on web) and stop the LRU garbage collector from
+  // evicting a user's older data, which would otherwise force a network
+  // round-trip — or an empty screen when offline — to get it back.
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+  _warmUpFirestore();
   runApp(const MyApp());
+}
+
+/// Kicks off the Firestore client's one-time startup (opening the local
+/// database, loading its indexes) right now, so it overlaps the splash and
+/// auth instead of starting only when the first real listener attaches.
+/// The read itself is a throwaway cache lookup and is expected to be empty.
+void _warmUpFirestore() {
+  unawaited(
+    FirebaseFirestore.instance
+        .collection('_warmup')
+        .limit(1)
+        .get(const GetOptions(source: Source.cache))
+        .then<void>((_) {}, onError: (Object _) {}),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -40,10 +67,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Shows the animated splash for [_minSplashDuration], then crossfades to
-/// [AuthGate]. Firebase is already initialized at this point (see main()),
-/// so this is purely a presentational delay to let the splash animation
-/// play out.
+/// Shows the animated splash for [_minSplashDuration] and then fades it out.
+///
+/// [AuthGate] is built underneath the splash from the very first frame, so
+/// auth resolves and every module's Firestore listener starts while the
+/// animation plays. By the time the splash lifts, the cached data is
+/// already on screen instead of the loading only beginning then.
 class _SplashGate extends StatefulWidget {
   const _SplashGate();
 
@@ -53,25 +82,38 @@ class _SplashGate extends StatefulWidget {
 
 class _SplashGateState extends State<_SplashGate> {
   static const _minSplashDuration = Duration(milliseconds: 1800);
-  bool _showSplash = true;
+  static const _fadeDuration = Duration(milliseconds: 500);
+  bool _splashVisible = true;
+  bool _splashMounted = true;
 
   @override
   void initState() {
     super.initState();
     Future.delayed(_minSplashDuration, () {
-      if (mounted) setState(() => _showSplash = false);
+      if (!mounted) return;
+      setState(() => _splashVisible = false);
+      Future.delayed(_fadeDuration, () {
+        if (mounted) setState(() => _splashMounted = false);
+      });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 500),
-      switchInCurve: Curves.easeIn,
-      switchOutCurve: Curves.easeOut,
-      child: _showSplash
-          ? const SplashScreen(key: ValueKey('splash'))
-          : const AuthGate(key: ValueKey('gate')),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const AuthGate(),
+        if (_splashMounted)
+          IgnorePointer(
+            child: AnimatedOpacity(
+              opacity: _splashVisible ? 1 : 0,
+              duration: _fadeDuration,
+              curve: Curves.easeOut,
+              child: const SplashScreen(),
+            ),
+          ),
+      ],
     );
   }
 }

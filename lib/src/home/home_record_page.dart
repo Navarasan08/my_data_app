@@ -52,6 +52,16 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Opening the tracker always lands on the current month. The cubit
+    // outlives this page, so without this a month chosen on a previous
+    // visit (or nudged by a stray swipe) would greet the user as an
+    // apparently empty tracker.
+    context.read<HomeRecordCubit>().selectDate(DateTime.now());
+  }
+
+  @override
   void dispose() {
     _fabVisible.dispose();
     super.dispose();
@@ -59,7 +69,6 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<HomeRecordCubit, HomeRecordState>(
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
@@ -72,6 +81,14 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
             title: const Text('Expense Tracker'),
             centerTitle: false,
             elevation: 0,
+            // Thin activity bar while data is still loading from cache or
+            // waiting for the server to confirm. Gone once live.
+            bottom: state.isLive
+                ? null
+                : const PreferredSize(
+                    preferredSize: Size.fromHeight(2),
+                    child: LinearProgressIndicator(minHeight: 2),
+                  ),
             actions: [
               IconButton(
                 icon: Icon(
@@ -113,183 +130,182 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
               ),
             ],
           ),
-          body: NotificationListener<ScrollNotification>(
-            onNotification: _handleScroll,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final width = constraints.maxWidth;
-                final isWide = width > 600;
-                final isExtraWide = width > 900;
-                final contentMaxWidth = isExtraWide ? 900.0 : double.infinity;
-                final gridCols = isExtraWide
-                    ? 3
-                    : isWide
-                    ? 2
-                    : 1;
+          // Until the first snapshot lands, a zeroed summary and an empty
+          // grid would read as "no data". Show an unmistakable loading
+          // state instead; it lasts well under a second on a warm cache.
+          body: state.isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : NotificationListener<ScrollNotification>(
+                  onNotification: _handleScroll,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final width = constraints.maxWidth;
+                      final isWide = width > 600;
+                      final isExtraWide = width > 900;
+                      final contentMaxWidth = isExtraWide
+                          ? 900.0
+                          : double.infinity;
+                      final gridCols = isExtraWide
+                          ? 3
+                          : isWide
+                          ? 2
+                          : 1;
 
-                return Column(
-                  children: [
-                    // Income / Expenses / Overall — the page's main totals
-                    // line now that the header carries only the title.
-                    Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(maxWidth: contentMaxWidth),
-                        child: _KindSummaryBar(
-                          formattedIncome:
-                              '+${cubit.formatAmount(displayIncome)}',
-                          formattedExpense: cubit.formatAmount(displayTotal),
-                          overall: displayIncome - displayTotal,
-                          formatAmount: cubit.formatAmount,
-                        ),
-                      ),
-                    ),
-
-                    // Date range + month navigation with the filter button on
-                    // its right, directly under the summary line. The filter
-                    // button always renders (it's the only way into the filter
-                    // sheet); the period pill only in monthly/calendar mode.
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      return Column(
                         children: [
-                          if (state.showMonthlyCalendar ||
-                              state.isCalendarView) ...[
-                            _PeriodNavBar(
-                              label: cubit.selectedPeriodLabel,
-                              count: filteredRecords.length,
-                              onPrevious: () => cubit.changeMonth(-1),
-                              onNext: () => cubit.changeMonth(1),
-                              onJumpToToday: () =>
-                                  cubit.selectDate(DateTime.now()),
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-                          _FilterButton(
-                            activeCount: state.selectedCategoryIds.length,
-                            onTap: () => _openMultiSelectSheet(
-                              context,
-                              cubit,
-                              state.selectedCategoryIds,
+                          // Income / Expenses / Overall — the page's main totals
+                          // line now that the header carries only the title.
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: contentMaxWidth,
+                              ),
+                              child: _KindSummaryBar(
+                                formattedIncome:
+                                    '+${cubit.formatAmount(displayIncome)}',
+                                formattedExpense: cubit.formatAmount(
+                                  displayTotal,
+                                ),
+                                overall: displayIncome - displayTotal,
+                                formatAmount: cubit.formatAmount,
+                              ),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
 
-                    // Active-filter pill — only rendered when a filter is
-                    // applied, since the chips strip moved into the menu's
-                    // Filters popup.
-                    if (state.selectedCategoryIds.isNotEmpty)
-                      Center(
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: contentMaxWidth,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+                          // Date range + month navigation with the filter button on
+                          // its right, directly under the summary line. The filter
+                          // button always renders (it's the only way into the filter
+                          // sheet); the period pill only in monthly/calendar mode.
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _ActiveFilterChip(
-                                  count: state.selectedCategoryIds.length,
+                                if (state.showMonthlyCalendar ||
+                                    state.isCalendarView) ...[
+                                  _PeriodNavBar(
+                                    label: cubit.selectedPeriodLabel,
+                                    count: filteredRecords.length,
+                                    onPrevious: () => cubit.changeMonth(-1),
+                                    onNext: () => cubit.changeMonth(1),
+                                    onJumpToToday: () =>
+                                        cubit.selectDate(DateTime.now()),
+                                  ),
+                                  const SizedBox(width: 8),
+                                ],
+                                _FilterButton(
+                                  activeCount: state.selectedCategoryIds.length,
                                   onTap: () => _openMultiSelectSheet(
                                     context,
                                     cubit,
                                     state.selectedCategoryIds,
                                   ),
-                                  onClear: cubit.clearCategoryFilter,
                                 ),
                               ],
                             ),
                           ),
-                        ),
-                      ),
-                    const SizedBox(height: 4),
 
-                    // Records List / Grid / Calendar
-                    Expanded(
-                      child: state.isCalendarView
-                          ? Center(
+                          // Active-filter pill — only rendered when a filter is
+                          // applied, since the chips strip moved into the menu's
+                          // Filters popup.
+                          if (state.selectedCategoryIds.isNotEmpty)
+                            Center(
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
                                   maxWidth: contentMaxWidth,
                                 ),
-                                child: _MonthCalendarView(cubit: cubit),
-                              ),
-                            )
-                          : filteredRecords.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.home_outlined,
-                                    size: 48,
-                                    color: cs.outline,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    6,
+                                    12,
+                                    0,
                                   ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    state.selectedCategoryIds.isNotEmpty
-                                        ? 'No records for the selected categories'
-                                        : 'No records yet',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: cs.onSurfaceVariant,
+                                  child: Row(
+                                    children: [
+                                      _ActiveFilterChip(
+                                        count: state.selectedCategoryIds.length,
+                                        onTap: () => _openMultiSelectSheet(
+                                          context,
+                                          cubit,
+                                          state.selectedCategoryIds,
+                                        ),
+                                        onClear: cubit.clearCategoryFilter,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+
+                          // Records List / Grid / Calendar
+                          Expanded(
+                            child: state.isCalendarView
+                                ? Center(
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: contentMaxWidth,
+                                      ),
+                                      child: _MonthCalendarView(cubit: cubit),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : Center(
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  maxWidth: contentMaxWidth,
-                                ),
-                                child: state.showMonthlyCalendar
-                                    ? (gridCols > 1
-                                          ? GridView.builder(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                    12,
-                                                    4,
-                                                    12,
-                                                    12,
-                                                  ),
-                                              gridDelegate:
-                                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: gridCols,
-                                                    crossAxisSpacing: 10,
-                                                    mainAxisSpacing: 10,
-                                                    childAspectRatio:
-                                                        isExtraWide ? 2.5 : 2.2,
-                                                  ),
-                                              itemCount: filteredRecords.length,
-                                              itemBuilder: (context, index) {
-                                                return _buildRecordItem(
-                                                  context,
-                                                  cubit,
-                                                  filteredRecords[index],
-                                                );
-                                              },
-                                            )
-                                          : _buildWeekGroupedList(
+                                  )
+                                : filteredRecords.isEmpty
+                                ? _EmptyRecords(state: state)
+                                : Center(
+                                    child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                        maxWidth: contentMaxWidth,
+                                      ),
+                                      child: state.showMonthlyCalendar
+                                          ? (gridCols > 1
+                                                ? GridView.builder(
+                                                    padding:
+                                                        const EdgeInsets.fromLTRB(
+                                                          12,
+                                                          4,
+                                                          12,
+                                                          12,
+                                                        ),
+                                                    gridDelegate:
+                                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                                          crossAxisCount:
+                                                              gridCols,
+                                                          crossAxisSpacing: 10,
+                                                          mainAxisSpacing: 10,
+                                                          childAspectRatio:
+                                                              isExtraWide
+                                                              ? 2.5
+                                                              : 2.2,
+                                                        ),
+                                                    itemCount:
+                                                        filteredRecords.length,
+                                                    itemBuilder: (context, index) {
+                                                      return _buildRecordItem(
+                                                        context,
+                                                        cubit,
+                                                        filteredRecords[index],
+                                                      );
+                                                    },
+                                                  )
+                                                : _buildWeekGroupedList(
+                                                    context,
+                                                    cubit,
+                                                    filteredRecords,
+                                                  ))
+                                          : _buildMonthGroupedList(
                                               context,
                                               cubit,
                                               filteredRecords,
-                                            ))
-                                    : _buildMonthGroupedList(
-                                        context,
-                                        cubit,
-                                        filteredRecords,
-                                      ),
-                              ),
-                            ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
+                                            ),
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
           // Slides down + fades out at the bottom of the scroll, comes back
           // as soon as the user scrolls upward. ValueListenableBuilder keeps
           // the rebuild scoped to the FAB so scrolling stays smooth.
@@ -688,6 +704,47 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
 /// Round filter button next to the period navigator. Opens the category
 /// multi-select sheet; shows a count badge and a green tint while a filter
 /// is active.
+/// Empty state for the records list. Only claims "no records" once the
+/// server has confirmed it; before that the data may simply not have
+/// arrived yet, so it says so instead of showing a misleading blank.
+class _EmptyRecords extends StatelessWidget {
+  final HomeRecordState state;
+  const _EmptyRecords({required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final IconData icon;
+    final String message;
+    if (state.isLoading) {
+      icon = Icons.hourglass_top_rounded;
+      message = 'Loading records…';
+    } else if (!state.isLive && state.records.isEmpty) {
+      icon = Icons.cloud_sync_rounded;
+      message = 'Syncing with server…';
+    } else if (state.selectedCategoryIds.isNotEmpty) {
+      icon = Icons.home_outlined;
+      message = 'No records for the selected categories';
+    } else {
+      icon = Icons.home_outlined;
+      message = 'No records yet';
+    }
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 48, color: cs.outline),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _FilterButton extends StatelessWidget {
   final int activeCount;
   final VoidCallback onTap;
@@ -1902,7 +1959,25 @@ class _MonthCalendarViewState extends State<_MonthCalendarView> {
   /// Minimum fling speed (px/s) for a horizontal drag to count as a swipe.
   static const _swipeVelocity = 250.0;
 
+  /// Where the current drag began; null when it started inside a system
+  /// gesture zone and must be ignored.
+  double? _dragStartX;
+
+  void _onHorizontalDragStart(DragStartDetails details) {
+    // Android's back gesture is a horizontal swipe from either screen edge.
+    // It reaches us as well as the system, so a drag that starts inside the
+    // system gesture insets must not change the month, or "going back" would
+    // silently move the tracker to the next month.
+    final mq = MediaQuery.of(context);
+    final x = details.globalPosition.dx;
+    final left = mq.systemGestureInsets.left;
+    final right = mq.size.width - mq.systemGestureInsets.right;
+    _dragStartX = (x <= left || x >= right) ? null : x;
+  }
+
   void _onHorizontalDragEnd(DragEndDetails details) {
+    if (_dragStartX == null) return;
+    _dragStartX = null;
     final v = details.primaryVelocity ?? 0;
     if (v.abs() < _swipeVelocity) return;
     // Swipe left (negative velocity) → next month, swipe right → previous.
@@ -2005,6 +2080,7 @@ class _MonthCalendarViewState extends State<_MonthCalendarView> {
         // don't compete. Taps on day cells are unaffected.
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
+          onHorizontalDragStart: _onHorizontalDragStart,
           onHorizontalDragEnd: _onHorizontalDragEnd,
           child: Column(
             children: [

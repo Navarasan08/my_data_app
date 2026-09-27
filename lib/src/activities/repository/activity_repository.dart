@@ -1,64 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:my_data_app/src/activities/model/activity_model.dart';
-import 'package:my_data_app/src/core/firestore_read.dart';
+import 'package:my_data_app/src/core/sync/single_collection_repository.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 
-abstract class ActivityRepository {
+abstract class ActivityRepository implements SyncNode {
   List<ActivityRecord> getAll();
   void add(ActivityRecord r);
   void update(ActivityRecord r);
   void delete(String id);
-  Future<void> init();
 }
 
-class FirestoreActivityRepository implements ActivityRepository {
-  final String uid;
-  final FirebaseFirestore _firestore;
-  List<ActivityRecord> _items = [];
-
-  FirestoreActivityRepository({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(uid).collection('activities');
+class FirestoreActivityRepository
+    extends SingleCollectionRepository<ActivityRecord>
+    implements ActivityRepository {
+  FirestoreActivityRepository({required super.uid, super.firestore})
+    : super(
+        collectionName: 'activities',
+        fromDoc: (json, _) => ActivityRecord.fromJson(json),
+        toJson: (r) => r.toJson(),
+        idOf: (r) => r.id,
+      );
 
   @override
-  Future<void> init() async {
-    _load(await readQueryCacheFirst(_collection));
-  }
-
-  /// Re-reads from the server, replacing the cache-first data from [init].
-  Future<void> refresh() async {
-    _load(await _collection.get());
-  }
-
-  void _load(QuerySnapshot<Map<String, dynamic>> snap) {
-    _items =
-        snap.docs.map((d) => ActivityRecord.fromJson(d.data())).toList();
-  }
+  void add(ActivityRecord r) => store.save(r);
 
   @override
-  List<ActivityRecord> getAll() => List.unmodifiable(_items);
+  void update(ActivityRecord r) => store.save(r);
 
   @override
-  void add(ActivityRecord r) {
-    _items.add(r);
-    _collection.doc(r.id).set(r.toJson());
-  }
-
-  @override
-  void update(ActivityRecord r) {
-    final i = _items.indexWhere((x) => x.id == r.id);
-    if (i != -1) {
-      _items[i] = r;
-      _collection.doc(r.id).set(r.toJson());
-    }
-  }
-
-  @override
-  void delete(String id) {
-    _items.removeWhere((x) => x.id == id);
-    _collection.doc(id).delete();
-  }
+  void delete(String id) => store.remove(id);
 }

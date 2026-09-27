@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/core/sync/sync_indicator.dart';
+import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 import 'package:my_data_app/src/events/my_events_page.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
@@ -21,7 +24,15 @@ class MainShell extends StatefulWidget {
   /// The shared local notifications service. Tap callbacks are wired here.
   final LocalNotificationService notificationService;
 
-  const MainShell({super.key, required this.notificationService});
+  /// Combined sync state of every module; drives the hairline activity bar
+  /// at the top of the shell while data is still loading or unconfirmed.
+  final ValueListenable<SyncStatus> syncStatus;
+
+  const MainShell({
+    super.key,
+    required this.notificationService,
+    required this.syncStatus,
+  });
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -49,28 +60,36 @@ class _MainShellState extends State<MainShell> {
   void _routeTo(String module, String itemId, String? dateStr) {
     switch (module) {
       case 'schedule':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ScheduleCubit>(),
-              child: ScheduleDetailPage(entryId: itemId),
-            ));
+        _pushOnHome(
+          (ctx) => BlocProvider.value(
+            value: ctx.read<ScheduleCubit>(),
+            child: ScheduleDetailPage(entryId: itemId),
+          ),
+        );
         break;
       case 'loans':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<LoanCubit>(),
-              child: LoanDetailPage(loanId: itemId),
-            ));
+        _pushOnHome(
+          (ctx) => BlocProvider.value(
+            value: ctx.read<LoanCubit>(),
+            child: LoanDetailPage(loanId: itemId),
+          ),
+        );
         break;
       case 'chits':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ChitCubit>(),
-              child: ChitFundDetailsPage(chitFundId: itemId),
-            ));
+        _pushOnHome(
+          (ctx) => BlocProvider.value(
+            value: ctx.read<ChitCubit>(),
+            child: ChitFundDetailsPage(chitFundId: itemId),
+          ),
+        );
         break;
       case 'checklists':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ChecklistCubit>(),
-              child: ChecklistDetailPage(groupId: itemId),
-            ));
+        _pushOnHome(
+          (ctx) => BlocProvider.value(
+            value: ctx.read<ChecklistCubit>(),
+            child: ChecklistDetailPage(groupId: itemId),
+          ),
+        );
         break;
       default:
         setState(() => _index = 2);
@@ -83,9 +102,9 @@ class _MainShellState extends State<MainShell> {
     setState(() => _index = 0);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => builder(context)),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => builder(context)));
     });
   }
 
@@ -115,64 +134,68 @@ class _MainShellState extends State<MainShell> {
         // else: silently absorb the pop, keeping the user inside the app.
       },
       child: Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: pages,
-      ),
-      bottomNavigationBar: BlocBuilder<NotificationCubit, NotificationState>(
-        builder: (context, state) {
-          final unread = context.read<NotificationCubit>().unreadCount;
-          final cs = Theme.of(context).colorScheme;
-          // Wrap the NavigationBar so it has a soft top edge separating it
-          // from the content above (M3 doesn't ship one by default).
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: cs.outlineVariant, width: 0.6),
+        body: Column(
+          children: [
+            SyncIndicator(status: widget.syncStatus),
+            Expanded(
+              child: IndexedStack(index: _index, children: pages),
+            ),
+          ],
+        ),
+        bottomNavigationBar: BlocBuilder<NotificationCubit, NotificationState>(
+          builder: (context, state) {
+            final unread = context.read<NotificationCubit>().unreadCount;
+            final cs = Theme.of(context).colorScheme;
+            // Wrap the NavigationBar so it has a soft top edge separating it
+            // from the content above (M3 doesn't ship one by default).
+            return DecoratedBox(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: cs.outlineVariant, width: 0.6),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 16,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: [
-                const NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard_rounded),
-                  label: 'Home',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.event_outlined),
-                  selectedIcon: Icon(Icons.event_rounded),
-                  label: 'My Events',
-                ),
-                NavigationDestination(
-                  icon: _NotificationIcon(
-                    unread: unread,
-                    icon: Icons.notifications_outlined,
+              child: NavigationBar(
+                selectedIndex: _index,
+                onDestinationSelected: (i) => setState(() => _index = i),
+                destinations: [
+                  const NavigationDestination(
+                    icon: Icon(Icons.dashboard_outlined),
+                    selectedIcon: Icon(Icons.dashboard_rounded),
+                    label: 'Home',
                   ),
-                  selectedIcon: _NotificationIcon(
-                    unread: unread,
-                    icon: Icons.notifications_rounded,
+                  const NavigationDestination(
+                    icon: Icon(Icons.event_outlined),
+                    selectedIcon: Icon(Icons.event_rounded),
+                    label: 'My Events',
                   ),
-                  label: 'Alerts',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.person_outline_rounded),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: 'Profile',
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                  NavigationDestination(
+                    icon: _NotificationIcon(
+                      unread: unread,
+                      icon: Icons.notifications_outlined,
+                    ),
+                    selectedIcon: _NotificationIcon(
+                      unread: unread,
+                      icon: Icons.notifications_rounded,
+                    ),
+                    label: 'Alerts',
+                  ),
+                  const NavigationDestination(
+                    icon: Icon(Icons.person_outline_rounded),
+                    selectedIcon: Icon(Icons.person_rounded),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -198,8 +221,7 @@ class _NotificationIcon extends StatelessWidget {
             top: -4,
             right: -6,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               decoration: BoxDecoration(
                 color: Colors.red[500],

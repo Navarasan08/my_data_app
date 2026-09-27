@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/goals/model/goal_model.dart';
 import 'package:my_data_app/src/goals/repository/goal_repository.dart';
@@ -5,42 +7,80 @@ import 'package:my_data_app/src/goals/cubit/goal_state.dart';
 
 class GoalCubit extends Cubit<GoalState> {
   final GoalRepository _repository;
+  StreamSubscription<void>? _sub;
+
+  /// Whether the backfill of missed failures has run against confirmed
+  /// (live) data this session. At construction the list is still loading,
+  /// so the real pass happens from [_sync] the first time data goes live.
+  bool _autoMarkedOnLive = false;
 
   GoalCubit(this._repository)
-      : super(GoalState(goals: _repository.getAll())) {
-    autoMarkMissedFailures();
+    : super(
+        GoalState(
+          goals: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+    // Harmless while loading (no goals yet); kept so a repository that is
+    // already live at construction is handled without waiting for an event.
+    if (state.isLive) {
+      _autoMarkedOnLive = true;
+      autoMarkMissedFailures();
+    }
   }
 
-  /// Re-emits state from the repository after a background server refresh.
-  void reloadFromRepository() {
-    emit(state.copyWith(goals: _repository.getAll()));
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        goals: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+    if (!_autoMarkedOnLive && state.isLive) {
+      _autoMarkedOnLive = true;
+      autoMarkMissedFailures();
+    }
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
   }
 
   void addGoal(Goal goal) {
     _repository.add(goal);
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
     if (goal.autoMarkFailures) autoMarkMissedFailures();
   }
 
   void updateGoal(Goal goal) {
     _repository.update(goal);
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
     if (goal.autoMarkFailures) autoMarkMissedFailures();
   }
 
   void deleteGoal(String id) {
     _repository.delete(id);
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
   }
 
-  void logDay(String goalId, DateTime date, GoalDayStatus status, {String? note}) {
+  void logDay(
+    String goalId,
+    DateTime date,
+    GoalDayStatus status, {
+    String? note,
+  }) {
     final goal = state.goals.firstWhere((g) => g.id == goalId);
     final key = Goal.dateKey(date);
     final logs = List<GoalLog>.from(goal.logs)
       ..removeWhere((l) => l.date == key);
     logs.add(GoalLog(date: key, status: status, note: note));
     _repository.update(goal.copyWith(logs: logs));
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
   }
 
   void removeLog(String goalId, DateTime date) {
@@ -49,13 +89,13 @@ class GoalCubit extends Cubit<GoalState> {
     final logs = List<GoalLog>.from(goal.logs)
       ..removeWhere((l) => l.date == key);
     _repository.update(goal.copyWith(logs: logs));
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
   }
 
   void archiveGoal(String goalId) {
     final goal = state.goals.firstWhere((g) => g.id == goalId);
     _repository.update(goal.copyWith(isArchived: true));
-    emit(state.copyWith(goals: _repository.getAll()));
+    _sync();
   }
 
   /// Backfills missing past-due dates as failures for every active goal that
@@ -74,7 +114,10 @@ class GoalCubit extends Cubit<GoalState> {
       var changed = false;
 
       var cursor = DateTime(
-          goal.startDate.year, goal.startDate.month, goal.startDate.day);
+        goal.startDate.year,
+        goal.startDate.month,
+        goal.startDate.day,
+      );
       while (cursor.isBefore(today)) {
         if (goal.isDueForDate(cursor)) {
           final key = Goal.dateKey(cursor);
@@ -93,7 +136,7 @@ class GoalCubit extends Cubit<GoalState> {
     }
 
     if (anyChanged) {
-      emit(state.copyWith(goals: _repository.getAll()));
+      _sync();
     }
   }
 

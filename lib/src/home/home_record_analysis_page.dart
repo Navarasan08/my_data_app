@@ -5,7 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
-import 'package:my_data_app/src/home/home_record_page.dart' show AddHomeRecordPage;
+import 'package:my_data_app/src/home/home_record_page.dart'
+    show AddHomeRecordPage;
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 
 /// Quick-pick time window for the analysis page. A user-set [DateTimeRange]
@@ -32,8 +33,7 @@ class HomeRecordAnalysisPage extends StatefulWidget {
   const HomeRecordAnalysisPage({Key? key}) : super(key: key);
 
   @override
-  State<HomeRecordAnalysisPage> createState() =>
-      _HomeRecordAnalysisPageState();
+  State<HomeRecordAnalysisPage> createState() => _HomeRecordAnalysisPageState();
 }
 
 class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
@@ -52,7 +52,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   /// day (e.g. 30) "July" runs 30 Jun → 29 Jul rather than 30 Jul → 29 Aug.
   /// With no custom cycle this is just the plain calendar month.
   ({DateTime start, DateTime end, bool allTime}) _monthWindow(
-      HomeRecordCubit cubit, DateTime anchor) {
+    HomeRecordCubit cubit,
+    DateTime anchor,
+  ) {
     final w = cubit.cycleWindowForMonth(anchor.year, anchor.month);
     return (
       start: w.start,
@@ -67,12 +69,19 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   /// `allTime` flag tells the caller it can short-circuit to the cubit's
   /// all-time aggregates.
   ({DateTime start, DateTime end, bool allTime}) _activeRange(
-      HomeRecordCubit cubit) {
+    HomeRecordCubit cubit,
+  ) {
     if (_dateRange != null) {
       // showDateRangePicker's end-date is the start-of-day — bump to
       // end-of-day so a same-day range matches all records that day.
-      final end = DateTime(_dateRange!.end.year, _dateRange!.end.month,
-          _dateRange!.end.day, 23, 59, 59);
+      final end = DateTime(
+        _dateRange!.end.year,
+        _dateRange!.end.month,
+        _dateRange!.end.day,
+        23,
+        59,
+        59,
+      );
       return (start: _dateRange!.start, end: end, allTime: false);
     }
     if (_monthAnchor != null) {
@@ -91,11 +100,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           allTime: false,
         );
       case AnalysisPeriod.all:
-        return (
-          start: DateTime(1970),
-          end: DateTime(2100),
-          allTime: true,
-        );
+        return (start: DateTime(1970), end: DateTime(2100), allTime: true);
     }
   }
 
@@ -118,7 +123,8 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       final s = _dateRange!.start;
       final e = _dateRange!.end;
       final lastDayOfStartMonth = DateTime(s.year, s.month + 1, 0).day;
-      final isFullSingleMonth = s.day == 1 &&
+      final isFullSingleMonth =
+          s.day == 1 &&
           e.day == lastDayOfStartMonth &&
           s.year == e.year &&
           s.month == e.month;
@@ -136,8 +142,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       case AnalysisPeriod.thisMonth:
         return DateFormat('MMM yyyy').format(now);
       case AnalysisPeriod.lastMonth:
-        return DateFormat('MMM yyyy')
-            .format(DateTime(now.year, now.month - 1));
+        return DateFormat('MMM yyyy').format(DateTime(now.year, now.month - 1));
       case AnalysisPeriod.year:
         return '${now.year}';
       case AnalysisPeriod.all:
@@ -207,12 +212,12 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   /// Key used to invalidate the [AnimatedSwitcher]s when any filter
   /// dimension changes — the new charts/lists cross-fade in.
   Object _filterKey() => Object.hash(
-        _period,
-        _dateRange?.start,
-        _dateRange?.end,
-        _monthAnchor,
-        _filterCategory?.id,
-      );
+    _period,
+    _dateRange?.start,
+    _dateRange?.end,
+    _monthAnchor,
+    _filterCategory?.id,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -220,11 +225,15 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
       builder: (context, state) {
         final cubit = context.read<HomeRecordCubit>();
         final categoryTotals = _categoryTotals(cubit);
-        final filteredTotal =
-            categoryTotals.values.fold<double>(0, (s, v) => s + v);
+        final filteredTotal = categoryTotals.values.fold<double>(
+          0,
+          (s, v) => s + v,
+        );
         final paymentTotals = _paymentTotals(cubit);
-        final paymentTotal =
-            paymentTotals.values.fold<double>(0, (s, v) => s + v);
+        final paymentTotal = paymentTotals.values.fold<double>(
+          0,
+          (s, v) => s + v,
+        );
         final untaggedCount = _untaggedPaymentCount(cubit);
         final monthlyData = cubit.monthlyCycleTotals(months: 12);
 
@@ -250,7 +259,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildFilterControls(
-                              context, cubit.categoriesByUsage),
+                            context,
+                            cubit.categoriesByUsage,
+                          ),
                           const SizedBox(height: 20),
 
                           // Charts swap with a cross-fade whenever the
@@ -276,13 +287,16 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                               'Category Breakdown',
                                               subtitle: _navigatorLabel(),
                                               trailing: _TotalExpenseLabel(
-                                                amount: cubit
-                                                    .formatAmount(filteredTotal),
+                                                amount: cubit.formatAmount(
+                                                  filteredTotal,
+                                                ),
                                               ),
                                             ),
                                             const SizedBox(height: 12),
-                                            _buildPieChart(categoryTotals,
-                                                filteredTotal),
+                                            _buildPieChart(
+                                              categoryTotals,
+                                              filteredTotal,
+                                            ),
                                             const SizedBox(height: 8),
                                             _buildPieLegend(
                                               categoryTotals,
@@ -300,10 +314,13 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                               CrossAxisAlignment.start,
                                           children: [
                                             _buildSectionTitle(
-                                                'Top Categories'),
+                                              'Top Categories',
+                                            ),
                                             const SizedBox(height: 12),
                                             _buildBarChart(
-                                                categoryTotals, cubit),
+                                              categoryTotals,
+                                              cubit,
+                                            ),
                                           ],
                                         ),
                                       ),
@@ -314,8 +331,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                     'Category Breakdown',
                                     subtitle: _navigatorLabel(),
                                     trailing: _TotalExpenseLabel(
-                                      amount: cubit
-                                          .formatAmount(filteredTotal),
+                                      amount: cubit.formatAmount(filteredTotal),
                                     ),
                                   ),
                                   const SizedBox(height: 18),
@@ -330,8 +346,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                                 ],
                                 const SizedBox(height: 24),
 
-                                _buildSectionTitle('Payment Method',
-                                    subtitle: _activeRangeLabel()),
+                                _buildSectionTitle(
+                                  'Payment Method',
+                                  subtitle: _activeRangeLabel(),
+                                ),
                                 const SizedBox(height: 12),
                                 _buildPaymentBreakdown(
                                   paymentTotals,
@@ -370,8 +388,11 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   // ── Section helpers ─────────────────────────────────────────────────────
 
-  Widget _buildSectionTitle(String title,
-      {String? subtitle, Widget? trailing}) {
+  Widget _buildSectionTitle(
+    String title, {
+    String? subtitle,
+    Widget? trailing,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -404,17 +425,16 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         ],
         if (trailing != null) ...[
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 1),
-            child: trailing,
-          ),
+          Padding(padding: const EdgeInsets.only(bottom: 1), child: trailing),
         ],
       ],
     );
   }
 
   Widget _buildFilterControls(
-      BuildContext context, List<HomeCategory> allCategories) {
+    BuildContext context,
+    List<HomeCategory> allCategories,
+  ) {
     final cs = Theme.of(context).colorScheme;
     // No segment looks selected while a custom range or a stepped month is active.
     final hasRange = _dateRange != null || _monthAnchor != null;
@@ -433,13 +453,16 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             width: double.infinity,
             child: SegmentedButton<AnalysisPeriod>(
               segments: AnalysisPeriod.values
-                  .map((p) => ButtonSegment<AnalysisPeriod>(
-                        value: p,
-                        label: Text(p.label),
-                      ))
+                  .map(
+                    (p) => ButtonSegment<AnalysisPeriod>(
+                      value: p,
+                      label: Text(p.label),
+                    ),
+                  )
                   .toList(),
-              selected:
-                  hasRange ? <AnalysisPeriod>{} : <AnalysisPeriod>{_period},
+              selected: hasRange
+                  ? <AnalysisPeriod>{}
+                  : <AnalysisPeriod>{_period},
               emptySelectionAllowed: true,
               showSelectedIcon: false,
               onSelectionChanged: (values) {
@@ -493,8 +516,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             decoration: const InputDecoration(
               labelText: 'Category',
               border: OutlineInputBorder(),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               isDense: true,
             ),
             items: [
@@ -509,8 +531,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                     children: [
                       Icon(cat.icon, size: 16, color: cat.color),
                       const SizedBox(width: 6),
-                      Text(cat.displayName,
-                          style: const TextStyle(fontSize: 13)),
+                      Text(
+                        cat.displayName,
+                        style: const TextStyle(fontSize: 13),
+                      ),
                     ],
                   ),
                 );
@@ -527,8 +551,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
 
   // ── Chart builders ──────────────────────────────────────────────────────
 
-  Widget _buildPieChart(
-      Map<HomeCategory, double> totals, double grandTotal) {
+  Widget _buildPieChart(Map<HomeCategory, double> totals, double grandTotal) {
     if (totals.isEmpty || grandTotal == 0) {
       return _emptyChart('No data in this period');
     }
@@ -541,9 +564,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             final percentage = (e.value / grandTotal * 100);
             return PieChartSectionData(
               value: e.value,
-              title: percentage >= 5
-                  ? '${percentage.toStringAsFixed(1)}%'
-                  : '',
+              title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
               color: e.key.color,
               radius: 85,
               titleStyle: const TextStyle(
@@ -564,10 +585,11 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildPieLegend(
-      Map<HomeCategory, double> totals,
-      double grandTotal,
-      HomeRecordCubit cubit,
-      Map<HomeCategory, Map<MeasureUnit, double>> categoryQuantities) {
+    Map<HomeCategory, double> totals,
+    double grandTotal,
+    HomeRecordCubit cubit,
+    Map<HomeCategory, Map<MeasureUnit, double>> categoryQuantities,
+  ) {
     if (totals.isEmpty) return const SizedBox();
 
     final cs = Theme.of(context).colorScheme;
@@ -593,8 +615,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
           onTap: () => _showCategoryRecords(context, cubit, e.key),
           borderRadius: BorderRadius.circular(6),
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
             child: Row(
               children: [
                 Container(
@@ -613,7 +634,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         TextSpan(
                           text: '${e.key.displayName}  ',
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         TextSpan(
                           text:
@@ -624,14 +647,19 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           TextSpan(
                             text: '  ·  ${qtyParts.join(', ')}',
                             style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant),
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                       ],
                     ),
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 16, color: cs.onSurfaceVariant),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: cs.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -656,16 +684,14 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
         ),
         child: Row(
           children: [
-            Icon(Icons.payments_rounded,
-                color: cs.onSurfaceVariant, size: 20),
+            Icon(Icons.payments_rounded, color: cs.onSurfaceVariant, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 untaggedCount > 0
                     ? 'No tagged records yet. $untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period have no payment method.'
                     : 'No data in this period',
-                style:
-                    TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
               ),
             ),
           ],
@@ -687,8 +713,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
               onTap: () => _showPaymentTypeRecords(context, cubit, e.key),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 child: Row(
                   children: [
                     Container(
@@ -697,8 +722,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         color: e.key.color.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(e.key.icon,
-                          color: e.key.color, size: 16),
+                      child: Icon(e.key.icon, color: e.key.color, size: 16),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -708,27 +732,25 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           Text(
                             e.key.displayName,
                             style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           TweenAnimationBuilder<double>(
                             tween: Tween(begin: 0, end: pct / 100),
-                            duration:
-                                const Duration(milliseconds: 500),
+                            duration: const Duration(milliseconds: 500),
                             curve: Curves.easeOutCubic,
                             builder: (_, t, _) {
                               return ClipRRect(
-                                borderRadius:
-                                    BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(4),
                                 child: LinearProgressIndicator(
                                   value: t,
                                   minHeight: 6,
-                                  backgroundColor:
-                                      cs.surfaceContainerHighest,
-                                  valueColor:
-                                      AlwaysStoppedAnimation<Color>(
-                                          e.key.color),
+                                  backgroundColor: cs.surfaceContainerHighest,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    e.key.color,
+                                  ),
                                 ),
                               );
                             },
@@ -743,18 +765,25 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         Text(
                           cubit.formatAmount(e.value),
                           style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         Text(
                           '${pct.toStringAsFixed(1)}%',
                           style: TextStyle(
-                              fontSize: 11, color: cs.onSurfaceVariant),
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(width: 6),
-                    Icon(Icons.chevron_right_rounded,
-                        size: 16, color: cs.onSurfaceVariant),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: cs.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
@@ -766,8 +795,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
               padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Text(
                 '$untaggedCount record${untaggedCount == 1 ? '' : 's'} in this period without a payment method.',
-                style:
-                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
             ),
           ],
@@ -777,13 +805,14 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildLineChart(
-      Map<DateTime, double> monthlyData, HomeRecordCubit cubit) {
+    Map<DateTime, double> monthlyData,
+    HomeRecordCubit cubit,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final entries = monthlyData.entries.toList();
     if (entries.isEmpty) return _emptyChart('No data to display');
 
-    final maxY =
-        entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final maxY = entries.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final yMax = maxY == 0 ? 100.0 : maxY * 1.2;
 
     return SizedBox(
@@ -809,10 +838,12 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
             ),
           ],
           titlesData: FlTitlesData(
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -826,8 +857,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       DateFormat('MMM').format(entries[idx].key),
-                      style:
-                          const TextStyle(fontSize: 10, color: Colors.grey),
+                      style: const TextStyle(fontSize: 10, color: Colors.grey),
                     ),
                   );
                 },
@@ -840,8 +870,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 getTitlesWidget: (value, meta) {
                   return Text(
                     cubit.formatAmount(value),
-                    style:
-                        const TextStyle(fontSize: 10, color: Colors.grey),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
                   );
                 },
               ),
@@ -864,7 +893,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   Widget _buildBarChart(
-      Map<HomeCategory, double> totals, HomeRecordCubit cubit) {
+    Map<HomeCategory, double> totals,
+    HomeRecordCubit cubit,
+  ) {
     final cs = Theme.of(context).colorScheme;
     if (totals.isEmpty) return _emptyChart('No data to display');
 
@@ -887,17 +918,20 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                   toY: e.value.value,
                   color: e.value.key.color,
                   width: sorted.length <= 5 ? 28 : 18,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(6)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(6),
+                  ),
                 ),
               ],
             );
           }).toList(),
           titlesData: FlTitlesData(
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -924,8 +958,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                 getTitlesWidget: (value, meta) {
                   return Text(
                     cubit.formatAmount(value),
-                    style:
-                        const TextStyle(fontSize: 10, color: Colors.grey),
+                    style: const TextStyle(fontSize: 10, color: Colors.grey),
                   );
                 },
               ),
@@ -963,7 +996,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   // ── Records sheets ──────────────────────────────────────────────────────
 
   void _showCategoryRecords(
-      BuildContext context, HomeRecordCubit cubit, HomeCategory cat) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    HomeCategory cat,
+  ) {
     final r = _activeRange(cubit);
     final records = cubit.recordsInRange(r.start, r.end, category: cat);
     _showRecordsSheet(
@@ -978,7 +1014,10 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
   }
 
   void _showPaymentTypeRecords(
-      BuildContext context, HomeRecordCubit cubit, PaymentType type) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    PaymentType type,
+  ) {
     final r = _activeRange(cubit);
     final records = cubit.recordsInRange(
       r.start,
@@ -1042,8 +1081,7 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         color: accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child:
-                          Icon(icon, color: accentColor, size: 20),
+                      child: Icon(icon, color: accentColor, size: 20),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1060,7 +1098,9 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                           Text(
                             '$subtitle  ·  ${records.length} record${records.length == 1 ? '' : 's'}',
                             style: TextStyle(
-                                fontSize: 12, color: cs.onSurfaceVariant),
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -1083,16 +1123,19 @@ class _HomeRecordAnalysisPageState extends State<HomeRecordAnalysisPage> {
                         child: Text(
                           'No records to show',
                           style: TextStyle(
-                              color: cs.onSurfaceVariant, fontSize: 14),
+                            color: cs.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
                         ),
                       )
                     : ListView.separated(
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         itemCount: records.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 6),
+                        separatorBuilder: (_, _) => const SizedBox(height: 6),
                         itemBuilder: (_, i) {
                           final r = records[i];
                           return _RecordListTile(
@@ -1155,10 +1198,7 @@ class _FadeSlideIn extends StatelessWidget {
       builder: (_, t, c) {
         return Opacity(
           opacity: t,
-          child: Transform.translate(
-            offset: Offset(0, (1 - t) * 16),
-            child: c,
-          ),
+          child: Transform.translate(offset: Offset(0, (1 - t) * 16), child: c),
         );
       },
       child: child,
@@ -1335,35 +1375,35 @@ class _RecordListTile extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(
-        children: [
-          Icon(record.category.icon, size: 18, color: record.category.color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  record.title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          children: [
+            Icon(record.category.icon, size: 18, color: record.category.color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    record.title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  [
-                    DateFormat('d MMM yyyy').format(record.date),
-                    if (record.paymentType != null)
-                      record.paymentType!.displayName,
-                    if (record.quantityLabel.isNotEmpty) record.quantityLabel,
-                  ].join('  ·  '),
-                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      DateFormat('d MMM yyyy').format(record.date),
+                      if (record.paymentType != null)
+                        record.paymentType!.displayName,
+                      if (record.quantityLabel.isNotEmpty) record.quantityLabel,
+                    ].join('  ·  '),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                  ),
+                ],
+              ),
             ),
-          ),
             Text(
               cubit.formatAmount(record.amount),
               style: TextStyle(
