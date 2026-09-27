@@ -302,10 +302,7 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
               child: AnimatedOpacity(
                 opacity: visible ? 1 : 0,
                 duration: const Duration(milliseconds: 200),
-                child: IgnorePointer(
-                  ignoring: !visible,
-                  child: fab,
-                ),
+                child: IgnorePointer(ignoring: !visible, child: fab),
               ),
             ),
             child: FloatingActionButton(
@@ -320,8 +317,9 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
                         categories: cubit.allCategories,
                         paymentTypes: cubit.paymentTypes,
                         groups: context.read<EventCubit>().activeEvents,
-                        groupTotals:
-                            context.read<EventCubit>().activeEventTotals,
+                        groupTotals: context
+                            .read<EventCubit>()
+                            .activeEventTotals,
                         initialDate: cubit.state.selectedDate,
                       ),
                     ),
@@ -1886,12 +1884,34 @@ class _EventGroupPicker extends StatelessWidget {
 /// shows the day-of-month plus the total expense for that day. Tapping a
 /// cell selects that day; the list of records for the selected day is
 /// rendered below the grid.
-class _MonthCalendarView extends StatelessWidget {
+class _MonthCalendarView extends StatefulWidget {
   final HomeRecordCubit cubit;
   const _MonthCalendarView({required this.cubit});
 
   @override
+  State<_MonthCalendarView> createState() => _MonthCalendarViewState();
+}
+
+class _MonthCalendarViewState extends State<_MonthCalendarView> {
+  /// Cycle start shown on the previous build; used to work out whether the
+  /// month moved forward or backward so the grid slides the right way. This
+  /// covers both swipes and the arrow buttons in the period bar.
+  DateTime? _lastStart;
+  int _slideDir = 1;
+
+  /// Minimum fling speed (px/s) for a horizontal drag to count as a swipe.
+  static const _swipeVelocity = 250.0;
+
+  void _onHorizontalDragEnd(DragEndDetails details) {
+    final v = details.primaryVelocity ?? 0;
+    if (v.abs() < _swipeVelocity) return;
+    // Swipe left (negative velocity) → next month, swipe right → previous.
+    widget.cubit.changeMonth(v < 0 ? 1 : -1);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cubit = widget.cubit;
     final cs = Theme.of(context).colorScheme;
     final state = cubit.state;
     final sel = DateTime(
@@ -1903,6 +1923,10 @@ class _MonthCalendarView extends StatelessWidget {
     // monthly start date and may cross calendar months.
     final start = cubit.selectedCycleStart;
     final end = cubit.selectedCycleEnd;
+    if (_lastStart != null && start != _lastStart) {
+      _slideDir = start.isAfter(_lastStart!) ? 1 : -1;
+    }
+    _lastStart = start;
     // Days in the cycle, via hours/24 so a DST shift can't drop/add a day.
     final totalDays = (end.difference(start).inHours / 24).round();
     // Monday=1 .. Sunday=7. Leading blanks put Monday at column 0.
@@ -1910,6 +1934,7 @@ class _MonthCalendarView extends StatelessWidget {
     final totalCells = ((leading + totalDays + 6) ~/ 7) * 7;
     final rows = totalCells ~/ 7;
     final dailyTotals = cubit.dailyTotalsForSelectedCycle;
+    final dailyIncome = cubit.dailyIncomeForSelectedCycle;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -1934,196 +1959,248 @@ class _MonthCalendarView extends StatelessWidget {
         final cellHeight = cellWidth / aspect;
         final gridHeight = rows * cellHeight + (rows - 1) * spacing;
 
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              child: Row(
-                children: dowLabels
-                    .map(
-                      (d) => Expanded(
-                        child: Center(
-                          child: Text(
-                            d,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: cs.onSurfaceVariant,
+        final grid = SizedBox(
+          // Keyed by cycle start so AnimatedSwitcher treats each month as a
+          // new child and slides between them.
+          key: ValueKey(start),
+          height: gridHeight + 8,
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 7,
+              mainAxisSpacing: spacing,
+              crossAxisSpacing: spacing,
+              childAspectRatio: aspect,
+            ),
+            itemCount: totalCells,
+            itemBuilder: (context, i) {
+              final offset = i - leading;
+              if (offset < 0 || offset >= totalDays) {
+                return const SizedBox.shrink();
+              }
+              final date = DateTime(
+                start.year,
+                start.month,
+                start.day + offset,
+              );
+              final amount = dailyTotals[date] ?? 0;
+              final income = dailyIncome[date] ?? 0;
+              final isToday = date == today;
+              final isSelected = date == sel;
+              return _DayCell(
+                day: date.day,
+                isToday: isToday,
+                isSelected: isSelected,
+                amountLabel: amount > 0 ? cubit.formatAmount(amount) : '',
+                incomeLabel: income > 0 ? '+${cubit.formatAmount(income)}' : '',
+                onTap: () => cubit.selectDate(date),
+              );
+            },
+          ),
+        );
+
+        // Horizontal swipe anywhere on the calendar view moves a month.
+        // The records list below scrolls vertically, so the two gestures
+        // don't compete. Taps on day cells are unaffected.
+        return GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onHorizontalDragEnd: _onHorizontalDragEnd,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                child: Row(
+                  children: dowLabels
+                      .map(
+                        (d) => Expanded(
+                          child: Center(
+                            child: Text(
+                              d,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-              ),
-            ),
-            SizedBox(
-              height: gridHeight + 8,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  mainAxisSpacing: spacing,
-                  crossAxisSpacing: spacing,
-                  childAspectRatio: aspect,
+                      )
+                      .toList(),
                 ),
-                itemCount: totalCells,
-                itemBuilder: (context, i) {
-                  final offset = i - leading;
-                  if (offset < 0 || offset >= totalDays) {
-                    return const SizedBox.shrink();
-                  }
-                  final date = DateTime(
-                    start.year,
-                    start.month,
-                    start.day + offset,
-                  );
-                  final amount = dailyTotals[date] ?? 0;
-                  final isToday = date == today;
-                  final isSelected = date == sel;
-                  return _DayCell(
-                    day: date.day,
-                    isToday: isToday,
-                    isSelected: isSelected,
-                    amountLabel: amount > 0 ? cubit.formatAmount(amount) : '',
-                    onTap: () => cubit.selectDate(date),
-                  );
-                },
               ),
-            ),
-            const Divider(height: 1),
+              ClipRect(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 260),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) {
+                    // Incoming month enters from the swipe side; the
+                    // outgoing one (whose animation runs in reverse) leaves
+                    // through the opposite side.
+                    final incoming = child.key == ValueKey(start);
+                    final from = Offset(
+                      incoming ? _slideDir.toDouble() : -_slideDir.toDouble(),
+                      0,
+                    );
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: from,
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  // Keep the outgoing month anchored at the top while the
+                  // heights differ (5 vs 6 rows) so nothing jumps.
+                  layoutBuilder: (currentChild, previousChildren) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [...previousChildren, ?currentChild],
+                  ),
+                  child: grid,
+                ),
+              ),
+              const Divider(height: 1),
 
-            // Selected-day summary header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
-              child: Row(
-                children: [
-                  Icon(Icons.event_rounded, size: 16, color: cs.onSurface),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      DateFormat('EEEE, d MMM yyyy').format(sel),
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
+              // Selected-day summary header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.event_rounded, size: 16, color: cs.onSurface),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        DateFormat('EEEE, d MMM yyyy').format(sel),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
-                  ),
-                  if (dayRecords.isNotEmpty) ...[
-                    if (dayIncome > 0) ...[
+                    if (dayRecords.isNotEmpty) ...[
+                      if (dayIncome > 0) ...[
+                        Text(
+                          '+${cubit.formatAmount(dayIncome)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[700],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                       Text(
-                        '+${cubit.formatAmount(dayIncome)}',
+                        cubit.formatAmount(dayTotal),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[700],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '(${dayRecords.length})',
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(width: 8),
                     ],
-                    Text(
-                      cubit.formatAmount(dayTotal),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red[700],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '(${dayRecords.length})',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
                   ],
-                ],
+                ),
               ),
-            ),
 
-            // Records for the selected day
-            Expanded(
-              child: dayRecords.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.event_busy_rounded,
-                            size: 36,
-                            color: cs.outline,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'No records on this day',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: cs.onSurfaceVariant,
+              // Records for the selected day
+              Expanded(
+                child: dayRecords.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_busy_rounded,
+                              size: 36,
+                              color: cs.outline,
                             ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
-                      itemCount: dayRecords.length,
-                      itemBuilder: (_, i) {
-                        final r = dayRecords[i];
-                        return _RecordCard(
-                          record: r,
-                          onEdit: () async {
-                            final edited = await Navigator.push<HomeRecord>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddHomeRecordPage(
-                                  record: r,
-                                  categories: cubit.allCategories,
-                                  paymentTypes: cubit.paymentTypes,
-                                  groups: context
-                                      .read<EventCubit>()
-                                      .activeEvents,
-                                  groupTotals: context
-                                      .read<EventCubit>()
-                                      .activeEventTotals,
-                                ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'No records on this day',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: cs.onSurfaceVariant,
                               ),
-                            );
-                            if (edited != null) {
-                              cubit.updateRecord(edited);
-                            }
-                          },
-                          onDelete: () async {
-                            final ok = await showDialog<bool>(
-                              context: context,
-                              builder: (dctx) => AlertDialog(
-                                title: const Text('Delete Record'),
-                                content: Text(
-                                  'Are you sure you want to delete "${r.title}"?',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dctx, false),
-                                    child: const Text('Cancel'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(12, 4, 12, 80),
+                        itemCount: dayRecords.length,
+                        itemBuilder: (_, i) {
+                          final r = dayRecords[i];
+                          return _RecordCard(
+                            record: r,
+                            onEdit: () async {
+                              final edited = await Navigator.push<HomeRecord>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddHomeRecordPage(
+                                    record: r,
+                                    categories: cubit.allCategories,
+                                    paymentTypes: cubit.paymentTypes,
+                                    groups: context
+                                        .read<EventCubit>()
+                                        .activeEvents,
+                                    groupTotals: context
+                                        .read<EventCubit>()
+                                        .activeEventTotals,
                                   ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dctx, true),
-                                    style: TextButton.styleFrom(
-                                      foregroundColor: Colors.red,
+                                ),
+                              );
+                              if (edited != null) {
+                                cubit.updateRecord(edited);
+                              }
+                            },
+                            onDelete: () async {
+                              final ok = await showDialog<bool>(
+                                context: context,
+                                builder: (dctx) => AlertDialog(
+                                  title: const Text('Delete Record'),
+                                  content: Text(
+                                    'Are you sure you want to delete "${r.title}"?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dctx, false),
+                                      child: const Text('Cancel'),
                                     ),
-                                    child: const Text('Delete'),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (ok == true) cubit.deleteRecord(r.id);
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dctx, true),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (ok == true) cubit.deleteRecord(r.id);
+                            },
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -2135,6 +2212,9 @@ class _DayCell extends StatelessWidget {
   final bool isToday;
   final bool isSelected;
   final String amountLabel;
+
+  /// Day's income, already prefixed with '+'. Empty when there is none.
+  final String incomeLabel;
   final VoidCallback? onTap;
 
   const _DayCell({
@@ -2142,6 +2222,7 @@ class _DayCell extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.amountLabel,
+    this.incomeLabel = '',
     this.onTap,
   });
 
@@ -2149,6 +2230,7 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final hasExpense = amountLabel.isNotEmpty;
+    final hasIncome = incomeLabel.isNotEmpty;
 
     // Border priority: selected (thick blue) > today (thin blue) > default.
     final Color borderColor;
@@ -2201,6 +2283,25 @@ class _DayCell extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            // Income sits just above the expense, both right-aligned. When
+            // only one exists it takes the bottom slot on its own.
+            if (hasIncome)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    incomeLabel,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ),
+              ),
             if (hasExpense)
               Align(
                 alignment: Alignment.bottomRight,

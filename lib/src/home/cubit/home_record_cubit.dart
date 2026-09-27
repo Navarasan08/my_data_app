@@ -8,7 +8,8 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   final HomeRecordRepository _repository;
 
   HomeRecordCubit(this._repository)
-      : super(HomeRecordState(
+    : super(
+        HomeRecordState(
           records: _repository.getAll(),
           selectedDate: DateTime.now(),
           customCategories: _repository.getCustomCategories(),
@@ -16,24 +17,29 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
           currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
           showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
           monthlyStartDay: _repository.getMonthlyStartDay(),
-          weekendAdjustment:
-              weekendAdjustmentFromName(_repository.getWeekendAdjustment()),
+          weekendAdjustment: weekendAdjustmentFromName(
+            _repository.getWeekendAdjustment(),
+          ),
           isCalendarView: _repository.getIsCalendarView(),
-        ));
+        ),
+      );
 
   /// Re-emits state from the repository after a background server refresh.
   void reloadFromRepository() {
-    emit(state.copyWith(
-      records: _repository.getAll(),
-      customCategories: _repository.getCustomCategories(),
-      paymentTypes: _repository.getPaymentTypes(),
-      currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
-      showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
-      monthlyStartDay: _repository.getMonthlyStartDay(),
-      weekendAdjustment:
-          weekendAdjustmentFromName(_repository.getWeekendAdjustment()),
-      isCalendarView: _repository.getIsCalendarView(),
-    ));
+    emit(
+      state.copyWith(
+        records: _repository.getAll(),
+        customCategories: _repository.getCustomCategories(),
+        paymentTypes: _repository.getPaymentTypes(),
+        currency: HomeCurrency.fromCode(_repository.getCurrencyCode()),
+        showMonthlyCalendar: _repository.getShowMonthlyCalendar(),
+        monthlyStartDay: _repository.getMonthlyStartDay(),
+        weekendAdjustment: weekendAdjustmentFromName(
+          _repository.getWeekendAdjustment(),
+        ),
+        isCalendarView: _repository.getIsCalendarView(),
+      ),
+    );
   }
 
   void addRecord(HomeRecord record) {
@@ -56,9 +62,9 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     final target = DateTime(cur.year, cur.month + monthDelta, 1);
     final daysInTarget = DateTime(target.year, target.month + 1, 0).day;
     final day = cur.day > daysInTarget ? daysInTarget : cur.day;
-    emit(state.copyWith(
-      selectedDate: DateTime(target.year, target.month, day),
-    ));
+    emit(
+      state.copyWith(selectedDate: DateTime(target.year, target.month, day)),
+    );
   }
 
   /// Toggle a category in the filter set. If the set was empty, this starts
@@ -88,10 +94,10 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }
 
   List<HomeCategory> get allCategories => [
-        ...HomeCategory.defaults,
-        ...HomeCategory.incomeDefaults,
-        ...state.customCategories,
-      ];
+    ...HomeCategory.defaults,
+    ...HomeCategory.incomeDefaults,
+    ...state.customCategories,
+  ];
 
   /// Categories sorted by usage (most-used first). Ties keep their declared
   /// order so the strip stays stable when counts are equal.
@@ -274,10 +280,12 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     for (int i = months - 1; i >= 0; i--) {
       final month = DateTime(now.year, now.month - i, 1);
       final total = state.records
-          .where((r) =>
-              !r.isIncome &&
-              r.date.year == month.year &&
-              r.date.month == month.month)
+          .where(
+            (r) =>
+                !r.isIncome &&
+                r.date.year == month.year &&
+                r.date.month == month.month,
+          )
           .fold(0.0, (sum, r) => sum + r.amount);
       result[month] = total;
     }
@@ -294,11 +302,13 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
     for (int i = months - 1; i >= 0; i--) {
       final anchor = DateTime(now.year, now.month - i, 1);
       final w = cycleWindowForMonth(anchor.year, anchor.month);
-      final total = state.records.where((r) {
-        if (r.isIncome) return false;
-        final d = DateTime(r.date.year, r.date.month, r.date.day);
-        return !d.isBefore(w.start) && d.isBefore(w.end);
-      }).fold(0.0, (sum, r) => sum + r.amount);
+      final total = state.records
+          .where((r) {
+            if (r.isIncome) return false;
+            final d = DateTime(r.date.year, r.date.month, r.date.day);
+            return !d.isBefore(w.start) && d.isBefore(w.end);
+          })
+          .fold(0.0, (sum, r) => sum + r.amount);
       result[anchor] = total;
     }
     return result;
@@ -314,7 +324,9 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   }
 
   Map<HomeCategory, double> categoryTotalsInRange(
-      DateTime start, DateTime end) {
+    DateTime start,
+    DateTime end,
+  ) {
     final map = <HomeCategory, double>{};
     for (final r in state.records) {
       if (r.isIncome) continue;
@@ -342,8 +354,7 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
         return false;
       }
       return true;
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
     return list;
   }
 
@@ -417,10 +428,12 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       }
       return r;
     }).toList();
-    emit(state.copyWith(
-      customCategories: _repository.getCustomCategories(),
-      records: updatedRecords,
-    ));
+    emit(
+      state.copyWith(
+        customCategories: _repository.getCustomCategories(),
+        records: updatedRecords,
+      ),
+    );
   }
 
   void deleteCustomCategory(String categoryId) {
@@ -458,10 +471,12 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
       }
       return r;
     }).toList();
-    emit(state.copyWith(
-      paymentTypes: _repository.getPaymentTypes(),
-      records: updatedRecords,
-    ));
+    emit(
+      state.copyWith(
+        paymentTypes: _repository.getPaymentTypes(),
+        records: updatedRecords,
+      ),
+    );
   }
 
   /// Removes the type from the user's managed list. Existing records keep
@@ -524,13 +539,21 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
   /// view, whose grid spans the cycle (which may cross calendar months when a
   /// custom start day is set), so totals are keyed by date — not day-of-month,
   /// which can repeat within a cycle.
-  Map<DateTime, double> get dailyTotalsForSelectedCycle {
+  Map<DateTime, double> get dailyTotalsForSelectedCycle =>
+      _dailyTotalsForSelectedCycle(income: false);
+
+  /// Per-day income totals for the selected cycle, respecting the active
+  /// category filter. Counterpart of [dailyTotalsForSelectedCycle].
+  Map<DateTime, double> get dailyIncomeForSelectedCycle =>
+      _dailyTotalsForSelectedCycle(income: true);
+
+  Map<DateTime, double> _dailyTotalsForSelectedCycle({required bool income}) {
     final selected = state.selectedCategoryIds;
     final start = selectedCycleStart;
     final end = selectedCycleEnd;
     final out = <DateTime, double>{};
     for (final r in state.records) {
-      if (r.isIncome) continue;
+      if (r.isIncome != income) continue;
       final d = DateTime(r.date.year, r.date.month, r.date.day);
       if (d.isBefore(start) || !d.isBefore(end)) continue;
       if (selected.isNotEmpty && !selected.contains(r.category.id)) continue;
@@ -550,16 +573,15 @@ class HomeRecordCubit extends Cubit<HomeRecordState> {
         return false;
       }
       return true;
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 
   /// Select a specific date (used by the calendar grid to drive the records
   /// list shown below it).
   void selectDate(DateTime date) {
-    emit(state.copyWith(
-      selectedDate: DateTime(date.year, date.month, date.day),
-    ));
+    emit(
+      state.copyWith(selectedDate: DateTime(date.year, date.month, date.day)),
+    );
   }
 
   /// Records on the currently selected day. Drives the records list shown
