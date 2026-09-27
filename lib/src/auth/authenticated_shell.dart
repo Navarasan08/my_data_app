@@ -21,6 +21,8 @@ import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
 import 'package:my_data_app/src/pregnancy/pregnancy_reminder_source.dart';
 import 'package:my_data_app/src/pregnancy/repository/pregnancy_repository.dart';
+import 'package:my_data_app/src/quick_notes/cubit/quick_note_cubit.dart';
+import 'package:my_data_app/src/quick_notes/repository/quick_note_repository.dart';
 import 'package:my_data_app/src/home/repository/home_record_repository.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
@@ -89,6 +91,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final FirestoreChecklistRepository _checklistRepo;
   late final FirestorePeriodRepository _periodRepo;
   late final FirestorePregnancyRepository _pregnancyRepo;
+  late final FirestoreQuickNoteRepository _quickNoteRepo;
   late final FirestoreHomeRecordRepository _homeRecordRepo;
   late final FirestoreScheduleRepository _scheduleRepo;
   late final FirestoreFoodMenuRepository _foodMenuRepo;
@@ -115,6 +118,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
   late final ChecklistCubit _checklistCubit;
   late final PeriodCubit _periodCubit;
   late final PregnancyCubit _pregnancyCubit;
+  late final QuickNoteCubit _quickNoteCubit;
   late final HomeRecordCubit _homeRecordCubit;
   late final FoodMenuCubit _foodMenuCubit;
   late final GoalCubit _goalCubit;
@@ -146,6 +150,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _checklistRepo = FirestoreChecklistRepository(uid: uid);
     _periodRepo = FirestorePeriodRepository(uid: uid);
     _pregnancyRepo = FirestorePregnancyRepository(uid: uid);
+    _quickNoteRepo = FirestoreQuickNoteRepository(uid: uid);
     _homeRecordRepo = FirestoreHomeRecordRepository(uid: uid);
     _scheduleRepo = FirestoreScheduleRepository(uid: uid);
     _foodMenuRepo = FirestoreFoodMenuRepository(uid: uid);
@@ -183,6 +188,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
       _checklistRepo,
       _periodRepo,
       _pregnancyRepo,
+      _quickNoteRepo,
       _scheduleRepo,
       _foodMenuRepo,
       _loanRepo,
@@ -216,6 +222,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _checklistCubit = ChecklistCubit(_checklistRepo);
     _periodCubit = PeriodCubit(_periodRepo);
     _pregnancyCubit = PregnancyCubit(_pregnancyRepo);
+    _quickNoteCubit = QuickNoteCubit(_quickNoteRepo);
     _homeRecordCubit = HomeRecordCubit(_homeRecordRepo);
     _foodMenuCubit = FoodMenuCubit(_foodMenuRepo);
     _goalCubit = GoalCubit(_goalRepo);
@@ -277,6 +284,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
     _checklistCubit.close();
     _periodCubit.close();
     _pregnancyCubit.close();
+    _quickNoteCubit.close();
     _homeRecordCubit.close();
     _scheduleCubit.close();
     _foodMenuCubit.close();
@@ -308,6 +316,7 @@ class _AuthenticatedShellState extends State<AuthenticatedShell> {
         BlocProvider.value(value: _checklistCubit),
         BlocProvider.value(value: _periodCubit),
         BlocProvider.value(value: _pregnancyCubit),
+        BlocProvider.value(value: _quickNoteCubit),
         BlocProvider.value(value: _homeRecordCubit),
         BlocProvider.value(value: _scheduleCubit),
         BlocProvider.value(value: _foodMenuCubit),

@@ -7,11 +7,7 @@ class ExportOptions {
   final DateTime? from;
   final DateTime? to;
 
-  const ExportOptions({
-    required this.moduleIds,
-    this.from,
-    this.to,
-  });
+  const ExportOptions({required this.moduleIds, this.from, this.to});
 }
 
 /// Fullscreen dialog letting the user pick which modules to export and an
@@ -70,18 +66,14 @@ class _ExportOptionsPageState extends State<ExportOptionsPage> {
   }
 
   void _clearDates() => setState(() {
-        _from = null;
-        _to = null;
-      });
+    _from = null;
+    _to = null;
+  });
 
   void _submit() {
     Navigator.pop(
       context,
-      ExportOptions(
-        moduleIds: Set.of(_selected),
-        from: _from,
-        to: _to,
-      ),
+      ExportOptions(moduleIds: Set.of(_selected), from: _from, to: _to),
     );
   }
 
@@ -161,10 +153,7 @@ class _ExportOptionsPageState extends State<ExportOptionsPage> {
             child: Text(
               'Reference data (vehicles, vault, categories, etc.) ignores the '
               'date range and is exported whenever its module is selected.',
-              style: TextStyle(
-                fontSize: 12,
-                color: cs.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
             ),
           ),
           const SizedBox(height: 24),
@@ -204,12 +193,13 @@ class _ExportOptionsPageState extends State<ExportOptionsPage> {
                     },
                     title: Row(
                       children: [
-                        Icon(DataIoService.modules[i].icon,
-                            size: 20, color: cs.primary),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(DataIoService.modules[i].label),
+                        Icon(
+                          DataIoService.modules[i].icon,
+                          size: 20,
+                          color: cs.primary,
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(DataIoService.modules[i].label)),
                       ],
                     ),
                     controlAffinity: ListTileControlAffinity.trailing,

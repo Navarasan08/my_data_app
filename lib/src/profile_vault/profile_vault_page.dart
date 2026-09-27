@@ -64,10 +64,8 @@ class ProfileVaultHomePage extends StatelessWidget {
               ],
               // Section tiles
               ...VaultSection.values.map(
-                (section) => _SectionTile(
-                  section: section,
-                  count: counts[section] ?? 0,
-                ),
+                (section) =>
+                    _SectionTile(section: section, count: counts[section] ?? 0),
               ),
               const SizedBox(height: 80),
             ],
@@ -105,10 +103,11 @@ class ProfileVaultHomePage extends StatelessWidget {
                 children: VaultSection.values.map((section) {
                   return ListTile(
                     dense: true,
-                    leading:
-                        Icon(section.icon, color: section.color, size: 22),
-                    title: Text(section.label,
-                        style: const TextStyle(fontSize: 14)),
+                    leading: Icon(section.icon, color: section.color, size: 22),
+                    title: Text(
+                      section.label,
+                      style: const TextStyle(fontSize: 14),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.push(
@@ -159,8 +158,7 @@ class _SectionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            border:
-                Border(left: BorderSide(color: section.color, width: 3)),
+            border: Border(left: BorderSide(color: section.color, width: 3)),
             color: section.color.withAlpha(10),
             borderRadius: BorderRadius.circular(10),
           ),
@@ -172,13 +170,17 @@ class _SectionTile extends StatelessWidget {
                 child: Text(
                   section.label,
                   style: const TextStyle(
-                      fontSize: 14, fontWeight: FontWeight.w500),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               if (count > 0)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: section.color.withAlpha(30),
                     borderRadius: BorderRadius.circular(12),
@@ -193,8 +195,11 @@ class _SectionTile extends StatelessWidget {
                   ),
                 ),
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant, size: 20),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -250,20 +255,27 @@ class SectionDetailPage extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(section.icon,
-                          size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(
+                        section.icon,
+                        size: 48,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Add your first ${section.label}',
                         style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
                 )
               : ListView.builder(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   itemCount: entries.length,
                   itemBuilder: (_, i) => _EntryCard(entry: entries[i]),
                 ),
@@ -348,8 +360,11 @@ class _EntryCard extends StatelessWidget {
 
   Widget _moreMenu(BuildContext context, ProfileVaultCubit cubit) {
     return PopupMenuButton<String>(
-      icon: Icon(Icons.more_vert_rounded,
-          size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      icon: Icon(
+        Icons.more_vert_rounded,
+        size: 18,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       itemBuilder: (_) => const [
@@ -360,7 +375,9 @@ class _EntryCard extends StatelessWidget {
       onSelected: (val) {
         switch (val) {
           case 'share':
-            SharePlus.instance.share(ShareParams(text: entry.toShareableText()));
+            SharePlus.instance.share(
+              ShareParams(text: entry.toShareableText()),
+            );
           case 'edit':
             Navigator.push(
               context,
@@ -368,7 +385,9 @@ class _EntryCard extends StatelessWidget {
                 builder: (_) => BlocProvider.value(
                   value: cubit,
                   child: AddEntryPage(
-                      section: entry.section, existingEntry: entry),
+                    section: entry.section,
+                    existingEntry: entry,
+                  ),
                 ),
               ),
             );
@@ -380,15 +399,18 @@ class _EntryCard extends StatelessWidget {
                 content: Text('Remove "${entry.title}" permanently?'),
                 actions: [
                   TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel')),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Cancel'),
+                  ),
                   TextButton(
                     onPressed: () {
                       cubit.deleteEntry(entry.id);
                       Navigator.pop(ctx);
                     },
-                    child: const Text('Delete',
-                        style: TextStyle(color: Colors.red)),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               ),
@@ -441,7 +463,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                 icon: const Icon(Icons.share_rounded, size: 20),
                 tooltip: 'Share',
                 onPressed: () {
-                  SharePlus.instance.share(ShareParams(text: entry.toShareableText()));
+                  SharePlus.instance.share(
+                    ShareParams(text: entry.toShareableText()),
+                  );
                 },
               ),
               IconButton(
@@ -452,7 +476,9 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                     builder: (_) => BlocProvider.value(
                       value: cubit,
                       child: AddEntryPage(
-                          section: section, existingEntry: entry),
+                        section: section,
+                        existingEntry: entry,
+                      ),
                     ),
                   ),
                 ),
@@ -464,8 +490,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
             ],
           ),
           body: ListView(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             children: [
               ...filledFields.map((f) {
                 final sensitive = _isSensitive(f.key);
@@ -477,12 +502,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
                   isRevealed: revealed,
                   onToggleReveal: sensitive
                       ? () => setState(() {
-                            if (revealed) {
-                              _revealedKeys.remove(f.key);
-                            } else {
-                              _revealedKeys.add(f.key);
-                            }
-                          })
+                          if (revealed) {
+                            _revealedKeys.remove(f.key);
+                          } else {
+                            _revealedKeys.add(f.key);
+                          }
+                        })
                       : null,
                 );
               }),
@@ -490,8 +515,7 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               // Share selected button
               if (filledFields.isNotEmpty)
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      _showSelectiveShareSheet(context, entry),
+                  onPressed: () => _showSelectiveShareSheet(context, entry),
                   icon: const Icon(Icons.checklist_rounded, size: 18),
                   label: const Text('Share Selected Fields'),
                   style: OutlinedButton.styleFrom(
@@ -502,14 +526,12 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               // Timestamps
               Text(
                 'Created: ${DateFormat('dd MMM yyyy, hh:mm a').format(entry.createdAt)}',
-                style:
-                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 2),
               Text(
                 'Updated: ${DateFormat('dd MMM yyyy, hh:mm a').format(entry.updatedAt)}',
-                style:
-                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
             ],
@@ -525,7 +547,10 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
   }
 
   void _confirmDelete(
-      BuildContext context, ProfileVaultCubit cubit, VaultEntry entry) {
+    BuildContext context,
+    ProfileVaultCubit cubit,
+    VaultEntry entry,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -533,16 +558,16 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
         content: Text('Remove "${entry.title}" permanently?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               cubit.deleteEntry(entry.id);
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -572,32 +597,32 @@ class _EntryDetailPageState extends State<EntryDetailPage> {
               children: [
                 const Text(
                   'Select fields to share',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                ...filledKeys.map((key) => CheckboxListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(key,
-                          style: const TextStyle(fontSize: 13)),
-                      subtitle: Text(
-                        entry.fields[key]!,
-                        style: const TextStyle(fontSize: 12),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      value: selected.contains(key),
-                      onChanged: (val) {
-                        setSheetState(() {
-                          if (val == true) {
-                            selected.add(key);
-                          } else {
-                            selected.remove(key);
-                          }
-                        });
-                      },
-                    )),
+                ...filledKeys.map(
+                  (key) => CheckboxListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(key, style: const TextStyle(fontSize: 13)),
+                    subtitle: Text(
+                      entry.fields[key]!,
+                      style: const TextStyle(fontSize: 12),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    value: selected.contains(key),
+                    onChanged: (val) {
+                      setSheetState(() {
+                        if (val == true) {
+                          selected.add(key);
+                        } else {
+                          selected.remove(key);
+                        }
+                      });
+                    },
+                  ),
+                ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
                   onPressed: selected.isEmpty
@@ -661,12 +686,10 @@ class _FieldTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(height: 1),
-                  Text(displayValue,
-                      style: const TextStyle(fontSize: 14)),
+                  Text(displayValue, style: const TextStyle(fontSize: 14)),
                 ],
               ),
             ),
@@ -688,8 +711,11 @@ class _FieldTile extends StatelessWidget {
               onTap: () => _copyValue(context),
               child: Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Icon(Icons.copy_rounded,
-                    size: 16, color: cs.onSurfaceVariant),
+                child: Icon(
+                  Icons.copy_rounded,
+                  size: 16,
+                  color: cs.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -715,8 +741,7 @@ class AddEntryPage extends StatefulWidget {
   final VaultSection section;
   final VaultEntry? existingEntry;
 
-  const AddEntryPage(
-      {super.key, required this.section, this.existingEntry});
+  const AddEntryPage({super.key, required this.section, this.existingEntry});
 
   @override
   State<AddEntryPage> createState() => _AddEntryPageState();
@@ -776,8 +801,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
     return null;
   }
 
-  bool _isDateField(String label) =>
-      label.toLowerCase().contains('date');
+  bool _isDateField(String label) => label.toLowerCase().contains('date');
 
   @override
   Widget build(BuildContext context) {
@@ -786,15 +810,16 @@ class _AddEntryPageState extends State<AddEntryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEdit
-            ? 'Edit ${widget.existingEntry!.title}'
-            : 'Add ${widget.section.label}'),
+        title: Text(
+          _isEdit
+              ? 'Edit ${widget.existingEntry!.title}'
+              : 'Add ${widget.section.label}',
+        ),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           children: [
             TextFormField(
               controller: _titleController,
@@ -833,8 +858,8 @@ class _AddEntryPageState extends State<AddEntryPage> {
       return Padding(
         padding: const EdgeInsets.only(bottom: 10),
         child: DropdownButtonFormField<String>(
-          initialValue: controller.text.isNotEmpty &&
-                  dropdown.contains(controller.text)
+          initialValue:
+              controller.text.isNotEmpty && dropdown.contains(controller.text)
               ? controller.text
               : null,
           decoration: InputDecoration(
@@ -843,9 +868,12 @@ class _AddEntryPageState extends State<AddEntryPage> {
             border: const OutlineInputBorder(),
           ),
           items: dropdown
-              .map((d) => DropdownMenuItem(
+              .map(
+                (d) => DropdownMenuItem(
                   value: d,
-                  child: Text(d, style: const TextStyle(fontSize: 14))))
+                  child: Text(d, style: const TextStyle(fontSize: 14)),
+                ),
+              )
               .toList(),
           onChanged: (val) => controller.text = val ?? '',
         ),
@@ -862,8 +890,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
             labelText: label,
             isDense: true,
             border: const OutlineInputBorder(),
-            suffixIcon:
-                const Icon(Icons.calendar_today_rounded, size: 18),
+            suffixIcon: const Icon(Icons.calendar_today_rounded, size: 18),
           ),
           onTap: () async {
             final picked = await showDatePicker(
@@ -873,8 +900,7 @@ class _AddEntryPageState extends State<AddEntryPage> {
               lastDate: DateTime(2100),
             );
             if (picked != null) {
-              controller.text =
-                  DateFormat('dd/MM/yyyy').format(picked);
+              controller.text = DateFormat('dd/MM/yyyy').format(picked);
             }
           },
         ),
@@ -926,20 +952,24 @@ class _AddEntryPageState extends State<AddEntryPage> {
     }
 
     if (_isEdit) {
-      cubit.updateEntry(widget.existingEntry!.copyWith(
-        title: _titleController.text.trim(),
-        fields: fields,
-        updatedAt: now,
-      ));
+      cubit.updateEntry(
+        widget.existingEntry!.copyWith(
+          title: _titleController.text.trim(),
+          fields: fields,
+          updatedAt: now,
+        ),
+      );
     } else {
-      cubit.addEntry(VaultEntry(
-        id: now.microsecondsSinceEpoch.toString(),
-        section: widget.section,
-        title: _titleController.text.trim(),
-        fields: fields,
-        createdAt: now,
-        updatedAt: now,
-      ));
+      cubit.addEntry(
+        VaultEntry(
+          id: now.microsecondsSinceEpoch.toString(),
+          section: widget.section,
+          title: _titleController.text.trim(),
+          fields: fields,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
     }
 
     Navigator.pop(context);
@@ -978,7 +1008,9 @@ class _SearchPageState extends State<_SearchPage> {
               child: Text(
                 'Type to search across all entries',
                 style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                ),
               ),
             )
           : _buildResults(context, cubit),
@@ -991,8 +1023,10 @@ class _SearchPageState extends State<_SearchPage> {
       return Center(
         child: Text(
           'No results found',
-          style:
-              TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 14),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize: 14,
+          ),
         ),
       );
     }
@@ -1008,8 +1042,7 @@ class _SearchPageState extends State<_SearchPage> {
       children: grouped.entries.expand((group) {
         return [
           Padding(
-            padding:
-                const EdgeInsets.only(left: 4, top: 8, bottom: 4),
+            padding: const EdgeInsets.only(left: 4, top: 8, bottom: 4),
             child: Text(
               group.key.label,
               style: TextStyle(

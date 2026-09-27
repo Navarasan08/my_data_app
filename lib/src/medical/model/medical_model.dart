@@ -7,16 +7,23 @@ enum Gender { male, female, other }
 extension GenderExt on Gender {
   String get label {
     switch (this) {
-      case Gender.male: return 'Male';
-      case Gender.female: return 'Female';
-      case Gender.other: return 'Other';
+      case Gender.male:
+        return 'Male';
+      case Gender.female:
+        return 'Female';
+      case Gender.other:
+        return 'Other';
     }
   }
+
   IconData get icon {
     switch (this) {
-      case Gender.male: return Icons.male_rounded;
-      case Gender.female: return Icons.female_rounded;
-      case Gender.other: return Icons.person_rounded;
+      case Gender.male:
+        return Icons.male_rounded;
+      case Gender.female:
+        return Icons.female_rounded;
+      case Gender.other:
+        return Icons.person_rounded;
     }
   }
 }
@@ -26,15 +33,24 @@ enum BloodGroup { aPos, aNeg, bPos, bNeg, abPos, abNeg, oPos, oNeg, unknown }
 extension BloodGroupExt on BloodGroup {
   String get label {
     switch (this) {
-      case BloodGroup.aPos: return 'A+';
-      case BloodGroup.aNeg: return 'A-';
-      case BloodGroup.bPos: return 'B+';
-      case BloodGroup.bNeg: return 'B-';
-      case BloodGroup.abPos: return 'AB+';
-      case BloodGroup.abNeg: return 'AB-';
-      case BloodGroup.oPos: return 'O+';
-      case BloodGroup.oNeg: return 'O-';
-      case BloodGroup.unknown: return 'Unknown';
+      case BloodGroup.aPos:
+        return 'A+';
+      case BloodGroup.aNeg:
+        return 'A-';
+      case BloodGroup.bPos:
+        return 'B+';
+      case BloodGroup.bNeg:
+        return 'B-';
+      case BloodGroup.abPos:
+        return 'AB+';
+      case BloodGroup.abNeg:
+        return 'AB-';
+      case BloodGroup.oPos:
+        return 'O+';
+      case BloodGroup.oNeg:
+        return 'O-';
+      case BloodGroup.unknown:
+        return 'Unknown';
     }
   }
 }
@@ -44,22 +60,35 @@ enum Relation { self, spouse, child, parent, sibling, other }
 extension RelationExt on Relation {
   String get label {
     switch (this) {
-      case Relation.self: return 'Self';
-      case Relation.spouse: return 'Spouse';
-      case Relation.child: return 'Child';
-      case Relation.parent: return 'Parent';
-      case Relation.sibling: return 'Sibling';
-      case Relation.other: return 'Other';
+      case Relation.self:
+        return 'Self';
+      case Relation.spouse:
+        return 'Spouse';
+      case Relation.child:
+        return 'Child';
+      case Relation.parent:
+        return 'Parent';
+      case Relation.sibling:
+        return 'Sibling';
+      case Relation.other:
+        return 'Other';
     }
   }
+
   IconData get icon {
     switch (this) {
-      case Relation.self: return Icons.person_rounded;
-      case Relation.spouse: return Icons.favorite_rounded;
-      case Relation.child: return Icons.child_care_rounded;
-      case Relation.parent: return Icons.elderly_rounded;
-      case Relation.sibling: return Icons.group_rounded;
-      case Relation.other: return Icons.person_outline_rounded;
+      case Relation.self:
+        return Icons.person_rounded;
+      case Relation.spouse:
+        return Icons.favorite_rounded;
+      case Relation.child:
+        return Icons.child_care_rounded;
+      case Relation.parent:
+        return Icons.elderly_rounded;
+      case Relation.sibling:
+        return Icons.group_rounded;
+      case Relation.other:
+        return Icons.person_outline_rounded;
     }
   }
 }
@@ -107,17 +136,28 @@ class FamilyMember {
   }
 
   FamilyMember copyWith({
-    String? id, String? name, Relation? relation, Gender? gender,
-    DateTime? dateOfBirth, BloodGroup? bloodGroup,
-    double? height, double? weight,
-    List<String>? allergies, List<String>? chronicConditions,
-    String? emergencyContact, String? insuranceInfo, String? notes,
+    String? id,
+    String? name,
+    Relation? relation,
+    Gender? gender,
+    DateTime? dateOfBirth,
+    BloodGroup? bloodGroup,
+    double? height,
+    double? weight,
+    List<String>? allergies,
+    List<String>? chronicConditions,
+    String? emergencyContact,
+    String? insuranceInfo,
+    String? notes,
   }) => FamilyMember(
-    id: id ?? this.id, name: name ?? this.name,
-    relation: relation ?? this.relation, gender: gender ?? this.gender,
+    id: id ?? this.id,
+    name: name ?? this.name,
+    relation: relation ?? this.relation,
+    gender: gender ?? this.gender,
     dateOfBirth: dateOfBirth ?? this.dateOfBirth,
     bloodGroup: bloodGroup ?? this.bloodGroup,
-    height: height ?? this.height, weight: weight ?? this.weight,
+    height: height ?? this.height,
+    weight: weight ?? this.weight,
     allergies: allergies ?? this.allergies,
     chronicConditions: chronicConditions ?? this.chronicConditions,
     emergencyContact: emergencyContact ?? this.emergencyContact,
@@ -126,26 +166,46 @@ class FamilyMember {
   );
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'name': name,
-    'relation': relation.index, 'gender': gender.index,
+    'id': id,
+    'name': name,
+    'relation': relation.index,
+    'gender': gender.index,
     'dateOfBirth': dateOfBirth?.toIso8601String(),
     'bloodGroup': bloodGroup.index,
-    'height': height, 'weight': weight,
-    'allergies': allergies, 'chronicConditions': chronicConditions,
+    'height': height,
+    'weight': weight,
+    'allergies': allergies,
+    'chronicConditions': chronicConditions,
     'emergencyContact': emergencyContact,
-    'insuranceInfo': insuranceInfo, 'notes': notes,
+    'insuranceInfo': insuranceInfo,
+    'notes': notes,
   };
 
   factory FamilyMember.fromJson(Map<String, dynamic> json) => FamilyMember(
-    id: json['id'] as String, name: json['name'] as String,
-    relation: Relation.values[(json['relation'] as int).clamp(0, Relation.values.length - 1)],
-    gender: json['gender'] != null ? Gender.values[(json['gender'] as int).clamp(0, Gender.values.length - 1)] : Gender.other,
-    dateOfBirth: json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth'] as String) : null,
-    bloodGroup: json['bloodGroup'] != null ? BloodGroup.values[(json['bloodGroup'] as int).clamp(0, BloodGroup.values.length - 1)] : BloodGroup.unknown,
+    id: json['id'] as String,
+    name: json['name'] as String,
+    relation: Relation
+        .values[(json['relation'] as int).clamp(0, Relation.values.length - 1)],
+    gender: json['gender'] != null
+        ? Gender.values[(json['gender'] as int).clamp(
+            0,
+            Gender.values.length - 1,
+          )]
+        : Gender.other,
+    dateOfBirth: json['dateOfBirth'] != null
+        ? DateTime.parse(json['dateOfBirth'] as String)
+        : null,
+    bloodGroup: json['bloodGroup'] != null
+        ? BloodGroup.values[(json['bloodGroup'] as int).clamp(
+            0,
+            BloodGroup.values.length - 1,
+          )]
+        : BloodGroup.unknown,
     height: (json['height'] as num?)?.toDouble(),
     weight: (json['weight'] as num?)?.toDouble(),
     allergies: (json['allergies'] as List<dynamic>?)?.cast<String>() ?? [],
-    chronicConditions: (json['chronicConditions'] as List<dynamic>?)?.cast<String>() ?? [],
+    chronicConditions:
+        (json['chronicConditions'] as List<dynamic>?)?.cast<String>() ?? [],
     emergencyContact: json['emergencyContact'] as String?,
     insuranceInfo: json['insuranceInfo'] as String?,
     notes: json['notes'] as String?,
@@ -154,46 +214,85 @@ class FamilyMember {
 
 // ── Medical Record ─────────────────────────────────────────────────────────
 
-enum RecordType { consultation, labReport, prescription, vaccination, surgery, hospitalization, dental, eyeCheckup, other }
+enum RecordType {
+  consultation,
+  labReport,
+  prescription,
+  vaccination,
+  surgery,
+  hospitalization,
+  dental,
+  eyeCheckup,
+  other,
+}
 
 extension RecordTypeExt on RecordType {
   String get label {
     switch (this) {
-      case RecordType.consultation: return 'Consultation';
-      case RecordType.labReport: return 'Lab Report';
-      case RecordType.prescription: return 'Prescription';
-      case RecordType.vaccination: return 'Vaccination';
-      case RecordType.surgery: return 'Surgery';
-      case RecordType.hospitalization: return 'Hospitalization';
-      case RecordType.dental: return 'Dental';
-      case RecordType.eyeCheckup: return 'Eye Checkup';
-      case RecordType.other: return 'Other';
+      case RecordType.consultation:
+        return 'Consultation';
+      case RecordType.labReport:
+        return 'Lab Report';
+      case RecordType.prescription:
+        return 'Prescription';
+      case RecordType.vaccination:
+        return 'Vaccination';
+      case RecordType.surgery:
+        return 'Surgery';
+      case RecordType.hospitalization:
+        return 'Hospitalization';
+      case RecordType.dental:
+        return 'Dental';
+      case RecordType.eyeCheckup:
+        return 'Eye Checkup';
+      case RecordType.other:
+        return 'Other';
     }
   }
+
   IconData get icon {
     switch (this) {
-      case RecordType.consultation: return Icons.medical_services_rounded;
-      case RecordType.labReport: return Icons.science_rounded;
-      case RecordType.prescription: return Icons.medication_rounded;
-      case RecordType.vaccination: return Icons.vaccines_rounded;
-      case RecordType.surgery: return Icons.local_hospital_rounded;
-      case RecordType.hospitalization: return Icons.hotel_rounded;
-      case RecordType.dental: return Icons.health_and_safety_rounded;
-      case RecordType.eyeCheckup: return Icons.visibility_rounded;
-      case RecordType.other: return Icons.note_alt_rounded;
+      case RecordType.consultation:
+        return Icons.medical_services_rounded;
+      case RecordType.labReport:
+        return Icons.science_rounded;
+      case RecordType.prescription:
+        return Icons.medication_rounded;
+      case RecordType.vaccination:
+        return Icons.vaccines_rounded;
+      case RecordType.surgery:
+        return Icons.local_hospital_rounded;
+      case RecordType.hospitalization:
+        return Icons.hotel_rounded;
+      case RecordType.dental:
+        return Icons.health_and_safety_rounded;
+      case RecordType.eyeCheckup:
+        return Icons.visibility_rounded;
+      case RecordType.other:
+        return Icons.note_alt_rounded;
     }
   }
+
   Color get color {
     switch (this) {
-      case RecordType.consultation: return Colors.blue;
-      case RecordType.labReport: return Colors.purple;
-      case RecordType.prescription: return Colors.teal;
-      case RecordType.vaccination: return Colors.green;
-      case RecordType.surgery: return Colors.red;
-      case RecordType.hospitalization: return Colors.orange;
-      case RecordType.dental: return Colors.cyan;
-      case RecordType.eyeCheckup: return Colors.indigo;
-      case RecordType.other: return Colors.grey;
+      case RecordType.consultation:
+        return Colors.blue;
+      case RecordType.labReport:
+        return Colors.purple;
+      case RecordType.prescription:
+        return Colors.teal;
+      case RecordType.vaccination:
+        return Colors.green;
+      case RecordType.surgery:
+        return Colors.red;
+      case RecordType.hospitalization:
+        return Colors.orange;
+      case RecordType.dental:
+        return Colors.cyan;
+      case RecordType.eyeCheckup:
+        return Colors.indigo;
+      case RecordType.other:
+        return Colors.grey;
     }
   }
 }
@@ -236,54 +335,86 @@ class MedicalRecord {
   });
 
   MedicalRecord copyWith({
-    String? id, String? memberId, RecordType? type, String? title,
-    String? doctorName, String? hospitalName, String? speciality,
-    DateTime? date, DateTime? followUpDate,
-    String? diagnosis, String? notes,
-    List<Medication>? medications, List<String>? symptoms,
-    List<LabResult>? labResults, double? amount, bool? isCovered,
+    String? id,
+    String? memberId,
+    RecordType? type,
+    String? title,
+    String? doctorName,
+    String? hospitalName,
+    String? speciality,
+    DateTime? date,
+    DateTime? followUpDate,
+    String? diagnosis,
+    String? notes,
+    List<Medication>? medications,
+    List<String>? symptoms,
+    List<LabResult>? labResults,
+    double? amount,
+    bool? isCovered,
   }) => MedicalRecord(
-    id: id ?? this.id, memberId: memberId ?? this.memberId,
-    type: type ?? this.type, title: title ?? this.title,
+    id: id ?? this.id,
+    memberId: memberId ?? this.memberId,
+    type: type ?? this.type,
+    title: title ?? this.title,
     doctorName: doctorName ?? this.doctorName,
     hospitalName: hospitalName ?? this.hospitalName,
     speciality: speciality ?? this.speciality,
-    date: date ?? this.date, followUpDate: followUpDate ?? this.followUpDate,
-    diagnosis: diagnosis ?? this.diagnosis, notes: notes ?? this.notes,
+    date: date ?? this.date,
+    followUpDate: followUpDate ?? this.followUpDate,
+    diagnosis: diagnosis ?? this.diagnosis,
+    notes: notes ?? this.notes,
     medications: medications ?? this.medications,
     symptoms: symptoms ?? this.symptoms,
     labResults: labResults ?? this.labResults,
-    amount: amount ?? this.amount, isCovered: isCovered ?? this.isCovered,
+    amount: amount ?? this.amount,
+    isCovered: isCovered ?? this.isCovered,
   );
 
   Map<String, dynamic> toJson() => {
-    'id': id, 'memberId': memberId, 'type': type.index,
-    'title': title, 'doctorName': doctorName,
-    'hospitalName': hospitalName, 'speciality': speciality,
+    'id': id,
+    'memberId': memberId,
+    'type': type.index,
+    'title': title,
+    'doctorName': doctorName,
+    'hospitalName': hospitalName,
+    'speciality': speciality,
     'date': date.toIso8601String(),
     'followUpDate': followUpDate?.toIso8601String(),
-    'diagnosis': diagnosis, 'notes': notes,
+    'diagnosis': diagnosis,
+    'notes': notes,
     'medications': medications.map((m) => m.toJson()).toList(),
     'symptoms': symptoms,
     'labResults': labResults.map((l) => l.toJson()).toList(),
-    'amount': amount, 'isCovered': isCovered,
+    'amount': amount,
+    'isCovered': isCovered,
   };
 
   factory MedicalRecord.fromJson(Map<String, dynamic> json) => MedicalRecord(
     id: json['id'] as String,
     memberId: json['memberId'] as String,
-    type: RecordType.values[(json['type'] as int).clamp(0, RecordType.values.length - 1)],
+    type: RecordType
+        .values[(json['type'] as int).clamp(0, RecordType.values.length - 1)],
     title: json['title'] as String,
     doctorName: json['doctorName'] as String?,
     hospitalName: json['hospitalName'] as String?,
     speciality: json['speciality'] as String?,
     date: DateTime.parse(json['date'] as String),
-    followUpDate: json['followUpDate'] != null ? DateTime.parse(json['followUpDate'] as String) : null,
+    followUpDate: json['followUpDate'] != null
+        ? DateTime.parse(json['followUpDate'] as String)
+        : null,
     diagnosis: json['diagnosis'] as String?,
     notes: json['notes'] as String?,
-    medications: (json['medications'] as List<dynamic>?)?.map((m) => Medication.fromJson(m as Map<String, dynamic>)).toList() ?? [],
+    medications:
+        (json['medications'] as List<dynamic>?)
+            ?.map((m) => Medication.fromJson(m as Map<String, dynamic>))
+            .toList() ??
+        [],
     symptoms: (json['symptoms'] as List<dynamic>?)?.cast<String>() ?? [],
-    labResults: (json['labResults'] as List<dynamic>?)?.map((l) => LabResult.fromJson(l as Map<String, dynamic>)).toList() ?? [],
+    labResults:
+        (json['labResults'] as List<dynamic>?)
+            ?.map((l) => LabResult.fromJson(l as Map<String, dynamic>))
+            .toList() ??
+        [],
     amount: (json['amount'] as num?)?.toDouble(),
     isCovered: json['isCovered'] as bool? ?? false,
   );
@@ -291,17 +422,30 @@ class MedicalRecord {
 
 // ── Medication ─────────────────────────────────────────────────────────────
 
-enum MedicationFrequency { onceDaily, twiceDaily, thriceDaily, asNeeded, weekly, custom }
+enum MedicationFrequency {
+  onceDaily,
+  twiceDaily,
+  thriceDaily,
+  asNeeded,
+  weekly,
+  custom,
+}
 
 extension MedicationFrequencyExt on MedicationFrequency {
   String get label {
     switch (this) {
-      case MedicationFrequency.onceDaily: return 'Once daily';
-      case MedicationFrequency.twiceDaily: return 'Twice daily';
-      case MedicationFrequency.thriceDaily: return 'Thrice daily';
-      case MedicationFrequency.asNeeded: return 'As needed';
-      case MedicationFrequency.weekly: return 'Weekly';
-      case MedicationFrequency.custom: return 'Custom';
+      case MedicationFrequency.onceDaily:
+        return 'Once daily';
+      case MedicationFrequency.twiceDaily:
+        return 'Twice daily';
+      case MedicationFrequency.thriceDaily:
+        return 'Thrice daily';
+      case MedicationFrequency.asNeeded:
+        return 'As needed';
+      case MedicationFrequency.weekly:
+        return 'Weekly';
+      case MedicationFrequency.custom:
+        return 'Custom';
     }
   }
 }
@@ -311,10 +455,14 @@ enum MealTiming { beforeFood, afterFood, withFood, anytime }
 extension MealTimingExt on MealTiming {
   String get label {
     switch (this) {
-      case MealTiming.beforeFood: return 'Before food';
-      case MealTiming.afterFood: return 'After food';
-      case MealTiming.withFood: return 'With food';
-      case MealTiming.anytime: return 'Anytime';
+      case MealTiming.beforeFood:
+        return 'Before food';
+      case MealTiming.afterFood:
+        return 'After food';
+      case MealTiming.withFood:
+        return 'With food';
+      case MealTiming.anytime:
+        return 'Anytime';
     }
   }
 }
@@ -363,37 +511,69 @@ class Medication {
   }
 
   Medication copyWith({
-    String? name, String? dosage, MedicationFrequency? frequency,
-    MealTiming? mealTiming, DateTime? startDate, DateTime? endDate,
-    bool? isActive, String? notes,
-    bool? morning, bool? afternoon, bool? evening, bool? night,
+    String? name,
+    String? dosage,
+    MedicationFrequency? frequency,
+    MealTiming? mealTiming,
+    DateTime? startDate,
+    DateTime? endDate,
+    bool? isActive,
+    String? notes,
+    bool? morning,
+    bool? afternoon,
+    bool? evening,
+    bool? night,
   }) => Medication(
-    name: name ?? this.name, dosage: dosage ?? this.dosage,
+    name: name ?? this.name,
+    dosage: dosage ?? this.dosage,
     frequency: frequency ?? this.frequency,
     mealTiming: mealTiming ?? this.mealTiming,
-    startDate: startDate ?? this.startDate, endDate: endDate ?? this.endDate,
-    isActive: isActive ?? this.isActive, notes: notes ?? this.notes,
-    morning: morning ?? this.morning, afternoon: afternoon ?? this.afternoon,
-    evening: evening ?? this.evening, night: night ?? this.night,
+    startDate: startDate ?? this.startDate,
+    endDate: endDate ?? this.endDate,
+    isActive: isActive ?? this.isActive,
+    notes: notes ?? this.notes,
+    morning: morning ?? this.morning,
+    afternoon: afternoon ?? this.afternoon,
+    evening: evening ?? this.evening,
+    night: night ?? this.night,
   );
 
   Map<String, dynamic> toJson() => {
-    'name': name, 'dosage': dosage,
-    'frequency': frequency.index, 'mealTiming': mealTiming.index,
+    'name': name,
+    'dosage': dosage,
+    'frequency': frequency.index,
+    'mealTiming': mealTiming.index,
     'startDate': startDate?.toIso8601String(),
     'endDate': endDate?.toIso8601String(),
-    'isActive': isActive, 'notes': notes,
-    'morning': morning, 'afternoon': afternoon,
-    'evening': evening, 'night': night,
+    'isActive': isActive,
+    'notes': notes,
+    'morning': morning,
+    'afternoon': afternoon,
+    'evening': evening,
+    'night': night,
   };
 
   factory Medication.fromJson(Map<String, dynamic> json) => Medication(
     name: json['name'] as String,
     dosage: json['dosage'] as String?,
-    frequency: json['frequency'] != null ? MedicationFrequency.values[(json['frequency'] as int).clamp(0, MedicationFrequency.values.length - 1)] : MedicationFrequency.onceDaily,
-    mealTiming: json['mealTiming'] != null ? MealTiming.values[(json['mealTiming'] as int).clamp(0, MealTiming.values.length - 1)] : MealTiming.afterFood,
-    startDate: json['startDate'] != null ? DateTime.parse(json['startDate'] as String) : null,
-    endDate: json['endDate'] != null ? DateTime.parse(json['endDate'] as String) : null,
+    frequency: json['frequency'] != null
+        ? MedicationFrequency.values[(json['frequency'] as int).clamp(
+            0,
+            MedicationFrequency.values.length - 1,
+          )]
+        : MedicationFrequency.onceDaily,
+    mealTiming: json['mealTiming'] != null
+        ? MealTiming.values[(json['mealTiming'] as int).clamp(
+            0,
+            MealTiming.values.length - 1,
+          )]
+        : MealTiming.afterFood,
+    startDate: json['startDate'] != null
+        ? DateTime.parse(json['startDate'] as String)
+        : null,
+    endDate: json['endDate'] != null
+        ? DateTime.parse(json['endDate'] as String)
+        : null,
     isActive: json['isActive'] as bool? ?? true,
     notes: json['notes'] as String?,
     morning: json['morning'] as bool? ?? false,
@@ -421,8 +601,11 @@ class LabResult {
   });
 
   LabResult copyWith({
-    String? testName, String? value, String? unit,
-    String? normalRange, bool? isAbnormal,
+    String? testName,
+    String? value,
+    String? unit,
+    String? normalRange,
+    bool? isAbnormal,
   }) => LabResult(
     testName: testName ?? this.testName,
     value: value ?? this.value,
@@ -432,8 +615,11 @@ class LabResult {
   );
 
   Map<String, dynamic> toJson() => {
-    'testName': testName, 'value': value, 'unit': unit,
-    'normalRange': normalRange, 'isAbnormal': isAbnormal,
+    'testName': testName,
+    'value': value,
+    'unit': unit,
+    'normalRange': normalRange,
+    'isAbnormal': isAbnormal,
   };
 
   factory LabResult.fromJson(Map<String, dynamic> json) => LabResult(

@@ -14,7 +14,10 @@ class DietPage extends StatelessWidget {
     return BlocBuilder<DietCubit, DietState>(
       builder: (context, state) {
         final cubit = context.read<DietCubit>();
-        final isCurrentMonth = _isSameMonth(state.selectedMonth, DateTime.now());
+        final isCurrentMonth = _isSameMonth(
+          state.selectedMonth,
+          DateTime.now(),
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -41,8 +44,10 @@ class DietPage extends StatelessWidget {
             children: [
               // Month nav
               Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 child: Row(
                   children: [
                     IconButton(
@@ -69,8 +74,10 @@ class DietPage extends StatelessWidget {
                     if (!isCurrentMonth)
                       TextButton(
                         onPressed: cubit.resetToCurrentMonth,
-                        child: const Text('Today',
-                            style: TextStyle(fontSize: 12)),
+                        child: const Text(
+                          'Today',
+                          style: TextStyle(fontSize: 12),
+                        ),
                       ),
                   ],
                 ),
@@ -79,9 +86,7 @@ class DietPage extends StatelessWidget {
 
               Expanded(
                 child: state.items.isEmpty
-                    ? _EmptyState(
-                        onAdd: () => _openAddItem(context, cubit),
-                      )
+                    ? _EmptyState(onAdd: () => _openAddItem(context, cubit))
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(12, 8, 12, 90),
                         itemCount: state.items.length,
@@ -91,8 +96,7 @@ class DietPage extends StatelessWidget {
                             item: item,
                             cubit: cubit,
                             onTap: () => _openItemDetail(context, cubit, item),
-                            onLogTap: () =>
-                                _openAddEntry(context, cubit, item),
+                            onLogTap: () => _openAddEntry(context, cubit, item),
                           );
                         },
                       ),
@@ -115,8 +119,11 @@ class DietPage extends StatelessWidget {
 
   // ── Bottom sheets / navigation ──────────────────────────────────────────
 
-  Future<void> _openAddItem(BuildContext context, DietCubit cubit,
-      {FoodItem? existing}) async {
+  Future<void> _openAddItem(
+    BuildContext context,
+    DietCubit cubit, {
+    FoodItem? existing,
+  }) async {
     final result = await showModalBottomSheet<FoodItem>(
       context: context,
       isScrollControlled: true,
@@ -134,7 +141,10 @@ class DietPage extends StatelessWidget {
   }
 
   Future<void> _openAddEntry(
-      BuildContext context, DietCubit cubit, FoodItem item) async {
+    BuildContext context,
+    DietCubit cubit,
+    FoodItem item,
+  ) async {
     final result = await showModalBottomSheet<FoodEntry>(
       context: context,
       isScrollControlled: true,
@@ -146,8 +156,7 @@ class DietPage extends StatelessWidget {
     if (result != null) cubit.addEntry(result);
   }
 
-  void _openItemDetail(
-      BuildContext context, DietCubit cubit, FoodItem item) {
+  void _openItemDetail(BuildContext context, DietCubit cubit, FoodItem item) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -182,8 +191,9 @@ class _FoodItemCard extends StatelessWidget {
     final remaining = cubit.remainingThisMonth(item);
     final limit = item.monthlyLimit;
     final exceeded = limit != null && consumed > limit;
-    final progress =
-        limit != null && limit > 0 ? (consumed / limit).clamp(0, 1).toDouble() : 0.0;
+    final progress = limit != null && limit > 0
+        ? (consumed / limit).clamp(0, 1).toDouble()
+        : 0.0;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -313,8 +323,7 @@ class _RemainingBadge extends StatelessWidget {
     final qStr = remaining % 1 == 0
         ? remaining.toInt().toString()
         : remaining.toStringAsFixed(1);
-    final label =
-        unitLabel == null || unitLabel!.isEmpty ? '' : ' $unitLabel';
+    final label = unitLabel == null || unitLabel!.isEmpty ? '' : ' $unitLabel';
     final color = exceeded ? Colors.red : Colors.green;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -345,8 +354,11 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.restaurant_menu_rounded,
-              size: 64, color: cs.onSurfaceVariant),
+          Icon(
+            Icons.restaurant_menu_rounded,
+            size: 64,
+            color: cs.onSurfaceVariant,
+          ),
           const SizedBox(height: 12),
           const Text(
             'No food items yet',
@@ -396,8 +408,9 @@ class _FoodItemFormState extends State<_FoodItemForm> {
     if (e != null) {
       _nameCtrl.text = e.name;
       _unitCtrl.text = e.unitLabel ?? '';
-      _limitCtrl.text =
-          e.monthlyLimit == null ? '' : _stripTrailing(e.monthlyLimit!);
+      _limitCtrl.text = e.monthlyLimit == null
+          ? ''
+          : _stripTrailing(e.monthlyLimit!);
       _iconIndex = e.iconIndex;
       _colorIndex = e.colorIndex;
     }
@@ -469,7 +482,9 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                 Text(
                   _isEditing ? 'Edit Food Item' : 'Add Food Item',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 16),
 
@@ -481,7 +496,8 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                       color: previewColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: previewColor.withValues(alpha: 0.4)),
+                        color: previewColor.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -489,9 +505,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                         Icon(previewIcon, color: previewColor, size: 26),
                         const SizedBox(width: 10),
                         Text(
-                          _nameCtrl.text.isEmpty
-                              ? 'Preview'
-                              : _nameCtrl.text,
+                          _nameCtrl.text.isEmpty ? 'Preview' : _nameCtrl.text,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -569,8 +583,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 8,
                     mainAxisSpacing: 6,
                     crossAxisSpacing: 6,
@@ -594,8 +607,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                         child: Icon(
                           FoodItem.availableIcons[i],
                           size: 20,
-                          color:
-                              selected ? previewColor : cs.onSurfaceVariant,
+                          color: selected ? previewColor : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -615,8 +627,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: List.generate(
-                      FoodItem.availableColors.length, (i) {
+                  children: List.generate(FoodItem.availableColors.length, (i) {
                     final c = FoodItem.availableColors[i];
                     final selected = _colorIndex == i;
                     return InkWell(
@@ -630,12 +641,14 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                           shape: BoxShape.circle,
                           border: selected
                               ? Border.all(color: Colors.black, width: 3)
-                              : Border.all(
-                                  color: cs.outline, width: 1),
+                              : Border.all(color: cs.outline, width: 1),
                         ),
                         child: selected
-                            ? const Icon(Icons.check,
-                                color: Colors.white, size: 16)
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
+                              )
                             : null,
                       ),
                     );
@@ -658,8 +671,7 @@ class _FoodItemFormState extends State<_FoodItemForm> {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
-                        child:
-                            Text(_isEditing ? 'Update' : 'Add Item'),
+                        child: Text(_isEditing ? 'Update' : 'Add Item'),
                       ),
                     ),
                   ],
@@ -781,18 +793,20 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _isEditing
-                              ? 'Edit entry'
-                              : 'Log ${item.name}',
+                          _isEditing ? 'Edit entry' : 'Log ${item.name}',
                           style: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold),
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         Text(
                           item.unitLabel == null
                               ? 'Quantity counts as "times eaten"'
                               : 'Unit: ${item.unitLabel}',
                           style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant),
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -830,9 +844,7 @@ class _FoodEntryFormState extends State<_FoodEntryForm> {
                 ),
                 leading: const Icon(Icons.event_rounded),
                 title: const Text('Date'),
-                subtitle: Text(
-                  DateFormat('EEEE, d MMM yyyy').format(_date),
-                ),
+                subtitle: Text(DateFormat('EEEE, d MMM yyyy').format(_date)),
                 onTap: _pickDate,
               ),
               const SizedBox(height: 12),
@@ -893,9 +905,7 @@ class _FoodItemDetailPage extends StatelessWidget {
         final cubit = context.read<DietCubit>();
         final item = cubit.itemById(itemId);
         if (item == null) {
-          return const Scaffold(
-            body: Center(child: Text('Item not found')),
-          );
+          return const Scaffold(body: Center(child: Text('Item not found')));
         }
         final entries = cubit.entriesForItemInMonth(item.id);
         final consumed = cubit.consumedThisMonth(item.id);
@@ -918,7 +928,8 @@ class _FoodItemDetailPage extends StatelessWidget {
                     isScrollControlled: true,
                     shape: const RoundedRectangleBorder(
                       borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(16)),
+                        top: Radius.circular(16),
+                      ),
                     ),
                     builder: (_) => _FoodItemForm(existing: item),
                   );
@@ -934,7 +945,8 @@ class _FoodItemDetailPage extends StatelessWidget {
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete food item'),
                       content: Text(
-                          'Delete "${item.name}" and all its entries?'),
+                        'Delete "${item.name}" and all its entries?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -943,7 +955,8 @@ class _FoodItemDetailPage extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -967,7 +980,8 @@ class _FoodItemDetailPage extends StatelessWidget {
                     color: item.color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: item.color.withValues(alpha: 0.3)),
+                      color: item.color.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -977,8 +991,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                           color: item.color.withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Icon(item.icon,
-                            size: 28, color: item.color),
+                        child: Icon(item.icon, size: 28, color: item.color),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -1002,8 +1015,9 @@ class _FoodItemDetailPage extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color:
-                                      exceeded ? Colors.red : Colors.green[700],
+                                  color: exceeded
+                                      ? Colors.red
+                                      : Colors.green[700],
                                 ),
                               ),
                             ],
@@ -1022,13 +1036,17 @@ class _FoodItemDetailPage extends StatelessWidget {
                     const Text(
                       'Entries this month',
                       style: TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Spacer(),
                     Text(
                       '${entries.length}',
                       style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant),
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1042,11 +1060,9 @@ class _FoodItemDetailPage extends StatelessWidget {
                         ),
                       )
                     : ListView.separated(
-                        padding:
-                            const EdgeInsets.fromLTRB(16, 4, 16, 90),
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 90),
                         itemCount: entries.length,
-                        separatorBuilder: (_, _) =>
-                            const SizedBox(height: 6),
+                        separatorBuilder: (_, _) => const SizedBox(height: 6),
                         itemBuilder: (_, i) {
                           final e = entries[i];
                           return Dismissible(
@@ -1054,10 +1070,13 @@ class _FoodItemDetailPage extends StatelessWidget {
                             background: Container(
                               alignment: Alignment.centerRight,
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 16),
+                                horizontal: 16,
+                              ),
                               color: Colors.red[100],
-                              child: const Icon(Icons.delete_outline,
-                                  color: Colors.red),
+                              child: const Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
                             ),
                             direction: DismissDirection.endToStart,
                             onDismissed: (_) => cubit.deleteEntry(e.id),
@@ -1065,27 +1084,31 @@ class _FoodItemDetailPage extends StatelessWidget {
                               onTap: () async {
                                 final updated =
                                     await showModalBottomSheet<FoodEntry>(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(16)),
-                                  ),
-                                  builder: (_) => _FoodEntryForm(
-                                      item: item, existing: e),
-                                );
+                                      context: context,
+                                      isScrollControlled: true,
+                                      shape: const RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(16),
+                                        ),
+                                      ),
+                                      builder: (_) => _FoodEntryForm(
+                                        item: item,
+                                        existing: e,
+                                      ),
+                                    );
                                 if (updated != null) {
                                   cubit.updateEntry(updated);
                                 }
                               },
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 decoration: BoxDecoration(
                                   color: cs.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                      color: cs.outlineVariant),
+                                  border: Border.all(color: cs.outlineVariant),
                                 ),
                                 child: Row(
                                   children: [
@@ -1094,8 +1117,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                                       height: 36,
                                       decoration: BoxDecoration(
                                         color: item.color,
-                                        borderRadius:
-                                            BorderRadius.circular(2),
+                                        borderRadius: BorderRadius.circular(2),
                                       ),
                                     ),
                                     const SizedBox(width: 10),
@@ -1115,7 +1137,8 @@ class _FoodItemDetailPage extends StatelessWidget {
                                               e.description!.isNotEmpty)
                                             Padding(
                                               padding: const EdgeInsets.only(
-                                                  top: 2),
+                                                top: 2,
+                                              ),
                                               child: Text(
                                                 e.description!,
                                                 style: TextStyle(
@@ -1123,8 +1146,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                                                   color: cs.onSurfaceVariant,
                                                 ),
                                                 maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
                                             ),
                                         ],
@@ -1157,8 +1179,7 @@ class _FoodItemDetailPage extends StatelessWidget {
                 context: context,
                 isScrollControlled: true,
                 shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 builder: (_) => _FoodEntryForm(item: item),
               );

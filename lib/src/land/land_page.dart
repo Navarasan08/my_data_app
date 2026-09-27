@@ -33,8 +33,11 @@ class LandListPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.landscape_rounded,
-                          size: 48, color: cs.outlineVariant),
+                      Icon(
+                        Icons.landscape_rounded,
+                        size: 48,
+                        color: cs.outlineVariant,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'No land records yet',
@@ -129,14 +132,16 @@ class _LandCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                             color: color.withValues(alpha: 0.15),
-                            child:
-                                Icon(record.type.icon, size: 22, color: color),
+                            child: Icon(
+                              record.type.icon,
+                              size: 22,
+                              color: color,
+                            ),
                           ),
                         )
                       : Container(
                           color: color.withValues(alpha: 0.15),
-                          child:
-                              Icon(record.type.icon, size: 28, color: color),
+                          child: Icon(record.type.icon, size: 28, color: color),
                         ),
                 ),
               ),
@@ -159,8 +164,11 @@ class _LandCard extends StatelessWidget {
                           ),
                         ),
                         if (record.isFavorite)
-                          Icon(Icons.star_rounded,
-                              size: 16, color: Colors.amber[700]),
+                          Icon(
+                            Icons.star_rounded,
+                            size: 16,
+                            color: Colors.amber[700],
+                          ),
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -177,7 +185,9 @@ class _LandCard extends StatelessWidget {
                       Text(
                         record.locationShort,
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant),
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -189,13 +199,19 @@ class _LandCard extends StatelessWidget {
                           Text(
                             record.areaDisplay,
                             style: TextStyle(
-                                fontSize: 12, color: cs.onSurfaceVariant),
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         if (record.askingPrice != null) ...[
                           if (record.areaDisplay.isNotEmpty)
-                            Text('  ·  ',
-                                style: TextStyle(
-                                    fontSize: 12, color: cs.onSurfaceVariant)),
+                            Text(
+                              '  ·  ',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
                           Text(
                             '₹${NumberFormat.compact().format(record.askingPrice)}',
                             style: TextStyle(
@@ -207,13 +223,18 @@ class _LandCard extends StatelessWidget {
                         ],
                         if (record.photoUrls.isNotEmpty) ...[
                           const Spacer(),
-                          Icon(Icons.photo_library_rounded,
-                              size: 12, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.photo_library_rounded,
+                            size: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             '${record.photoUrls.length}',
                             style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant),
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ],
@@ -223,8 +244,9 @@ class _LandCard extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.share_rounded, size: 18),
-                onPressed: () => SharePlus.instance
-                    .share(ShareParams(text: record.toShareableText())),
+                onPressed: () => SharePlus.instance.share(
+                  ShareParams(text: record.toShareableText()),
+                ),
                 visualDensity: VisualDensity.compact,
               ),
             ],
@@ -249,9 +271,7 @@ class LandDetailPage extends StatelessWidget {
         final cubit = context.read<LandCubit>();
         final record = cubit.getById(landId);
         if (record == null) {
-          return const Scaffold(
-            body: Center(child: Text('Land not found')),
-          );
+          return const Scaffold(body: Center(child: Text('Land not found')));
         }
 
         final sections = record.asShareSections();
@@ -274,8 +294,9 @@ class LandDetailPage extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.share_rounded),
                 tooltip: 'Share all',
-                onPressed: () => SharePlus.instance
-                    .share(ShareParams(text: record.toShareableText())),
+                onPressed: () => SharePlus.instance.share(
+                  ShareParams(text: record.toShareableText()),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.edit_rounded),
@@ -310,7 +331,8 @@ class LandDetailPage extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -366,7 +388,9 @@ class LandDetailPage extends StatelessWidget {
                           const SizedBox(height: 14),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.green[50],
                               borderRadius: BorderRadius.circular(10),
@@ -374,8 +398,11 @@ class LandDetailPage extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.sell_rounded,
-                                    size: 18, color: Colors.green[700]),
+                                Icon(
+                                  Icons.sell_rounded,
+                                  size: 18,
+                                  color: Colors.green[700],
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   'Asking Price',
@@ -412,10 +439,7 @@ class LandDetailPage extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             record.description!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              height: 1.4,
-                            ),
+                            style: const TextStyle(fontSize: 14, height: 1.4),
                           ),
                         ],
                         if (record.mapsUrl.isNotEmpty) ...[
@@ -423,7 +447,8 @@ class LandDetailPage extends StatelessWidget {
                           InkWell(
                             onTap: () {
                               Clipboard.setData(
-                                  ClipboardData(text: record.mapsUrl));
+                                ClipboardData(text: record.mapsUrl),
+                              );
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text('Maps link copied'),
@@ -433,8 +458,11 @@ class LandDetailPage extends StatelessWidget {
                             },
                             child: Row(
                               children: [
-                                Icon(Icons.map_rounded,
-                                    size: 16, color: Colors.blue[700]),
+                                Icon(
+                                  Icons.map_rounded,
+                                  size: 16,
+                                  color: Colors.blue[700],
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Open in Maps',
@@ -458,10 +486,12 @@ class LandDetailPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Column(
-                      children: sections.map((s) => _DetailSection(
-                            title: s.key,
-                            fields: s.value,
-                          )).toList(),
+                      children: sections
+                          .map(
+                            (s) =>
+                                _DetailSection(title: s.key, fields: s.value),
+                          )
+                          .toList(),
                     ),
                   ),
 
@@ -471,8 +501,7 @@ class LandDetailPage extends StatelessWidget {
                   OutlinedButton.icon(
                     icon: const Icon(Icons.share_rounded, size: 18),
                     label: const Text('Share selected fields'),
-                    onPressed: () =>
-                        _shareSelected(context, record, sections),
+                    onPressed: () => _shareSelected(context, record, sections),
                   ),
                   const SizedBox(height: 8),
 
@@ -482,7 +511,9 @@ class LandDetailPage extends StatelessWidget {
                     child: Text(
                       'Updated ${DateFormat('MMM d, yyyy').format(record.updatedAt)}',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -511,112 +542,117 @@ class LandDetailPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setSt) {
-          return DraggableScrollableSheet(
-            initialChildSize: 0.75,
-            maxChildSize: 0.9,
-            minChildSize: 0.4,
-            expand: false,
-            builder: (ctx, scroll) => Column(
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Select fields to share',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    controller: scroll,
-                    children: sections.expand((s) {
-                      return [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+        return StatefulBuilder(
+          builder: (ctx, setSt) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.75,
+              maxChildSize: 0.9,
+              minChildSize: 0.4,
+              expand: false,
+              builder: (ctx, scroll) => Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            s.key,
+                            'Select fields to share',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: Theme.of(ctx).colorScheme.onSurface,
                             ),
                           ),
                         ),
-                        ...s.value.entries.map((e) {
-                          final flatKey = '${s.key} : ${e.key}';
-                          final checked = selected.contains(flatKey);
-                          return CheckboxListTile(
-                            dense: true,
-                            value: checked,
-                            title: Text(e.key),
-                            subtitle: Text(
-                              e.value,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      controller: scroll,
+                      children: sections.expand((s) {
+                        return [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                            child: Text(
+                              s.key,
                               style: TextStyle(
-                                  fontSize: 12,
-                                  color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(ctx).colorScheme.onSurface,
+                              ),
                             ),
-                            onChanged: (v) {
-                              setSt(() {
-                                if (v == true) {
-                                  selected.add(flatKey);
-                                } else {
-                                  selected.remove(flatKey);
-                                }
-                              });
-                            },
-                          );
-                        }),
-                      ];
-                    }).toList(),
+                          ),
+                          ...s.value.entries.map((e) {
+                            final flatKey = '${s.key} : ${e.key}';
+                            final checked = selected.contains(flatKey);
+                            return CheckboxListTile(
+                              dense: true,
+                              value: checked,
+                              title: Text(e.key),
+                              subtitle: Text(
+                                e.value,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(
+                                    ctx,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              onChanged: (v) {
+                                setSt(() {
+                                  if (v == true) {
+                                    selected.add(flatKey);
+                                  } else {
+                                    selected.remove(flatKey);
+                                  }
+                                });
+                              },
+                            );
+                          }),
+                        ];
+                      }).toList(),
+                    ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          child: const Text('Cancel'),
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Cancel'),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: selected.isEmpty
-                              ? null
-                              : () {
-                                  Navigator.pop(ctx);
-                                  SharePlus.instance.share(
-                                    ShareParams(
-                                      text: record.toShareableText(
-                                          selectedKeys: selected),
-                                    ),
-                                  );
-                                },
-                          icon:
-                              const Icon(Icons.share_rounded, size: 18),
-                          label: const Text('Share'),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: selected.isEmpty
+                                ? null
+                                : () {
+                                    Navigator.pop(ctx);
+                                    SharePlus.instance.share(
+                                      ShareParams(
+                                        text: record.toShareableText(
+                                          selectedKeys: selected,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                            icon: const Icon(Icons.share_rounded, size: 18),
+                            label: const Text('Share'),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          );
-        });
+                ],
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -709,8 +745,11 @@ class _FieldRow extends StatelessWidget {
                 ),
               ),
             ),
-            Icon(Icons.content_copy_rounded,
-                size: 14, color: cs.onSurfaceVariant),
+            Icon(
+              Icons.content_copy_rounded,
+              size: 14,
+              color: cs.onSurfaceVariant,
+            ),
           ],
         ),
       ),
@@ -757,8 +796,11 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
           ),
         ),
         child: Center(
-          child: Icon(widget.record.type.icon,
-              size: 56, color: color.withValues(alpha: 0.6)),
+          child: Icon(
+            widget.record.type.icon,
+            size: 56,
+            color: color.withValues(alpha: 0.6),
+          ),
         ),
       );
     }
@@ -780,13 +822,17 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                   width: double.infinity,
                   errorBuilder: (_, __, ___) => Container(
                     color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    child: Icon(Icons.broken_image_rounded,
-                        size: 40, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      size: 40,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   loadingBuilder: (_, child, progress) {
                     if (progress == null) return child;
                     return const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2));
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
                   },
                 ),
               );
@@ -820,8 +866,7 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
               top: 10,
               right: 10,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(10),
@@ -829,8 +874,11 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.photo_library_rounded,
-                        size: 12, color: Colors.white),
+                    const Icon(
+                      Icons.photo_library_rounded,
+                      size: 12,
+                      color: Colors.white,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       '${_index + 1}/${urls.length}',
@@ -849,11 +897,12 @@ class _PhotoCarouselState extends State<_PhotoCarousel> {
     );
   }
 
-  void _openFullscreen(
-      BuildContext context, List<String> urls, int initial) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => _FullscreenGallery(urls: urls, initialIndex: initial),
-    ));
+  void _openFullscreen(BuildContext context, List<String> urls, int initial) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _FullscreenGallery(urls: urls, initialIndex: initial),
+      ),
+    );
   }
 }
 
@@ -904,9 +953,11 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
               child: Image.network(
                 widget.urls[i],
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image_rounded,
-                        color: Colors.white54, size: 48),
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.white54,
+                  size: 48,
+                ),
               ),
             ),
           );
@@ -1027,8 +1078,8 @@ class _AddLandPageState extends State<AddLandPage> {
   @override
   void initState() {
     super.initState();
-    _landId = widget.existing?.id ??
-        DateTime.now().millisecondsSinceEpoch.toString();
+    _landId =
+        widget.existing?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
     // Use a shared uid from FirebaseAuth for photo storage paths
     final uid = FirebaseAuth.instance.currentUser?.uid ?? 'anon';
     _photoService = LandPhotoService(uid: uid);
@@ -1089,17 +1140,43 @@ class _AddLandPageState extends State<AddLandPage> {
   @override
   void dispose() {
     for (final c in [
-      _name, _description, _askingPrice,
-      _surveyNumber, _subDivision, _pattaNumber, _area,
-      _addressLine, _village, _taluka, _district, _state, _pincode,
-      _country, _landmark, _latitude, _longitude,
-      _ownerName, _ownerContact, _coOwners,
-      _purchasePrice, _sellerName, _registrationNumber, _registrarOffice,
-      _stampDuty, _registrationFee,
-      _currentMarketValue, _guidelineValue,
-      _boundaryNorth, _boundarySouth, _boundaryEast, _boundaryWest,
-      _propertyTaxNumber, _encumbranceStatus, _ecNumber,
-      _documentsAvailable, _notes,
+      _name,
+      _description,
+      _askingPrice,
+      _surveyNumber,
+      _subDivision,
+      _pattaNumber,
+      _area,
+      _addressLine,
+      _village,
+      _taluka,
+      _district,
+      _state,
+      _pincode,
+      _country,
+      _landmark,
+      _latitude,
+      _longitude,
+      _ownerName,
+      _ownerContact,
+      _coOwners,
+      _purchasePrice,
+      _sellerName,
+      _registrationNumber,
+      _registrarOffice,
+      _stampDuty,
+      _registrationFee,
+      _currentMarketValue,
+      _guidelineValue,
+      _boundaryNorth,
+      _boundarySouth,
+      _boundaryEast,
+      _boundaryWest,
+      _propertyTaxNumber,
+      _encumbranceStatus,
+      _ecNumber,
+      _documentsAvailable,
+      _notes,
     ]) {
       c.dispose();
     }
@@ -1128,9 +1205,9 @@ class _AddLandPageState extends State<AddLandPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploadingPhotos = false);
@@ -1146,9 +1223,9 @@ class _AddLandPageState extends State<AddLandPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploadingPhotos = false);
@@ -1217,18 +1294,24 @@ class _AddLandPageState extends State<AddLandPage> {
   }
 
   Widget _sectionTitle(String t) => Padding(
-        padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
-        child: Text(t,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              letterSpacing: 0.5,
-            )),
-      );
+    padding: const EdgeInsets.fromLTRB(0, 16, 0, 8),
+    child: Text(
+      t,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.onSurface,
+        letterSpacing: 0.5,
+      ),
+    ),
+  );
 
-  Widget _field(String label, TextEditingController c,
-      {TextInputType? keyboard, int maxLines = 1}) {
+  Widget _field(
+    String label,
+    TextEditingController c, {
+    TextInputType? keyboard,
+    int maxLines = 1,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: TextFormField(
@@ -1240,7 +1323,9 @@ class _AddLandPageState extends State<AddLandPage> {
           border: const OutlineInputBorder(),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12, vertical: 12),
+            horizontal: 12,
+            vertical: 12,
+          ),
         ),
       ),
     );
@@ -1250,67 +1335,72 @@ class _AddLandPageState extends State<AddLandPage> {
     final cs = Theme.of(context).colorScheme;
     final thumbs = <Widget>[];
     for (final url in _photoUrls) {
-      thumbs.add(Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              url,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+      thumbs.add(
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                url,
                 width: 80,
                 height: 80,
-                color: cs.surfaceContainerLow,
-                child: Icon(Icons.broken_image_rounded,
-                    color: cs.onSurfaceVariant),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 2,
-            right: 2,
-            child: InkWell(
-              onTap: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Delete Photo'),
-                    content: const Text(
-                        'Remove this photo? It will also be deleted from storage.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.red),
-                        child: const Text('Delete'),
-                      ),
-                    ],
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 80,
+                  height: 80,
+                  color: cs.surfaceContainerLow,
+                  child: Icon(
+                    Icons.broken_image_rounded,
+                    color: cs.onSurfaceVariant,
                   ),
-                );
-                if (confirmed == true) {
-                  _removePhoto(url);
-                }
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close,
-                    size: 12, color: Colors.white),
               ),
             ),
-          ),
-        ],
-      ));
+            Positioned(
+              top: 2,
+              right: 2,
+              child: InkWell(
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Photo'),
+                      content: const Text(
+                        'Remove this photo? It will also be deleted from storage.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) {
+                    _removePhoto(url);
+                  }
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 12, color: Colors.white),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
     }
 
     thumbs.add(
@@ -1323,10 +1413,7 @@ class _AddLandPageState extends State<AddLandPage> {
           decoration: BoxDecoration(
             color: cs.surfaceContainerLow,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: cs.outline,
-              style: BorderStyle.solid,
-            ),
+            border: Border.all(color: cs.outline, style: BorderStyle.solid),
           ),
           child: _uploadingPhotos
               ? const Center(
@@ -1339,13 +1426,18 @@ class _AddLandPageState extends State<AddLandPage> {
               : Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.add_photo_alternate_rounded,
-                        size: 22, color: cs.onSurfaceVariant),
+                    Icon(
+                      Icons.add_photo_alternate_rounded,
+                      size: 22,
+                      color: cs.onSurfaceVariant,
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'Gallery',
                       style: TextStyle(
-                          fontSize: 10, color: cs.onSurfaceVariant),
+                        fontSize: 10,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1368,13 +1460,15 @@ class _AddLandPageState extends State<AddLandPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.photo_camera_rounded,
-                  size: 22, color: cs.onSurfaceVariant),
+              Icon(
+                Icons.photo_camera_rounded,
+                size: 22,
+                color: cs.onSurfaceVariant,
+              ),
               const SizedBox(height: 2),
               Text(
                 'Camera',
-                style:
-                    TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
               ),
             ],
           ),
@@ -1386,17 +1480,20 @@ class _AddLandPageState extends State<AddLandPage> {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: thumbs
-            .map((w) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: w,
-                ))
+            .map(
+              (w) =>
+                  Padding(padding: const EdgeInsets.only(right: 8), child: w),
+            )
             .toList(),
       ),
     );
   }
 
   Widget _dateField(
-      String label, DateTime? value, ValueChanged<DateTime?> onPicked) {
+    String label,
+    DateTime? value,
+    ValueChanged<DateTime?> onPicked,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
@@ -1410,7 +1507,9 @@ class _AddLandPageState extends State<AddLandPage> {
             border: const OutlineInputBorder(),
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12, vertical: 12),
+              horizontal: 12,
+              vertical: 12,
+            ),
             suffixIcon: value != null
                 ? IconButton(
                     icon: const Icon(Icons.clear, size: 18),
@@ -1479,8 +1578,11 @@ class _AddLandPageState extends State<AddLandPage> {
                   maxLines: 4,
                 ),
                 const SizedBox(height: 10),
-                _field('Asking Price (₹)', _askingPrice,
-                    keyboard: TextInputType.number),
+                _field(
+                  'Asking Price (₹)',
+                  _askingPrice,
+                  keyboard: TextInputType.number,
+                ),
                 DropdownButtonFormField<LandType>(
                   initialValue: _type,
                   decoration: const InputDecoration(
@@ -1511,8 +1613,11 @@ class _AddLandPageState extends State<AddLandPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: _field('Area', _area,
-                          keyboard: TextInputType.number),
+                      child: _field(
+                        'Area',
+                        _area,
+                        keyboard: TextInputType.number,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1525,11 +1630,15 @@ class _AddLandPageState extends State<AddLandPage> {
                             border: OutlineInputBorder(),
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 12),
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
                           ),
                           items: AreaUnit.values.map((u) {
                             return DropdownMenuItem(
-                                value: u, child: Text(u.label));
+                              value: u,
+                              child: Text(u.label),
+                            );
                           }).toList(),
                           onChanged: (v) {
                             if (v != null) setState(() => _areaUnit = v);
@@ -1546,57 +1655,93 @@ class _AddLandPageState extends State<AddLandPage> {
                 _field('Taluka / Mandal', _taluka),
                 _field('District', _district),
                 _field('State', _state),
-                Row(children: [
-                  Expanded(child: _field('PIN Code', _pincode)),
-                  const SizedBox(width: 8),
-                  Expanded(child: _field('Country', _country)),
-                ]),
+                Row(
+                  children: [
+                    Expanded(child: _field('PIN Code', _pincode)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _field('Country', _country)),
+                  ],
+                ),
                 _field('Landmark', _landmark),
-                Row(children: [
-                  Expanded(
-                    child: _field('Latitude', _latitude,
-                        keyboard: TextInputType.number),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _field('Longitude', _longitude,
-                        keyboard: TextInputType.number),
-                  ),
-                ]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _field(
+                        'Latitude',
+                        _latitude,
+                        keyboard: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _field(
+                        'Longitude',
+                        _longitude,
+                        keyboard: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
 
                 _sectionTitle('OWNER'),
                 _field('Owner Name', _ownerName),
-                _field('Owner Contact', _ownerContact,
-                    keyboard: TextInputType.phone),
+                _field(
+                  'Owner Contact',
+                  _ownerContact,
+                  keyboard: TextInputType.phone,
+                ),
                 _field('Co-owners', _coOwners, maxLines: 2),
 
                 _sectionTitle('PURCHASE & REGISTRATION'),
-                _dateField('Purchase Date', _purchaseDate,
-                    (v) => setState(() => _purchaseDate = v)),
-                _field('Purchase Price', _purchasePrice,
-                    keyboard: TextInputType.number),
+                _dateField(
+                  'Purchase Date',
+                  _purchaseDate,
+                  (v) => setState(() => _purchaseDate = v),
+                ),
+                _field(
+                  'Purchase Price',
+                  _purchasePrice,
+                  keyboard: TextInputType.number,
+                ),
                 _field('Seller Name', _sellerName),
                 _field('Registration No', _registrationNumber),
-                _dateField('Registration Date', _registrationDate,
-                    (v) => setState(() => _registrationDate = v)),
+                _dateField(
+                  'Registration Date',
+                  _registrationDate,
+                  (v) => setState(() => _registrationDate = v),
+                ),
                 _field('Registrar Office', _registrarOffice),
-                Row(children: [
-                  Expanded(
-                    child: _field('Stamp Duty', _stampDuty,
-                        keyboard: TextInputType.number),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _field('Registration Fee', _registrationFee,
-                        keyboard: TextInputType.number),
-                  ),
-                ]),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _field(
+                        'Stamp Duty',
+                        _stampDuty,
+                        keyboard: TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _field(
+                        'Registration Fee',
+                        _registrationFee,
+                        keyboard: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
 
                 _sectionTitle('VALUATION'),
-                _field('Current Market Value', _currentMarketValue,
-                    keyboard: TextInputType.number),
-                _field('Guideline Value', _guidelineValue,
-                    keyboard: TextInputType.number),
+                _field(
+                  'Current Market Value',
+                  _currentMarketValue,
+                  keyboard: TextInputType.number,
+                ),
+                _field(
+                  'Guideline Value',
+                  _guidelineValue,
+                  keyboard: TextInputType.number,
+                ),
 
                 _sectionTitle('BOUNDARIES'),
                 _field('North', _boundaryNorth),
@@ -1606,12 +1751,14 @@ class _AddLandPageState extends State<AddLandPage> {
 
                 _sectionTitle('TAX & LEGAL'),
                 _field('Property Tax Number', _propertyTaxNumber),
-                _dateField('Last Tax Paid Date', _lastTaxPaidDate,
-                    (v) => setState(() => _lastTaxPaidDate = v)),
+                _dateField(
+                  'Last Tax Paid Date',
+                  _lastTaxPaidDate,
+                  (v) => setState(() => _lastTaxPaidDate = v),
+                ),
                 _field('Encumbrance Status', _encumbranceStatus),
                 _field('EC Number', _ecNumber),
-                _field('Documents Available', _documentsAvailable,
-                    maxLines: 2),
+                _field('Documents Available', _documentsAvailable, maxLines: 2),
 
                 _sectionTitle('NOTES'),
                 _field('Notes', _notes, maxLines: 4),

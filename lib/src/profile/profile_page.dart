@@ -47,11 +47,11 @@ class ProfilePage extends StatelessWidget {
                   const _SectionLabel(label: 'Account'),
                   const SizedBox(height: 10),
                   _ProfileTile(
-                    icon: Icons.person_rounded,
-                    label: 'Display Name',
-                    value: name.isNotEmpty ? name : 'Not set',
-                    onEdit: () => _editDisplayName(context, name),
-                  )
+                        icon: Icons.person_rounded,
+                        label: 'Display Name',
+                        value: name.isNotEmpty ? name : 'Not set',
+                        onEdit: () => _editDisplayName(context, name),
+                      )
                       .animate()
                       .fadeIn(delay: 100.ms, duration: 350.ms)
                       .slideX(
@@ -62,10 +62,10 @@ class ProfilePage extends StatelessWidget {
                         curve: Curves.easeOutCubic,
                       ),
                   _ProfileTile(
-                    icon: Icons.email_rounded,
-                    label: 'Email',
-                    value: email,
-                  )
+                        icon: Icons.email_rounded,
+                        label: 'Email',
+                        value: email,
+                      )
                       .animate()
                       .fadeIn(delay: 180.ms, duration: 350.ms)
                       .slideX(
@@ -76,10 +76,10 @@ class ProfilePage extends StatelessWidget {
                         curve: Curves.easeOutCubic,
                       ),
                   _ProfileTile(
-                    icon: Icons.fingerprint_rounded,
-                    label: 'User ID',
-                    value: uid,
-                  )
+                        icon: Icons.fingerprint_rounded,
+                        label: 'User ID',
+                        value: uid,
+                      )
                       .animate()
                       .fadeIn(delay: 260.ms, duration: 350.ms)
                       .slideX(
@@ -91,11 +91,11 @@ class ProfilePage extends StatelessWidget {
                       ),
                   if (createdAt != null)
                     _ProfileTile(
-                      icon: Icons.calendar_today_rounded,
-                      label: 'Member Since',
-                      value:
-                          '${createdAt.day}/${createdAt.month}/${createdAt.year}',
-                    )
+                          icon: Icons.calendar_today_rounded,
+                          label: 'Member Since',
+                          value:
+                              '${createdAt.day}/${createdAt.month}/${createdAt.year}',
+                        )
                         .animate()
                         .fadeIn(delay: 340.ms, duration: 350.ms)
                         .slideX(
@@ -111,15 +111,15 @@ class ProfilePage extends StatelessWidget {
                     const SizedBox(height: 10),
                     for (var i = 0; i < otherAccounts.length; i++)
                       _SavedAccountCard(
-                        account: otherAccounts[i],
-                        onSwitch: () =>
-                            authCubit.switchAccount(otherAccounts[i]),
-                        onRemove: () => authCubit
-                            .removeSavedAccount(otherAccounts[i].email),
-                      )
+                            account: otherAccounts[i],
+                            onSwitch: () =>
+                                authCubit.switchAccount(otherAccounts[i]),
+                            onRemove: () => authCubit.removeSavedAccount(
+                              otherAccounts[i].email,
+                            ),
+                          )
                           .animate()
-                          .fadeIn(
-                              delay: (420 + i * 60).ms, duration: 350.ms)
+                          .fadeIn(delay: (420 + i * 60).ms, duration: 350.ms)
                           .slideX(
                             begin: -0.04,
                             end: 0,
@@ -156,10 +156,8 @@ class ProfilePage extends StatelessWidget {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => BlocProvider.value(
-          value: dashCubit,
-          child: const SettingsPage(),
-        ),
+        builder: (_) =>
+            BlocProvider.value(value: dashCubit, child: const SettingsPage()),
       ),
     );
   }
@@ -199,9 +197,7 @@ class ProfilePage extends StatelessWidget {
                 // outside AuthenticatedShell — skip silently in that case.
                 if (context.mounted) {
                   try {
-                    await context
-                        .read<GroupCubit>()
-                        .syncMyDisplayName(newName);
+                    await context.read<GroupCubit>().syncMyDisplayName(newName);
                   } catch (_) {}
                 }
               }
@@ -332,32 +328,32 @@ class _ProfileHeader extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Container(
-                  width: 96,
-                  height: 96,
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.7),
-                        Colors.white.withValues(alpha: 0.15),
-                      ],
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white.withValues(alpha: 0.25),
-                    child: Text(
-                      initial,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 38,
-                        fontWeight: FontWeight.bold,
+                      width: 96,
+                      height: 96,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.7),
+                            Colors.white.withValues(alpha: 0.15),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                )
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white.withValues(alpha: 0.25),
+                        child: Text(
+                          initial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 38,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    )
                     .animate()
                     .scale(
                       begin: const Offset(0.6, 0.6),
@@ -533,8 +529,8 @@ class _SavedAccountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final hasName = account.displayName != null &&
-        account.displayName!.isNotEmpty;
+    final hasName =
+        account.displayName != null && account.displayName!.isNotEmpty;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
@@ -574,10 +570,7 @@ class _SavedAccountCard extends StatelessWidget {
                 if (hasName)
                   Text(
                     account.email,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurfaceVariant,
-                    ),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -587,8 +580,7 @@ class _SavedAccountCard extends StatelessWidget {
           TextButton(
             onPressed: onSwitch,
             style: TextButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             ),
             child: const Text('Switch'),
           ),

@@ -52,8 +52,11 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                   _summaryCards(state, monthlyEntriesCount, totalAll),
                   const SizedBox(height: 20),
 
-                  _sectionTitle(context, 'Top items',
-                      subtitle: 'Last 12 months'),
+                  _sectionTitle(
+                    context,
+                    'Top items',
+                    subtitle: 'Last 12 months',
+                  ),
                   const SizedBox(height: 10),
                   if (sorted.isEmpty)
                     _emptyBox(context, 'No entries yet')
@@ -159,11 +162,16 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                     Text(
                       item.name,
                       style: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: total > 0 ? e.value / total : 0),
+                      tween: Tween(
+                        begin: 0,
+                        end: total > 0 ? e.value / total : 0,
+                      ),
                       duration: const Duration(milliseconds: 500),
                       curve: Curves.easeOutCubic,
                       builder: (_, t, _) => ClipRRect(
@@ -172,8 +180,7 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                           value: t,
                           minHeight: 6,
                           backgroundColor: cs.surfaceContainerHighest,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(item.color),
+                          valueColor: AlwaysStoppedAnimation<Color>(item.color),
                         ),
                       ),
                     ),
@@ -187,12 +194,13 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                   Text(
                     item.quantityLabel(e.value),
                     style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     '${pct.toStringAsFixed(1)}%',
-                    style:
-                        TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -252,17 +260,20 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                   toY: idx.value.value,
                   color: item.color,
                   width: 16,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(4)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(4),
+                  ),
                 ),
               ],
             );
           }).toList(),
           titlesData: FlTitlesData(
             topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
+              sideTitles: SideTitles(showTitles: false),
+            ),
             rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false)),
+              sideTitles: SideTitles(showTitles: false),
+            ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -286,7 +297,9 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                     child: Text(
                       DateFormat('MMM').format(entries[i].key),
                       style: TextStyle(
-                          fontSize: 10, color: cs.onSurfaceVariant),
+                        fontSize: 10,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   );
                 },
@@ -310,13 +323,18 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
 
   // ── Selected-month breakdown ────────────────────────────────────────────
 
-  Widget _monthBreakdown(BuildContext context, DietState state, DietCubit cubit) {
+  Widget _monthBreakdown(
+    BuildContext context,
+    DietState state,
+    DietCubit cubit,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final consumed = cubit.consumedInMonth(
-        state.selectedMonth.year, state.selectedMonth.month);
+      state.selectedMonth.year,
+      state.selectedMonth.month,
+    );
     if (state.items.isEmpty) return _emptyBox(context, 'No items yet');
-    final monthLabel =
-        DateFormat('MMMM yyyy').format(state.selectedMonth);
+    final monthLabel = DateFormat('MMMM yyyy').format(state.selectedMonth);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -330,8 +348,11 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_rounded,
-                    size: 14, color: cs.onSurface),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  size: 14,
+                  color: cs.onSurface,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   monthLabel,
@@ -364,7 +385,9 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                         Text(
                           item.name,
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 3),
                         if (limit != null)
@@ -379,7 +402,8 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
                                 minHeight: 5,
                                 backgroundColor: cs.outlineVariant,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    exceeded ? Colors.red : item.color),
+                                  exceeded ? Colors.red : item.color,
+                                ),
                               ),
                             ),
                           ),
@@ -413,12 +437,14 @@ class _DietAnalysisPageState extends State<DietAnalysisPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(title,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: cs.onSurface,
-            )),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: cs.onSurface,
+          ),
+        ),
         if (subtitle != null) ...[
           const SizedBox(width: 8),
           Padding(

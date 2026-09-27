@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/core/sync/sync_indicator.dart';
 import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
-import 'package:my_data_app/src/events/my_events_page.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
 import 'package:my_data_app/src/notifications/notification_service.dart';
 import 'package:my_data_app/src/notifications/notifications_page.dart';
-import 'package:my_data_app/src/profile/profile_page.dart';
+import 'package:my_data_app/src/quick_notes/quick_notes_page.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
 import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
@@ -18,10 +18,12 @@ import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
 import 'package:my_data_app/src/chits/chit_screen.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/checklist/checklist_page.dart';
-import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
-import 'package:my_data_app/src/pregnancy/pregnancy_page.dart';
+import 'package:my_data_app/src/shell/app_drawer.dart';
+import 'package:my_data_app/src/shell/feature_pages.dart';
 
-/// Top-level shell with bottom navigation: Home / My Events / Alerts / Profile.
+/// Top-level shell: a left drawer (profile, events, settings) and four
+/// bottom tabs — Quick Notes, a user-chosen module (Expense Tracker by
+/// default), the Dashboard, and Alerts. Which tab opens first is a setting.
 class MainShell extends StatefulWidget {
   /// The shared local notifications service. Tap callbacks are wired here.
   final LocalNotificationService notificationService;
@@ -41,11 +43,21 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  static const _notesIndex = 0;
+  static const _moduleIndex = 1;
+  static const _dashboardIndex = 2;
+  static const _alertsIndex = 3;
+
+  late int _index;
+
+  /// Once the user picks a tab we stop following the landing-tab setting,
+  /// which may still be arriving from Firestore on a cold start.
+  bool _userNavigated = false;
 
   @override
   void initState() {
     super.initState();
+    _index = _indexFor(context.read<DashboardSettingsCubit>().state.landingTab);
     // OS-notification taps are funneled through here too. Payload format:
     // <sourceModule>|<sourceItemId>|<sourceDate?>
     widget.notificationService.onTap = (payload) {
@@ -58,11 +70,23 @@ class _MainShellState extends State<MainShell> {
     };
   }
 
+  static int _indexFor(ShellTab tab) => switch (tab) {
+    ShellTab.notes => _notesIndex,
+    ShellTab.module => _moduleIndex,
+    ShellTab.dashboard => _dashboardIndex,
+    ShellTab.alerts => _alertsIndex,
+  };
+
+  void _select(int i) {
+    _userNavigated = true;
+    setState(() => _index = i);
+  }
+
   /// Open the right module for a tapped notification (in-app or OS).
   void _routeTo(String module, String itemId, String? dateStr) {
     switch (module) {
       case 'schedule':
-        _pushOnHome(
+        _pushOnDashboard(
           (ctx) => BlocProvider.value(
             value: ctx.read<ScheduleCubit>(),
             child: ScheduleDetailPage(entryId: itemId),
@@ -70,7 +94,7 @@ class _MainShellState extends State<MainShell> {
         );
         break;
       case 'loans':
-        _pushOnHome(
+        _pushOnDashboard(
           (ctx) => BlocProvider.value(
             value: ctx.read<LoanCubit>(),
             child: LoanDetailPage(loanId: itemId),
@@ -78,7 +102,7 @@ class _MainShellState extends State<MainShell> {
         );
         break;
       case 'chits':
-        _pushOnHome(
+        _pushOnDashboard(
           (ctx) => BlocProvider.value(
             value: ctx.read<ChitCubit>(),
             child: ChitFundDetailsPage(chitFundId: itemId),
@@ -86,7 +110,7 @@ class _MainShellState extends State<MainShell> {
         );
         break;
       case 'checklists':
-        _pushOnHome(
+        _pushOnDashboard(
           (ctx) => BlocProvider.value(
             value: ctx.read<ChecklistCubit>(),
             child: ChecklistDetailPage(groupId: itemId),
@@ -94,22 +118,17 @@ class _MainShellState extends State<MainShell> {
         );
         break;
       case 'pregnancy':
-        _pushOnHome(
-          (ctx) => BlocProvider.value(
-            value: ctx.read<PregnancyCubit>(),
-            child: const PregnancyPage(),
-          ),
-        );
+        _pushOnDashboard((ctx) => buildFeaturePage(ctx, 'pregnancy')!);
         break;
       default:
-        setState(() => _index = 2);
+        _select(_alertsIndex);
     }
   }
 
-  /// Switch to the Home tab and push a detail page on the next frame, so the
-  /// page builder can read cubits from the freshly-active context.
-  void _pushOnHome(Widget Function(BuildContext) builder) {
-    setState(() => _index = 0);
+  /// Switch to the Dashboard tab and push a detail page on the next frame,
+  /// so the page builder can read cubits from the freshly-active context.
+  void _pushOnDashboard(Widget Function(BuildContext) builder) {
+    _select(_dashboardIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.of(
@@ -120,30 +139,40 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<DashboardSettingsCubit>().state;
+    if (!_userNavigated) {
+      final wanted = _indexFor(settings.landingTab);
+      if (wanted != _index) _index = wanted;
+    }
+    final moduleId = settings.secondTabFeatureId;
+    final moduleFeature = settings.featureById(moduleId);
+    final modulePage =
+        buildFeaturePage(context, moduleId) ??
+        buildFeaturePage(context, 'home')!;
+
     final pages = <Widget>[
+      const QuickNotesPage(),
+      // Keyed by module id so switching the setting rebuilds the tab.
+      KeyedSubtree(key: ValueKey('tab_$moduleId'), child: modulePage),
       const DashboardPage(),
-      const MyEventsPage(),
       NotificationsPage(
         onOpen: (n) => _routeTo(n.sourceModule, n.sourceItemId, n.sourceDate),
       ),
-      const ProfilePage(),
     ];
 
     // Intercept the system / browser back button.
-    //   * If the user is on a non-Home tab → switch to Home (don't exit).
-    //   * If on Home and at the root route → swallow the pop (prevents the
-    //     "blank page" on web when the browser tries to navigate past the
-    //     app's first history entry).
+    //   * If the user is on a non-Dashboard tab → switch to Dashboard.
+    //   * If on Dashboard and at the root route → swallow the pop (prevents
+    //     the "blank page" on web when the browser tries to navigate past
+    //     the app's first history entry).
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        if (_index != 0) {
-          setState(() => _index = 0);
-        }
-        // else: silently absorb the pop, keeping the user inside the app.
+        if (_index != _dashboardIndex) _select(_dashboardIndex);
       },
       child: Scaffold(
+        drawer: const AppDrawer(),
         body: Column(
           children: [
             SyncIndicator(status: widget.syncStatus),
@@ -173,17 +202,24 @@ class _MainShellState extends State<MainShell> {
               ),
               child: NavigationBar(
                 selectedIndex: _index,
-                onDestinationSelected: (i) => setState(() => _index = i),
+                onDestinationSelected: _select,
                 destinations: [
+                  const NavigationDestination(
+                    icon: Icon(Icons.sticky_note_2_outlined),
+                    selectedIcon: Icon(Icons.sticky_note_2_rounded),
+                    label: 'Notes',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(
+                      moduleFeature?.icon ??
+                          Icons.account_balance_wallet_rounded,
+                    ),
+                    label: _shortTitle(moduleFeature?.title ?? 'Expenses'),
+                  ),
                   const NavigationDestination(
                     icon: Icon(Icons.dashboard_outlined),
                     selectedIcon: Icon(Icons.dashboard_rounded),
-                    label: 'Home',
-                  ),
-                  const NavigationDestination(
-                    icon: Icon(Icons.event_outlined),
-                    selectedIcon: Icon(Icons.event_rounded),
-                    label: 'My Events',
+                    label: 'Dashboard',
                   ),
                   NavigationDestination(
                     icon: _NotificationIcon(
@@ -196,11 +232,6 @@ class _MainShellState extends State<MainShell> {
                     ),
                     label: 'Alerts',
                   ),
-                  const NavigationDestination(
-                    icon: Icon(Icons.person_outline_rounded),
-                    selectedIcon: Icon(Icons.person_rounded),
-                    label: 'Profile',
-                  ),
                 ],
               ),
             );
@@ -208,6 +239,16 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
     );
+  }
+
+  /// Bottom-bar labels have little room; drop a trailing "Tracker" etc.
+  static String _shortTitle(String title) {
+    const drop = [' Tracker', ' Records', ' Manager'];
+    var t = title;
+    for (final d in drop) {
+      if (t.endsWith(d)) t = t.substring(0, t.length - d.length);
+    }
+    return t;
   }
 }
 

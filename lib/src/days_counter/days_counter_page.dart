@@ -402,8 +402,13 @@ class _EventCard extends StatelessWidget {
               : 'days to go')
         : (daysCount == 1 ? 'day ago' : 'days ago');
 
+    final isToday = isUpcoming && daysCount == 0;
+    final dateText = DateFormat(
+      isUpcoming ? 'EEE, d MMM yyyy' : 'd MMM yyyy',
+    ).format(occurDate);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         // A soft wash of the kind's colour over the surface, so a wedding
@@ -419,12 +424,15 @@ class _EventCard extends StatelessWidget {
             ),
           ],
         ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: color.withValues(alpha: isToday ? 0.75 : 0.30),
+          width: isToday ? 1.6 : 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 10,
+            color: color.withValues(alpha: isToday ? 0.18 : 0.08),
+            blurRadius: isToday ? 16 : 10,
             offset: const Offset(0, 4),
           ),
         ],
@@ -433,41 +441,30 @@ class _EventCard extends StatelessWidget {
         children: [
           // Watermark motif in the corner: rings, cake, candle, lantern…
           Positioned(
-            right: -14,
-            bottom: -18,
+            right: -18,
+            bottom: -22,
             child: Icon(
               theme.watermark,
-              size: 96,
-              color: theme.primary.withValues(alpha: 0.08),
+              size: 110,
+              color: theme.primary.withValues(alpha: 0.07),
             ),
           ),
-          if (theme.ribbon != null)
+          // The milestone is the point of the card ("Turning 24", "4th
+          // wedding anniversary"), so it takes the top-right corner tag.
+          if (yearsLabel != null)
             Positioned(
               top: 0,
               right: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(10, 3, 12, 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [theme.primary, theme.secondary],
-                  ),
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  theme.ribbon!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.8,
-                  ),
-                ),
+              child: _MilestoneBadge(
+                text: yearsLabel,
+                icon: _kindIcon(event.kind),
+                theme: theme,
+                emphasized: isToday,
+                corner: true,
               ),
             ),
           InkWell(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             onTap: () async {
               final result = await Navigator.push<DaysCounterEvent>(
                 context,
@@ -482,52 +479,21 @@ class _EventCard extends StatelessWidget {
             },
             onLongPress: () => _confirmDelete(context),
             child: Padding(
-              // Extra headroom when a ribbon sits in the corner.
+              // Extra headroom when the milestone tag sits in the corner.
               padding: EdgeInsets.fromLTRB(
                 14,
-                theme.ribbon != null ? 20 : 14,
+                yearsLabel != null ? 30 : 14,
                 14,
                 14,
               ),
               child: Row(
                 children: [
-                  // Big day count box
-                  Container(
-                    width: 78,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [theme.primary, theme.secondary],
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            dayLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          daySub,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                  _DayBox(
+                    label: dayLabel,
+                    sub: daySub,
+                    theme: theme,
+                    isToday: isToday,
+                    todayIcon: _kindIcon(event.kind),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -537,55 +503,14 @@ class _EventCard extends StatelessWidget {
                         Text(
                           event.title,
                           style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.2,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Icon(event.eventType.icon, size: 14, color: color),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                event.eventType.displayName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: color,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 1,
-                              ),
-                              decoration: BoxDecoration(
-                                color: event.isYearly
-                                    ? Colors.green.withValues(alpha: 0.12)
-                                    : Colors.blueGrey.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                event.isYearly ? 'Yearly' : 'One time',
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  color: event.isYearly
-                                      ? Colors.green[800]
-                                      : Colors.blueGrey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 7),
                         Row(
                           children: [
                             Icon(
@@ -596,74 +521,58 @@ class _EventCard extends StatelessWidget {
                             const SizedBox(width: 4),
                             Flexible(
                               child: Text(
-                                DateFormat(
-                                  event.isYearly ? 'd MMM' : 'd MMM yyyy',
-                                ).format(occurDate),
+                                dateText,
                                 style: TextStyle(
                                   fontSize: 12,
+                                  fontWeight: FontWeight.w600,
                                   color: cs.onSurface,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            if (event.isYearly) ...[
-                              const SizedBox(width: 6),
-                              Text(
-                                DateFormat('yyyy').format(occurDate),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                            if (yearsLabel != null) ...[
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  '· $yearsLabel',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: color,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
                           ],
                         ),
                         if (desc.detail != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 3),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _kindIcon(event.kind),
-                                  size: 12,
-                                  color: cs.onSurfaceVariant,
-                                ),
-                                const SizedBox(width: 4),
-                                Flexible(
-                                  child: Text(
-                                    desc.detail!,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: cs.onSurfaceVariant,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              desc.detail!,
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _MiniChip(
+                              icon: event.eventType.icon,
+                              label: event.eventType.displayName,
+                              color: event.eventType.color,
+                            ),
+                            const SizedBox(width: 6),
+                            _MiniChip(
+                              icon: event.isYearly
+                                  ? Icons.autorenew_rounded
+                                  : Icons.calendar_today_rounded,
+                              label: event.isYearly ? 'Yearly' : 'One time',
+                              color: event.isYearly
+                                  ? Colors.green
+                                  : Colors.blueGrey,
+                            ),
+                          ],
+                        ),
                         if (event.notes != null && event.notes!.isNotEmpty)
                           Padding(
-                            padding: const EdgeInsets.only(top: 4),
+                            padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               event.notes!,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 11.5,
                                 color: cs.onSurfaceVariant,
                                 fontStyle: FontStyle.italic,
                               ),
@@ -674,31 +583,12 @@ class _EventCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Today.isToday(occurDate, today)
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            'TODAY',
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: color,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        )
-                      : Icon(
-                          Icons.chevron_right_rounded,
-                          size: 20,
-                          color: cs.onSurfaceVariant,
-                        ),
+                  const SizedBox(width: 4),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
                 ],
               ),
             ),
@@ -740,14 +630,10 @@ class _KindTheme {
   final Color secondary;
   final IconData watermark;
 
-  /// Small ribbon in the top-right corner; null for plain cards.
-  final String? ribbon;
-
   const _KindTheme({
     required this.primary,
     required this.secondary,
     required this.watermark,
-    this.ribbon,
   });
 
   static _KindTheme of(DaysCounterEvent event) {
@@ -757,28 +643,24 @@ class _KindTheme {
           primary: Color(0xFFF06292), // pink
           secondary: Color(0xFFFFB74D), // amber
           watermark: Icons.cake_rounded,
-          ribbon: 'BIRTHDAY',
         );
       case DaysCounterEventKind.wedding:
         return const _KindTheme(
           primary: Color(0xFFC2185B), // deep rose
           secondary: Color(0xFFD4AF37), // gold
           watermark: Icons.favorite_rounded,
-          ribbon: 'ANNIVERSARY',
         );
       case DaysCounterEventKind.memorial:
         return const _KindTheme(
           primary: Color(0xFF546E7A), // slate
           secondary: Color(0xFF90A4AE),
           watermark: Icons.local_florist_rounded,
-          ribbon: 'IN MEMORY',
         );
       case DaysCounterEventKind.festival:
         return const _KindTheme(
           primary: Color(0xFFFF7043), // orange
           secondary: Color(0xFF7E57C2), // violet
           watermark: Icons.celebration_rounded,
-          ribbon: 'FESTIVAL',
         );
       case DaysCounterEventKind.other:
         final c = event.eventType.color;
@@ -809,6 +691,181 @@ String _dateLabelFor(DaysCounterEventKind kind, DaysCounterRecurrence r) {
     DaysCounterEventKind.festival => 'Date',
     DaysCounterEventKind.other => 'Original date',
   };
+}
+
+/// The big count on the left: "12 / days to go". On the day itself it
+/// swaps to the kind's icon with TODAY underneath.
+class _DayBox extends StatelessWidget {
+  final String label;
+  final String sub;
+  final _KindTheme theme;
+  final bool isToday;
+  final IconData todayIcon;
+
+  const _DayBox({
+    required this.label,
+    required this.sub,
+    required this.theme,
+    required this.isToday,
+    required this.todayIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 82,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [theme.primary, theme.secondary],
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primary.withValues(alpha: 0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (isToday)
+            Icon(todayIcon, size: 30, color: Colors.white)
+          else
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.8,
+                  height: 1.05,
+                ),
+              ),
+            ),
+          const SizedBox(height: 3),
+          Text(
+            isToday ? 'TODAY' : sub,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.92),
+              fontSize: isToday ? 10 : 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: isToday ? 1.0 : 0.2,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The milestone pill: "Turning 24", "4th wedding anniversary".
+class _MilestoneBadge extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final _KindTheme theme;
+  final bool emphasized;
+
+  /// True when the badge is the card's top-right corner tag: only the
+  /// bottom-left corner is rounded so it hugs the card edge.
+  final bool corner;
+
+  const _MilestoneBadge({
+    required this.text,
+    required this.icon,
+    required this.theme,
+    this.emphasized = false,
+    this.corner = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: corner
+          ? EdgeInsets.fromLTRB(12, emphasized ? 6 : 5, 14, emphasized ? 7 : 6)
+          : EdgeInsets.symmetric(
+              horizontal: emphasized ? 12 : 10,
+              vertical: emphasized ? 6 : 5,
+            ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [theme.primary, theme.secondary]),
+        borderRadius: corner
+            ? const BorderRadius.only(bottomLeft: Radius.circular(14))
+            : BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: theme.primary.withValues(alpha: 0.30),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: emphasized ? 16 : 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: emphasized ? 14 : 13,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small tinted chip for the type and recurrence.
+class _MiniChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _MiniChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class Today {
@@ -898,6 +955,34 @@ class _AddEventPageState extends State<AddEventPage> {
     if (d != null) setState(() => _selectedDate = d);
   }
 
+  /// Confirms, deletes through the cubit and returns to the list. The list
+  /// receives no result, so it does not try to update the removed event.
+  Future<void> _delete(BuildContext context, DaysCounterCubit cubit) async {
+    final event = widget.existing;
+    if (event == null) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: const Text('Delete event'),
+        content: Text('Remove "${event.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(d, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(d, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    cubit.deleteEvent(event.id);
+    Navigator.pop(context);
+  }
+
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final type = _selectedType;
@@ -942,6 +1027,14 @@ class _AddEventPageState extends State<AddEventPage> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Edit Event' : 'Add Event'),
         elevation: 0,
+        actions: [
+          if (_isEditing)
+            IconButton(
+              tooltip: 'Delete event',
+              icon: const Icon(Icons.delete_outline_rounded),
+              onPressed: () => _delete(context, cubit),
+            ),
+        ],
       ),
       body: Center(
         child: ConstrainedBox(
@@ -1105,6 +1198,21 @@ class _AddEventPageState extends State<AddEventPage> {
                     style: const TextStyle(fontSize: 16),
                   ),
                 ),
+                if (_isEditing) ...[
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () => _delete(context, cubit),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: BorderSide(
+                        color: Colors.red.withValues(alpha: 0.5),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    label: const Text('Delete Event'),
+                  ),
+                ],
               ],
             ),
           ),

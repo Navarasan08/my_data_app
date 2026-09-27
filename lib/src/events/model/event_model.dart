@@ -43,26 +43,26 @@ class EventFund {
       availableColors[colorIndex.clamp(0, availableColors.length - 1)];
 
   static final List<IconData> availableIcons = [
-    Icons.celebration_rounded,      // 0 - marriage / celebration
-    Icons.flight_rounded,           // 1 - trip
+    Icons.celebration_rounded, // 0 - marriage / celebration
+    Icons.flight_rounded, // 1 - trip
     Icons.home_repair_service_rounded, // 2 - renovation
-    Icons.construction_rounded,     // 3 - construction / junk
-    Icons.school_rounded,           // 4 - education
-    Icons.cake_rounded,             // 5 - birthday
-    Icons.health_and_safety_rounded,// 6 - medical
-    Icons.shopping_bag_rounded,     // 7 - shopping
+    Icons.construction_rounded, // 3 - construction / junk
+    Icons.school_rounded, // 4 - education
+    Icons.cake_rounded, // 5 - birthday
+    Icons.health_and_safety_rounded, // 6 - medical
+    Icons.shopping_bag_rounded, // 7 - shopping
     Icons.baby_changing_station_rounded, // 8 - baby
-    Icons.business_center_rounded,  // 9 - business
-    Icons.house_rounded,            // 10 - housewarming
-    Icons.directions_car_rounded,   // 11 - vehicle purchase
-    Icons.movie_rounded,            // 12 - entertainment
-    Icons.card_giftcard_rounded,    // 13 - gifts
-    Icons.restaurant_rounded,       // 14 - feast
-    Icons.temple_hindu_rounded,     // 15 - pooja / religious
-    Icons.event_rounded,            // 16 - generic event
-    Icons.favorite_rounded,         // 17 - anniversary
-    Icons.groups_rounded,           // 18 - group / family
-    Icons.beach_access_rounded,     // 19 - vacation
+    Icons.business_center_rounded, // 9 - business
+    Icons.house_rounded, // 10 - housewarming
+    Icons.directions_car_rounded, // 11 - vehicle purchase
+    Icons.movie_rounded, // 12 - entertainment
+    Icons.card_giftcard_rounded, // 13 - gifts
+    Icons.restaurant_rounded, // 14 - feast
+    Icons.temple_hindu_rounded, // 15 - pooja / religious
+    Icons.event_rounded, // 16 - generic event
+    Icons.favorite_rounded, // 17 - anniversary
+    Icons.groups_rounded, // 18 - group / family
+    Icons.beach_access_rounded, // 19 - vacation
   ];
 
   static final List<Color> availableColors = [
@@ -115,36 +115,36 @@ class EventFund {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'iconIndex': iconIndex,
-        'colorIndex': colorIndex,
-        'budget': budget,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'eventDate': eventDate?.toIso8601String(),
-        'isArchived': isArchived,
-        'showCalendar': showCalendar,
-        'showDateSeparators': showDateSeparators,
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'iconIndex': iconIndex,
+    'colorIndex': colorIndex,
+    'budget': budget,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'eventDate': eventDate?.toIso8601String(),
+    'isArchived': isArchived,
+    'showCalendar': showCalendar,
+    'showDateSeparators': showDateSeparators,
+  };
 
   factory EventFund.fromJson(Map<String, dynamic> json) => EventFund(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        description: json['description'] as String?,
-        iconIndex: json['iconIndex'] as int? ?? 0,
-        colorIndex: json['colorIndex'] as int? ?? 0,
-        budget: (json['budget'] as num?)?.toDouble(),
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-        eventDate: json['eventDate'] != null
-            ? DateTime.parse(json['eventDate'] as String)
-            : null,
-        isArchived: json['isArchived'] as bool? ?? false,
-        showCalendar: json['showCalendar'] as bool? ?? false,
-        showDateSeparators: json['showDateSeparators'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    description: json['description'] as String?,
+    iconIndex: json['iconIndex'] as int? ?? 0,
+    colorIndex: json['colorIndex'] as int? ?? 0,
+    budget: (json['budget'] as num?)?.toDouble(),
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+    eventDate: json['eventDate'] != null
+        ? DateTime.parse(json['eventDate'] as String)
+        : null,
+    isArchived: json['isArchived'] as bool? ?? false,
+    showCalendar: json['showCalendar'] as bool? ?? false,
+    showDateSeparators: json['showDateSeparators'] as bool? ?? false,
+  );
 }
 
 /// An expense entry belonging to a specific [EventFund].
@@ -154,9 +154,9 @@ class EventExpense {
   final String title;
   final double amount;
   final DateTime date;
-  final String? category;     // free-text tag, user-defined per event
-  final String? paidTo;       // vendor / person
-  final String? paymentMode;  // cash / upi / card / bank transfer
+  final String? category; // free-text tag, user-defined per event
+  final String? paidTo; // vendor / person
+  final String? paymentMode; // cash / upi / card / bank transfer
   final String? notes;
 
   const EventExpense({
@@ -196,29 +196,37 @@ class EventExpense {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'eventId': eventId,
-        'title': title,
-        'amount': amount,
-        'date': date.toIso8601String(),
-        'category': category,
-        'paidTo': paidTo,
-        'paymentMode': paymentMode,
-        'notes': notes,
-      };
+    'id': id,
+    'eventId': eventId,
+    'title': title,
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'category': category,
+    'paidTo': paidTo,
+    'paymentMode': paymentMode,
+    'notes': notes,
+  };
 
   factory EventExpense.fromJson(Map<String, dynamic> json) => EventExpense(
-        id: json['id'] as String,
-        eventId: json['eventId'] as String,
-        title: json['title'] as String,
-        amount: (json['amount'] as num).toDouble(),
-        date: DateTime.parse(json['date'] as String),
-        category: json['category'] as String?,
-        paidTo: json['paidTo'] as String?,
-        paymentMode: json['paymentMode'] as String?,
-        notes: json['notes'] as String?,
-      );
+    id: json['id'] as String,
+    eventId: json['eventId'] as String,
+    title: json['title'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    date: DateTime.parse(json['date'] as String),
+    category: json['category'] as String?,
+    paidTo: json['paidTo'] as String?,
+    paymentMode: json['paymentMode'] as String?,
+    notes: json['notes'] as String?,
+  );
 }
 
 /// Common payment modes shown as suggestion chips.
-const kPaymentModes = ['Cash', 'UPI', 'Debit Card', 'Credit Card', 'Bank Transfer', 'Cheque', 'Other'];
+const kPaymentModes = [
+  'Cash',
+  'UPI',
+  'Debit Card',
+  'Credit Card',
+  'Bank Transfer',
+  'Cheque',
+  'Other',
+];

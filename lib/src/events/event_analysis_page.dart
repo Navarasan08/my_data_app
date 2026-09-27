@@ -118,8 +118,14 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
     if (_dateRange != null) {
       // showDateRangePicker's end-date is the start-of-day — bump to
       // end-of-day so a same-day range matches all expenses that day.
-      final end = DateTime(_dateRange!.end.year, _dateRange!.end.month,
-          _dateRange!.end.day, 23, 59, 59);
+      final end = DateTime(
+        _dateRange!.end.year,
+        _dateRange!.end.month,
+        _dateRange!.end.day,
+        23,
+        59,
+        59,
+      );
       return (start: _dateRange!.start, end: end);
     }
     if (_monthAnchor != null) return _monthWindow(_monthAnchor!);
@@ -156,7 +162,8 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
       final s = _dateRange!.start;
       final e = _dateRange!.end;
       final lastDayOfStartMonth = DateTime(s.year, s.month + 1, 0).day;
-      final isFullSingleMonth = s.day == 1 &&
+      final isFullSingleMonth =
+          s.day == 1 &&
           e.day == lastDayOfStartMonth &&
           s.year == e.year &&
           s.month == e.month;
@@ -211,10 +218,16 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
   // ── Aggregations ─────────────────────────────────────────────────────────
 
   static String _categoryKey(EventExpense e) =>
-      (e.category?.trim().isEmpty ?? true) ? 'Uncategorized' : e.category!.trim();
+      (e.category?.trim().isEmpty ?? true)
+      ? 'Uncategorized'
+      : e.category!.trim();
 
-  List<EventExpense> _expensesInRange(List<EventExpense> all,
-      {String? category, String? paymentMode, bool untaggedOnly = false}) {
+  List<EventExpense> _expensesInRange(
+    List<EventExpense> all, {
+    String? category,
+    String? paymentMode,
+    bool untaggedOnly = false,
+  }) {
     final r = _activeRange();
     return all.where((e) {
       if (e.date.isBefore(r.start) || e.date.isAfter(r.end)) return false;
@@ -225,8 +238,7 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
       }
       if (paymentMode != null && e.paymentMode != paymentMode) return false;
       return true;
-    }).toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    }).toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 
   Map<String, double> _categoryTotals(List<EventExpense> all) {
@@ -253,8 +265,10 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
 
   /// Totals for the last [months] calendar months (oldest → newest),
   /// including empty months so the trend line has a continuous axis.
-  Map<DateTime, double> _monthlyTotals(List<EventExpense> all,
-      {int months = 12}) {
+  Map<DateTime, double> _monthlyTotals(
+    List<EventExpense> all, {
+    int months = 12,
+  }) {
     final now = DateTime.now();
     final result = <DateTime, double>{};
     for (int i = months - 1; i >= 0; i--) {
@@ -282,12 +296,12 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
   /// Key used to invalidate the [AnimatedSwitcher] when any filter
   /// dimension changes — the new charts cross-fade in.
   Object _filterKey() => Object.hash(
-        _period,
-        _dateRange?.start,
-        _dateRange?.end,
-        _monthAnchor,
-        _filterCategory,
-      );
+    _period,
+    _dateRange?.start,
+    _dateRange?.end,
+    _monthAnchor,
+    _filterCategory,
+  );
 
   // ── Build ────────────────────────────────────────────────────────────────
 
@@ -304,11 +318,15 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
         final allExpenses = cubit.expensesFor(widget.eventId);
         final colors = _categoryColors(allExpenses);
         final categoryTotals = _categoryTotals(allExpenses);
-        final filteredTotal =
-            categoryTotals.values.fold<double>(0, (s, v) => s + v);
+        final filteredTotal = categoryTotals.values.fold<double>(
+          0,
+          (s, v) => s + v,
+        );
         final paymentTotals = _paymentTotals(allExpenses);
-        final paymentTotal =
-            paymentTotals.values.fold<double>(0, (s, v) => s + v);
+        final paymentTotal = paymentTotals.values.fold<double>(
+          0,
+          (s, v) => s + v,
+        );
         final untaggedCount = _untaggedPaymentCount(allExpenses);
         final monthlyData = _monthlyTotals(allExpenses);
         final allCategories = allExpenses.map(_categoryKey).toSet().toList()
@@ -356,15 +374,24 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                                             'Category Breakdown',
                                             subtitle: _navigatorLabel(),
                                             trailing: _TotalSpentLabel(
-                                                amount:
-                                                    '₹${_fmt.format(filteredTotal)}'),
+                                              amount:
+                                                  '₹${_fmt.format(filteredTotal)}',
+                                            ),
                                           ),
                                           const SizedBox(height: 12),
-                                          _buildPieChart(categoryTotals,
-                                              filteredTotal, colors),
+                                          _buildPieChart(
+                                            categoryTotals,
+                                            filteredTotal,
+                                            colors,
+                                          ),
                                           const SizedBox(height: 8),
-                                          _buildPieLegend(cubit, event,
-                                              categoryTotals, filteredTotal, colors),
+                                          _buildPieLegend(
+                                            cubit,
+                                            event,
+                                            categoryTotals,
+                                            filteredTotal,
+                                            colors,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -376,7 +403,10 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                                         children: [
                                           _buildSectionTitle('Top Categories'),
                                           const SizedBox(height: 12),
-                                          _buildBarChart(categoryTotals, colors),
+                                          _buildBarChart(
+                                            categoryTotals,
+                                            colors,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -387,21 +417,37 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                                   'Category Breakdown',
                                   subtitle: _navigatorLabel(),
                                   trailing: _TotalSpentLabel(
-                                      amount: '₹${_fmt.format(filteredTotal)}'),
+                                    amount: '₹${_fmt.format(filteredTotal)}',
+                                  ),
                                 ),
                                 const SizedBox(height: 18),
                                 _buildPieChart(
-                                    categoryTotals, filteredTotal, colors),
+                                  categoryTotals,
+                                  filteredTotal,
+                                  colors,
+                                ),
                                 const SizedBox(height: 8),
-                                _buildPieLegend(cubit, event, categoryTotals,
-                                    filteredTotal, colors),
+                                _buildPieLegend(
+                                  cubit,
+                                  event,
+                                  categoryTotals,
+                                  filteredTotal,
+                                  colors,
+                                ),
                               ],
                               const SizedBox(height: 24),
-                              _buildSectionTitle('Payment Mode',
-                                  subtitle: _activeRangeLabel()),
+                              _buildSectionTitle(
+                                'Payment Mode',
+                                subtitle: _activeRangeLabel(),
+                              ),
                               const SizedBox(height: 12),
-                              _buildPaymentBreakdown(cubit, event,
-                                  paymentTotals, paymentTotal, untaggedCount),
+                              _buildPaymentBreakdown(
+                                cubit,
+                                event,
+                                paymentTotals,
+                                paymentTotal,
+                                untaggedCount,
+                              ),
                               const SizedBox(height: 24),
                               _buildSectionTitle('Monthly Trend'),
                               const SizedBox(height: 12),
@@ -430,8 +476,11 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
 
   // ── Section helpers ──────────────────────────────────────────────────────
 
-  Widget _buildSectionTitle(String title,
-      {String? subtitle, Widget? trailing}) {
+  Widget _buildSectionTitle(
+    String title, {
+    String? subtitle,
+    Widget? trailing,
+  }) {
     final cs = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
@@ -464,17 +513,17 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
         ],
         if (trailing != null) ...[
           const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 1),
-            child: trailing,
-          ),
+          Padding(padding: const EdgeInsets.only(bottom: 1), child: trailing),
         ],
       ],
     );
   }
 
-  Widget _buildFilterControls(BuildContext context, List<String> allCategories,
-      Map<String, Color> colors) {
+  Widget _buildFilterControls(
+    BuildContext context,
+    List<String> allCategories,
+    Map<String, Color> colors,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final hasRange = _dateRange != null || _monthAnchor != null;
 
@@ -490,10 +539,12 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
             width: double.infinity,
             child: SegmentedButton<_AnalysisPeriod>(
               segments: _AnalysisPeriod.values
-                  .map((p) => ButtonSegment<_AnalysisPeriod>(
-                        value: p,
-                        label: Text(p.label),
-                      ))
+                  .map(
+                    (p) => ButtonSegment<_AnalysisPeriod>(
+                      value: p,
+                      label: Text(p.label),
+                    ),
+                  )
                   .toList(),
               selected: hasRange
                   ? <_AnalysisPeriod>{}
@@ -546,8 +597,7 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
             decoration: const InputDecoration(
               labelText: 'Category',
               border: OutlineInputBorder(),
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               isDense: true,
             ),
             items: [
@@ -586,8 +636,11 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
 
   // ── Chart builders ───────────────────────────────────────────────────────
 
-  Widget _buildPieChart(Map<String, double> totals, double grandTotal,
-      Map<String, Color> colors) {
+  Widget _buildPieChart(
+    Map<String, double> totals,
+    double grandTotal,
+    Map<String, Color> colors,
+  ) {
     if (totals.isEmpty || grandTotal == 0) {
       return _emptyChart('No expenses in this period');
     }
@@ -600,8 +653,7 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
             final percentage = (e.value / grandTotal * 100);
             return PieChartSectionData(
               value: e.value,
-              title:
-                  percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
+              title: percentage >= 5 ? '${percentage.toStringAsFixed(1)}%' : '',
               color: colors[e.key],
               radius: 85,
               titleStyle: const TextStyle(
@@ -620,8 +672,13 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
     );
   }
 
-  Widget _buildPieLegend(EventCubit cubit, EventFund event,
-      Map<String, double> totals, double grandTotal, Map<String, Color> colors) {
+  Widget _buildPieLegend(
+    EventCubit cubit,
+    EventFund event,
+    Map<String, double> totals,
+    double grandTotal,
+    Map<String, Color> colors,
+  ) {
     if (totals.isEmpty) return const SizedBox();
 
     final cs = Theme.of(context).colorScheme;
@@ -639,8 +696,10 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
             title: e.key,
             accentColor: colors[e.key] ?? event.color,
             icon: Icons.label_rounded,
-            expenses:
-                _expensesInRange(cubit.expensesFor(event.id), category: e.key),
+            expenses: _expensesInRange(
+              cubit.expensesFor(event.id),
+              category: e.key,
+            ),
           ),
           borderRadius: BorderRadius.circular(6),
           child: Padding(
@@ -663,7 +722,9 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                         TextSpan(
                           text: '${e.key}  ',
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         TextSpan(
                           text:
@@ -674,8 +735,11 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                     ),
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    size: 16, color: cs.onSurfaceVariant),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: cs.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -684,8 +748,13 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
     );
   }
 
-  Widget _buildPaymentBreakdown(EventCubit cubit, EventFund event,
-      Map<String, double> totals, double grandTotal, int untaggedCount) {
+  Widget _buildPaymentBreakdown(
+    EventCubit cubit,
+    EventFund event,
+    Map<String, double> totals,
+    double grandTotal,
+    int untaggedCount,
+  ) {
     final cs = Theme.of(context).colorScheme;
     if (totals.isEmpty) {
       return Container(
@@ -729,13 +798,14 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                 title: e.key,
                 accentColor: style.color,
                 icon: style.icon,
-                expenses: _expensesInRange(cubit.expensesFor(event.id),
-                    paymentMode: e.key),
+                expenses: _expensesInRange(
+                  cubit.expensesFor(event.id),
+                  paymentMode: e.key,
+                ),
               ),
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                 child: Row(
                   children: [
                     Container(
@@ -754,7 +824,9 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                           Text(
                             e.key,
                             style: const TextStyle(
-                                fontSize: 13, fontWeight: FontWeight.w600),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           TweenAnimationBuilder<double>(
@@ -769,7 +841,8 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                                   minHeight: 6,
                                   backgroundColor: cs.surfaceContainerHighest,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      style.color),
+                                    style.color,
+                                  ),
                                 ),
                               );
                             },
@@ -784,18 +857,25 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                         Text(
                           '₹${_fmt.format(e.value)}',
                           style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w700),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         Text(
                           '${pct.toStringAsFixed(1)}%',
                           style: TextStyle(
-                              fontSize: 11, color: cs.onSurfaceVariant),
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(width: 6),
-                    Icon(Icons.chevron_right_rounded,
-                        size: 16, color: cs.onSurfaceVariant),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: cs.onSurfaceVariant,
+                    ),
                   ],
                 ),
               ),
@@ -847,10 +927,12 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
             ),
           ],
           titlesData: FlTitlesData(
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -922,17 +1004,20 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                   toY: e.value.value,
                   color: colors[e.value.key],
                   width: sorted.length <= 5 ? 28 : 18,
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(6)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(6),
+                  ),
                 ),
               ],
             );
           }).toList(),
           titlesData: FlTitlesData(
-            topTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles:
-                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
@@ -1057,7 +1142,9 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                           Text(
                             '${_activeRangeLabel()}  ·  ${expenses.length} expense${expenses.length == 1 ? '' : 's'}',
                             style: TextStyle(
-                                fontSize: 12, color: cs.onSurfaceVariant),
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
@@ -1080,13 +1167,17 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                         child: Text(
                           'No expenses to show',
                           style: TextStyle(
-                              color: cs.onSurfaceVariant, fontSize: 14),
+                            color: cs.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
                         ),
                       )
                     : ListView.separated(
                         controller: scrollController,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 8),
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         itemCount: expenses.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 6),
                         itemBuilder: (_, i) {
@@ -1099,14 +1190,15 @@ class _EventAnalysisPageState extends State<EventAnalysisPage> {
                               // list won't reflect the edit, so dismissing
                               // avoids showing stale data.
                               Navigator.pop(sheetCtx);
-                              final edited =
-                                  await Navigator.push<EventExpense>(
+                              final edited = await Navigator.push<EventExpense>(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => BlocProvider.value(
                                     value: cubit,
                                     child: AddExpensePage(
-                                        event: event, existing: exp),
+                                      event: event,
+                                      existing: exp,
+                                    ),
                                   ),
                                 ),
                               );
@@ -1286,9 +1378,7 @@ class _ExpenseListTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: accentColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
-          border: Border(
-            left: BorderSide(color: accentColor, width: 3),
-          ),
+          border: Border(left: BorderSide(color: accentColor, width: 3)),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Row(

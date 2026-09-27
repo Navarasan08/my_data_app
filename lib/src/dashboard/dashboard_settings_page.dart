@@ -38,7 +38,9 @@ class DashboardSettingsPage extends StatelessWidget {
                   Expanded(
                     child: ReorderableListView.builder(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
                       itemCount: features.length,
                       onReorder: cubit.reorder,
                       proxyDecorator: (child, index, animation) {
@@ -53,8 +55,7 @@ class DashboardSettingsPage extends StatelessWidget {
                         return _FeatureSettingTile(
                           key: ValueKey(feature.id),
                           feature: feature,
-                          onToggle: () =>
-                              cubit.toggleVisibility(feature.id),
+                          onToggle: () => cubit.toggleVisibility(feature.id),
                         );
                       },
                     ),
@@ -92,8 +93,7 @@ class _FeatureSettingTile extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -128,8 +128,11 @@ class _FeatureSettingTile extends StatelessWidget {
               onChanged: (_) => onToggle(),
               activeColor: Colors.green,
             ),
-            Icon(Icons.drag_handle_rounded,
-                color: cs.onSurfaceVariant, size: 22),
+            Icon(
+              Icons.drag_handle_rounded,
+              color: cs.onSurfaceVariant,
+              size: 22,
+            ),
           ],
         ),
       ),

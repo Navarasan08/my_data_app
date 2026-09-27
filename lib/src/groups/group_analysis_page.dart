@@ -50,8 +50,14 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
 
   ({DateTime start, DateTime end, bool allTime}) _activeRange() {
     if (_customRange != null) {
-      final end = DateTime(_customRange!.end.year, _customRange!.end.month,
-          _customRange!.end.day, 23, 59, 59);
+      final end = DateTime(
+        _customRange!.end.year,
+        _customRange!.end.month,
+        _customRange!.end.day,
+        23,
+        59,
+        59,
+      );
       return (start: _customRange!.start, end: end, allTime: false);
     }
     final now = DateTime.now();
@@ -75,11 +81,7 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
           allTime: false,
         );
       case GroupAnalysisPeriod.all:
-        return (
-          start: DateTime(1970),
-          end: DateTime(2100),
-          allTime: true,
-        );
+        return (start: DateTime(1970), end: DateTime(2100), allTime: true);
     }
   }
 
@@ -98,8 +100,7 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
         final cubit = context.read<GroupCubit>();
         final group = cubit.getGroup(widget.groupId);
         if (group == null) {
-          return const Scaffold(
-              body: Center(child: Text('Group not found')));
+          return const Scaffold(body: Center(child: Text('Group not found')));
         }
 
         final range = _activeRange();
@@ -107,10 +108,12 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
         final inRange = range.allTime
             ? allExpenses
             : allExpenses
-                .where((e) =>
-                    !e.date.isBefore(range.start) &&
-                    !e.date.isAfter(range.end))
-                .toList();
+                  .where(
+                    (e) =>
+                        !e.date.isBefore(range.start) &&
+                        !e.date.isAfter(range.end),
+                  )
+                  .toList();
 
         return Scaffold(
           appBar: AppBar(
@@ -150,26 +153,31 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
                 SegmentedButton<GroupAnalysisPeriod>(
                   segments: const [
                     ButtonSegment(
-                        value: GroupAnalysisPeriod.thisMonth,
-                        label: Text('Month')),
+                      value: GroupAnalysisPeriod.thisMonth,
+                      label: Text('Month'),
+                    ),
                     ButtonSegment(
-                        value: GroupAnalysisPeriod.lastMonth,
-                        label: Text('Last')),
+                      value: GroupAnalysisPeriod.lastMonth,
+                      label: Text('Last'),
+                    ),
                     ButtonSegment(
-                        value: GroupAnalysisPeriod.year,
-                        label: Text('Year')),
+                      value: GroupAnalysisPeriod.year,
+                      label: Text('Year'),
+                    ),
                     ButtonSegment(
-                        value: GroupAnalysisPeriod.all,
-                        label: Text('All')),
+                      value: GroupAnalysisPeriod.all,
+                      label: Text('All'),
+                    ),
                   ],
                   selected: {_period},
-                  onSelectionChanged: (s) =>
-                      setState(() => _period = s.first),
+                  onSelectionChanged: (s) => setState(() => _period = s.first),
                 )
               else
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(8),
@@ -178,9 +186,13 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
                     children: [
                       const Icon(Icons.date_range, size: 16),
                       const SizedBox(width: 6),
-                      Text(_rangeLabel(),
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(
+                        _rangeLabel(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -205,8 +217,7 @@ class _GroupAnalysisPageState extends State<GroupAnalysisPage> {
 
               if (inRange.isNotEmpty) ...[
                 _SectionTitle(title: 'Monthly trend'),
-                _MonthlyTrendChart(
-                    expenses: inRange, color: group.color),
+                _MonthlyTrendChart(expenses: inRange, color: group.color),
                 const SizedBox(height: 20),
               ] else
                 _EmptyState(label: _rangeLabel()),
@@ -289,8 +300,7 @@ class _SummarySection extends StatelessWidget {
           subtitle: myNet.abs() < 0.01
               ? Text(
                   'Even on this slice',
-                  style: TextStyle(
-                      fontSize: 11, color: cs.onSurfaceVariant),
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
                 )
               : null,
         ),
@@ -337,14 +347,18 @@ class _StatTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant)),
-                Text(value,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
                 if (subtitle != null) subtitle!,
               ],
             ),
@@ -368,15 +382,16 @@ class _PerMemberBreakdown extends StatelessWidget {
     if (expenses.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Text('Nothing to break down.',
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+        child: Text(
+          'Nothing to break down.',
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+        ),
       );
     }
     final paidByMember = <String, double>{};
     final owedByMember = <String, double>{};
     for (final e in expenses) {
-      paidByMember[e.paidByUid] =
-          (paidByMember[e.paidByUid] ?? 0) + e.amount;
+      paidByMember[e.paidByUid] = (paidByMember[e.paidByUid] ?? 0) + e.amount;
       for (final s in e.splits) {
         owedByMember[s.uid] = (owedByMember[s.uid] ?? 0) + s.owed;
       }
@@ -405,14 +420,20 @@ class _PerMemberBreakdown extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(m?.label ?? uid,
-                          style: const TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        m?.label ?? uid,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     Text(
                       'paid ₹${_money.format(paid)} · owes ₹${_money.format(owed)}',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -446,8 +467,7 @@ class _DualBar extends StatelessWidget {
             value: paidFraction.clamp(0.0, 1.0),
             minHeight: 5,
             backgroundColor: cs.surfaceContainerHighest,
-            valueColor:
-                AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
           ),
         ),
         const SizedBox(height: 2),
@@ -457,8 +477,7 @@ class _DualBar extends StatelessWidget {
             value: owedFraction.clamp(0.0, 1.0),
             minHeight: 5,
             backgroundColor: cs.surfaceContainerHighest,
-            valueColor:
-                AlwaysStoppedAnimation<Color>(Colors.orange[700]!),
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange[700]!),
           ),
         ),
       ],
@@ -504,14 +523,20 @@ class _CategoryChart extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(e.key,
-                          style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w600)),
+                      child: Text(
+                        e.key,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     Text(
                       '₹${_money.format(e.value)}  (${pct.toStringAsFixed(0)}%)',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -569,11 +594,14 @@ class _MonthlyTrendChart extends StatelessWidget {
             borderData: FlBorderData(show: false),
             titlesData: FlTitlesData(
               leftTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                sideTitles: SideTitles(showTitles: false),
+              ),
               rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                sideTitles: SideTitles(showTitles: false),
+              ),
               topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false)),
+                sideTitles: SideTitles(showTitles: false),
+              ),
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
@@ -586,8 +614,10 @@ class _MonthlyTrendChart extends StatelessWidget {
                     final d = sortedKeys[i];
                     return Padding(
                       padding: const EdgeInsets.only(top: 4),
-                      child: Text(DateFormat('MMM').format(d),
-                          style: const TextStyle(fontSize: 10)),
+                      child: Text(
+                        DateFormat('MMM').format(d),
+                        style: const TextStyle(fontSize: 10),
+                      ),
                     );
                   },
                 ),
@@ -603,7 +633,8 @@ class _MonthlyTrendChart extends StatelessWidget {
                       color: color,
                       width: 16,
                       borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(4)),
+                        top: Radius.circular(4),
+                      ),
                     ),
                   ],
                 ),
@@ -626,11 +657,14 @@ class _SectionTitle extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6, top: 4),
-      child: Text(title,
-          style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: cs.onSurface)),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: cs.onSurface,
+        ),
+      ),
     );
   }
 }
@@ -647,12 +681,12 @@ class _EmptyState extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.bar_chart_rounded,
-                size: 48, color: cs.outlineVariant),
+            Icon(Icons.bar_chart_rounded, size: 48, color: cs.outlineVariant),
             const SizedBox(height: 8),
-            Text('No expenses in "$label"',
-                style: TextStyle(
-                    fontSize: 13, color: cs.onSurfaceVariant)),
+            Text(
+              'No expenses in "$label"',
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       ),

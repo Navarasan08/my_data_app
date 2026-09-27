@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/auth/cubit/auth_cubit.dart';
-import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
-import 'package:my_data_app/src/groups/cubit/group_cubit.dart';
-import 'package:my_data_app/src/profile/profile_page.dart';
+import 'package:my_data_app/src/shell/app_drawer.dart';
 import 'package:my_data_app/src/theme/app_theme.dart';
 
 /// Shared gradient header used by the Home and My Events tabs.
@@ -12,9 +10,8 @@ import 'package:my_data_app/src/theme/app_theme.dart';
 /// Reads the current user from [AuthCubit] internally so callers don't have
 /// to thread name/initial/greeting through; trailing [actions] (theme
 /// toggle, view toggle, logout, etc.) are supplied per-screen and laid out
-/// to the right of the greeting block. Tapping the avatar opens the profile
-/// page, forwarding both [AuthCubit] and [DashboardSettingsCubit] so the
-/// pushed route can read them.
+/// to the right of the greeting block. Tapping the avatar opens the shell's
+/// side drawer, where the profile lives.
 class AppHeader extends StatelessWidget {
   /// Buttons rendered on the right side of the header. Use [HeaderIconButton]
   /// for the standard round white-tinted style.
@@ -23,11 +20,7 @@ class AppHeader extends StatelessWidget {
   /// Hide the date subtitle when true (gives more room for trailing actions).
   final bool showDate;
 
-  const AppHeader({
-    super.key,
-    this.actions = const [],
-    this.showDate = true,
-  });
+  const AppHeader({super.key, this.actions = const [], this.showDate = true});
 
   @override
   Widget build(BuildContext context) {
@@ -37,18 +30,16 @@ class AppHeader extends StatelessWidget {
     final userName = (displayName != null && displayName.isNotEmpty)
         ? displayName
         : email;
-    final userInitial =
-        userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+    final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
 
     final hour = DateTime.now().hour;
     final greeting = hour < 12
         ? 'Good Morning'
         : hour < 17
-            ? 'Good Afternoon'
-            : 'Good Evening';
+        ? 'Good Afternoon'
+        : 'Good Evening';
 
-    final hasOtherAccounts =
-        context.read<AuthCubit>().otherAccounts.isNotEmpty;
+    final hasOtherAccounts = context.read<AuthCubit>().otherAccounts.isNotEmpty;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -97,7 +88,7 @@ class AppHeader extends StatelessWidget {
               _HeaderAvatar(
                 initial: userInitial,
                 hasOtherAccounts: hasOtherAccounts,
-                onTap: () => _openProfile(context),
+                onTap: () => openShellDrawer(context),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -147,39 +138,6 @@ class AppHeader extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  void _openProfile(BuildContext context) {
-    final authCubit = context.read<AuthCubit>();
-    // DashboardSettingsCubit / GroupCubit may not be in scope if the header
-    // is used somewhere outside AuthenticatedShell — fall back gracefully.
-    DashboardSettingsCubit? settingsCubit;
-    try {
-      settingsCubit = context.read<DashboardSettingsCubit>();
-    } catch (_) {
-      settingsCubit = null;
-    }
-    GroupCubit? groupCubit;
-    try {
-      groupCubit = context.read<GroupCubit>();
-    } catch (_) {
-      groupCubit = null;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: authCubit),
-            if (settingsCubit != null)
-              BlocProvider.value(value: settingsCubit),
-            if (groupCubit != null) BlocProvider.value(value: groupCubit),
-          ],
-          child: const ProfilePage(),
-        ),
       ),
     );
   }
@@ -273,8 +231,7 @@ class _HeaderAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(
-                      color: AppTheme.brandAccent, width: 1.5),
+                  border: Border.all(color: AppTheme.brandAccent, width: 1.5),
                 ),
                 child: const Icon(
                   Icons.swap_horiz_rounded,

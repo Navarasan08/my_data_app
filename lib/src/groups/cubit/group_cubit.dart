@@ -20,7 +20,7 @@ class GroupCubit extends Cubit<GroupState> {
   late final StreamSubscription _sub;
 
   GroupCubit(this._repository, {required this.currentUid})
-      : super(const GroupState()) {
+    : super(const GroupState()) {
     _refresh();
     _sub = _repository.changes.listen((_) => _refresh());
   }
@@ -33,12 +33,14 @@ class GroupCubit extends Cubit<GroupState> {
       expensesMap[g.id] = _repository.getExpensesFor(g.id);
       settlementsMap[g.id] = _repository.getSettlementsFor(g.id);
     }
-    emit(state.copyWith(
-      groups: groups,
-      expensesByGroup: expensesMap,
-      settlementsByGroup: settlementsMap,
-      pendingInvitations: _repository.getPendingInvitations(),
-    ));
+    emit(
+      state.copyWith(
+        groups: groups,
+        expensesByGroup: expensesMap,
+        settlementsByGroup: settlementsMap,
+        pendingInvitations: _repository.getPendingInvitations(),
+      ),
+    );
   }
 
   // ── Group lifecycle ──────────────────────────────────────────────────────
@@ -49,14 +51,13 @@ class GroupCubit extends Cubit<GroupState> {
     int iconIndex = 18,
     int colorIndex = 0,
     String currency = 'INR',
-  }) =>
-      _repository.createGroup(
-        name: name,
-        description: description,
-        iconIndex: iconIndex,
-        colorIndex: colorIndex,
-        currency: currency,
-      );
+  }) => _repository.createGroup(
+    name: name,
+    description: description,
+    iconIndex: iconIndex,
+    colorIndex: colorIndex,
+    currency: currency,
+  );
 
   Future<void> updateGroup(GroupFund group) => _repository.updateGroup(group);
 
@@ -65,17 +66,15 @@ class GroupCubit extends Cubit<GroupState> {
   Future<void> syncMyDisplayName(String? newName) =>
       _repository.syncCurrentUserDisplayName(newName);
 
-  Future<void> deleteGroup(String groupId) =>
-      _repository.deleteGroup(groupId);
+  Future<void> deleteGroup(String groupId) => _repository.deleteGroup(groupId);
   Future<void> leaveGroup(String groupId) => _repository.leaveGroup(groupId);
 
   Future<void> toggleArchive(String groupId) async {
     final group = getGroup(groupId);
     if (group == null) return;
-    await _repository.updateGroup(group.copyWith(
-      isArchived: !group.isArchived,
-      updatedAt: DateTime.now(),
-    ));
+    await _repository.updateGroup(
+      group.copyWith(isArchived: !group.isArchived, updatedAt: DateTime.now()),
+    );
   }
 
   // ── Invitations ──────────────────────────────────────────────────────────
@@ -83,8 +82,7 @@ class GroupCubit extends Cubit<GroupState> {
   Future<GroupInvitation> invite({
     required String groupId,
     required String email,
-  }) =>
-      _repository.inviteByEmail(groupId: groupId, email: email);
+  }) => _repository.inviteByEmail(groupId: groupId, email: email);
 
   Future<void> cancelInvitation(String invitationId) =>
       _repository.cancelInvitation(invitationId);
@@ -150,8 +148,7 @@ class GroupCubit extends Cubit<GroupState> {
   }
 
   /// What the current user owes (negative) or is owed (positive) in [groupId].
-  double myBalanceIn(String groupId) =>
-      netBalances(groupId)[currentUid] ?? 0;
+  double myBalanceIn(String groupId) => netBalances(groupId)[currentUid] ?? 0;
 
   /// Greedy "who owes whom" plan for [groupId]. Empty when the group is
   /// fully settled within ±1 paisa.

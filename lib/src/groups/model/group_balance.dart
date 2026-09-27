@@ -36,15 +36,17 @@ List<GroupSplit> resolveSplits({
   switch (mode) {
     case SplitMode.equal:
       final per = amount / rawSplits.length;
-      final rounded =
-          rawSplits.map((s) => s.copyWith(value: per, owed: per)).toList();
+      final rounded = rawSplits
+          .map((s) => s.copyWith(value: per, owed: per))
+          .toList();
       return _absorbRounding(rounded, amount);
 
     case SplitMode.exact:
       final sum = rawSplits.fold<double>(0, (s, x) => s + x.value);
       if ((sum - amount).abs() > 0.01) {
         throw ArgumentError(
-            'Exact splits sum to ${sum.toStringAsFixed(2)} but total is ${amount.toStringAsFixed(2)}.');
+          'Exact splits sum to ${sum.toStringAsFixed(2)} but total is ${amount.toStringAsFixed(2)}.',
+        );
       }
       return rawSplits.map((s) => s.copyWith(owed: s.value)).toList();
 
@@ -54,8 +56,7 @@ List<GroupSplit> resolveSplits({
         throw ArgumentError('Shares must sum to a positive number.');
       }
       final mapped = rawSplits
-          .map((s) =>
-              s.copyWith(owed: amount * (s.value / totalWeight)))
+          .map((s) => s.copyWith(owed: amount * (s.value / totalWeight)))
           .toList();
       return _absorbRounding(mapped, amount);
 
@@ -63,7 +64,8 @@ List<GroupSplit> resolveSplits({
       final totalPct = rawSplits.fold<double>(0, (s, x) => s + x.value);
       if ((totalPct - 100).abs() > 0.01) {
         throw ArgumentError(
-            'Percentages must sum to 100 (got ${totalPct.toStringAsFixed(2)}).');
+          'Percentages must sum to 100 (got ${totalPct.toStringAsFixed(2)}).',
+        );
       }
       final mapped = rawSplits
           .map((s) => s.copyWith(owed: amount * (s.value / 100)))
@@ -78,10 +80,7 @@ List<GroupSplit> _absorbRounding(List<GroupSplit> splits, double target) {
   final diff = target - sum;
   if (diff.abs() < 0.005) return splits;
   final first = splits.first;
-  return [
-    first.copyWith(owed: first.owed + diff),
-    ...splits.skip(1),
-  ];
+  return [first.copyWith(owed: first.owed + diff), ...splits.skip(1)];
 }
 
 /// Net balance per member uid after all [expenses] and recorded [settlements]
@@ -147,11 +146,13 @@ List<SettlementTransfer> computeSettlementPlan(
 
   while (i < creditors.length && j < debtors.length) {
     final pay = cAmt[i] < dAmt[j] ? cAmt[i] : dAmt[j];
-    transfers.add(SettlementTransfer(
-      fromUid: debtors[j].key,
-      toUid: creditors[i].key,
-      amount: double.parse(pay.toStringAsFixed(2)),
-    ));
+    transfers.add(
+      SettlementTransfer(
+        fromUid: debtors[j].key,
+        toUid: creditors[i].key,
+        amount: double.parse(pay.toStringAsFixed(2)),
+      ),
+    );
     cAmt[i] -= pay;
     dAmt[j] -= pay;
     if (cAmt[i] < epsilon) i++;

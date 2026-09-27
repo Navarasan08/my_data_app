@@ -14,16 +14,16 @@ class SavedAccount {
   });
 
   Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-        'displayName': displayName,
-      };
+    'email': email,
+    'password': password,
+    'displayName': displayName,
+  };
 
   factory SavedAccount.fromJson(Map<String, dynamic> json) => SavedAccount(
-        email: json['email'] as String,
-        password: json['password'] as String,
-        displayName: json['displayName'] as String?,
-      );
+    email: json['email'] as String,
+    password: json['password'] as String,
+    displayName: json['displayName'] as String?,
+  );
 }
 
 class AuthState {

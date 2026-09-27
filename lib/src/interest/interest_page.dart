@@ -60,14 +60,21 @@ class _InterestListPageState extends State<InterestListPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.call_made_rounded,
-                          size: 16, color: Colors.green),
+                      const Icon(
+                        Icons.call_made_rounded,
+                        size: 16,
+                        color: Colors.green,
+                      ),
                       const SizedBox(width: 6),
                       const Text('I Lent'),
                       const SizedBox(width: 4),
-                      Text('($lentActive)',
-                          style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant)),
+                      Text(
+                        '($lentActive)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -75,14 +82,21 @@ class _InterestListPageState extends State<InterestListPage>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.call_received_rounded,
-                          size: 16, color: Colors.deepOrange),
+                      const Icon(
+                        Icons.call_received_rounded,
+                        size: 16,
+                        color: Colors.deepOrange,
+                      ),
                       const SizedBox(width: 6),
                       const Text('I Borrowed'),
                       const SizedBox(width: 4),
-                      Text('($borrowedActive)',
-                          style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant)),
+                      Text(
+                        '($borrowedActive)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -93,7 +107,9 @@ class _InterestListPageState extends State<InterestListPage>
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 10),
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 color: cs.surface,
                 child: Row(
                   children: [
@@ -146,49 +162,52 @@ class _InterestListPageState extends State<InterestListPage>
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            for (final dir in InterestDirection.values)
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: dir.color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(dir.icon, color: dir.color, size: 22),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                title: Text(dir.label,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
-                subtitle: Text(dir == InterestDirection.lent
-                    ? 'Money you gave with interest'
-                    : 'Money you took with interest'),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final record = await Navigator.push<InterestRecord>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          AddInterestPage(presetDirection: dir),
-                    ),
-                  );
-                  if (record != null) cubit.addRecord(record);
-                },
               ),
-          ],
-        ),
-      );
+              const SizedBox(height: 16),
+              for (final dir in InterestDirection.values)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: dir.color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(dir.icon, color: dir.color, size: 22),
+                  ),
+                  title: Text(
+                    dir.label,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    dir == InterestDirection.lent
+                        ? 'Money you gave with interest'
+                        : 'Money you took with interest',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final record = await Navigator.push<InterestRecord>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddInterestPage(presetDirection: dir),
+                      ),
+                    );
+                    if (record != null) cubit.addRecord(record);
+                  },
+                ),
+            ],
+          ),
+        );
       },
     );
   }
@@ -254,14 +273,21 @@ class _RecordListView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.account_balance_wallet_outlined,
-                size: 64, color: cs.onSurfaceVariant),
+            Icon(
+              Icons.account_balance_wallet_outlined,
+              size: 64,
+              color: cs.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
-            Text('No records yet',
-                style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant)),
+            Text(
+              'No records yet',
+              style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 4),
-            Text('Tap + to add',
-                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+            Text(
+              'Tap + to add',
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       );
@@ -341,8 +367,10 @@ class _RecordCard extends StatelessWidget {
                       '₹${_money(record.principal)} @ '
                       '${record.interestRate.toStringAsFixed(record.interestRate.truncateToDouble() == record.interestRate ? 0 : 2)}'
                       '${record.rateUnit.short} · Started ${_date(record.startDate)}',
-                      style:
-                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -350,7 +378,9 @@ class _RecordCard extends StatelessWidget {
                     if (record.isClosed)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(4),
@@ -358,9 +388,10 @@ class _RecordCard extends StatelessWidget {
                         child: Text(
                           'CLOSED',
                           style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: cs.onSurfaceVariant),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       )
                     else
@@ -396,7 +427,7 @@ class _RecordCard extends StatelessWidget {
 class InterestDetailPage extends StatelessWidget {
   final String recordId;
   const InterestDetailPage({Key? key, required this.recordId})
-      : super(key: key);
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -437,9 +468,9 @@ class InterestDetailPage extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.share_outlined),
-                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Coming soon')),
-                ),
+                onPressed: () => ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Coming soon'))),
               ),
               IconButton(
                 icon: const Icon(Icons.delete_outline),
@@ -449,7 +480,8 @@ class InterestDetailPage extends StatelessWidget {
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete Record'),
                       content: Text(
-                          'Delete record with ${record.personName}? This cannot be undone.'),
+                        'Delete record with ${record.personName}? This cannot be undone.',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -458,7 +490,8 @@ class InterestDetailPage extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -521,13 +554,15 @@ class InterestDetailPage extends StatelessWidget {
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          Icon(Icons.phone_outlined,
-                              size: 14, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.phone_outlined,
+                            size: 14,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             record.personContact!,
-                            style: TextStyle(
-                                fontSize: 13, color: cs.onSurface),
+                            style: TextStyle(fontSize: 13, color: cs.onSurface),
                           ),
                         ],
                       ),
@@ -589,7 +624,9 @@ class InterestDetailPage extends StatelessWidget {
               _SectionTitle('Terms'),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 12, vertical: 4),
+                  horizontal: 12,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: cs.surface,
                   borderRadius: BorderRadius.circular(10),
@@ -598,8 +635,9 @@ class InterestDetailPage extends StatelessWidget {
                 child: Column(
                   children: [
                     _InfoRow(
-                        label: 'Principal',
-                        value: '₹${_money(record.principal)}'),
+                      label: 'Principal',
+                      value: '₹${_money(record.principal)}',
+                    ),
                     _InfoRow(
                       label: 'Rate',
                       value:
@@ -607,15 +645,14 @@ class InterestDetailPage extends StatelessWidget {
                     ),
                     _InfoRow(
                       label: 'Monthly interest',
-                      value:
-                          '₹${_money(record.monthlyInterestOnPrincipal)}',
+                      value: '₹${_money(record.monthlyInterestOnPrincipal)}',
                     ),
-                    _InfoRow(
-                        label: 'Started', value: _date(record.startDate)),
+                    _InfoRow(label: 'Started', value: _date(record.startDate)),
                     if (record.expectedEndDate != null)
                       _InfoRow(
-                          label: 'Expected end',
-                          value: _date(record.expectedEndDate!)),
+                        label: 'Expected end',
+                        value: _date(record.expectedEndDate!),
+                      ),
                     if (record.notes != null && record.notes!.isNotEmpty)
                       _InfoRow(label: 'Notes', value: record.notes!),
                   ],
@@ -656,8 +693,10 @@ class InterestDetailPage extends StatelessWidget {
                                 width: 80,
                                 height: 80,
                                 color: cs.surfaceContainerHighest,
-                                child: Icon(Icons.broken_image_rounded,
-                                    color: cs.onSurfaceVariant),
+                                child: Icon(
+                                  Icons.broken_image_rounded,
+                                  color: cs.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ),
@@ -685,48 +724,51 @@ class InterestDetailPage extends StatelessWidget {
                   ),
                 )
               else
-                ...payments.map((p) => _PaymentTile(
-                      payment: p,
-                      direction: record.direction,
-                      onEdit: () async {
-                        final updated =
-                            await Navigator.push<InterestPayment>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => AddPaymentPage(
-                                record: record, existing: p),
+                ...payments.map(
+                  (p) => _PaymentTile(
+                    payment: p,
+                    direction: record.direction,
+                    onEdit: () async {
+                      final updated = await Navigator.push<InterestPayment>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              AddPaymentPage(record: record, existing: p),
+                        ),
+                      );
+                      if (updated != null) {
+                        cubit.updatePayment(record.id, updated);
+                      }
+                    },
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Payment'),
+                          content: Text(
+                            'Delete payment of ₹${_money(p.amount)}?',
                           ),
-                        );
-                        if (updated != null) {
-                          cubit.updatePayment(record.id, updated);
-                        }
-                      },
-                      onDelete: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Payment'),
-                            content: Text(
-                                'Delete payment of ₹${_money(p.amount)}?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Cancel'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          cubit.deletePayment(record.id, p.id);
-                        }
-                      },
-                    )),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        cubit.deletePayment(record.id, p.id);
+                      }
+                    },
+                  ),
+                ),
 
               const SizedBox(height: 20),
 
@@ -747,7 +789,8 @@ class InterestDetailPage extends StatelessWidget {
                       builder: (ctx) => AlertDialog(
                         title: const Text('Close Record'),
                         content: const Text(
-                            'Mark this record as fully settled?'),
+                          'Mark this record as fully settled?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -802,10 +845,7 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-        ),
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -816,8 +856,7 @@ class _Chip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _Chip(
-      {required this.icon, required this.label, required this.color});
+  const _Chip({required this.icon, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -919,10 +958,7 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
             ),
           ),
         ],
@@ -967,8 +1003,7 @@ class _PaymentTile extends StatelessWidget {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   color: kindColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
@@ -1000,28 +1035,36 @@ class _PaymentTile extends StatelessWidget {
                         Text(
                           _date(payment.paidDate),
                           style: TextStyle(
-                              fontSize: 11, color: cs.onSurfaceVariant),
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         if (payment.photoUrls.isNotEmpty) ...[
                           const SizedBox(width: 8),
-                          Icon(Icons.attach_file_rounded,
-                              size: 11, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.attach_file_rounded,
+                            size: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             '${payment.photoUrls.length}',
                             style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant),
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ],
                     ),
-                    if (payment.notes != null &&
-                        payment.notes!.isNotEmpty) ...[
+                    if (payment.notes != null && payment.notes!.isNotEmpty) ...[
                       const SizedBox(height: 2),
                       Text(
                         payment.notes!,
                         style: TextStyle(
-                            fontSize: 11, color: cs.onSurfaceVariant),
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -1056,11 +1099,8 @@ class AddInterestPage extends StatefulWidget {
   final InterestRecord? existing;
   final InterestDirection? presetDirection;
 
-  const AddInterestPage({
-    Key? key,
-    this.existing,
-    this.presetDirection,
-  }) : super(key: key);
+  const AddInterestPage({Key? key, this.existing, this.presetDirection})
+    : super(key: key);
 
   @override
   State<AddInterestPage> createState() => _AddInterestPageState();
@@ -1091,9 +1131,8 @@ class _AddInterestPageState extends State<AddInterestPage> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    _direction = e?.direction ??
-        widget.presetDirection ??
-        InterestDirection.lent;
+    _direction =
+        e?.direction ?? widget.presetDirection ?? InterestDirection.lent;
     if (e != null) {
       _nameController.text = e.personName;
       _contactController.text = e.personContact ?? '';
@@ -1130,9 +1169,9 @@ class _AddInterestPageState extends State<AddInterestPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -1148,9 +1187,9 @@ class _AddInterestPageState extends State<AddInterestPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -1202,9 +1241,10 @@ class _AddInterestPageState extends State<AddInterestPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text('Direction',
-                style:
-                    TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const Text(
+              'Direction',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<InterestDirection>(
               segments: const [
@@ -1293,10 +1333,10 @@ class _AddInterestPageState extends State<AddInterestPage> {
                       border: OutlineInputBorder(),
                     ),
                     items: RateUnit.values
-                        .map((u) => DropdownMenuItem(
-                              value: u,
-                              child: Text(u.label),
-                            ))
+                        .map(
+                          (u) =>
+                              DropdownMenuItem(value: u, child: Text(u.label)),
+                        )
                         .toList(),
                     onChanged: (v) {
                       if (v != null) setState(() => _rateUnit = v);
@@ -1326,20 +1366,20 @@ class _AddInterestPageState extends State<AddInterestPage> {
               contentPadding: EdgeInsets.zero,
               leading: const Icon(Icons.event_outlined),
               title: const Text('Expected End Date (optional)'),
-              subtitle: Text(_expectedEndDate != null
-                  ? _date(_expectedEndDate!)
-                  : 'Not set'),
+              subtitle: Text(
+                _expectedEndDate != null ? _date(_expectedEndDate!) : 'Not set',
+              ),
               trailing: _expectedEndDate != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () =>
-                          setState(() => _expectedEndDate = null),
+                      onPressed: () => setState(() => _expectedEndDate = null),
                     )
                   : null,
               onTap: () async {
                 final d = await showDatePicker(
                   context: context,
-                  initialDate: _expectedEndDate ??
+                  initialDate:
+                      _expectedEndDate ??
                       _startDate.add(const Duration(days: 365)),
                   firstDate: DateTime(2000),
                   lastDate: DateTime(2100),
@@ -1400,11 +1440,8 @@ class AddPaymentPage extends StatefulWidget {
   final InterestRecord record;
   final InterestPayment? existing;
 
-  const AddPaymentPage({
-    Key? key,
-    required this.record,
-    this.existing,
-  }) : super(key: key);
+  const AddPaymentPage({Key? key, required this.record, this.existing})
+    : super(key: key);
 
   @override
   State<AddPaymentPage> createState() => _AddPaymentPageState();
@@ -1435,10 +1472,12 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       _amountController.text = e.amount.toStringAsFixed(0);
       _kind = e.kind;
       _paidDate = e.paidDate;
-      _principalPartController.text =
-          e.principalPart != null ? e.principalPart!.toStringAsFixed(0) : '';
-      _interestPartController.text =
-          e.interestPart != null ? e.interestPart!.toStringAsFixed(0) : '';
+      _principalPartController.text = e.principalPart != null
+          ? e.principalPart!.toStringAsFixed(0)
+          : '';
+      _interestPartController.text = e.interestPart != null
+          ? e.interestPart!.toStringAsFixed(0)
+          : '';
       _notesController.text = e.notes ?? '';
       _photoUrls = List<String>.from(e.photoUrls);
     }
@@ -1469,9 +1508,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -1490,9 +1529,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Upload failed: $e')));
       }
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -1524,8 +1563,9 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
     if (!_formKey.currentState!.validate()) return;
     final mixedErr = _validateMixed();
     if (mixedErr != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(mixedErr)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(mixedErr)));
       return;
     }
     final amount = double.parse(_amountController.text);
@@ -1611,10 +1651,7 @@ class _AddPaymentPageState extends State<AddPaymentPage> {
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: PaymentKind.values
-                  .map((k) => DropdownMenuItem(
-                        value: k,
-                        child: Text(k.label),
-                      ))
+                  .map((k) => DropdownMenuItem(value: k, child: Text(k.label)))
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _kind = v);
@@ -1719,129 +1756,153 @@ class _PhotosPicker extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tiles = <Widget>[];
     for (final url in urls) {
-      tiles.add(Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.network(
-              url,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+      tiles.add(
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                url,
                 width: 80,
                 height: 80,
-                color: cs.surfaceContainerHighest,
-                child: Icon(Icons.broken_image_rounded,
-                    color: cs.onSurfaceVariant),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 2,
-            right: 2,
-            child: InkWell(
-              onTap: () async {
-                final confirmed = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Delete Photo'),
-                    content: const Text(
-                        'Remove this photo? It will also be deleted from storage.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style:
-                            TextButton.styleFrom(foregroundColor: Colors.red),
-                        child: const Text('Delete'),
-                      ),
-                    ],
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 80,
+                  height: 80,
+                  color: cs.surfaceContainerHighest,
+                  child: Icon(
+                    Icons.broken_image_rounded,
+                    color: cs.onSurfaceVariant,
                   ),
-                );
-                if (confirmed == true) onRemove(url);
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: Container(
-                padding: const EdgeInsets.all(3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 12, color: Colors.white),
               ),
             ),
-          ),
-        ],
-      ));
-    }
-
-    tiles.add(InkWell(
-      onTap: uploading ? null : onPickGallery,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: cs.outline),
-        ),
-        child: uploading
-            ? const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+            Positioned(
+              top: 2,
+              right: 2,
+              child: InkWell(
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Photo'),
+                      content: const Text(
+                        'Remove this photo? It will also be deleted from storage.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) onRemove(url);
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, size: 12, color: Colors.white),
                 ),
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate_rounded,
-                      size: 22, color: cs.onSurfaceVariant),
-                  const SizedBox(height: 2),
-                  Text('Gallery',
-                      style:
-                          TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
-                ],
               ),
-      ),
-    ));
-
-    tiles.add(InkWell(
-      onTap: uploading ? null : onPickCamera,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        width: 80,
-        height: 80,
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: cs.outline),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.photo_camera_rounded,
-                size: 22, color: cs.onSurfaceVariant),
-            const SizedBox(height: 2),
-            Text('Camera',
-                style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant)),
+            ),
           ],
         ),
+      );
+    }
+
+    tiles.add(
+      InkWell(
+        onTap: uploading ? null : onPickGallery,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outline),
+          ),
+          child: uploading
+              ? const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_photo_alternate_rounded,
+                      size: 22,
+                      color: cs.onSurfaceVariant,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Gallery',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+        ),
       ),
-    ));
+    );
+
+    tiles.add(
+      InkWell(
+        onTap: uploading ? null : onPickCamera,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outline),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.photo_camera_rounded,
+                size: 22,
+                color: cs.onSurfaceVariant,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Camera',
+                style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         children: tiles
-            .map((w) =>
-                Padding(padding: const EdgeInsets.only(right: 8), child: w))
+            .map(
+              (w) =>
+                  Padding(padding: const EdgeInsets.only(right: 8), child: w),
+            )
             .toList(),
       ),
     );
@@ -1900,9 +1961,10 @@ class _FullscreenGalleryState extends State<_FullscreenGallery> {
                 widget.urls[i],
                 fit: BoxFit.contain,
                 errorBuilder: (_, __, ___) => const Icon(
-                    Icons.broken_image_rounded,
-                    color: Colors.white54,
-                    size: 48),
+                  Icons.broken_image_rounded,
+                  color: Colors.white54,
+                  size: 48,
+                ),
               ),
             ),
           );

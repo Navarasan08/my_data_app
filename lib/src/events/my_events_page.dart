@@ -84,12 +84,16 @@ class MyEventsPage extends StatelessWidget {
                                 right: -2,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 1),
+                                    horizontal: 5,
+                                    vertical: 1,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.red,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
-                                        color: Colors.white, width: 1.5),
+                                      color: Colors.white,
+                                      width: 1.5,
+                                    ),
                                   ),
                                   child: Text(
                                     '$count',
@@ -118,8 +122,11 @@ class MyEventsPage extends StatelessWidget {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.maxWidth;
-                      final gridCols =
-                          width > 900 ? 6 : width > 600 ? 5 : 4;
+                      final gridCols = width > 900
+                          ? 6
+                          : width > 600
+                          ? 5
+                          : 4;
 
                       return ListView(
                         padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
@@ -153,7 +160,8 @@ class MyEventsPage extends StatelessWidget {
                                           builder: (_) => BlocProvider.value(
                                             value: cubit,
                                             child: EventDetailPage(
-                                                eventId: event.id),
+                                              eventId: event.id,
+                                            ),
                                           ),
                                         ),
                                       );
@@ -165,14 +173,14 @@ class MyEventsPage extends StatelessWidget {
                                   onTap: () async {
                                     final newEvent =
                                         await Navigator.push<EventFund>(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocProvider.value(
-                                          value: cubit,
-                                          child: const AddEventPage(),
-                                        ),
-                                      ),
-                                    );
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => BlocProvider.value(
+                                              value: cubit,
+                                              child: const AddEventPage(),
+                                            ),
+                                          ),
+                                        );
                                     if (newEvent != null) {
                                       cubit.addEvent(newEvent);
                                     }
@@ -185,8 +193,7 @@ class MyEventsPage extends StatelessWidget {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) =>
-                                              BlocProvider.value(
+                                          builder: (_) => BlocProvider.value(
                                             value: cubit,
                                             child: const EventFinancePage(),
                                           ),
@@ -213,8 +220,12 @@ class MyEventsPage extends StatelessWidget {
                                     count: groups.length,
                                   ),
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      8,
+                                      0,
+                                      8,
+                                      8,
+                                    ),
                                     child: GridView.count(
                                       shrinkWrap: true,
                                       physics:
@@ -225,8 +236,9 @@ class MyEventsPage extends StatelessWidget {
                                       childAspectRatio: 0.85,
                                       children: [
                                         ...groups.map((g) {
-                                          final myBal =
-                                              gcubit.myBalanceIn(g.id);
+                                          final myBal = gcubit.myBalanceIn(
+                                            g.id,
+                                          );
                                           return _GroupGridCard(
                                             group: g,
                                             myBalance: myBal,
@@ -248,15 +260,18 @@ class MyEventsPage extends StatelessWidget {
                                                 MaterialPageRoute(
                                                   builder: (_) =>
                                                       MultiBlocProvider(
-                                                    providers: [
-                                                      BlocProvider.value(
-                                                          value: gcubit),
-                                                      BlocProvider.value(
-                                                          value: settings),
-                                                    ],
-                                                    child: GroupDetailPage(
-                                                        groupId: g.id),
-                                                  ),
+                                                        providers: [
+                                                          BlocProvider.value(
+                                                            value: gcubit,
+                                                          ),
+                                                          BlocProvider.value(
+                                                            value: settings,
+                                                          ),
+                                                        ],
+                                                        child: GroupDetailPage(
+                                                          groupId: g.id,
+                                                        ),
+                                                      ),
                                                 ),
                                               );
                                             },
@@ -268,10 +283,10 @@ class MyEventsPage extends StatelessWidget {
                                             MaterialPageRoute(
                                               builder: (_) =>
                                                   BlocProvider.value(
-                                                value: gcubit,
-                                                child:
-                                                    const CreateGroupPage(),
-                                              ),
+                                                    value: gcubit,
+                                                    child:
+                                                        const CreateGroupPage(),
+                                                  ),
                                             ),
                                           ),
                                         ),
@@ -397,7 +412,9 @@ class _EventGridCard extends StatelessWidget {
                   right: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: event.color,
                       borderRadius: BorderRadius.circular(8),
@@ -417,10 +434,7 @@ class _EventGridCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             event.name,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -449,12 +463,13 @@ class _AddEventCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: cs.outline,
-                style: BorderStyle.solid,
-              ),
+              border: Border.all(color: cs.outline, style: BorderStyle.solid),
             ),
-            child: Icon(Icons.add_rounded, size: 26, color: cs.onSurfaceVariant),
+            child: Icon(
+              Icons.add_rounded,
+              size: 26,
+              color: cs.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -490,13 +505,13 @@ class _GroupGridCard extends StatelessWidget {
     final badgeColor = iAmOwed
         ? Colors.green
         : iOwe
-            ? Colors.red
-            : null;
+        ? Colors.red
+        : null;
     final badgeText = iAmOwed
         ? '+₹${_money.format(myBalance)}'
         : iOwe
-            ? '-₹${_money.format(-myBalance)}'
-            : null;
+        ? '-₹${_money.format(-myBalance)}'
+        : null;
 
     return InkWell(
       onTap: onTap,
@@ -521,7 +536,9 @@ class _GroupGridCard extends StatelessWidget {
                   right: -6,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
                     decoration: BoxDecoration(
                       color: badgeColor,
                       borderRadius: BorderRadius.circular(8),
@@ -541,10 +558,7 @@ class _GroupGridCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             group.name,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -573,13 +587,13 @@ class _AddGroupCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: cs.outline,
-                style: BorderStyle.solid,
-              ),
+              border: Border.all(color: cs.outline, style: BorderStyle.solid),
             ),
-            child: Icon(Icons.group_add_rounded,
-                size: 26, color: cs.onSurfaceVariant),
+            child: Icon(
+              Icons.group_add_rounded,
+              size: 26,
+              color: cs.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -616,8 +630,11 @@ class _ManageCard extends StatelessWidget {
               color: cs.surfaceContainerLow,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(Icons.inventory_2_rounded,
-                size: 26, color: cs.onSurfaceVariant),
+            child: Icon(
+              Icons.inventory_2_rounded,
+              size: 26,
+              color: cs.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 6),
           Text(

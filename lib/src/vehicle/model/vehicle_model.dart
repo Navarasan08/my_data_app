@@ -104,9 +104,11 @@ class Vehicle {
     final nsd = nextServiceDate;
     if (nsd == null) return null;
     final now = DateTime.now();
-    return DateTime(nsd.year, nsd.month, nsd.day)
-        .difference(DateTime(now.year, now.month, now.day))
-        .inDays;
+    return DateTime(
+      nsd.year,
+      nsd.month,
+      nsd.day,
+    ).difference(DateTime(now.year, now.month, now.day)).inDays;
   }
 
   // ── Computed stats ──────────────────────────────────────────────────────
@@ -275,7 +277,8 @@ class Vehicle {
       color: json['color'] as String?,
       purchaseDate: DateTime.parse(json['purchaseDate'] as String),
       purchasePrice: (json['purchasePrice'] as num?)?.toDouble(),
-      records: (json['records'] as List<dynamic>?)
+      records:
+          (json['records'] as List<dynamic>?)
               ?.map((r) => VehicleRecord.fromJson(r as Map<String, dynamic>))
               .toList() ??
           [],

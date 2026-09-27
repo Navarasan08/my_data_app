@@ -7,8 +7,12 @@ import 'package:my_data_app/src/food_menu/cubit/food_menu_state.dart';
 class FoodMenuPage extends StatelessWidget {
   const FoodMenuPage({Key? key}) : super(key: key);
 
-  Future<void> _addMeal(BuildContext context, FoodMenuCubit cubit,
-      int weekday, MealType type) async {
+  Future<void> _addMeal(
+    BuildContext context,
+    FoodMenuCubit cubit,
+    int weekday,
+    MealType type,
+  ) async {
     final result = await Navigator.push<MealEntry>(
       context,
       MaterialPageRoute(
@@ -19,7 +23,10 @@ class FoodMenuPage extends StatelessWidget {
   }
 
   Future<void> _editMeal(
-      BuildContext context, FoodMenuCubit cubit, MealEntry meal) async {
+    BuildContext context,
+    FoodMenuCubit cubit,
+    MealEntry meal,
+  ) async {
     final edited = await Navigator.push<MealEntry>(
       context,
       MaterialPageRoute(builder: (_) => AddMealPage(entry: meal)),
@@ -27,8 +34,12 @@ class FoodMenuPage extends StatelessWidget {
     if (edited != null) cubit.updateEntry(edited);
   }
 
-  Future<void> _deleteMeal(BuildContext context, FoodMenuCubit cubit,
-      MealEntry meal, String label) async {
+  Future<void> _deleteMeal(
+    BuildContext context,
+    FoodMenuCubit cubit,
+    MealEntry meal,
+    String label,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -87,8 +98,8 @@ class FoodMenuPage extends StatelessWidget {
                             color: isSelected
                                 ? Colors.deepOrange
                                 : isToday
-                                    ? Colors.orange.withValues(alpha: 0.08)
-                                    : null,
+                                ? Colors.orange.withValues(alpha: 0.08)
+                                : null,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Column(
@@ -101,8 +112,8 @@ class FoodMenuPage extends StatelessWidget {
                                   color: isSelected
                                       ? Colors.white
                                       : isToday
-                                          ? Colors.deepOrange
-                                          : cs.onSurfaceVariant,
+                                      ? Colors.deepOrange
+                                      : cs.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -115,17 +126,20 @@ class FoodMenuPage extends StatelessWidget {
                                     width: 5,
                                     height: 5,
                                     margin: const EdgeInsets.symmetric(
-                                        horizontal: 1, vertical: 2),
+                                      horizontal: 1,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       color: has
                                           ? (isSelected
-                                              ? Colors.white
-                                              : mt.color)
+                                                ? Colors.white
+                                                : mt.color)
                                           : (isSelected
-                                              ? Colors.white
-                                                  .withValues(alpha: 0.3)
-                                              : cs.outline),
+                                                ? Colors.white.withValues(
+                                                    alpha: 0.3,
+                                                  )
+                                                : cs.outline),
                                     ),
                                   );
                                 }).toList(),
@@ -171,7 +185,9 @@ class FoodMenuPage extends StatelessWidget {
                           const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.deepOrange,
                               borderRadius: BorderRadius.circular(8),
@@ -208,8 +224,8 @@ class FoodMenuPage extends StatelessWidget {
                     // Custom entries section
                     _CustomEntriesSection(
                       customEntries: cubit.getCustomEntries(sel),
-                      onAdd: () => _addMeal(
-                          context, cubit, sel, MealType.custom),
+                      onAdd: () =>
+                          _addMeal(context, cubit, sel, MealType.custom),
                       onEdit: (meal) => _editMeal(context, cubit, meal),
                       onDelete: (meal) =>
                           _deleteMeal(context, cubit, meal, meal.displayLabel),
@@ -276,7 +292,9 @@ class _MealTimelineSection extends StatelessWidget {
                     color: hasMeals ? color : cs.outline,
                     border: hasMeals
                         ? Border.all(
-                            color: color.withValues(alpha: 0.3), width: 3)
+                            color: color.withValues(alpha: 0.3),
+                            width: 3,
+                          )
                         : null,
                   ),
                 ),
@@ -309,7 +327,10 @@ class _MealTimelineSection extends StatelessWidget {
                     // Header
                     Row(
                       children: [
-                        Text(mealType.emoji, style: const TextStyle(fontSize: 24)),
+                        Text(
+                          mealType.emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -339,7 +360,9 @@ class _MealTimelineSection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
@@ -347,8 +370,7 @@ class _MealTimelineSection extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.add_rounded,
-                                    size: 14, color: color),
+                                Icon(Icons.add_rounded, size: 14, color: color),
                                 const SizedBox(width: 2),
                                 Text(
                                   'Add',
@@ -368,12 +390,14 @@ class _MealTimelineSection extends StatelessWidget {
                     // Meal entries
                     if (hasMeals) ...[
                       const SizedBox(height: 10),
-                      ...meals.map((meal) => _MealItemRow(
-                            meal: meal,
-                            color: color,
-                            onEdit: () => onEdit(meal),
-                            onDelete: () => onDelete(meal),
-                          )),
+                      ...meals.map(
+                        (meal) => _MealItemRow(
+                          meal: meal,
+                          color: color,
+                          onEdit: () => onEdit(meal),
+                          onDelete: () => onDelete(meal),
+                        ),
+                      ),
                     ] else ...[
                       const SizedBox(height: 8),
                       Text(
@@ -424,10 +448,7 @@ class _CustomEntriesSection extends StatelessWidget {
             width: 48,
             child: Column(
               children: [
-                Text(
-                  '⏰',
-                  style: const TextStyle(fontSize: 14),
-                ),
+                Text('⏰', style: const TextStyle(fontSize: 14)),
                 const SizedBox(height: 4),
                 Container(
                   width: 12,
@@ -437,7 +458,9 @@ class _CustomEntriesSection extends StatelessWidget {
                     color: customEntries.isNotEmpty ? color : cs.outline,
                     border: customEntries.isNotEmpty
                         ? Border.all(
-                            color: color.withValues(alpha: 0.3), width: 3)
+                            color: color.withValues(alpha: 0.3),
+                            width: 3,
+                          )
                         : null,
                   ),
                 ),
@@ -466,8 +489,7 @@ class _CustomEntriesSection extends StatelessWidget {
                     // Header
                     Row(
                       children: [
-                        const Text('⏰',
-                            style: TextStyle(fontSize: 24)),
+                        const Text('⏰', style: TextStyle(fontSize: 24)),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -498,7 +520,9 @@ class _CustomEntriesSection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(8),
@@ -506,8 +530,7 @@ class _CustomEntriesSection extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.add_rounded,
-                                    size: 14, color: color),
+                                Icon(Icons.add_rounded, size: 14, color: color),
                                 const SizedBox(width: 2),
                                 Text(
                                   'Add',
@@ -525,11 +548,13 @@ class _CustomEntriesSection extends StatelessWidget {
                     ),
                     if (customEntries.isNotEmpty) ...[
                       const SizedBox(height: 10),
-                      ...customEntries.map((entry) => _CustomItemRow(
-                            meal: entry,
-                            onEdit: () => onEdit(entry),
-                            onDelete: () => onDelete(entry),
-                          )),
+                      ...customEntries.map(
+                        (entry) => _CustomItemRow(
+                          meal: entry,
+                          onEdit: () => onEdit(entry),
+                          onDelete: () => onDelete(entry),
+                        ),
+                      ),
                     ] else ...[
                       const SizedBox(height: 8),
                       Text(
@@ -586,7 +611,9 @@ class _CustomItemRow extends StatelessWidget {
               if (time != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   margin: const EdgeInsets.only(right: 10),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
@@ -647,8 +674,11 @@ class _CustomItemRow extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -675,20 +705,62 @@ class _MealItemRow extends StatelessWidget {
   });
 
   static const _foodEmojis = {
-    'rice': '🍚', 'dal': '🍲', 'roti': '🫓', 'chapati': '🫓',
-    'naan': '🫓', 'sabzi': '🥘', 'curry': '🍛', 'biryani': '🍛',
-    'dosa': '🥞', 'idli': '🍘', 'samosa': '🥟', 'paratha': '🫓',
-    'tea': '🍵', 'coffee': '☕', 'juice': '🧃', 'milk': '🥛',
-    'egg': '🥚', 'omelette': '🍳', 'bread': '🍞', 'toast': '🍞',
-    'salad': '🥗', 'soup': '🍜', 'sandwich': '🥪', 'burger': '🍔',
-    'pizza': '🍕', 'pasta': '🍝', 'noodles': '🍜', 'maggi': '🍜',
-    'chicken': '🍗', 'fish': '🐟', 'paneer': '🧀', 'curd': '🥛',
-    'fruit': '🍎', 'banana': '🍌', 'apple': '🍎', 'mango': '🥭',
-    'cake': '🍰', 'ice cream': '🍦', 'biscuit': '🍪', 'cookie': '🍪',
-    'water': '💧', 'lassi': '🥛', 'buttermilk': '🥛', 'smoothie': '🥤',
-    'poha': '🍚', 'upma': '🍚', 'puri': '🫓', 'khichdi': '🍚',
-    'raita': '🥛', 'pickle': '🫙', 'papad': '🫓', 'chutney': '🫙',
-    'sweet': '🍬', 'halwa': '🍮', 'kheer': '🍮', 'gulab jamun': '🍩',
+    'rice': '🍚',
+    'dal': '🍲',
+    'roti': '🫓',
+    'chapati': '🫓',
+    'naan': '🫓',
+    'sabzi': '🥘',
+    'curry': '🍛',
+    'biryani': '🍛',
+    'dosa': '🥞',
+    'idli': '🍘',
+    'samosa': '🥟',
+    'paratha': '🫓',
+    'tea': '🍵',
+    'coffee': '☕',
+    'juice': '🧃',
+    'milk': '🥛',
+    'egg': '🥚',
+    'omelette': '🍳',
+    'bread': '🍞',
+    'toast': '🍞',
+    'salad': '🥗',
+    'soup': '🍜',
+    'sandwich': '🥪',
+    'burger': '🍔',
+    'pizza': '🍕',
+    'pasta': '🍝',
+    'noodles': '🍜',
+    'maggi': '🍜',
+    'chicken': '🍗',
+    'fish': '🐟',
+    'paneer': '🧀',
+    'curd': '🥛',
+    'fruit': '🍎',
+    'banana': '🍌',
+    'apple': '🍎',
+    'mango': '🥭',
+    'cake': '🍰',
+    'ice cream': '🍦',
+    'biscuit': '🍪',
+    'cookie': '🍪',
+    'water': '💧',
+    'lassi': '🥛',
+    'buttermilk': '🥛',
+    'smoothie': '🥤',
+    'poha': '🍚',
+    'upma': '🍚',
+    'puri': '🫓',
+    'khichdi': '🍚',
+    'raita': '🥛',
+    'pickle': '🫙',
+    'papad': '🫓',
+    'chutney': '🫙',
+    'sweet': '🍬',
+    'halwa': '🍮',
+    'kheer': '🍮',
+    'gulab jamun': '🍩',
   };
 
   String _getEmoji(String item) {
@@ -733,8 +805,10 @@ class _MealItemRow extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Row(
                           children: [
-                            Text(_getEmoji(item),
-                                style: const TextStyle(fontSize: 16)),
+                            Text(
+                              _getEmoji(item),
+                              style: const TextStyle(fontSize: 16),
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -777,8 +851,11 @@ class _MealItemRow extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -797,7 +874,7 @@ class AddMealPage extends StatefulWidget {
   final MealType? mealType;
 
   const AddMealPage({Key? key, this.entry, this.weekday, this.mealType})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<AddMealPage> createState() => _AddMealPageState();
@@ -844,8 +921,7 @@ class _AddMealPageState extends State<AddMealPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final entry = MealEntry(
-      id: widget.entry?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.entry?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       weekday: _weekday,
       mealType: _mealType,
       items: _itemsController.text.trim(),
@@ -911,8 +987,10 @@ class _AddMealPageState extends State<AddMealPage> {
                   ),
                   child: Row(
                     children: [
-                      Text(_mealType.emoji,
-                          style: const TextStyle(fontSize: 28)),
+                      Text(
+                        _mealType.emoji,
+                        style: const TextStyle(fontSize: 28),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -921,8 +999,8 @@ class _AddMealPageState extends State<AddMealPage> {
                             Text(
                               _isCustom
                                   ? (_labelController.text.isNotEmpty
-                                      ? '${_labelController.text} · ${MealEntry.weekdayFullName(_weekday)}'
-                                      : 'Custom · ${MealEntry.weekdayFullName(_weekday)}')
+                                        ? '${_labelController.text} · ${MealEntry.weekdayFullName(_weekday)}'
+                                        : 'Custom · ${MealEntry.weekdayFullName(_weekday)}')
                                   : '${_mealType.label} · ${MealEntry.weekdayFullName(_weekday)}',
                               style: TextStyle(
                                 fontSize: 15,
@@ -933,8 +1011,8 @@ class _AddMealPageState extends State<AddMealPage> {
                             Text(
                               _isCustom
                                   ? (_timeHour != null
-                                      ? _timeDisplay
-                                      : 'Set a time')
+                                        ? _timeDisplay
+                                        : 'Set a time')
                                   : _mealType.timeHint,
                               style: TextStyle(
                                 fontSize: 12,
@@ -1020,8 +1098,10 @@ class _AddMealPageState extends State<AddMealPage> {
                       borderRadius: BorderRadius.circular(4),
                       side: BorderSide(color: cs.outline),
                     ),
-                    leading: Icon(Icons.access_time_rounded,
-                        color: _mealType.color),
+                    leading: Icon(
+                      Icons.access_time_rounded,
+                      color: _mealType.color,
+                    ),
                     title: const Text('Time'),
                     subtitle: Text(
                       _timeDisplay,
@@ -1046,8 +1126,10 @@ class _AddMealPageState extends State<AddMealPage> {
                         : 'Rice, Dal, Sabzi, Roti',
                     helperText: 'Separate items with commas',
                     border: const OutlineInputBorder(),
-                    prefixIcon:
-                        Icon(Icons.fastfood_rounded, color: _mealType.color),
+                    prefixIcon: Icon(
+                      Icons.fastfood_rounded,
+                      color: _mealType.color,
+                    ),
                   ),
                   maxLines: 3,
                   validator: (v) =>
@@ -1070,7 +1152,8 @@ class _AddMealPageState extends State<AddMealPage> {
                 ElevatedButton.icon(
                   onPressed: _save,
                   icon: Icon(
-                      _isEditing ? Icons.save_rounded : Icons.add_rounded),
+                    _isEditing ? Icons.save_rounded : Icons.add_rounded,
+                  ),
                   label: Text(
                     _isEditing ? 'Update' : 'Save',
                     style: const TextStyle(fontSize: 16),

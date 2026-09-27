@@ -65,7 +65,10 @@ class ReminderSweeper {
       final pending = source.pendingIn(yesterday, twoDaysOut);
       for (final item in pending) {
         final due = DateTime(
-            item.dueDate.year, item.dueDate.month, item.dueDate.day);
+          item.dueDate.year,
+          item.dueDate.month,
+          item.dueDate.day,
+        );
         final diff = due.difference(today).inDays;
         if (diff > 2 || diff < -1) continue;
 
@@ -78,9 +81,11 @@ class ReminderSweeper {
     // Auto-resolve stale notifications for every module we actually swept.
     for (final entry in activeByModule.entries) {
       final stale = notificationCubit.state.items
-          .where((n) =>
-              n.sourceModule == entry.key &&
-              !entry.value.contains(n.dedupeKey))
+          .where(
+            (n) =>
+                n.sourceModule == entry.key &&
+                !entry.value.contains(n.dedupeKey),
+          )
           .toList();
       for (final n in stale) {
         notificationCubit.dismiss(n.id);
@@ -89,7 +94,10 @@ class ReminderSweeper {
   }
 
   AppNotification _buildNotification(
-      String module, ReminderItem item, int diffDays) {
+    String module,
+    ReminderItem item,
+    int diffDays,
+  ) {
     String body;
     NotificationSeverity severity;
 

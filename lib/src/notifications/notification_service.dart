@@ -25,17 +25,13 @@ class LocalNotificationService {
 
   Future<void> init() async {
     if (_initialized || !supported) return;
-    const androidInit =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosInit = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
-    const settings = InitializationSettings(
-      android: androidInit,
-      iOS: iosInit,
-    );
+    const settings = InitializationSettings(android: androidInit, iOS: iosInit);
 
     await _plugin.initialize(
       settings: settings,
@@ -47,13 +43,16 @@ class LocalNotificationService {
 
     // Android 13+ requires runtime permission; iOS always.
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await android?.requestNotificationsPermission();
     } else if (Platform.isIOS) {
       await _plugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
+            IOSFlutterLocalNotificationsPlugin
+          >()
           ?.requestPermissions(alert: true, badge: true, sound: true);
     }
 

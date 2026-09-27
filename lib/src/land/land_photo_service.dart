@@ -11,8 +11,8 @@ class LandPhotoService {
     required this.uid,
     FirebaseStorage? storage,
     ImagePicker? picker,
-  })  : _storage = storage ?? FirebaseStorage.instance,
-        _picker = picker ?? ImagePicker();
+  }) : _storage = storage ?? FirebaseStorage.instance,
+       _picker = picker ?? ImagePicker();
 
   /// Pick one or more images from the gallery and upload them under
   /// users/{uid}/lands/{landId}/<timestamp>_<idx>.jpg. Returns the download

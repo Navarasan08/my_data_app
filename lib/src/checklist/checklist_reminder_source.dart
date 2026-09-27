@@ -20,13 +20,14 @@ class ChecklistReminderSource implements ReminderSource {
       if (group.isAllCompleted) continue;
       final due = group.targetDate;
       if (due.isBefore(windowStart) || due.isAfter(windowEnd)) continue;
-      out.add(ReminderItem(
-        itemId: group.id,
-        dueDate: due,
-        title: group.name,
-        body:
-            '${group.completedItems}/${group.totalItems} items done',
-      ));
+      out.add(
+        ReminderItem(
+          itemId: group.id,
+          dueDate: due,
+          title: group.name,
+          body: '${group.completedItems}/${group.totalItems} items done',
+        ),
+      );
     }
     return out;
   }

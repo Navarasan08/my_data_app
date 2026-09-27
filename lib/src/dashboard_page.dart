@@ -2,45 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
-import 'package:my_data_app/src/reminder/reminder_page.dart';
 import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
-import 'package:my_data_app/src/vehicle/vehicle_manager_page.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
-import 'package:my_data_app/src/chits/chit_screen.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
-import 'package:my_data_app/src/checklist/checklist_page.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
-import 'package:my_data_app/src/periods/period_page.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
-import 'package:my_data_app/src/home/home_record_page.dart';
-import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
-import 'package:my_data_app/src/schedule/schedule_page.dart';
 import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
-import 'package:my_data_app/src/food_menu/food_menu_page.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
-import 'package:my_data_app/src/loans/loan_page.dart';
 import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
-import 'package:my_data_app/src/goals/goal_page.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
-import 'package:my_data_app/src/money_owe/money_owe_page.dart';
 import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
-import 'package:my_data_app/src/medical/medical_page.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
-import 'package:my_data_app/src/profile_vault/profile_vault_page.dart';
 import 'package:my_data_app/src/land/cubit/land_cubit.dart';
-import 'package:my_data_app/src/land/land_page.dart';
 import 'package:my_data_app/src/interest/cubit/interest_cubit.dart';
-import 'package:my_data_app/src/interest/interest_page.dart';
 import 'package:my_data_app/src/activities/cubit/activity_cubit.dart';
-import 'package:my_data_app/src/activities/activity_page.dart';
 import 'package:my_data_app/src/diet/cubit/diet_cubit.dart';
-import 'package:my_data_app/src/diet/diet_page.dart';
 import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
-import 'package:my_data_app/src/days_counter/days_counter_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
-import 'package:my_data_app/src/pregnancy/pregnancy_page.dart';
+import 'package:my_data_app/src/shell/feature_pages.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
 import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
 import 'package:my_data_app/src/theme/theme_cubit.dart';
@@ -193,130 +174,8 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _navigateToFeature(BuildContext context, String id) {
-    Widget page;
-    switch (id) {
-      case 'bills':
-        page = BlocProvider.value(
-          value: context.read<BillCubit>(),
-          child: const BillsPage(),
-        );
-        break;
-      case 'vehicles':
-        page = BlocProvider.value(
-          value: context.read<VehicleCubit>(),
-          child: const VehicleListPage(),
-        );
-        break;
-      case 'chits':
-        page = BlocProvider.value(
-          value: context.read<ChitCubit>(),
-          child: const ChitFundListPage(),
-        );
-        break;
-      case 'checklists':
-        page = BlocProvider.value(
-          value: context.read<ChecklistCubit>(),
-          child: const ChecklistListPage(),
-        );
-        break;
-      case 'periods':
-        page = BlocProvider.value(
-          value: context.read<PeriodCubit>(),
-          child: const PeriodTrackerPage(),
-        );
-        break;
-      case 'home':
-        // Provide EventCubit alongside HomeRecordCubit so records can be
-        // linked to event/group funds and navigate to them.
-        page = MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: context.read<HomeRecordCubit>()),
-            BlocProvider.value(value: context.read<EventCubit>()),
-          ],
-          child: const HomeRecordPage(),
-        );
-        break;
-      case 'schedules':
-        page = BlocProvider.value(
-          value: context.read<ScheduleCubit>(),
-          child: const SchedulePage(),
-        );
-        break;
-      case 'food_menu':
-        page = BlocProvider.value(
-          value: context.read<FoodMenuCubit>(),
-          child: const FoodMenuPage(),
-        );
-        break;
-      case 'loans':
-        page = BlocProvider.value(
-          value: context.read<LoanCubit>(),
-          child: const LoanListPage(),
-        );
-        break;
-      case 'goals':
-        page = BlocProvider.value(
-          value: context.read<GoalCubit>(),
-          child: const GoalListPage(),
-        );
-        break;
-      case 'money_owe':
-        page = BlocProvider.value(
-          value: context.read<MoneyOweCubit>(),
-          child: const MoneyOwePage(),
-        );
-        break;
-      case 'pregnancy':
-        page = BlocProvider.value(
-          value: context.read<PregnancyCubit>(),
-          child: const PregnancyPage(),
-        );
-        break;
-      case 'medical':
-        page = BlocProvider.value(
-          value: context.read<MedicalCubit>(),
-          child: const MedicalHomePage(),
-        );
-        break;
-      case 'vault':
-        page = BlocProvider.value(
-          value: context.read<ProfileVaultCubit>(),
-          child: const ProfileVaultHomePage(),
-        );
-        break;
-      case 'land':
-        page = BlocProvider.value(
-          value: context.read<LandCubit>(),
-          child: const LandListPage(),
-        );
-        break;
-      case 'interest':
-        page = BlocProvider.value(
-          value: context.read<InterestCubit>(),
-          child: const InterestListPage(),
-        );
-        break;
-      case 'activities':
-        page = BlocProvider.value(
-          value: context.read<ActivityCubit>(),
-          child: const ActivityPage(),
-        );
-        break;
-      case 'diet':
-        page = BlocProvider.value(
-          value: context.read<DietCubit>(),
-          child: const DietPage(),
-        );
-        break;
-      case 'days_counter':
-        page = BlocProvider.value(
-          value: context.read<DaysCounterCubit>(),
-          child: const DaysCounterPage(),
-        );
-        break;
-      default:
-        return;
-    }
+    final page = buildFeaturePage(context, id);
+    if (page == null) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 

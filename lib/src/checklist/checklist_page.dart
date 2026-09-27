@@ -17,8 +17,7 @@ class ChecklistListPage extends StatelessWidget {
       builder: (context, state) {
         final cubit = context.read<ChecklistCubit>();
         final checklists = state.checklists;
-        final completedCount =
-            checklists.where((c) => c.isAllCompleted).length;
+        final completedCount = checklists.where((c) => c.isAllCompleted).length;
         final inProgressCount = checklists.length - completedCount;
 
         return Scaffold(
@@ -72,19 +71,26 @@ class ChecklistListPage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.checklist_rounded,
-                                size: 64, color: cs.outline),
+                            Icon(
+                              Icons.checklist_rounded,
+                              size: 64,
+                              color: cs.outline,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               'No checklists yet',
                               style: TextStyle(
-                                  fontSize: 18, color: cs.onSurfaceVariant),
+                                fontSize: 18,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             Text(
                               'Tap + to create your first checklist',
                               style: TextStyle(
-                                  fontSize: 14, color: cs.onSurfaceVariant),
+                                fontSize: 14,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -103,7 +109,8 @@ class ChecklistListPage extends StatelessWidget {
                                   builder: (_) => BlocProvider.value(
                                     value: cubit,
                                     child: ChecklistDetailPage(
-                                        groupId: group.id),
+                                      groupId: group.id,
+                                    ),
                                   ),
                                 ),
                               );
@@ -111,12 +118,12 @@ class ChecklistListPage extends StatelessWidget {
                             onEdit: () async {
                               final edited =
                                   await Navigator.push<ChecklistGroup>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      AddChecklistGroupPage(group: group),
-                                ),
-                              );
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          AddChecklistGroupPage(group: group),
+                                    ),
+                                  );
                               if (edited != null) {
                                 cubit.updateChecklist(edited);
                               }
@@ -127,7 +134,8 @@ class ChecklistListPage extends StatelessWidget {
                                 builder: (ctx) => AlertDialog(
                                   title: const Text('Delete Checklist'),
                                   content: Text(
-                                      'Are you sure you want to delete "${group.name}"? All items will also be deleted.'),
+                                    'Are you sure you want to delete "${group.name}"? All items will also be deleted.',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -135,10 +143,10 @@ class ChecklistListPage extends StatelessWidget {
                                       child: const Text('Cancel'),
                                     ),
                                     TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, true),
+                                      onPressed: () => Navigator.pop(ctx, true),
                                       style: TextButton.styleFrom(
-                                          foregroundColor: Colors.red),
+                                        foregroundColor: Colors.red,
+                                      ),
                                       child: const Text('Delete'),
                                     ),
                                   ],
@@ -159,7 +167,8 @@ class ChecklistListPage extends StatelessWidget {
               final newGroup = await Navigator.push<ChecklistGroup>(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => const AddChecklistGroupPage()),
+                  builder: (_) => const AddChecklistGroupPage(),
+                ),
               );
               if (newGroup != null) {
                 cubit.addChecklist(newGroup);
@@ -210,10 +219,7 @@ class _SummaryCard extends StatelessWidget {
               color: color,
             ),
           ),
-          Text(
-            title,
-            style: TextStyle(fontSize: 11, color: color),
-          ),
+          Text(title, style: TextStyle(fontSize: 11, color: color)),
         ],
       ),
     );
@@ -245,7 +251,8 @@ class _ChecklistGroupCard extends StatelessWidget {
   String _progressText() {
     final itemsText = '${group.completedItems}/${group.totalItems} items';
     if (group.isAllCompleted) return '$itemsText  ·  Completed';
-    if (group.daysLeft < 0) return '$itemsText  ·  ${-group.daysLeft} days overdue';
+    if (group.daysLeft < 0)
+      return '$itemsText  ·  ${-group.daysLeft} days overdue';
     if (group.daysLeft == 0) return '$itemsText  ·  Due today';
     if (group.daysLeft == 1) return '$itemsText  ·  1 day left';
     return '$itemsText  ·  ${group.daysLeft} days left';
@@ -261,9 +268,7 @@ class _ChecklistGroupCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: statusColor.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border(
-          left: BorderSide(color: statusColor, width: 3),
-        ),
+        border: Border(left: BorderSide(color: statusColor, width: 3)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -290,7 +295,10 @@ class _ChecklistGroupCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       _progressText(),
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     if (group.totalItems > 0) ...[
                       const SizedBox(height: 4),
@@ -300,7 +308,9 @@ class _ChecklistGroupCard extends StatelessWidget {
                           value: group.progress,
                           minHeight: 3,
                           backgroundColor: cs.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            statusColor,
+                          ),
                         ),
                       ),
                     ],
@@ -316,8 +326,11 @@ class _ChecklistGroupCard extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -334,7 +347,7 @@ class ChecklistDetailPage extends StatelessWidget {
   final String groupId;
 
   const ChecklistDetailPage({Key? key, required this.groupId})
-      : super(key: key);
+    : super(key: key);
 
   Color _daysLeftColor(ChecklistGroup group) {
     if (group.isAllCompleted) return Colors.green;
@@ -367,10 +380,8 @@ class ChecklistDetailPage extends StatelessWidget {
         }
 
         final color = _daysLeftColor(group);
-        final uncompleted =
-            group.items.where((i) => !i.isCompleted).toList();
-        final completed =
-            group.items.where((i) => i.isCompleted).toList();
+        final uncompleted = group.items.where((i) => !i.isCompleted).toList();
+        final completed = group.items.where((i) => i.isCompleted).toList();
 
         return Scaffold(
           appBar: AppBar(
@@ -415,7 +426,9 @@ class ChecklistDetailPage extends StatelessWidget {
                             Text(
                               'Target: ${DateFormat('MMM d, yyyy').format(group.targetDate)}',
                               style: TextStyle(
-                                  fontSize: 13, color: cs.onSurfaceVariant),
+                                fontSize: 13,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -467,16 +480,17 @@ class ChecklistDetailPage extends StatelessWidget {
                 ),
               ),
 
-              if (group.description != null &&
-                  group.description!.isNotEmpty)
+              if (group.description != null && group.description!.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       group.description!,
-                      style:
-                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
@@ -488,32 +502,40 @@ class ChecklistDetailPage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add_task_rounded,
-                                size: 48, color: cs.outline),
+                            Icon(
+                              Icons.add_task_rounded,
+                              size: 48,
+                              color: cs.outline,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'No items yet',
                               style: TextStyle(
-                                  fontSize: 16, color: cs.onSurfaceVariant),
+                                fontSize: 16,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Tap + to add items',
                               style: TextStyle(
-                                  fontSize: 13, color: cs.onSurfaceVariant),
+                                fontSize: 13,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                       )
                     : ListView(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         children: [
                           // Pending items
                           if (uncompleted.isNotEmpty) ...[
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 8, top: 4),
+                              padding: const EdgeInsets.only(bottom: 8, top: 4),
                               child: Text(
                                 'To Do (${uncompleted.length})',
                                 style: TextStyle(
@@ -524,20 +546,28 @@ class ChecklistDetailPage extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            ...uncompleted.map((item) => _ChecklistItemTile(
-                                  item: item,
-                                  onToggle: () =>
-                                      cubit.toggleItem(groupId, item.id),
-                                  onDelete: () => _confirmDeleteItem(
-                                      context, cubit, groupId, item),
-                                )),
+                            ...uncompleted.map(
+                              (item) => _ChecklistItemTile(
+                                item: item,
+                                onToggle: () =>
+                                    cubit.toggleItem(groupId, item.id),
+                                onDelete: () => _confirmDeleteItem(
+                                  context,
+                                  cubit,
+                                  groupId,
+                                  item,
+                                ),
+                              ),
+                            ),
                           ],
 
                           // Completed items
                           if (completed.isNotEmpty) ...[
                             Padding(
-                              padding:
-                                  const EdgeInsets.only(bottom: 8, top: 16),
+                              padding: const EdgeInsets.only(
+                                bottom: 8,
+                                top: 16,
+                              ),
                               child: Text(
                                 'Completed (${completed.length})',
                                 style: TextStyle(
@@ -548,13 +578,19 @@ class ChecklistDetailPage extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            ...completed.map((item) => _ChecklistItemTile(
-                                  item: item,
-                                  onToggle: () =>
-                                      cubit.toggleItem(groupId, item.id),
-                                  onDelete: () => _confirmDeleteItem(
-                                      context, cubit, groupId, item),
-                                )),
+                            ...completed.map(
+                              (item) => _ChecklistItemTile(
+                                item: item,
+                                onToggle: () =>
+                                    cubit.toggleItem(groupId, item.id),
+                                onDelete: () => _confirmDeleteItem(
+                                  context,
+                                  cubit,
+                                  groupId,
+                                  item,
+                                ),
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -581,8 +617,12 @@ class ChecklistDetailPage extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDeleteItem(BuildContext context, ChecklistCubit cubit,
-      String groupId, ChecklistItem item) async {
+  Future<void> _confirmDeleteItem(
+    BuildContext context,
+    ChecklistCubit cubit,
+    String groupId,
+    ChecklistItem item,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -669,8 +709,7 @@ class _ChecklistItemTile extends StatelessWidget {
           item.title,
           style: TextStyle(
             fontSize: 15,
-            decoration:
-                item.isCompleted ? TextDecoration.lineThrough : null,
+            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
             color: item.isCompleted ? cs.onSurfaceVariant : cs.onSurface,
           ),
         ),
@@ -681,8 +720,7 @@ class _ChecklistItemTile extends StatelessWidget {
               )
             : null,
         trailing: IconButton(
-          icon: Icon(Icons.close_rounded,
-              size: 18, color: cs.onSurfaceVariant),
+          icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
           onPressed: onDelete,
         ),
       ),
@@ -728,7 +766,8 @@ class _AddChecklistGroupPageState extends State<AddChecklistGroupPage> {
   void _save() {
     if (_formKey.currentState!.validate()) {
       final group = ChecklistGroup(
-        id: widget.group?.id ??
+        id:
+            widget.group?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         description: _descriptionController.text.isEmpty

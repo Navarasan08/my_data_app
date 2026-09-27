@@ -27,9 +27,9 @@ class GroupSettingsPage extends StatelessWidget {
                   SwitchListTile(
                     title: const Text('Month-wise expense list'),
                     subtitle: const Text(
-                        'Group expenses by month with subtotals instead of a flat list.'),
-                    secondary:
-                        const Icon(Icons.calendar_view_month_rounded),
+                      'Group expenses by month with subtotals instead of a flat list.',
+                    ),
+                    secondary: const Icon(Icons.calendar_view_month_rounded),
                     value: state.monthwiseListView,
                     onChanged: cubit.setMonthwiseListView,
                   ),

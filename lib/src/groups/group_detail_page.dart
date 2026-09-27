@@ -54,9 +54,7 @@ class GroupDetailPage extends StatelessWidget {
           final cubit = context.read<GroupCubit>();
           final group = cubit.getGroup(groupId);
           if (group == null) {
-            return const Scaffold(
-              body: Center(child: Text('Group not found')),
-            );
+            return const Scaffold(body: Center(child: Text('Group not found')));
           }
           final color = group.color;
 
@@ -99,11 +97,12 @@ class GroupDetailPage extends StatelessWidget {
                   },
                 ),
                 IconButton(
-                  icon: Icon(group.isArchived
-                      ? Icons.unarchive_rounded
-                      : Icons.archive_rounded),
-                  tooltip:
-                      group.isArchived ? 'Unarchive' : 'Archive',
+                  icon: Icon(
+                    group.isArchived
+                        ? Icons.unarchive_rounded
+                        : Icons.archive_rounded,
+                  ),
+                  tooltip: group.isArchived ? 'Unarchive' : 'Archive',
                   onPressed: () => cubit.toggleArchive(group.id),
                 ),
                 PopupMenuButton<String>(
@@ -124,8 +123,10 @@ class GroupDetailPage extends StatelessWidget {
                       if (isOwner)
                         const PopupMenuItem(
                           value: 'delete',
-                          child: Text('Delete group',
-                              style: TextStyle(color: Colors.red)),
+                          child: Text(
+                            'Delete group',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
                     ];
                   },
@@ -182,15 +183,18 @@ class GroupDetailPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Leave group'),
         content: Text(
-            'You will no longer see expenses in "${group.name}". You can be re-invited later.'),
+          'You will no longer see expenses in "${group.name}". You can be re-invited later.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Leave')),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Leave'),
+          ),
         ],
       ),
     );
@@ -207,15 +211,18 @@ class GroupDetailPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Delete group'),
         content: Text(
-            'Delete "${group.name}" for everyone? All expenses and settlements will be removed permanently.'),
+          'Delete "${group.name}" for everyone? All expenses and settlements will be removed permanently.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete')),
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -251,26 +258,29 @@ class _SummaryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Group spend',
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant)),
-                Text('₹${_money.format(total)}',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: group.color)),
+                Text(
+                  'Group spend',
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                ),
+                Text(
+                  '₹${_money.format(total)}',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: group.color,
+                  ),
+                ),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: iAmOwed
                   ? Colors.green.withValues(alpha: 0.12)
                   : iOwe
-                      ? Colors.red.withValues(alpha: 0.12)
-                      : cs.surfaceContainerHighest,
+                  ? Colors.red.withValues(alpha: 0.12)
+                  : cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -280,25 +290,24 @@ class _SummaryCard extends StatelessWidget {
                   iAmOwed
                       ? 'you get back'
                       : iOwe
-                          ? 'you owe'
-                          : 'all settled',
-                  style:
-                      TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
+                      ? 'you owe'
+                      : 'all settled',
+                  style: TextStyle(fontSize: 10, color: cs.onSurfaceVariant),
                 ),
                 Text(
                   iAmOwed
                       ? '₹${_money.format(myBal)}'
                       : iOwe
-                          ? '₹${_money.format(-myBal)}'
-                          : '—',
+                      ? '₹${_money.format(-myBal)}'
+                      : '—',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: iAmOwed
                         ? Colors.green[700]
                         : iOwe
-                            ? Colors.red[700]
-                            : cs.onSurface,
+                        ? Colors.red[700]
+                        : cs.onSurface,
                   ),
                 ),
               ],
@@ -326,16 +335,21 @@ class _ExpensesTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_rounded,
-                size: 44, color: cs.outlineVariant),
+            Icon(
+              Icons.receipt_long_rounded,
+              size: 44,
+              color: cs.outlineVariant,
+            ),
             const SizedBox(height: 10),
-            Text('No expenses yet',
-                style:
-                    TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+            Text(
+              'No expenses yet',
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 4),
-            Text('Tap "+ Add expense" to record one',
-                style:
-                    TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+            Text(
+              'Tap "+ Add expense" to record one',
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       );
@@ -453,8 +467,9 @@ class _ExpenseTile extends StatelessWidget {
         .where((s) => s.uid == cubit.currentUid)
         .fold<double>(0, (s, x) => s + x.owed);
     final iPaid = expense.paidByUid == cubit.currentUid;
-    final myShare =
-        iPaid ? expense.amount - mySplit : -mySplit; // net delta for me
+    final myShare = iPaid
+        ? expense.amount - mySplit
+        : -mySplit; // net delta for me
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -491,16 +506,22 @@ class _ExpenseTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(expense.title,
-                        style: const TextStyle(
-                            fontSize: 14, fontWeight: FontWeight.w600),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      expense.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       '${DateFormat('d MMM').format(expense.date)} · paid by $payer',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     if (_wasEdited(expense))
                       Text(
@@ -517,9 +538,13 @@ class _ExpenseTile extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text('₹${_money.format(expense.amount)}',
-                      style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.bold)),
+                  Text(
+                    '₹${_money.format(expense.amount)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   if (myShare.abs() > 0.01)
                     Text(
                       iPaid
@@ -527,17 +552,18 @@ class _ExpenseTile extends StatelessWidget {
                           : 'you owe ₹${_money.format(-myShare)}',
                       style: TextStyle(
                         fontSize: 10,
-                        color: iPaid
-                            ? Colors.green[700]
-                            : Colors.red[700],
+                        color: iPaid ? Colors.green[700] : Colors.red[700],
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                 ],
               ),
               IconButton(
-                icon: Icon(Icons.delete_outline_rounded,
-                    size: 18, color: Colors.red[300]),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Colors.red[300],
+                ),
                 tooltip: 'Delete',
                 onPressed: () async {
                   final confirmed = await showDialog<bool>(
@@ -547,13 +573,16 @@ class _ExpenseTile extends StatelessWidget {
                       content: Text('Delete "${expense.title}"?'),
                       actions: [
                         TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel')),
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
                         TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            style: TextButton.styleFrom(
-                                foregroundColor: Colors.red),
-                            child: const Text('Delete')),
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Delete'),
+                        ),
                       ],
                     ),
                   );
@@ -590,33 +619,35 @@ class _MembersTabState extends State<_MembersTab> {
     super.dispose();
   }
 
-  static final _emailRegex =
-      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+  static final _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   Future<void> _invite() async {
     final raw = _emailCtrl.text.trim().toLowerCase();
     if (!_emailRegex.hasMatch(raw)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid email')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid email')));
       return;
     }
     setState(() => _sending = true);
     try {
-      await context
-          .read<GroupCubit>()
-          .invite(groupId: widget.group.id, email: raw);
+      await context.read<GroupCubit>().invite(
+        groupId: widget.group.id,
+        email: raw,
+      );
       _emailCtrl.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Invitation sent to $raw')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Invitation sent to $raw')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not invite: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not invite: $e')));
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -631,11 +662,14 @@ class _MembersTabState extends State<_MembersTab> {
     return ListView(
       padding: const EdgeInsets.all(12),
       children: [
-        Text('Members (${group.memberIds.length})',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface)),
+        Text(
+          'Members (${group.memberIds.length})',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
+          ),
+        ),
         const SizedBox(height: 8),
         ...group.memberIds.map((uid) {
           final m = group.members[uid];
@@ -654,9 +688,7 @@ class _MembersTabState extends State<_MembersTab> {
                   radius: 16,
                   backgroundColor: group.color.withValues(alpha: 0.2),
                   child: Text(
-                    (m?.label.isNotEmpty == true
-                            ? m!.label[0]
-                            : '?')
+                    (m?.label.isNotEmpty == true ? m!.label[0] : '?')
                         .toUpperCase(),
                     style: TextStyle(
                       fontSize: 13,
@@ -670,31 +702,42 @@ class _MembersTabState extends State<_MembersTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(m?.label ?? uid,
-                          style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600)),
+                      Text(
+                        m?.label ?? uid,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                       if (m?.email != null && m!.email != m.label)
-                        Text(m.email,
-                            style: TextStyle(
-                                fontSize: 11,
-                                color: cs.onSurfaceVariant)),
+                        Text(
+                          m.email,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
                     ],
                   ),
                 ),
                 if (isOwner)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 2),
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: group.color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Text('owner',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: group.color,
-                            fontWeight: FontWeight.w600)),
+                    child: Text(
+                      'owner',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: group.color,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
               ],
             ),
@@ -702,11 +745,14 @@ class _MembersTabState extends State<_MembersTab> {
         }),
 
         const SizedBox(height: 20),
-        Text('Invite by email',
-            style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface)),
+        Text(
+          'Invite by email',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
+          ),
+        ),
         const SizedBox(height: 6),
         Row(
           children: [
@@ -737,8 +783,9 @@ class _MembersTabState extends State<_MembersTab> {
         ),
         const SizedBox(height: 8),
         Text(
-            'They will see a pending invitation when they open the app, signed in with this email.',
-            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+          'They will see a pending invitation when they open the app, signed in with this email.',
+          style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+        ),
       ],
     );
   }
@@ -767,9 +814,11 @@ class _SettleInline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Builder(builder: (innerContext) {
-      return SettleUpInlineBody(groupId: groupId);
-    });
+    return Builder(
+      builder: (innerContext) {
+        return SettleUpInlineBody(groupId: groupId);
+      },
+    );
   }
 }
 
@@ -803,15 +852,17 @@ class SettleUpInlineBody extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.check_circle_rounded,
-                    color: Colors.green[700]),
+                Icon(Icons.check_circle_rounded, color: Colors.green[700]),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('Everyone is settled up.',
-                      style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.green[800],
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    'Everyone is settled up.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.green[800],
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -826,11 +877,14 @@ class SettleUpInlineBody extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${plan.length} pending transfer${plan.length == 1 ? "" : "s"}',
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: cs.onSurface)),
+                Text(
+                  '${plan.length} pending transfer${plan.length == 1 ? "" : "s"}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 ...plan.take(5).map((t) {
                   final from = group.members[t.fromUid]?.label ?? '?';
@@ -840,22 +894,28 @@ class SettleUpInlineBody extends StatelessWidget {
                     child: Row(
                       children: [
                         Expanded(
-                          child: Text('$from → $to',
-                              style: const TextStyle(fontSize: 13)),
+                          child: Text(
+                            '$from → $to',
+                            style: const TextStyle(fontSize: 13),
+                          ),
                         ),
-                        Text('₹${_money.format(t.amount)}',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                                color: group.color)),
+                        Text(
+                          '₹${_money.format(t.amount)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: group.color,
+                          ),
+                        ),
                       ],
                     ),
                   );
                 }),
                 if (plan.length > 5)
-                  Text('+${plan.length - 5} more',
-                      style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant)),
+                  Text(
+                    '+${plan.length - 5} more',
+                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                  ),
               ],
             ),
           ),

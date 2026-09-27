@@ -58,9 +58,7 @@ class GoalListPage extends StatelessWidget {
             final cubit = context.read<GoalCubit>();
             final goal = await Navigator.push<Goal>(
               context,
-              MaterialPageRoute(
-                builder: (_) => const AddGoalPage(),
-              ),
+              MaterialPageRoute(builder: (_) => const AddGoalPage()),
             );
             if (goal != null) {
               cubit.addGoal(goal);
@@ -157,9 +155,7 @@ class _GoalCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: completed
-              ? Colors.green.withValues(alpha: 0.06)
-              : cs.surface,
+          color: completed ? Colors.green.withValues(alpha: 0.06) : cs.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: completed ? Colors.green.shade400 : cs.outline,
@@ -197,13 +193,18 @@ class _GoalCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          Icon(goal.frequency.icon,
-                              size: 12, color: cs.onSurfaceVariant),
+                          Icon(
+                            goal.frequency.icon,
+                            size: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             goal.frequency.label,
                             style: TextStyle(
-                                fontSize: 12, color: cs.onSurfaceVariant),
+                              fontSize: 12,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                           if (goal.currentStreak > 0) ...[
                             const SizedBox(width: 8),
@@ -220,7 +221,9 @@ class _GoalCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.green.shade100,
                                 borderRadius: BorderRadius.circular(4),
@@ -228,9 +231,11 @@ class _GoalCard extends StatelessWidget {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.emoji_events_rounded,
-                                      size: 11,
-                                      color: Colors.green.shade800),
+                                  Icon(
+                                    Icons.emoji_events_rounded,
+                                    size: 11,
+                                    color: Colors.green.shade800,
+                                  ),
                                   const SizedBox(width: 3),
                                   Text(
                                     'Completed',
@@ -260,13 +265,16 @@ class _GoalCard extends StatelessWidget {
                         value: goal.successRate,
                         strokeWidth: 4,
                         backgroundColor: cs.surfaceContainerHighest,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.green[600]!),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Colors.green[600]!,
+                        ),
                       ),
                       Text(
                         '$rate%',
                         style: const TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.bold),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -312,14 +320,11 @@ class _GoalCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _MiniStat(
-                    emoji: '\u{1F525}', value: '${goal.currentStreak}'),
+                _MiniStat(emoji: '\u{1F525}', value: '${goal.currentStreak}'),
                 const SizedBox(width: 12),
-                _MiniStat(
-                    emoji: '\u2705', value: '${goal.successCount}'),
+                _MiniStat(emoji: '\u2705', value: '${goal.successCount}'),
                 const SizedBox(width: 12),
-                _MiniStat(
-                    emoji: '\u274C', value: '${goal.failureCount}'),
+                _MiniStat(emoji: '\u274C', value: '${goal.failureCount}'),
                 const Spacer(),
                 InkWell(
                   onTap: () async {
@@ -328,7 +333,8 @@ class _GoalCard extends StatelessWidget {
                       builder: (ctx) => AlertDialog(
                         title: const Text('Delete Goal'),
                         content: Text(
-                            'Are you sure you want to delete "${goal.title}"?'),
+                          'Are you sure you want to delete "${goal.title}"?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -336,8 +342,9 @@ class _GoalCard extends StatelessWidget {
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
-                            style:
-                                TextButton.styleFrom(foregroundColor: Colors.red),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
                             child: const Text('Delete'),
                           ),
                         ],
@@ -354,8 +361,11 @@ class _GoalCard extends StatelessWidget {
                       color: Colors.red[50],
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Icon(Icons.delete_outline_rounded,
-                        size: 16, color: Colors.red[300]),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: Colors.red[300],
+                    ),
                   ),
                 ),
               ],
@@ -377,7 +387,7 @@ class _MiniStat extends StatelessWidget {
   final String emoji;
   final String value;
   const _MiniStat({Key? key, required this.emoji, required this.value})
-      : super(key: key);
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -386,8 +396,10 @@ class _MiniStat extends StatelessWidget {
       children: [
         Text(emoji, style: const TextStyle(fontSize: 13)),
         const SizedBox(width: 3),
-        Text(value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -435,9 +447,15 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
         }
 
         final total = goal.totalTracked;
-        final successPct = total > 0 ? (goal.successCount * 100 / total).round() : 0;
-        final failurePct = total > 0 ? (goal.failureCount * 100 / total).round() : 0;
-        final streakPct = total > 0 ? (goal.currentStreak * 100 / total).round() : 0;
+        final successPct = total > 0
+            ? (goal.successCount * 100 / total).round()
+            : 0;
+        final failurePct = total > 0
+            ? (goal.failureCount * 100 / total).round()
+            : 0;
+        final streakPct = total > 0
+            ? (goal.currentStreak * 100 / total).round()
+            : 0;
         final sortedLogs = List<GoalLog>.from(goal.logs)
           ..sort((a, b) => b.date.compareTo(a.date));
 
@@ -451,9 +469,7 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                 onPressed: () async {
                   final edited = await Navigator.push<Goal>(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => AddGoalPage(goal: goal),
-                    ),
+                    MaterialPageRoute(builder: (_) => AddGoalPage(goal: goal)),
                   );
                   if (edited != null) {
                     cubit.updateGoal(edited);
@@ -476,17 +492,20 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
               Row(
                 children: [
                   _StatTile(
-                      label: 'Success',
-                      value: '${goal.successCount}',
-                      subValue: '$successPct%'),
+                    label: 'Success',
+                    value: '${goal.successCount}',
+                    subValue: '$successPct%',
+                  ),
                   _StatTile(
-                      label: 'Failure',
-                      value: '${goal.failureCount}',
-                      subValue: '$failurePct%'),
+                    label: 'Failure',
+                    value: '${goal.failureCount}',
+                    subValue: '$failurePct%',
+                  ),
                   _StatTile(
-                      label: 'Streak',
-                      value: '${goal.currentStreak}',
-                      subValue: '$streakPct%'),
+                    label: 'Streak',
+                    value: '${goal.currentStreak}',
+                    subValue: '$streakPct%',
+                  ),
                   _StatTile(label: 'Total', value: '$total'),
                 ],
               ),
@@ -495,8 +514,10 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
               if (goal.deadline != null) ...[
                 const SizedBox(height: 12),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: goal.daysLeft >= 0
                         ? Colors.orange[50]
@@ -511,11 +532,13 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.timer_outlined,
-                          size: 16,
-                          color: goal.daysLeft >= 0
-                              ? Colors.orange[700]
-                              : Colors.red[700]),
+                      Icon(
+                        Icons.timer_outlined,
+                        size: 16,
+                        color: goal.daysLeft >= 0
+                            ? Colors.orange[700]
+                            : Colors.red[700],
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         goal.daysLeft >= 0
@@ -547,7 +570,9 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                   Text(
                     DateFormat('MMMM yyyy').format(_viewMonth),
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.chevron_right),
@@ -560,13 +585,19 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
               // Weekday labels
               Row(
                 children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-                    .map((d) => Expanded(
-                          child: Center(
-                            child: Text(d,
-                                style: TextStyle(
-                                    fontSize: 11, color: cs.onSurfaceVariant)),
+                    .map(
+                      (d) => Expanded(
+                        child: Center(
+                          child: Text(
+                            d,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
-                        ))
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
               const SizedBox(height: 4),
@@ -640,10 +671,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
 
   Widget _buildCalendarGrid(Goal goal, GoalCubit cubit) {
     final cs = Theme.of(context).colorScheme;
-    final firstDay =
-        DateTime(_viewMonth.year, _viewMonth.month, 1);
-    final daysInMonth =
-        DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
+    final firstDay = DateTime(_viewMonth.year, _viewMonth.month, 1);
+    final daysInMonth = DateTime(_viewMonth.year, _viewMonth.month + 1, 0).day;
     // Monday = 1, so offset is weekday - 1
     final startOffset = firstDay.weekday - 1;
 
@@ -657,7 +686,8 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
       final date = DateTime(_viewMonth.year, _viewMonth.month, day);
       final isDue = goal.isDueForDate(date);
       final status = goal.statusForDate(date);
-      final isToday = date.year == now.year &&
+      final isToday =
+          date.year == now.year &&
           date.month == now.month &&
           date.day == now.day;
 
@@ -705,10 +735,10 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
                 color: (status != null && isDue)
                     ? Colors.white
                     : isToday
-                        ? Colors.blue[800]
-                        : isDue
-                            ? cs.onSurface
-                            : cs.onSurfaceVariant,
+                    ? Colors.blue[800]
+                    : isDue
+                    ? cs.onSurface
+                    : cs.onSurfaceVariant,
               ),
             ),
           ),
@@ -727,7 +757,11 @@ class _GoalDetailPageState extends State<GoalDetailPage> {
 
   /// Cycle: unlogged → success → failure → skip → unlogged
   void _cycleStatus(
-      Goal goal, DateTime date, GoalDayStatus? current, GoalCubit cubit) {
+    Goal goal,
+    DateTime date,
+    GoalDayStatus? current,
+    GoalCubit cubit,
+  ) {
     switch (current) {
       case null:
         cubit.logDay(goal.id, date, GoalDayStatus.success);
@@ -770,7 +804,9 @@ class _StatTile extends StatelessWidget {
               child: Text.rich(
                 TextSpan(
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                   children: [
                     TextSpan(text: value),
                     if (subValue != null)
@@ -788,8 +824,10 @@ class _StatTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 2),
-            Text(label,
-                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       ),
@@ -851,9 +889,9 @@ class _AddGoalPageState extends State<AddGoalPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     if (_frequency == GoalFrequency.custom && _customDays.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one day')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Select at least one day')));
       return;
     }
 
@@ -924,16 +962,18 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 prefixIcon: Icon(Icons.category),
               ),
               items: GoalCategory.values
-                  .map((c) => DropdownMenuItem(
-                        value: c,
-                        child: Row(
-                          children: [
-                            Icon(c.icon, size: 18, color: c.color),
-                            const SizedBox(width: 8),
-                            Text(c.label),
-                          ],
-                        ),
-                      ))
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: c,
+                      child: Row(
+                        children: [
+                          Icon(c.icon, size: 18, color: c.color),
+                          const SizedBox(width: 8),
+                          Text(c.label),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _category = v);
@@ -942,27 +982,32 @@ class _AddGoalPageState extends State<AddGoalPage> {
             const SizedBox(height: 24),
 
             // Frequency
-            const Text('Frequency',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Frequency',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<GoalFrequency>(
               segments: GoalFrequency.values
-                  .map((f) => ButtonSegment(
-                        value: f,
-                        label: Text(f.label),
-                        icon: Icon(f.icon),
-                      ))
+                  .map(
+                    (f) => ButtonSegment(
+                      value: f,
+                      label: Text(f.label),
+                      icon: Icon(f.icon),
+                    ),
+                  )
                   .toList(),
               selected: {_frequency},
-              onSelectionChanged: (s) =>
-                  setState(() => _frequency = s.first),
+              onSelectionChanged: (s) => setState(() => _frequency = s.first),
             ),
 
             // Custom weekday chips
             if (_frequency == GoalFrequency.custom) ...[
               const SizedBox(height: 16),
-              const Text('Select Days',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+              const Text(
+                'Select Days',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -1022,7 +1067,8 @@ class _AddGoalPageState extends State<AddGoalPage> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text('Deadline'),
                 subtitle: Text(
-                    DateFormat('d MMM yyyy').format(_deadline ?? _startDate)),
+                  DateFormat('d MMM yyyy').format(_deadline ?? _startDate),
+                ),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
@@ -1054,8 +1100,10 @@ class _AddGoalPageState extends State<AddGoalPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Goal' : 'Save Goal',
-                  style: const TextStyle(fontSize: 16)),
+              child: Text(
+                _isEditing ? 'Update Goal' : 'Save Goal',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),

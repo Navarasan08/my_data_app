@@ -38,14 +38,45 @@ class FeatureItem {
   };
 }
 
+/// The four bottom tabs, by role rather than index.
+enum ShellTab {
+  notes('Quick Notes'),
+  module('Second tab module'),
+  dashboard('Dashboard'),
+  alerts('Alerts');
+
+  final String label;
+  const ShellTab(this.label);
+
+  static ShellTab fromName(String? name) => ShellTab.values.firstWhere(
+    (t) => t.name == name,
+    orElse: () => ShellTab.dashboard,
+  );
+}
+
 class DashboardSettingsState {
   final List<FeatureItem> features;
   final bool isGridView;
 
+  /// Feature id shown on the second bottom tab. Expense Tracker by default.
+  final String secondTabFeatureId;
+
+  /// Which tab the app opens on.
+  final ShellTab landingTab;
+
   const DashboardSettingsState({
     required this.features,
     this.isGridView = true,
+    this.secondTabFeatureId = 'home',
+    this.landingTab = ShellTab.dashboard,
   });
+
+  FeatureItem? featureById(String id) {
+    for (final f in features) {
+      if (f.id == id) return f;
+    }
+    return null;
+  }
 
   List<FeatureItem> get visibleFeatures =>
       features.where((f) => f.visible).toList()
@@ -54,9 +85,13 @@ class DashboardSettingsState {
   DashboardSettingsState copyWith({
     List<FeatureItem>? features,
     bool? isGridView,
+    String? secondTabFeatureId,
+    ShellTab? landingTab,
   }) => DashboardSettingsState(
     features: features ?? this.features,
     isGridView: isGridView ?? this.isGridView,
+    secondTabFeatureId: secondTabFeatureId ?? this.secondTabFeatureId,
+    landingTab: landingTab ?? this.landingTab,
   );
 }
 
@@ -251,7 +286,29 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
     }
 
     final isGridView = data['isGridView'] as bool? ?? state.isGridView;
-    emit(state.copyWith(features: features, isGridView: isGridView));
+    emit(
+      state.copyWith(
+        features: features,
+        isGridView: isGridView,
+        secondTabFeatureId:
+            data['secondTabFeatureId'] as String? ?? state.secondTabFeatureId,
+        landingTab: data['landingTab'] == null
+            ? state.landingTab
+            : ShellTab.fromName(data['landingTab'] as String?),
+      ),
+    );
+  }
+
+  void setSecondTab(String featureId) {
+    emit(state.copyWith(secondTabFeatureId: featureId));
+    _settingsDoc.set({
+      'secondTabFeatureId': featureId,
+    }, SetOptions(merge: true));
+  }
+
+  void setLandingTab(ShellTab tab) {
+    emit(state.copyWith(landingTab: tab));
+    _settingsDoc.set({'landingTab': tab.name}, SetOptions(merge: true));
   }
 
   void toggleViewMode() {

@@ -111,7 +111,8 @@ class ChecklistGroup {
       description: json['description'] as String?,
       targetDate: DateTime.parse(json['targetDate'] as String),
       createdDate: DateTime.parse(json['createdDate'] as String),
-      items: (json['items'] as List<dynamic>?)
+      items:
+          (json['items'] as List<dynamic>?)
               ?.map((i) => ChecklistItem.fromJson(i as Map<String, dynamic>))
               .toList() ??
           [],

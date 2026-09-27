@@ -22,12 +22,14 @@ class ScheduleReminderSource implements ReminderSource {
     for (final entry in scheduleCubit.state.entries) {
       for (final date in entry.occurrencesInRange(windowStart, windowEnd)) {
         if (entry.isCompletedOn(date)) continue;
-        out.add(ReminderItem(
-          itemId: entry.id,
-          dueDate: date,
-          title: entry.title,
-          meta: {'category': entry.category.label},
-        ));
+        out.add(
+          ReminderItem(
+            itemId: entry.id,
+            dueDate: date,
+            title: entry.title,
+            meta: {'category': entry.category.label},
+          ),
+        );
       }
     }
     return out;

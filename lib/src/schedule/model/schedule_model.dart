@@ -24,64 +24,88 @@ class ScheduleCategory {
   String get label => displayName;
 
   static final List<IconData> availableIcons = [
-    Icons.work_rounded,              // 0 - work
-    Icons.person_rounded,            // 1 - personal
-    Icons.favorite_rounded,          // 2 - health
-    Icons.school_rounded,            // 3 - education
-    Icons.flight_rounded,            // 4 - travel
-    Icons.event_rounded,             // 5 - other / general
-    Icons.fitness_center_rounded,    // 6 - fitness
-    Icons.medical_services_rounded,  // 7 - medical
-    Icons.restaurant_rounded,        // 8 - food
-    Icons.shopping_cart_rounded,     // 9 - shopping
-    Icons.home_rounded,              // 10 - home
-    Icons.celebration_rounded,       // 11 - celebration
-    Icons.sports_esports_rounded,    // 12 - hobby / gaming
-    Icons.music_note_rounded,        // 13 - music
-    Icons.movie_rounded,             // 14 - movie
-    Icons.people_rounded,            // 15 - meeting
-    Icons.phone_rounded,             // 16 - call
-    Icons.video_call_rounded,        // 17 - video call
-    Icons.flag_rounded,              // 18 - milestone
-    Icons.cake_rounded,              // 19 - birthday
-    Icons.card_giftcard_rounded,     // 20 - gift / anniversary
-    Icons.self_improvement_rounded,  // 21 - meditation
-    Icons.auto_stories_rounded,      // 22 - reading / study
-    Icons.directions_car_rounded,    // 23 - vehicle / trip
-    Icons.spa_rounded,               // 24 - beauty / wellness
+    Icons.work_rounded, // 0 - work
+    Icons.person_rounded, // 1 - personal
+    Icons.favorite_rounded, // 2 - health
+    Icons.school_rounded, // 3 - education
+    Icons.flight_rounded, // 4 - travel
+    Icons.event_rounded, // 5 - other / general
+    Icons.fitness_center_rounded, // 6 - fitness
+    Icons.medical_services_rounded, // 7 - medical
+    Icons.restaurant_rounded, // 8 - food
+    Icons.shopping_cart_rounded, // 9 - shopping
+    Icons.home_rounded, // 10 - home
+    Icons.celebration_rounded, // 11 - celebration
+    Icons.sports_esports_rounded, // 12 - hobby / gaming
+    Icons.music_note_rounded, // 13 - music
+    Icons.movie_rounded, // 14 - movie
+    Icons.people_rounded, // 15 - meeting
+    Icons.phone_rounded, // 16 - call
+    Icons.video_call_rounded, // 17 - video call
+    Icons.flag_rounded, // 18 - milestone
+    Icons.cake_rounded, // 19 - birthday
+    Icons.card_giftcard_rounded, // 20 - gift / anniversary
+    Icons.self_improvement_rounded, // 21 - meditation
+    Icons.auto_stories_rounded, // 22 - reading / study
+    Icons.directions_car_rounded, // 23 - vehicle / trip
+    Icons.spa_rounded, // 24 - beauty / wellness
   ];
 
   static final List<Color> availableColors = [
-    Colors.blue,       // 0
-    Colors.purple,     // 1
-    Colors.red,        // 2
-    Colors.teal,       // 3
-    Colors.orange,     // 4
-    Colors.grey,       // 5
-    Colors.green,      // 6
-    Colors.indigo,     // 7
-    Colors.pink,       // 8
-    Colors.cyan,       // 9
-    Colors.amber,      // 10
-    Colors.brown,      // 11
+    Colors.blue, // 0
+    Colors.purple, // 1
+    Colors.red, // 2
+    Colors.teal, // 3
+    Colors.orange, // 4
+    Colors.grey, // 5
+    Colors.green, // 6
+    Colors.indigo, // 7
+    Colors.pink, // 8
+    Colors.cyan, // 9
+    Colors.amber, // 10
+    Colors.brown, // 11
     Colors.deepPurple, // 12
     Colors.deepOrange, // 13
-    Colors.lightBlue,  // 14
+    Colors.lightBlue, // 14
   ];
 
   // Default categories
   static const work = ScheduleCategory(
-      id: 'work', displayName: 'Work', iconIndex: 0, colorIndex: 0);
+    id: 'work',
+    displayName: 'Work',
+    iconIndex: 0,
+    colorIndex: 0,
+  );
   static const personal = ScheduleCategory(
-      id: 'personal', displayName: 'Personal', iconIndex: 1, colorIndex: 1);
+    id: 'personal',
+    displayName: 'Personal',
+    iconIndex: 1,
+    colorIndex: 1,
+  );
   static const health = ScheduleCategory(
-      id: 'health', displayName: 'Health', iconIndex: 2, colorIndex: 2);
+    id: 'health',
+    displayName: 'Health',
+    iconIndex: 2,
+    colorIndex: 2,
+  );
   static const education = ScheduleCategory(
-      id: 'education', displayName: 'Education', iconIndex: 3, colorIndex: 3);
+    id: 'education',
+    displayName: 'Education',
+    iconIndex: 3,
+    colorIndex: 3,
+  );
   static const travel = ScheduleCategory(
-      id: 'travel', displayName: 'Travel', iconIndex: 4, colorIndex: 4);
+    id: 'travel',
+    displayName: 'Travel',
+    iconIndex: 4,
+    colorIndex: 4,
+  );
   static const other = ScheduleCategory(
-      id: 'other', displayName: 'Other', iconIndex: 5, colorIndex: 5);
+    id: 'other',
+    displayName: 'Other',
+    iconIndex: 5,
+    colorIndex: 5,
+  );
 
   static final List<ScheduleCategory> defaults = [
     work,
@@ -93,7 +117,9 @@ class ScheduleCategory {
   ];
 
   static ScheduleCategory findById(
-      String id, List<ScheduleCategory> customCategories) {
+    String id,
+    List<ScheduleCategory> customCategories,
+  ) {
     for (final c in defaults) {
       if (c.id == id) return c;
     }
@@ -117,12 +143,12 @@ class ScheduleCategory {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'iconIndex': iconIndex,
-        'colorIndex': colorIndex,
-        'isCustom': isCustom,
-      };
+    'id': id,
+    'displayName': displayName,
+    'iconIndex': iconIndex,
+    'colorIndex': colorIndex,
+    'isCustom': isCustom,
+  };
 
   factory ScheduleCategory.fromJson(Map<String, dynamic> json) =>
       ScheduleCategory(
@@ -134,42 +160,53 @@ class ScheduleCategory {
       );
 
   @override
-  bool operator ==(Object other) =>
-      other is ScheduleCategory && other.id == id;
+  bool operator ==(Object other) => other is ScheduleCategory && other.id == id;
 
   @override
   int get hashCode => id.hashCode;
 }
 
 enum RecurrenceMode {
-  none,              // one-time
-  weeklyOnDays,      // repeat on selected weekdays each week (customDays = 1..7)
-  monthlyOnDays,     // repeat on selected days of month (customDays = 1..31)
-  everyNDays,        // every N days
-  everyNWeeks,       // every N weeks
-  everyNMonths,      // every N months
+  none, // one-time
+  weeklyOnDays, // repeat on selected weekdays each week (customDays = 1..7)
+  monthlyOnDays, // repeat on selected days of month (customDays = 1..31)
+  everyNDays, // every N days
+  everyNWeeks, // every N weeks
+  everyNMonths, // every N months
 }
 
 extension RecurrenceModeExt on RecurrenceMode {
   String get label {
     switch (this) {
-      case RecurrenceMode.none: return 'One-time';
-      case RecurrenceMode.weeklyOnDays: return 'Weekly on days';
-      case RecurrenceMode.monthlyOnDays: return 'Monthly on days';
-      case RecurrenceMode.everyNDays: return 'Every N days';
-      case RecurrenceMode.everyNWeeks: return 'Every N weeks';
-      case RecurrenceMode.everyNMonths: return 'Every N months';
+      case RecurrenceMode.none:
+        return 'One-time';
+      case RecurrenceMode.weeklyOnDays:
+        return 'Weekly on days';
+      case RecurrenceMode.monthlyOnDays:
+        return 'Monthly on days';
+      case RecurrenceMode.everyNDays:
+        return 'Every N days';
+      case RecurrenceMode.everyNWeeks:
+        return 'Every N weeks';
+      case RecurrenceMode.everyNMonths:
+        return 'Every N months';
     }
   }
 
   String get shortLabel {
     switch (this) {
-      case RecurrenceMode.none: return 'Once';
-      case RecurrenceMode.weeklyOnDays: return 'Weekly';
-      case RecurrenceMode.monthlyOnDays: return 'Monthly';
-      case RecurrenceMode.everyNDays: return 'Days';
-      case RecurrenceMode.everyNWeeks: return 'Weeks';
-      case RecurrenceMode.everyNMonths: return 'Months';
+      case RecurrenceMode.none:
+        return 'Once';
+      case RecurrenceMode.weeklyOnDays:
+        return 'Weekly';
+      case RecurrenceMode.monthlyOnDays:
+        return 'Monthly';
+      case RecurrenceMode.everyNDays:
+        return 'Days';
+      case RecurrenceMode.everyNWeeks:
+        return 'Weeks';
+      case RecurrenceMode.everyNMonths:
+        return 'Months';
     }
   }
 }
@@ -178,8 +215,8 @@ class ScheduleEntry {
   final String id;
   final String title;
   final String? description;
-  final DateTime startDate;        // date only
-  final DateTime? endDate;         // optional; null = ongoing
+  final DateTime startDate; // date only
+  final DateTime? endDate; // optional; null = ongoing
   final ScheduleCategory category;
 
   // Per-occurrence completion / skip lists. Stored as date-only.
@@ -188,8 +225,8 @@ class ScheduleEntry {
 
   // Recurrence
   final RecurrenceMode repeatMode;
-  final List<int>? customDays;     // weekly: 1..7; monthly: 1..31
-  final int? interval;             // for everyN modes
+  final List<int>? customDays; // weekly: 1..7; monthly: 1..31
+  final int? interval; // for everyN modes
 
   const ScheduleEntry({
     required this.id,
@@ -289,7 +326,8 @@ class ScheduleEntry {
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor))
+              result.add(cursor);
             cursor = cursor.add(Duration(days: n));
           }
         }
@@ -300,7 +338,8 @@ class ScheduleEntry {
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor))
+              result.add(cursor);
             cursor = cursor.add(Duration(days: 7 * n));
           }
         }
@@ -311,7 +350,8 @@ class ScheduleEntry {
           DateTime cursor = start;
           while (!cursor.isAfter(searchEnd) && guard < 20000) {
             guard++;
-            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor)) result.add(cursor);
+            if (!cursor.isBefore(rangeStartD) && !isSkippedOn(cursor))
+              result.add(cursor);
             cursor = DateTime(cursor.year, cursor.month + n, cursor.day);
           }
         }
@@ -395,42 +435,51 @@ class ScheduleEntry {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
-        // Persist category by id so custom categories round-trip correctly
-        'category': category.id,
-        'completedDates':
-            completedDates.map((d) => d.toIso8601String()).toList(),
-        'skippedDates':
-            skippedDates.map((d) => d.toIso8601String()).toList(),
-        'repeatMode': repeatMode.index,
-        'customDays': customDays,
-        'interval': interval,
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    // Persist category by id so custom categories round-trip correctly
+    'category': category.id,
+    'completedDates': completedDates.map((d) => d.toIso8601String()).toList(),
+    'skippedDates': skippedDates.map((d) => d.toIso8601String()).toList(),
+    'repeatMode': repeatMode.index,
+    'customDays': customDays,
+    'interval': interval,
+  };
 
   factory ScheduleEntry.fromJson(
     Map<String, dynamic> json, {
     List<ScheduleCategory> customCategories = const [],
   }) {
-    final startRaw =
-        (json['startDate'] ?? json['dateTime']) as String?;
+    final startRaw = (json['startDate'] ?? json['dateTime']) as String?;
     final endRaw = (json['endDate'] ?? json['endTime']) as String?;
 
     RecurrenceMode mode = RecurrenceMode.none;
     if (json['repeatMode'] != null) {
-      mode = RecurrenceMode.values[(json['repeatMode'] as int)
-          .clamp(0, RecurrenceMode.values.length - 1)];
+      mode =
+          RecurrenceMode.values[(json['repeatMode'] as int).clamp(
+            0,
+            RecurrenceMode.values.length - 1,
+          )];
     } else if (json['repeatType'] != null) {
       final oldIdx = json['repeatType'] as int;
       switch (oldIdx) {
-        case 1: mode = RecurrenceMode.everyNDays; break;
-        case 2: mode = RecurrenceMode.weeklyOnDays; break;
-        case 3: mode = RecurrenceMode.monthlyOnDays; break;
-        case 4: mode = RecurrenceMode.monthlyOnDays; break;
-        default: mode = RecurrenceMode.none;
+        case 1:
+          mode = RecurrenceMode.everyNDays;
+          break;
+        case 2:
+          mode = RecurrenceMode.weeklyOnDays;
+          break;
+        case 3:
+          mode = RecurrenceMode.monthlyOnDays;
+          break;
+        case 4:
+          mode = RecurrenceMode.monthlyOnDays;
+          break;
+        default:
+          mode = RecurrenceMode.none;
       }
     }
 
@@ -449,18 +498,18 @@ class ScheduleEntry {
     // to a single completedDates entry on the start date so old data still
     // shows as "done".
     final legacyCompleted = json['isCompleted'] as bool? ?? false;
-    final completedRaw =
-        (json['completedDates'] as List<dynamic>?)?.cast<String>();
-    final skippedRaw =
-        (json['skippedDates'] as List<dynamic>?)?.cast<String>();
+    final completedRaw = (json['completedDates'] as List<dynamic>?)
+        ?.cast<String>();
+    final skippedRaw = (json['skippedDates'] as List<dynamic>?)?.cast<String>();
 
     final completedDates = completedRaw != null
         ? completedRaw.map(DateTime.parse).toList()
         : (legacyCompleted && startRaw != null
-            ? [DateTime.parse(startRaw)]
-            : <DateTime>[]);
-    final skippedDates =
-        skippedRaw != null ? skippedRaw.map(DateTime.parse).toList() : <DateTime>[];
+              ? [DateTime.parse(startRaw)]
+              : <DateTime>[]);
+    final skippedDates = skippedRaw != null
+        ? skippedRaw.map(DateTime.parse).toList()
+        : <DateTime>[];
 
     return ScheduleEntry(
       id: json['id'] as String,

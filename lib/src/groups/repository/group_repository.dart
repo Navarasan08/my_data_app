@@ -98,10 +98,8 @@ class FirestoreGroupRepository implements GroupRepository {
       _firestore.collection('groups');
   CollectionReference<Map<String, dynamic>> get _invitationsCol =>
       _firestore.collection('groupInvitations');
-  CollectionReference<Map<String, dynamic>> get _membershipsCol => _firestore
-      .collection('users')
-      .doc(uid)
-      .collection('groupMemberships');
+  CollectionReference<Map<String, dynamic>> get _membershipsCol =>
+      _firestore.collection('users').doc(uid).collection('groupMemberships');
 
   @override
   Stream<void> get changes => _changes.stream;
@@ -159,27 +157,29 @@ class FirestoreGroupRepository implements GroupRepository {
           .get()
           .then(_onInvitationsSnapshot)
           .catchError((e, st) {
-        developer.log(
-          'groups: failed to query groupInvitations for $_normalizedEmail',
-          name: 'GroupRepository',
-          error: e,
-          stackTrace: st as StackTrace?,
-        );
-        throw e;
-      }),
+            developer.log(
+              'groups: failed to query groupInvitations for $_normalizedEmail',
+              name: 'GroupRepository',
+              error: e,
+              stackTrace: st as StackTrace?,
+            );
+            throw e;
+          }),
     ]);
 
     // Self-heal: if the user updated their displayName outside the app (or in
     // a prior session before groups existed), push the latest value into each
     // group's members map. The method no-ops when nothing's stale.
-    unawaited(syncCurrentUserDisplayName(displayName).catchError((e, st) {
-      developer.log(
-        'groups: displayName sync failed (non-fatal)',
-        name: 'GroupRepository',
-        error: e,
-        stackTrace: st as StackTrace?,
-      );
-    }));
+    unawaited(
+      syncCurrentUserDisplayName(displayName).catchError((e, st) {
+        developer.log(
+          'groups: displayName sync failed (non-fatal)',
+          name: 'GroupRepository',
+          error: e,
+          stackTrace: st as StackTrace?,
+        );
+      }),
+    );
   }
 
   @override
@@ -214,26 +214,30 @@ class FirestoreGroupRepository implements GroupRepository {
   }
 
   Future<void> _onMembershipsSnapshot(
-      QuerySnapshot<Map<String, dynamic>> snap) async {
+    QuerySnapshot<Map<String, dynamic>> snap,
+  ) async {
     // For initial load we also want the group docs themselves to be present
     // before init() resolves. Fetch them in parallel with one-shot reads, then
     // let the listener take over.
     final ids = snap.docs.map((d) => d.id).toList();
-    await Future.wait(ids.map((gid) async {
-      final groupDoc = await _groupsCol.doc(gid).get();
-      final data = groupDoc.data();
-      if (data != null) _groups[gid] = GroupFund.fromJson(data);
-      final exp = await _groupsCol.doc(gid).collection('expenses').get();
-      _expenses[gid] = exp.docs
-          .map((d) => GroupExpense.fromJson(d.data()))
-          .toList()
-        ..sort((a, b) => b.date.compareTo(a.date));
-      final settled = await _groupsCol.doc(gid).collection('settlements').get();
-      _settlements[gid] = settled.docs
-          .map((d) => GroupSettlement.fromJson(d.data()))
-          .toList()
-        ..sort((a, b) => b.settledAt.compareTo(a.settledAt));
-    }));
+    await Future.wait(
+      ids.map((gid) async {
+        final groupDoc = await _groupsCol.doc(gid).get();
+        final data = groupDoc.data();
+        if (data != null) _groups[gid] = GroupFund.fromJson(data);
+        final exp = await _groupsCol.doc(gid).collection('expenses').get();
+        _expenses[gid] =
+            exp.docs.map((d) => GroupExpense.fromJson(d.data())).toList()
+              ..sort((a, b) => b.date.compareTo(a.date));
+        final settled = await _groupsCol
+            .doc(gid)
+            .collection('settlements')
+            .get();
+        _settlements[gid] =
+            settled.docs.map((d) => GroupSettlement.fromJson(d.data())).toList()
+              ..sort((a, b) => b.settledAt.compareTo(a.settledAt));
+      }),
+    );
     // Now hook up live listeners for the same set.
     for (final gid in ids) {
       _groupSubs.putIfAbsent(gid, () => _subscribeToGroup(gid));
@@ -250,35 +254,33 @@ class FirestoreGroupRepository implements GroupRepository {
       }
       _changes.add(null);
     });
-    final expensesSub =
-        _groupsCol.doc(groupId).collection('expenses').snapshots().listen(
-      (snap) {
-        _expenses[groupId] = snap.docs
-            .map((d) => GroupExpense.fromJson(d.data()))
-            .toList()
-          ..sort((a, b) => b.date.compareTo(a.date));
-        _changes.add(null);
-      },
-    );
+    final expensesSub = _groupsCol
+        .doc(groupId)
+        .collection('expenses')
+        .snapshots()
+        .listen((snap) {
+          _expenses[groupId] =
+              snap.docs.map((d) => GroupExpense.fromJson(d.data())).toList()
+                ..sort((a, b) => b.date.compareTo(a.date));
+          _changes.add(null);
+        });
     final settlementsSub = _groupsCol
         .doc(groupId)
         .collection('settlements')
         .snapshots()
         .listen((snap) {
-      _settlements[groupId] = snap.docs
-          .map((d) => GroupSettlement.fromJson(d.data()))
-          .toList()
-        ..sort((a, b) => b.settledAt.compareTo(a.settledAt));
-      _changes.add(null);
-    });
+          _settlements[groupId] =
+              snap.docs.map((d) => GroupSettlement.fromJson(d.data())).toList()
+                ..sort((a, b) => b.settledAt.compareTo(a.settledAt));
+          _changes.add(null);
+        });
     return _GroupSubs(groupSub, expensesSub, settlementsSub);
   }
 
   void _onInvitationsChanged(QuerySnapshot<Map<String, dynamic>> snap) {
-    _invitations = snap.docs
-        .map((d) => GroupInvitation.fromJson(d.data()))
-        .toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    _invitations =
+        snap.docs.map((d) => GroupInvitation.fromJson(d.data())).toList()
+          ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     _changes.add(null);
   }
 
@@ -308,7 +310,9 @@ class FirestoreGroupRepository implements GroupRepository {
     final group = GroupFund(
       id: groupId,
       name: name.trim(),
-      description: description?.trim().isEmpty == true ? null : description?.trim(),
+      description: description?.trim().isEmpty == true
+          ? null
+          : description?.trim(),
       iconIndex: iconIndex,
       colorIndex: colorIndex,
       createdBy: uid,
@@ -339,10 +343,9 @@ class FirestoreGroupRepository implements GroupRepository {
 
   @override
   Future<void> syncCurrentUserDisplayName(String? newDisplayName) async {
-    final normalized =
-        (newDisplayName == null || newDisplayName.trim().isEmpty)
-            ? null
-            : newDisplayName.trim();
+    final normalized = (newDisplayName == null || newDisplayName.trim().isEmpty)
+        ? null
+        : newDisplayName.trim();
     final stale = _groups.values.where((g) {
       final me = g.members[uid];
       return me != null && me.displayName != normalized;
@@ -373,10 +376,14 @@ class FirestoreGroupRepository implements GroupRepository {
     // Only the creator should call this. Best-effort cleanup of subcollections;
     // a Cloud Function would do this properly, but we don't have one here.
     final group = _groups[groupId];
-    final expensesSnap =
-        await _groupsCol.doc(groupId).collection('expenses').get();
-    final settlementsSnap =
-        await _groupsCol.doc(groupId).collection('settlements').get();
+    final expensesSnap = await _groupsCol
+        .doc(groupId)
+        .collection('expenses')
+        .get();
+    final settlementsSnap = await _groupsCol
+        .doc(groupId)
+        .collection('settlements')
+        .get();
     final batch = _firestore.batch();
     for (final d in expensesSnap.docs) {
       batch.delete(d.reference);
@@ -388,11 +395,13 @@ class FirestoreGroupRepository implements GroupRepository {
     // Remove every member's membership index doc.
     if (group != null) {
       for (final memberUid in group.memberIds) {
-        batch.delete(_firestore
-            .collection('users')
-            .doc(memberUid)
-            .collection('groupMemberships')
-            .doc(groupId));
+        batch.delete(
+          _firestore
+              .collection('users')
+              .doc(memberUid)
+              .collection('groupMemberships')
+              .doc(groupId),
+        );
       }
     } else {
       batch.delete(_membershipsCol.doc(groupId));
@@ -404,8 +413,7 @@ class FirestoreGroupRepository implements GroupRepository {
   Future<void> leaveGroup(String groupId) async {
     final group = _groups[groupId];
     if (group == null) return;
-    final newMemberIds =
-        group.memberIds.where((id) => id != uid).toList();
+    final newMemberIds = group.memberIds.where((id) => id != uid).toList();
     final newMembers = Map<String, GroupMember>.from(group.members)
       ..remove(uid);
     final batch = _firestore.batch();

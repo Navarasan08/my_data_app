@@ -11,24 +11,28 @@ class AuthCubit extends Cubit<AuthState> {
   static const _accountsKey = 'saved_accounts';
 
   AuthCubit({FirebaseAuth? auth})
-      : _auth = auth ?? FirebaseAuth.instance,
-        super(const AuthState()) {
+    : _auth = auth ?? FirebaseAuth.instance,
+      super(const AuthState()) {
     _authSubscription = _auth.authStateChanges().listen(_onAuthStateChanged);
     _loadSavedAccounts();
   }
 
   void _onAuthStateChanged(User? user) {
     if (user != null) {
-      emit(AuthState(
-        status: AuthStatus.authenticated,
-        user: user,
-        savedAccounts: state.savedAccounts,
-      ));
+      emit(
+        AuthState(
+          status: AuthStatus.authenticated,
+          user: user,
+          savedAccounts: state.savedAccounts,
+        ),
+      );
     } else {
-      emit(AuthState(
-        status: AuthStatus.unauthenticated,
-        savedAccounts: state.savedAccounts,
-      ));
+      emit(
+        AuthState(
+          status: AuthStatus.unauthenticated,
+          savedAccounts: state.savedAccounts,
+        ),
+      );
     }
   }
 
@@ -48,19 +52,22 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> _persistAccounts(List<SavedAccount> accounts) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-        _accountsKey, jsonEncode(accounts.map((a) => a.toJson()).toList()));
+      _accountsKey,
+      jsonEncode(accounts.map((a) => a.toJson()).toList()),
+    );
   }
 
   Future<void> _saveCurrentAccount(String email, String password) async {
     final accounts = List<SavedAccount>.from(state.savedAccounts);
     accounts.removeWhere((a) => a.email == email);
     accounts.insert(
-        0,
-        SavedAccount(
-          email: email,
-          password: password,
-          displayName: _auth.currentUser?.displayName,
-        ));
+      0,
+      SavedAccount(
+        email: email,
+        password: password,
+        displayName: _auth.currentUser?.displayName,
+      ),
+    );
     await _persistAccounts(accounts);
     emit(state.copyWith(savedAccounts: accounts));
   }
@@ -90,7 +97,9 @@ class AuthCubit extends Cubit<AuthState> {
     try {
       emit(state.copyWith(errorMessage: null));
       await _auth.createUserWithEmailAndPassword(
-          email: email, password: password);
+        email: email,
+        password: password,
+      );
       await _saveCurrentAccount(email, password);
     } on FirebaseAuthException catch (e) {
       emit(state.copyWith(errorMessage: _mapErrorCode(e.code)));
@@ -104,7 +113,9 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(errorMessage: null));
       await _auth.signOut();
       await _auth.signInWithEmailAndPassword(
-          email: account.email, password: account.password);
+        email: account.email,
+        password: account.password,
+      );
       // Move switched account to top
       await _saveCurrentAccount(account.email, account.password);
     } on FirebaseAuthException catch (e) {
@@ -120,11 +131,13 @@ class AuthCubit extends Cubit<AuthState> {
       await user.reload();
       final refreshed = _auth.currentUser;
       if (refreshed != null) {
-        emit(AuthState(
-          status: AuthStatus.authenticated,
-          user: refreshed,
-          savedAccounts: state.savedAccounts,
-        ));
+        emit(
+          AuthState(
+            status: AuthStatus.authenticated,
+            user: refreshed,
+            savedAccounts: state.savedAccounts,
+          ),
+        );
       }
     }
   }
@@ -136,9 +149,7 @@ class AuthCubit extends Cubit<AuthState> {
   /// Other accounts (not the currently logged in one)
   List<SavedAccount> get otherAccounts {
     final currentEmail = _auth.currentUser?.email;
-    return state.savedAccounts
-        .where((a) => a.email != currentEmail)
-        .toList();
+    return state.savedAccounts.where((a) => a.email != currentEmail).toList();
   }
 
   String _mapErrorCode(String code) {

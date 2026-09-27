@@ -46,12 +46,15 @@ class ScheduleSettingsPage extends StatelessWidget {
                       children: ScheduleCategory.defaults.map((cat) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
                           child: Chip(
-                            avatar: Icon(cat.icon,
-                                size: 16, color: cat.color),
-                            label: Text(cat.displayName,
-                                style: const TextStyle(fontSize: 12)),
+                            avatar: Icon(cat.icon, size: 16, color: cat.color),
+                            label: Text(
+                              cat.displayName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
                           ),
                         );
                       }).toList(),
@@ -101,7 +104,9 @@ class ScheduleSettingsPage extends StatelessWidget {
                       final inUse = cubit.isCategoryInUse(cat.id);
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
@@ -109,33 +114,39 @@ class ScheduleSettingsPage extends StatelessWidget {
                               color: cat.color.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: Icon(cat.icon,
-                                color: cat.color, size: 24),
+                            child: Icon(cat.icon, color: cat.color, size: 24),
                           ),
                           title: Text(
                             cat.displayName,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                           subtitle: inUse
-                              ? const Text('In use',
+                              ? const Text(
+                                  'In use',
                                   style: TextStyle(
-                                      fontSize: 12, color: Colors.green))
+                                    fontSize: 12,
+                                    color: Colors.green,
+                                  ),
+                                )
                               : null,
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit_outlined,
-                                    color: Colors.blue[400]),
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.blue[400],
+                                ),
                                 onPressed: () =>
                                     _showCategoryDialog(context, cubit, cat),
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete_outline,
-                                    color: Colors.red[400]),
-                                onPressed: () => _confirmDelete(
-                                    context, cubit, cat, inUse),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red[400],
+                                ),
+                                onPressed: () =>
+                                    _confirmDelete(context, cubit, cat, inUse),
                               ),
                             ],
                           ),
@@ -152,8 +163,11 @@ class ScheduleSettingsPage extends StatelessWidget {
     );
   }
 
-  void _showCategoryDialog(BuildContext context, ScheduleCubit cubit,
-      ScheduleCategory? existing) {
+  void _showCategoryDialog(
+    BuildContext context,
+    ScheduleCubit cubit,
+    ScheduleCategory? existing,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => _CategoryDialog(
@@ -169,8 +183,12 @@ class ScheduleSettingsPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, ScheduleCubit cubit,
-      ScheduleCategory category, bool inUse) {
+  void _confirmDelete(
+    BuildContext context,
+    ScheduleCubit cubit,
+    ScheduleCategory category,
+    bool inUse,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -203,10 +221,7 @@ class _CategoryDialog extends StatefulWidget {
   final ScheduleCategory? existing;
   final ValueChanged<ScheduleCategory> onSave;
 
-  const _CategoryDialog({
-    this.existing,
-    required this.onSave,
-  });
+  const _CategoryDialog({this.existing, required this.onSave});
 
   @override
   State<_CategoryDialog> createState() => _CategoryDialogState();
@@ -238,10 +253,8 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final previewIcon =
-        ScheduleCategory.availableIcons[_selectedIconIndex];
-    final previewColor =
-        ScheduleCategory.availableColors[_selectedColorIndex];
+    final previewIcon = ScheduleCategory.availableIcons[_selectedIconIndex];
+    final previewColor = ScheduleCategory.availableColors[_selectedColorIndex];
 
     return AlertDialog(
       title: Text(_isEditing ? 'Edit Category' : 'Add Category'),
@@ -260,7 +273,8 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     color: previewColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
+                      color: previewColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -294,17 +308,19 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ),
               const SizedBox(height: 16),
 
-              Text('Icon',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface)),
+              Text(
+                'Icon',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 140,
                 child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
                     mainAxisSpacing: 6,
                     crossAxisSpacing: 6,
@@ -313,8 +329,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   itemBuilder: (context, index) {
                     final isSelected = _selectedIconIndex == index;
                     return InkWell(
-                      onTap: () =>
-                          setState(() => _selectedIconIndex = index),
+                      onTap: () => setState(() => _selectedIconIndex = index),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         decoration: BoxDecoration(
@@ -340,41 +355,47 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ),
               const SizedBox(height: 16),
 
-              Text('Color',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface)),
+              Text(
+                'Color',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: List.generate(
-                    ScheduleCategory.availableColors.length, (index) {
-                  final color = ScheduleCategory.availableColors[index];
-                  final isSelected = _selectedColorIndex == index;
-                  return InkWell(
-                    onTap: () =>
-                        setState(() => _selectedColorIndex = index),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color,
-                        shape: BoxShape.circle,
-                        border: isSelected
-                            ? Border.all(color: cs.onSurface, width: 3)
-                            : Border.all(
-                                color: cs.outline, width: 1),
+                  ScheduleCategory.availableColors.length,
+                  (index) {
+                    final color = ScheduleCategory.availableColors[index];
+                    final isSelected = _selectedColorIndex == index;
+                    return InkWell(
+                      onTap: () => setState(() => _selectedColorIndex = index),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(color: cs.onSurface, width: 3)
+                              : Border.all(color: cs.outline, width: 1),
+                        ),
+                        child: isSelected
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 18,
+                              )
+                            : null,
                       ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 18)
-                          : null,
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -390,7 +411,8 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ? null
               : () {
                   final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
+                  final id =
+                      widget.existing?.id ??
                       'custom_${DateTime.now().millisecondsSinceEpoch}';
                   final category = ScheduleCategory(
                     id: id,

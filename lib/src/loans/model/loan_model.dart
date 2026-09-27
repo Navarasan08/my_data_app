@@ -5,40 +5,64 @@ enum LoanType { home, car, personal, education, business, gold, credit, other }
 extension LoanTypeExt on LoanType {
   String get label {
     switch (this) {
-      case LoanType.home: return 'Home Loan';
-      case LoanType.car: return 'Car/Vehicle Loan';
-      case LoanType.personal: return 'Personal Loan';
-      case LoanType.education: return 'Education Loan';
-      case LoanType.business: return 'Business Loan';
-      case LoanType.gold: return 'Gold Loan';
-      case LoanType.credit: return 'Credit Card';
-      case LoanType.other: return 'Other';
+      case LoanType.home:
+        return 'Home Loan';
+      case LoanType.car:
+        return 'Car/Vehicle Loan';
+      case LoanType.personal:
+        return 'Personal Loan';
+      case LoanType.education:
+        return 'Education Loan';
+      case LoanType.business:
+        return 'Business Loan';
+      case LoanType.gold:
+        return 'Gold Loan';
+      case LoanType.credit:
+        return 'Credit Card';
+      case LoanType.other:
+        return 'Other';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case LoanType.home: return Icons.home_rounded;
-      case LoanType.car: return Icons.directions_car_rounded;
-      case LoanType.personal: return Icons.person_rounded;
-      case LoanType.education: return Icons.school_rounded;
-      case LoanType.business: return Icons.business_rounded;
-      case LoanType.gold: return Icons.diamond_rounded;
-      case LoanType.credit: return Icons.credit_card_rounded;
-      case LoanType.other: return Icons.account_balance_rounded;
+      case LoanType.home:
+        return Icons.home_rounded;
+      case LoanType.car:
+        return Icons.directions_car_rounded;
+      case LoanType.personal:
+        return Icons.person_rounded;
+      case LoanType.education:
+        return Icons.school_rounded;
+      case LoanType.business:
+        return Icons.business_rounded;
+      case LoanType.gold:
+        return Icons.diamond_rounded;
+      case LoanType.credit:
+        return Icons.credit_card_rounded;
+      case LoanType.other:
+        return Icons.account_balance_rounded;
     }
   }
 
   Color get color {
     switch (this) {
-      case LoanType.home: return Colors.blue;
-      case LoanType.car: return Colors.indigo;
-      case LoanType.personal: return Colors.purple;
-      case LoanType.education: return Colors.teal;
-      case LoanType.business: return Colors.brown;
-      case LoanType.gold: return Colors.amber;
-      case LoanType.credit: return Colors.red;
-      case LoanType.other: return Colors.grey;
+      case LoanType.home:
+        return Colors.blue;
+      case LoanType.car:
+        return Colors.indigo;
+      case LoanType.personal:
+        return Colors.purple;
+      case LoanType.education:
+        return Colors.teal;
+      case LoanType.business:
+        return Colors.brown;
+      case LoanType.gold:
+        return Colors.amber;
+      case LoanType.credit:
+        return Colors.red;
+      case LoanType.other:
+        return Colors.grey;
     }
   }
 }
@@ -90,8 +114,7 @@ class Loan {
   List<Repayment> get partPayments =>
       repayments.where((r) => r.isPartPayment).toList();
 
-  double get totalRepaid =>
-      repayments.fold(0.0, (sum, r) => sum + r.amount);
+  double get totalRepaid => repayments.fold(0.0, (sum, r) => sum + r.amount);
 
   double get totalPartPayments =>
       partPayments.fold(0.0, (sum, r) => sum + r.amount);
@@ -103,8 +126,10 @@ class Loan {
       repayments.fold(0.0, (sum, r) => sum + (r.principalPortion ?? 0));
 
   double get outstandingBalance =>
-      (principalAmount - totalPrincipalPaid - totalPartPayments)
-          .clamp(0, double.infinity);
+      (principalAmount - totalPrincipalPaid - totalPartPayments).clamp(
+        0,
+        double.infinity,
+      );
 
   double get totalPayable => emiAmount * tenureMonths;
 
@@ -130,7 +155,10 @@ class Loan {
 
   DateTime get nextEmiDate {
     return DateTime(
-        startDate.year, startDate.month + paidEmiCount + 1, startDate.day);
+      startDate.year,
+      startDate.month + paidEmiCount + 1,
+      startDate.day,
+    );
   }
 
   String get directionLabel =>
@@ -173,51 +201,52 @@ class Loan {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'type': type.index,
-        'direction': direction.index,
-        'principalAmount': principalAmount,
-        'interestRate': interestRate,
-        'tenureMonths': tenureMonths,
-        'emiAmount': emiAmount,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
-        'lenderOrBorrower': lenderOrBorrower,
-        'accountNumber': accountNumber,
-        'notes': notes,
-        'isClosed': isClosed,
-        'repayments': repayments.map((r) => r.toJson()).toList(),
-      };
+    'id': id,
+    'name': name,
+    'type': type.index,
+    'direction': direction.index,
+    'principalAmount': principalAmount,
+    'interestRate': interestRate,
+    'tenureMonths': tenureMonths,
+    'emiAmount': emiAmount,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    'lenderOrBorrower': lenderOrBorrower,
+    'accountNumber': accountNumber,
+    'notes': notes,
+    'isClosed': isClosed,
+    'repayments': repayments.map((r) => r.toJson()).toList(),
+  };
 
   factory Loan.fromJson(Map<String, dynamic> json) => Loan(
-        id: json['id'] as String,
-        name: json['name'] as String,
-        type: LoanType.values[(json['type'] as int).clamp(0, LoanType.values.length - 1)],
-        direction: json['direction'] != null
-            ? LoanDirection.values[(json['direction'] as int).clamp(0, 1)]
-            : LoanDirection.borrowed,
-        principalAmount: (json['principalAmount'] as num).toDouble(),
-        interestRate: (json['interestRate'] as num).toDouble(),
-        tenureMonths: json['tenureMonths'] as int,
-        emiAmount: (json['emiAmount'] as num).toDouble(),
-        startDate: DateTime.parse(json['startDate'] as String),
-        endDate: json['endDate'] != null
-            ? DateTime.parse(json['endDate'] as String)
-            : null,
-        lenderOrBorrower: json['lenderOrBorrower'] as String?,
-        accountNumber: json['accountNumber'] as String?,
-        notes: json['notes'] as String?,
-        isClosed: json['isClosed'] as bool? ?? false,
-        repayments: (json['repayments'] as List<dynamic>?)
-                ?.map((r) => Repayment.fromJson(r as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+    id: json['id'] as String,
+    name: json['name'] as String,
+    type: LoanType
+        .values[(json['type'] as int).clamp(0, LoanType.values.length - 1)],
+    direction: json['direction'] != null
+        ? LoanDirection.values[(json['direction'] as int).clamp(0, 1)]
+        : LoanDirection.borrowed,
+    principalAmount: (json['principalAmount'] as num).toDouble(),
+    interestRate: (json['interestRate'] as num).toDouble(),
+    tenureMonths: json['tenureMonths'] as int,
+    emiAmount: (json['emiAmount'] as num).toDouble(),
+    startDate: DateTime.parse(json['startDate'] as String),
+    endDate: json['endDate'] != null
+        ? DateTime.parse(json['endDate'] as String)
+        : null,
+    lenderOrBorrower: json['lenderOrBorrower'] as String?,
+    accountNumber: json['accountNumber'] as String?,
+    notes: json['notes'] as String?,
+    isClosed: json['isClosed'] as bool? ?? false,
+    repayments:
+        (json['repayments'] as List<dynamic>?)
+            ?.map((r) => Repayment.fromJson(r as Map<String, dynamic>))
+            .toList() ??
+        [],
+  );
 
   /// Calculate EMI from principal, rate, tenure
-  static double calculateEmi(
-      double principal, double annualRate, int months) {
+  static double calculateEmi(double principal, double annualRate, int months) {
     if (annualRate == 0) return principal / months;
     final r = annualRate / 12 / 100;
     final emi = principal * r * _pow(1 + r, months) / (_pow(1 + r, months) - 1);
@@ -253,17 +282,19 @@ class Loan {
     final remainingPrincipal = outstandingBalance;
     if (interestRate == 0 || remainingEmis <= 0) return 0;
     // Approximate: remaining EMIs * emiAmount - remaining principal
-    return (emiAmount * remainingEmis - remainingPrincipal).clamp(0, double.infinity);
+    return (emiAmount * remainingEmis - remainingPrincipal).clamp(
+      0,
+      double.infinity,
+    );
   }
 
   /// Total interest (paid + remaining)
   double get totalInterestActual => interestPaid + interestRemaining;
 
   /// Interest saved from part payments
-  double get interestSaved =>
-      totalInterestOriginal > totalInterestActual
-          ? totalInterestOriginal - totalInterestActual
-          : 0;
+  double get interestSaved => totalInterestOriginal > totalInterestActual
+      ? totalInterestOriginal - totalInterestActual
+      : 0;
 
   // ── Amortization ─────────────────────────────────────────────────────
 
@@ -290,19 +321,23 @@ class Loan {
       balance -= principal;
       // Apply any part payments at this month
       for (final pp in partPayments) {
-        final ppMonth = (pp.paidDate.year - startDate.year) * 12 +
-            pp.paidDate.month - startDate.month;
+        final ppMonth =
+            (pp.paidDate.year - startDate.year) * 12 +
+            pp.paidDate.month -
+            startDate.month;
         if (ppMonth == i + 1) {
           balance = (balance - pp.amount).clamp(0, double.infinity);
         }
       }
-      schedule.add(AmortizationEntry(
-        month: i + 1,
-        emi: emiAmount,
-        principal: principal,
-        interest: interest,
-        balance: balance < 0.01 ? 0 : balance,
-      ));
+      schedule.add(
+        AmortizationEntry(
+          month: i + 1,
+          emi: emiAmount,
+          principal: principal,
+          interest: interest,
+          balance: balance < 0.01 ? 0 : balance,
+        ),
+      );
       if (balance <= 0) break;
     }
     return schedule;
@@ -310,13 +345,19 @@ class Loan {
 
   /// Calculate new EMI after part payment with reduced principal
   static double calculateNewEmi(
-      double remainingPrincipal, double annualRate, int remainingMonths) {
+    double remainingPrincipal,
+    double annualRate,
+    int remainingMonths,
+  ) {
     return calculateEmi(remainingPrincipal, annualRate, remainingMonths);
   }
 
   /// Calculate new tenure with same EMI after part payment
   static int calculateNewTenure(
-      double remainingPrincipal, double annualRate, double emi) {
+    double remainingPrincipal,
+    double annualRate,
+    double emi,
+  ) {
     if (annualRate == 0) return (remainingPrincipal / emi).ceil();
     final r = annualRate / 12 / 100;
     if (emi <= remainingPrincipal * r) return 999; // EMI too low
@@ -379,42 +420,45 @@ class Repayment {
     bool? isPartPayment,
     PartPaymentStrategy? strategy,
   }) => Repayment(
-        id: id ?? this.id,
-        monthNumber: monthNumber ?? this.monthNumber,
-        amount: amount ?? this.amount,
-        principalPortion: principalPortion ?? this.principalPortion,
-        interestPortion: interestPortion ?? this.interestPortion,
-        paidDate: paidDate ?? this.paidDate,
-        notes: notes ?? this.notes,
-        isPartPayment: isPartPayment ?? this.isPartPayment,
-        strategy: strategy ?? this.strategy,
-      );
+    id: id ?? this.id,
+    monthNumber: monthNumber ?? this.monthNumber,
+    amount: amount ?? this.amount,
+    principalPortion: principalPortion ?? this.principalPortion,
+    interestPortion: interestPortion ?? this.interestPortion,
+    paidDate: paidDate ?? this.paidDate,
+    notes: notes ?? this.notes,
+    isPartPayment: isPartPayment ?? this.isPartPayment,
+    strategy: strategy ?? this.strategy,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'monthNumber': monthNumber,
-        'amount': amount,
-        'principalPortion': principalPortion,
-        'interestPortion': interestPortion,
-        'paidDate': paidDate.toIso8601String(),
-        'notes': notes,
-        'isPartPayment': isPartPayment,
-        'strategy': strategy?.index,
-      };
+    'id': id,
+    'monthNumber': monthNumber,
+    'amount': amount,
+    'principalPortion': principalPortion,
+    'interestPortion': interestPortion,
+    'paidDate': paidDate.toIso8601String(),
+    'notes': notes,
+    'isPartPayment': isPartPayment,
+    'strategy': strategy?.index,
+  };
 
   factory Repayment.fromJson(Map<String, dynamic> json) => Repayment(
-        id: json['id'] as String,
-        monthNumber: json['monthNumber'] as int,
-        amount: (json['amount'] as num).toDouble(),
-        principalPortion: (json['principalPortion'] as num?)?.toDouble(),
-        interestPortion: (json['interestPortion'] as num?)?.toDouble(),
-        paidDate: DateTime.parse(json['paidDate'] as String),
-        notes: json['notes'] as String?,
-        isPartPayment: json['isPartPayment'] as bool? ?? false,
-        strategy: json['strategy'] != null
-            ? PartPaymentStrategy.values[(json['strategy'] as int).clamp(0, PartPaymentStrategy.values.length - 1)]
-            : null,
-      );
+    id: json['id'] as String,
+    monthNumber: json['monthNumber'] as int,
+    amount: (json['amount'] as num).toDouble(),
+    principalPortion: (json['principalPortion'] as num?)?.toDouble(),
+    interestPortion: (json['interestPortion'] as num?)?.toDouble(),
+    paidDate: DateTime.parse(json['paidDate'] as String),
+    notes: json['notes'] as String?,
+    isPartPayment: json['isPartPayment'] as bool? ?? false,
+    strategy: json['strategy'] != null
+        ? PartPaymentStrategy.values[(json['strategy'] as int).clamp(
+            0,
+            PartPaymentStrategy.values.length - 1,
+          )]
+        : null,
+  );
 }
 
 class AmortizationEntry {

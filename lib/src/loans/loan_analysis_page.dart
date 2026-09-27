@@ -25,8 +25,9 @@ class LoanAnalysisPage extends StatelessWidget {
         builder: (context, state) {
           final cubit = context.read<LoanCubit>();
           final activeBorrowed = state.loans
-              .where((l) =>
-                  !l.isClosed && l.direction == LoanDirection.borrowed)
+              .where(
+                (l) => !l.isClosed && l.direction == LoanDirection.borrowed,
+              )
               .toList();
 
           return ListView(
@@ -38,8 +39,12 @@ class LoanAnalysisPage extends StatelessWidget {
                 children: [
                   _summaryCard(
                     'Total Principal',
-                    _fmt(activeBorrowed.fold(
-                        0.0, (sum, l) => sum + l.principalAmount)),
+                    _fmt(
+                      activeBorrowed.fold(
+                        0.0,
+                        (sum, l) => sum + l.principalAmount,
+                      ),
+                    ),
                     Colors.blue,
                   ),
                   const SizedBox(width: 8),
@@ -64,8 +69,10 @@ class LoanAnalysisPage extends StatelessWidget {
                 children: [
                   _summaryCard(
                     'Total Interest',
-                    _fmt(cubit.totalInterestPaidAll +
-                        cubit.totalInterestRemainingAll),
+                    _fmt(
+                      cubit.totalInterestPaidAll +
+                          cubit.totalInterestRemainingAll,
+                    ),
                     Colors.purple,
                   ),
                   const SizedBox(width: 8),
@@ -88,8 +95,10 @@ class LoanAnalysisPage extends StatelessWidget {
               if (cubit.totalInterestSavedAll > 0) ...[
                 Container(
                   width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 16,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade50,
                     borderRadius: BorderRadius.circular(10),
@@ -231,24 +240,26 @@ class LoanAnalysisPage extends StatelessWidget {
             spacing: 12,
             runSpacing: 6,
             children: slices
-                .map((s) => Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: s.color,
-                            shape: BoxShape.circle,
-                          ),
+                .map(
+                  (s) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: s.color,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${s.label} (${_fmt(s.value)})',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ))
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${s.label} (${_fmt(s.value)})',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -260,20 +271,33 @@ class LoanAnalysisPage extends StatelessWidget {
 
   Widget _buildPrincipalInterestPie(BuildContext context, List<Loan> loans) {
     final cs = Theme.of(context).colorScheme;
-    final totalPrincipalPaid =
-        loans.fold(0.0, (sum, l) => sum + l.totalPrincipalPaid);
-    final totalInterestPaid =
-        loans.fold(0.0, (sum, l) => sum + l.interestPaid);
-    final remainingPrincipal =
-        loans.fold(0.0, (sum, l) => sum + l.outstandingBalance);
-    final remainingInterest =
-        loans.fold(0.0, (sum, l) => sum + l.interestRemaining);
+    final totalPrincipalPaid = loans.fold(
+      0.0,
+      (sum, l) => sum + l.totalPrincipalPaid,
+    );
+    final totalInterestPaid = loans.fold(0.0, (sum, l) => sum + l.interestPaid);
+    final remainingPrincipal = loans.fold(
+      0.0,
+      (sum, l) => sum + l.outstandingBalance,
+    );
+    final remainingInterest = loans.fold(
+      0.0,
+      (sum, l) => sum + l.interestRemaining,
+    );
 
     final slices = <_PieSlice>[
       _PieSlice('Principal Paid', totalPrincipalPaid, Colors.blue),
       _PieSlice('Interest Paid', totalInterestPaid, Colors.orange),
-      _PieSlice('Principal Remaining', remainingPrincipal, Colors.blue.shade200),
-      _PieSlice('Interest Remaining', remainingInterest, Colors.orange.shade200),
+      _PieSlice(
+        'Principal Remaining',
+        remainingPrincipal,
+        Colors.blue.shade200,
+      ),
+      _PieSlice(
+        'Interest Remaining',
+        remainingInterest,
+        Colors.orange.shade200,
+      ),
     ].where((s) => s.value > 0).toList();
 
     if (slices.isEmpty) {
@@ -298,24 +322,26 @@ class LoanAnalysisPage extends StatelessWidget {
             spacing: 12,
             runSpacing: 6,
             children: slices
-                .map((s) => Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 10,
-                          height: 10,
-                          decoration: BoxDecoration(
-                            color: s.color,
-                            shape: BoxShape.circle,
-                          ),
+                .map(
+                  (s) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: s.color,
+                          shape: BoxShape.circle,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${s.label} (${_fmt(s.value)})',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ))
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${s.label} (${_fmt(s.value)})',
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ],
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -330,17 +356,19 @@ class LoanAnalysisPage extends StatelessWidget {
     final loansWithPP = loans.where((l) => l.partPayments.isNotEmpty).toList();
     if (loansWithPP.isEmpty) return const SizedBox.shrink();
 
-    final totalPP =
-        loansWithPP.fold(0.0, (sum, l) => sum + l.totalPartPayments);
-    final totalSaved =
-        loansWithPP.fold(0.0, (sum, l) => sum + l.interestSaved);
+    final totalPP = loansWithPP.fold(
+      0.0,
+      (sum, l) => sum + l.totalPartPayments,
+    );
+    final totalSaved = loansWithPP.fold(0.0, (sum, l) => sum + l.interestSaved);
     // Estimate months saved: interest saved / monthly interest cost
     final avgMonthlyInterest = loansWithPP.fold(0.0, (sum, l) {
       if (l.interestRate == 0) return sum;
       return sum + (l.outstandingBalance * l.interestRate / 12 / 100);
     });
-    final monthsSaved =
-        avgMonthlyInterest > 0 ? (totalSaved / avgMonthlyInterest).round() : 0;
+    final monthsSaved = avgMonthlyInterest > 0
+        ? (totalSaved / avgMonthlyInterest).round()
+        : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,53 +387,69 @@ class LoanAnalysisPage extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  _miniStat(context, 'Total Part Payments', _fmt(totalPP), Colors.teal),
-                  const SizedBox(width: 8),
-                  _miniStat(context, 'Interest Saved', _fmt(totalSaved), Colors.green),
+                  _miniStat(
+                    context,
+                    'Total Part Payments',
+                    _fmt(totalPP),
+                    Colors.teal,
+                  ),
                   const SizedBox(width: 8),
                   _miniStat(
-                      context, 'Months Saved', '~$monthsSaved', Colors.deepPurple),
+                    context,
+                    'Interest Saved',
+                    _fmt(totalSaved),
+                    Colors.green,
+                  ),
+                  const SizedBox(width: 8),
+                  _miniStat(
+                    context,
+                    'Months Saved',
+                    '~$monthsSaved',
+                    Colors.deepPurple,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              ...loansWithPP.map((loan) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: cs.surface,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+              ...loansWithPP.map(
+                (loan) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: cs.surface,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          loan.name,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Part Payments: ${_fmt(loan.totalPartPayments)}',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        if (loan.partPayments.isNotEmpty)
                           Text(
-                            loan.name,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Part Payments: ${_fmt(loan.totalPartPayments)}',
+                            'Strategy: ${loan.partPayments.last.strategy == PartPaymentStrategy.reduceEmi ? 'Reduce EMI' : 'Reduce Tenure'}',
                             style: const TextStyle(fontSize: 12),
                           ),
-                          if (loan.partPayments.isNotEmpty)
-                            Text(
-                              'Strategy: ${loan.partPayments.last.strategy == PartPaymentStrategy.reduceEmi ? 'Reduce EMI' : 'Reduce Tenure'}',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          Text(
-                            'Interest Saved: ${_fmt(loan.interestSaved)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        Text(
+                          'Interest Saved: ${_fmt(loan.interestSaved)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green.shade700,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  )),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -414,7 +458,12 @@ class LoanAnalysisPage extends StatelessWidget {
     );
   }
 
-  Widget _miniStat(BuildContext context, String label, String value, Color color) {
+  Widget _miniStat(
+    BuildContext context,
+    String label,
+    String value,
+    Color color,
+  ) {
     final cs = Theme.of(context).colorScheme;
     return Expanded(
       child: Column(
@@ -462,7 +511,9 @@ class LoanAnalysisPage extends StatelessWidget {
                 child: Text(
                   loan.name,
                   style: const TextStyle(
-                      fontWeight: FontWeight.w600, fontSize: 14),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
               ),
               Text(
@@ -489,12 +540,18 @@ class LoanAnalysisPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _amortLine(context,
-                    'Principal Paid', _fmt(loan.totalPrincipalPaid)),
+                child: _amortLine(
+                  context,
+                  'Principal Paid',
+                  _fmt(loan.totalPrincipalPaid),
+                ),
               ),
               Expanded(
-                child: _amortLine(context,
-                    'Principal Left', _fmt(loan.outstandingBalance)),
+                child: _amortLine(
+                  context,
+                  'Principal Left',
+                  _fmt(loan.outstandingBalance),
+                ),
               ),
             ],
           ),
@@ -502,12 +559,18 @@ class LoanAnalysisPage extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child:
-                    _amortLine(context, 'Interest Paid', _fmt(loan.interestPaid)),
+                child: _amortLine(
+                  context,
+                  'Interest Paid',
+                  _fmt(loan.interestPaid),
+                ),
               ),
               Expanded(
-                child: _amortLine(context,
-                    'Interest Left', _fmt(loan.interestRemaining)),
+                child: _amortLine(
+                  context,
+                  'Interest Left',
+                  _fmt(loan.interestRemaining),
+                ),
               ),
             ],
           ),
@@ -543,8 +606,7 @@ class LoanAnalysisPage extends StatelessWidget {
 
   Widget _buildEmiBarChart(BuildContext context, List<Loan> loans) {
     final cs = Theme.of(context).colorScheme;
-    final maxEmi =
-        loans.fold(0.0, (m, l) => l.emiAmount > m ? l.emiAmount : m);
+    final maxEmi = loans.fold(0.0, (m, l) => l.emiAmount > m ? l.emiAmount : m);
     if (maxEmi == 0) return const SizedBox.shrink();
 
     return Container(
@@ -598,7 +660,9 @@ class LoanAnalysisPage extends StatelessWidget {
                 Text(
                   _fmt(loan.emiAmount),
                   style: const TextStyle(
-                      fontSize: 11, fontWeight: FontWeight.w600),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),

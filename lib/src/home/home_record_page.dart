@@ -6,6 +6,7 @@ import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_state.dart';
 import 'package:my_data_app/src/home/home_record_analysis_page.dart';
 import 'package:my_data_app/src/home/home_record_settings_page.dart';
+import 'package:my_data_app/src/shell/app_drawer.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/event_finance_page.dart'
@@ -78,6 +79,7 @@ class _HomeRecordPageState extends State<HomeRecordPage> {
 
         return Scaffold(
           appBar: AppBar(
+            leading: const ShellMenuButton(),
             title: const Text('Expense Tracker'),
             centerTitle: false,
             elevation: 0,
