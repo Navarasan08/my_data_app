@@ -11,10 +11,7 @@ import 'package:my_data_app/src/theme/app_theme.dart';
 class BrandedLoader extends StatelessWidget {
   final String message;
 
-  const BrandedLoader({
-    super.key,
-    this.message = 'Loading your data…',
-  });
+  const BrandedLoader({super.key, this.message = 'Loading your data…'});
 
   @override
   Widget build(BuildContext context) {
@@ -33,17 +30,17 @@ class BrandedLoader extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.insights_rounded,
-                    size: 48,
-                    color: Colors.white,
-                  ),
-                )
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                      child: const Icon(
+                        Icons.insights_rounded,
+                        size: 48,
+                        color: Colors.white,
+                      ),
+                    )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(
                       begin: const Offset(1, 1),

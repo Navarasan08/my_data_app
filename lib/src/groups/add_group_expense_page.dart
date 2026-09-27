@@ -13,11 +13,7 @@ import 'package:my_data_app/src/groups/model/group_model.dart';
 class AddGroupExpensePage extends StatefulWidget {
   final GroupFund group;
   final GroupExpense? existing;
-  const AddGroupExpensePage({
-    super.key,
-    required this.group,
-    this.existing,
-  });
+  const AddGroupExpensePage({super.key, required this.group, this.existing});
 
   @override
   State<AddGroupExpensePage> createState() => _AddGroupExpensePageState();
@@ -64,8 +60,9 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
       _payerUid = e.paidByUid;
       _participants = e.splits.map((s) => s.uid).toSet();
       for (final s in e.splits) {
-        _splitControllers[s.uid] =
-            TextEditingController(text: _formatValue(s.value));
+        _splitControllers[s.uid] = TextEditingController(
+          text: _formatValue(s.value),
+        );
       }
     }
     for (final uid in widget.group.memberIds) {
@@ -181,8 +178,10 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
               children: [
                 // Group banner
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -191,12 +190,14 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
                     children: [
                       Icon(widget.group.icon, size: 18, color: color),
                       const SizedBox(width: 8),
-                      Text(widget.group.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          )),
+                      Text(
+                        widget.group.name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -223,8 +224,9 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
                     border: OutlineInputBorder(),
                     isDense: true,
                   ),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Required';
                     final n = double.tryParse(v.trim());
@@ -250,8 +252,7 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
                       labelText: 'Date',
                       border: OutlineInputBorder(),
                       isDense: true,
-                      suffixIcon:
-                          Icon(Icons.calendar_today_rounded, size: 18),
+                      suffixIcon: Icon(Icons.calendar_today_rounded, size: 18),
                     ),
                     child: Text(
                       DateFormat('EEE, MMM d, yyyy').format(_date),
@@ -283,22 +284,27 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
                 ),
                 const SizedBox(height: 16),
 
-                Text('Split mode',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Split mode',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 SegmentedButton<SplitMode>(
                   segments: const [
+                    ButtonSegment(value: SplitMode.equal, label: Text('Equal')),
                     ButtonSegment(
-                        value: SplitMode.equal, label: Text('Equal')),
+                      value: SplitMode.exact,
+                      label: Text('Exact ₹'),
+                    ),
                     ButtonSegment(
-                        value: SplitMode.exact, label: Text('Exact ₹')),
-                    ButtonSegment(
-                        value: SplitMode.share, label: Text('Shares')),
-                    ButtonSegment(
-                        value: SplitMode.percent, label: Text('%')),
+                      value: SplitMode.share,
+                      label: Text('Shares'),
+                    ),
+                    ButtonSegment(value: SplitMode.percent, label: Text('%')),
                   ],
                   selected: {_mode},
                   onSelectionChanged: (s) => setState(() => _mode = s.first),
@@ -358,7 +364,9 @@ class _AddGroupExpensePageState extends State<AddGroupExpensePage> {
                           height: 18,
                           width: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(
                           _isEditing ? 'Update Expense' : 'Add Expense',
@@ -414,23 +422,27 @@ class _SplitsEditor extends StatelessWidget {
       final per = participants.isEmpty || totalAmount <= 0
           ? 0
           : totalAmount / participants.length;
-      return Text('₹${per.toStringAsFixed(2)}',
-          style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: cs.onSurface));
+      return Text(
+        '₹${per.toStringAsFixed(2)}',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: cs.onSurface,
+        ),
+      );
     }
     return SizedBox(
       width: 100,
       child: TextField(
         controller: controllers[uid],
         textAlign: TextAlign.right,
-        keyboardType:
-            const TextInputType.numberWithOptions(decimal: true),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
         decoration: InputDecoration(
           isDense: true,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 8,
+            vertical: 8,
+          ),
           suffixText: _modeSuffix(),
         ),
         onChanged: (_) => onChanged(),
@@ -446,9 +458,9 @@ class _SplitsEditor extends StatelessWidget {
         return null;
       case SplitMode.exact:
         final sum = participants.fold<double>(
-            0,
-            (s, uid) =>
-                s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0));
+          0,
+          (s, uid) => s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0),
+        );
         final diff = totalAmount - sum;
         if (diff.abs() < 0.01) return null;
         return diff > 0
@@ -456,16 +468,16 @@ class _SplitsEditor extends StatelessWidget {
             : '₹${(-diff).toStringAsFixed(2)} over';
       case SplitMode.share:
         final sum = participants.fold<double>(
-            0,
-            (s, uid) =>
-                s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0));
+          0,
+          (s, uid) => s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0),
+        );
         if (sum <= 0) return 'Enter at least one share';
         return null;
       case SplitMode.percent:
         final sum = participants.fold<double>(
-            0,
-            (s, uid) =>
-                s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0));
+          0,
+          (s, uid) => s + (double.tryParse(controllers[uid]?.text ?? '') ?? 0),
+        );
         final diff = 100 - sum;
         if (diff.abs() < 0.01) return null;
         return diff > 0
@@ -492,18 +504,24 @@ class _SplitsEditor extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Split between',
-                  style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w600)),
+              Text(
+                'Split between',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
               if (msg != null)
-                Text(msg,
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.orange[800],
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  msg,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.orange[800],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
             ],
           ),
           const Divider(height: 16),

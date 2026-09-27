@@ -108,10 +108,7 @@ LinearGradient _gradient(Color base) {
   return LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [
-      base,
-      Color.lerp(base, Colors.black, 0.35)!,
-    ],
+    colors: [base, Color.lerp(base, Colors.black, 0.35)!],
   );
 }
 
@@ -122,9 +119,7 @@ Widget _revealButton(bool revealed, VoidCallback onTap, {Color? color}) {
     child: Padding(
       padding: const EdgeInsets.all(6),
       child: Icon(
-        revealed
-            ? Icons.visibility_off_rounded
-            : Icons.visibility_rounded,
+        revealed ? Icons.visibility_off_rounded : Icons.visibility_rounded,
         size: 16,
         color: color ?? Colors.white.withValues(alpha: 0.85),
       ),
@@ -174,8 +169,8 @@ class _CardVisual extends StatelessWidget {
     final number = rawNumber == null
         ? '••••  ••••  ••••  ••••'
         : (state._revealed
-            ? _formatCardNumber(rawNumber)
-            : _maskCardNumber(rawNumber));
+              ? _formatCardNumber(rawNumber)
+              : _maskCardNumber(rawNumber));
 
     return AspectRatio(
       aspectRatio: 1.586,
@@ -222,8 +217,11 @@ class _CardVisual extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-            Icon(Icons.sim_card_rounded,
-                color: Colors.amber.shade300, size: 30),
+            Icon(
+              Icons.sim_card_rounded,
+              color: Colors.amber.shade300,
+              size: 30,
+            ),
             const Spacer(),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -383,9 +381,7 @@ class _GovtIdVisual extends StatelessWidget {
     final accent = VaultSection.govtId.color;
     final maskedNumber = idNumber == null
         ? '— — — —'
-        : (state._revealed
-            ? idNumber
-            : _maskMiddle(idNumber));
+        : (state._revealed ? idNumber : _maskMiddle(idNumber));
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -409,8 +405,11 @@ class _GovtIdVisual extends StatelessWidget {
               _badge(idType.toUpperCase(), color: accent),
               const Spacer(),
               if (idNumber != null)
-                _revealButton(state._revealed, state._toggleReveal,
-                    color: accent),
+                _revealButton(
+                  state._revealed,
+                  state._toggleReveal,
+                  color: accent,
+                ),
             ],
           ),
           const SizedBox(height: 10),
@@ -424,10 +423,15 @@ class _GovtIdVisual extends StatelessWidget {
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: accent.withValues(alpha: 0.4), width: 1),
+                    color: accent.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
-                child: Icon(Icons.person_rounded,
-                    color: accent.withValues(alpha: 0.7), size: 38),
+                child: Icon(
+                  Icons.person_rounded,
+                  color: accent.withValues(alpha: 0.7),
+                  size: 38,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -462,7 +466,9 @@ class _GovtIdVisual extends StatelessWidget {
                         child: Text(
                           'Issued by $issued',
                           style: TextStyle(
-                              fontSize: 11, color: Colors.grey.shade600),
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
                       ),
                     if (issueDate != null || expiry != null) ...[
@@ -517,8 +523,8 @@ class _BankVisual extends StatelessWidget {
     final masked = accountNumber == null
         ? '••••••••••••'
         : (state._revealed
-            ? accountNumber
-            : '••••••${accountNumber.length > 4 ? accountNumber.substring(accountNumber.length - 4) : accountNumber}');
+              ? accountNumber
+              : '••••••${accountNumber.length > 4 ? accountNumber.substring(accountNumber.length - 4) : accountNumber}');
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -545,8 +551,11 @@ class _BankVisual extends StatelessWidget {
                   color: Colors.teal.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.account_balance_rounded,
-                    color: Colors.teal.shade700, size: 22),
+                child: Icon(
+                  Icons.account_balance_rounded,
+                  color: Colors.teal.shade700,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -566,7 +575,9 @@ class _BankVisual extends StatelessWidget {
                       Text(
                         branch,
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant),
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -578,8 +589,7 @@ class _BankVisual extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: Colors.teal.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
@@ -591,11 +601,14 @@ class _BankVisual extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('A/C NUMBER',
-                          style: TextStyle(
-                              fontSize: 9,
-                              color: cs.onSurfaceVariant,
-                              letterSpacing: 1)),
+                      Text(
+                        'A/C NUMBER',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: cs.onSurfaceVariant,
+                          letterSpacing: 1,
+                        ),
+                      ),
                       const SizedBox(height: 2),
                       Text(
                         masked,
@@ -610,8 +623,11 @@ class _BankVisual extends StatelessWidget {
                   ),
                 ),
                 if (accountNumber != null)
-                  _revealButton(state._revealed, state._toggleReveal,
-                      color: Colors.teal.shade700),
+                  _revealButton(
+                    state._revealed,
+                    state._toggleReveal,
+                    color: Colors.teal.shade700,
+                  ),
               ],
             ),
           ),
@@ -651,11 +667,11 @@ class _ContactVisual extends StatelessWidget {
     final initials = name.trim().isEmpty
         ? '?'
         : name
-            .trim()
-            .split(RegExp(r'\s+'))
-            .take(2)
-            .map((s) => s[0].toUpperCase())
-            .join();
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((s) => s[0].toUpperCase())
+              .join();
 
     final accent = Colors.redAccent;
     final cs = Theme.of(context).colorScheme;
@@ -704,7 +720,9 @@ class _ContactVisual extends StatelessWidget {
                     Text(
                       name,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -714,7 +732,9 @@ class _ContactVisual extends StatelessWidget {
                         child: Text(
                           relation,
                           style: TextStyle(
-                              fontSize: 13, color: cs.onSurfaceVariant),
+                            fontSize: 13,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                   ],
@@ -729,16 +749,29 @@ class _ContactVisual extends StatelessWidget {
             const SizedBox(height: 8),
           ],
           if (phone != null)
-            _ContactLine(icon: Icons.phone_rounded, value: phone, color: accent),
+            _ContactLine(
+              icon: Icons.phone_rounded,
+              value: phone,
+              color: accent,
+            ),
           if (alt != null)
             _ContactLine(
-                icon: Icons.phone_iphone_rounded, value: alt, color: accent),
+              icon: Icons.phone_iphone_rounded,
+              value: alt,
+              color: accent,
+            ),
           if (email != null)
             _ContactLine(
-                icon: Icons.email_rounded, value: email, color: accent),
+              icon: Icons.email_rounded,
+              value: email,
+              color: accent,
+            ),
           if (addr != null)
             _ContactLine(
-                icon: Icons.location_on_rounded, value: addr, color: accent),
+              icon: Icons.location_on_rounded,
+              value: addr,
+              color: accent,
+            ),
         ],
       ),
     );
@@ -749,8 +782,11 @@ class _ContactLine extends StatelessWidget {
   final IconData icon;
   final String value;
   final Color color;
-  const _ContactLine(
-      {required this.icon, required this.value, required this.color});
+  const _ContactLine({
+    required this.icon,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -819,12 +855,14 @@ class _InsuranceVisual extends StatelessWidget {
                 topRight: Radius.circular(14),
               ),
             ),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                const Icon(Icons.verified_user_rounded,
-                    color: Colors.white, size: 18),
+                const Icon(
+                  Icons.verified_user_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'POLICY · ${type.toUpperCase()}',
@@ -856,7 +894,9 @@ class _InsuranceVisual extends StatelessWidget {
                 Text(
                   provider,
                   style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w700),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -883,7 +923,8 @@ class _InsuranceVisual extends StatelessWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      if (start != null) _MiniLabel(label: 'From', value: start),
+                      if (start != null)
+                        _MiniLabel(label: 'From', value: start),
                       if (start != null && end != null)
                         const SizedBox(width: 14),
                       if (end != null) _MiniLabel(label: 'To', value: end),
@@ -915,11 +956,14 @@ class _PolicyStat extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: TextStyle(
-                fontSize: 10,
-                color: cs.onSurfaceVariant,
-                letterSpacing: 0.6)),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: cs.onSurfaceVariant,
+            letterSpacing: 0.6,
+          ),
+        ),
         const SizedBox(height: 2),
         Text(
           value,
@@ -1016,21 +1060,24 @@ class _CredentialVisual extends StatelessWidget {
           if (password != null) ...[
             const SizedBox(height: 12),
             _SecretLine(
-                label: 'Password',
-                value: password,
-                revealed: state._revealed),
+              label: 'Password',
+              value: password,
+              revealed: state._revealed,
+            ),
           ],
           if (pin != null) ...[
             const SizedBox(height: 6),
-            _SecretLine(
-                label: 'PIN', value: pin, revealed: state._revealed),
+            _SecretLine(label: 'PIN', value: pin, revealed: state._revealed),
           ],
           if (twofa != null) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.shield_moon_rounded,
-                    color: Colors.amber.shade300, size: 14),
+                Icon(
+                  Icons.shield_moon_rounded,
+                  color: Colors.amber.shade300,
+                  size: 14,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   '2FA · $twofa',
@@ -1070,12 +1117,14 @@ class _SecretLine extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text('$label  ',
-              style: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 10,
-                letterSpacing: 0.6,
-              )),
+          Text(
+            '$label  ',
+            style: TextStyle(
+              color: Colors.grey.shade400,
+              fontSize: 10,
+              letterSpacing: 0.6,
+            ),
+          ),
           Expanded(
             child: Text(
               display,
@@ -1114,10 +1163,11 @@ class _VehicleVisual extends StatelessWidget {
     final color = state._f('Color');
     final fuel = state._f('Fuel Type');
 
-    final headline = [
-      if (make != null) make,
-      if (model != null) model,
-    ].join(' ').trim().isEmpty
+    final headline =
+        [
+          if (make != null) make,
+          if (model != null) model,
+        ].join(' ').trim().isEmpty
         ? state.widget.entry.title
         : [if (make != null) make, if (model != null) model].join(' ').trim();
 
@@ -1143,11 +1193,7 @@ class _VehicleVisual extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                _iconForType(type),
-                color: accent,
-                size: 24,
-              ),
+              Icon(_iconForType(type), color: accent, size: 24),
               const SizedBox(width: 8),
               Expanded(
                 child: Column(
@@ -1156,16 +1202,22 @@ class _VehicleVisual extends StatelessWidget {
                     Text(
                       headline,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (year != null || type != null)
                       Text(
-                        [if (type != null) type, if (year != null) year]
-                            .join(' · '),
+                        [
+                          if (type != null) type,
+                          if (year != null) year,
+                        ].join(' · '),
                         style: TextStyle(
-                            fontSize: 11, color: cs.onSurfaceVariant),
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),
@@ -1178,7 +1230,9 @@ class _VehicleVisual extends StatelessWidget {
             Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 8),
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.yellow.shade600,
                   borderRadius: BorderRadius.circular(8),
@@ -1276,9 +1330,10 @@ class _EmploymentVisual extends StatelessWidget {
                 child: Text(
                   initials,
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800),
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -1289,7 +1344,9 @@ class _EmploymentVisual extends StatelessWidget {
                     Text(
                       company,
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w700),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1299,7 +1356,9 @@ class _EmploymentVisual extends StatelessWidget {
                         child: Text(
                           designation,
                           style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant),
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -1310,7 +1369,10 @@ class _EmploymentVisual extends StatelessWidget {
               const Icon(Icons.work_rounded, color: Colors.brown, size: 18),
             ],
           ),
-          if (empId != null || department != null || join != null || endDate != null) ...[
+          if (empId != null ||
+              department != null ||
+              join != null ||
+              endDate != null) ...[
             const SizedBox(height: 12),
             Wrap(
               spacing: 14,
@@ -1370,8 +1432,7 @@ class _EducationVisual extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             degree,
-            style: const TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w800),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -1381,9 +1442,10 @@ class _EducationVisual extends StatelessWidget {
             Text(
               spec,
               style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontStyle: FontStyle.italic),
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -1391,8 +1453,11 @@ class _EducationVisual extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               inst,
-              style:
-                  TextStyle(fontSize: 13, color: accent, fontWeight: FontWeight.w700),
+              style: TextStyle(
+                fontSize: 13,
+                color: accent,
+                fontWeight: FontWeight.w700,
+              ),
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1403,8 +1468,7 @@ class _EducationVisual extends StatelessWidget {
               padding: const EdgeInsets.only(top: 2),
               child: Text(
                 university,
-                style: TextStyle(
-                    fontSize: 11, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1560,12 +1624,14 @@ class _AddressVisual extends StatelessWidget {
       state._f('Door/Flat No'),
       state._f('Street'),
       state._f('Area/Locality'),
-      [state._f('City'), state._f('District')]
-          .where((v) => v != null && v.isNotEmpty)
-          .join(', '),
-      [state._f('State'), state._f('PIN Code')]
-          .where((v) => v != null && v.isNotEmpty)
-          .join(' '),
+      [
+        state._f('City'),
+        state._f('District'),
+      ].where((v) => v != null && v.isNotEmpty).join(', '),
+      [
+        state._f('State'),
+        state._f('PIN Code'),
+      ].where((v) => v != null && v.isNotEmpty).join(' '),
       state._f('Country'),
     ].where((v) => v != null && v.isNotEmpty).cast<String>().toList();
 
@@ -1596,24 +1662,24 @@ class _AddressVisual extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w700),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          ...lines.map((l) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 1),
-                child: Text(
-                  l,
-                  style: const TextStyle(fontSize: 13, height: 1.4),
-                ),
-              )),
+          ...lines.map(
+            (l) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1),
+              child: Text(l, style: const TextStyle(fontSize: 13, height: 1.4)),
+            ),
+          ),
           if (landmark != null && landmark.isNotEmpty) ...[
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.tour_rounded,
-                    size: 13, color: Colors.grey.shade600),
+                Icon(Icons.tour_rounded, size: 13, color: Colors.grey.shade600),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -1654,11 +1720,11 @@ class _BasicDetailsVisual extends StatelessWidget {
     final initials = name.trim().isEmpty
         ? '?'
         : name
-            .trim()
-            .split(RegExp(r'\s+'))
-            .take(2)
-            .map((s) => s[0].toUpperCase())
-            .join();
+              .trim()
+              .split(RegExp(r'\s+'))
+              .take(2)
+              .map((s) => s[0].toUpperCase())
+              .join();
 
     final accent = Colors.blue.shade700;
     final cs = Theme.of(context).colorScheme;
@@ -1706,7 +1772,9 @@ class _BasicDetailsVisual extends StatelessWidget {
                     Text(
                       name,
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1714,10 +1782,14 @@ class _BasicDetailsVisual extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          [if (gender != null) gender, if (dob != null) dob]
-                              .join(' · '),
+                          [
+                            if (gender != null) gender,
+                            if (dob != null) dob,
+                          ].join(' · '),
                           style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant),
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                   ],
@@ -1732,10 +1804,16 @@ class _BasicDetailsVisual extends StatelessWidget {
             const SizedBox(height: 8),
             if (phone != null)
               _ContactLine(
-                  icon: Icons.phone_rounded, value: phone, color: accent),
+                icon: Icons.phone_rounded,
+                value: phone,
+                color: accent,
+              ),
             if (email != null)
               _ContactLine(
-                  icon: Icons.email_rounded, value: email, color: accent),
+                icon: Icons.email_rounded,
+                value: email,
+                color: accent,
+              ),
           ],
         ],
       ),
@@ -1784,7 +1862,9 @@ class _HobbyVisual extends StatelessWidget {
                 Text(
                   hobby,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1837,10 +1917,7 @@ class _MiniLabel extends StatelessWidget {
         const SizedBox(height: 1),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
         ),
       ],
     );

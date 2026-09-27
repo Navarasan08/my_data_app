@@ -15,10 +15,7 @@ class SettingsPage extends StatelessWidget {
     final dashCubit = context.read<DashboardSettingsCubit>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Settings'), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(24),
         children: [
@@ -71,6 +68,36 @@ class SettingsPage extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 16),
+          const _SectionLabel(label: 'Navigation'),
+          const SizedBox(height: 8),
+          BlocBuilder<DashboardSettingsCubit, DashboardSettingsState>(
+            builder: (context, dashSettings) {
+              final second = dashSettings.featureById(
+                dashSettings.secondTabFeatureId,
+              );
+              return Column(
+                children: [
+                  _ActionTile(
+                    icon: second?.icon ?? Icons.account_balance_wallet_rounded,
+                    label: 'Second tab',
+                    value: second?.title ?? 'Expense Tracker',
+                    onTap: () =>
+                        _pickSecondTab(context, dashCubit, dashSettings),
+                  ),
+                  _ActionTile(
+                    icon: Icons.login_rounded,
+                    label: 'Open app on',
+                    value: dashSettings.landingTab == ShellTab.module
+                        ? (second?.title ?? 'Second tab')
+                        : dashSettings.landingTab.label,
+                    onTap: () =>
+                        _pickLandingTab(context, dashCubit, dashSettings),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           const _SectionLabel(label: 'Data'),
@@ -144,8 +171,11 @@ class SettingsPage extends StatelessWidget {
       if (!context.mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       messenger.showSnackBar(
-        SnackBar(content: Text(
-            'Export ready (${_humanBytes(size.bytes)}) — choose where to save it.')),
+        SnackBar(
+          content: Text(
+            'Export ready (${_humanBytes(size.bytes)}) — choose where to save it.',
+          ),
+        ),
       );
     } catch (e) {
       if (context.mounted) {
@@ -156,13 +186,12 @@ class SettingsPage extends StatelessWidget {
   }
 
   Future<bool?> _confirmExport(BuildContext context, ExportOptions opts) {
-    final fmt = (DateTime d) =>
-        '${d.day}/${d.month}/${d.year}';
+    final fmt = (DateTime d) => '${d.day}/${d.month}/${d.year}';
     final range = (opts.from == null && opts.to == null)
         ? 'All time'
         : '${opts.from == null ? 'Any' : fmt(opts.from!)}'
-            ' → '
-            '${opts.to == null ? 'Any' : fmt(opts.to!)}';
+              ' → '
+              '${opts.to == null ? 'Any' : fmt(opts.to!)}';
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -171,8 +200,10 @@ class SettingsPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Modules: ${opts.moduleIds.length}'
-                ' of ${DataIoService.modules.length}'),
+            Text(
+              'Modules: ${opts.moduleIds.length}'
+              ' of ${DataIoService.modules.length}',
+            ),
             const SizedBox(height: 4),
             Text('Date range: $range'),
           ],
@@ -197,8 +228,9 @@ class SettingsPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Large export'),
         content: Text(
-            'The export file is about ${_humanBytes(bytes)}. Sharing files '
-            'this large can be slow or fail on some platforms. Continue anyway?'),
+          'The export file is about ${_humanBytes(bytes)}. Sharing files '
+          'this large can be slow or fail on some platforms. Continue anyway?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -219,9 +251,10 @@ class SettingsPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Export too large'),
         content: Text(
-            'The export would be about ${_humanBytes(bytes)}, which exceeds '
-            'the ${_humanBytes(DataIoService.blockBytes)} limit. Try narrowing '
-            'the date range or deselecting some modules.'),
+          'The export would be about ${_humanBytes(bytes)}, which exceeds '
+          'the ${_humanBytes(DataIoService.blockBytes)} limit. Try narrowing '
+          'the date range or deselecting some modules.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -284,9 +317,7 @@ class SettingsPage extends StatelessWidget {
       await context.read<AuthCubit>().signOut();
     } catch (e) {
       Navigator.of(context, rootNavigator: true).pop();
-      messenger.showSnackBar(
-        SnackBar(content: Text('Import failed: $e')),
-      );
+      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
     }
   }
 
@@ -295,9 +326,7 @@ class SettingsPage extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Import mode'),
-        content: const Text(
-          'Choose how the imported data should be applied:',
-        ),
+        content: const Text('Choose how the imported data should be applied:'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -386,9 +415,88 @@ class SettingsPage extends StatelessWidget {
   }
 
   void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
+}
+
+Future<void> _pickSecondTab(
+  BuildContext context,
+  DashboardSettingsCubit cubit,
+  DashboardSettingsState settings,
+) async {
+  final id = await showModalBottomSheet<String>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Which module lives on the second tab?',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+          ),
+          for (final f in settings.features)
+            ListTile(
+              leading: Icon(f.icon, color: f.gradient.first),
+              title: Text(f.title),
+              trailing: f.id == settings.secondTabFeatureId
+                  ? const Icon(Icons.check_rounded)
+                  : null,
+              onTap: () => Navigator.pop(context, f.id),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (id != null) cubit.setSecondTab(id);
+}
+
+Future<void> _pickLandingTab(
+  BuildContext context,
+  DashboardSettingsCubit cubit,
+  DashboardSettingsState settings,
+) async {
+  final second = settings.featureById(settings.secondTabFeatureId);
+  final tab = await showModalBottomSheet<ShellTab>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => SafeArea(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, 8),
+            child: Text(
+              'Which tab should the app open on?',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+          ),
+          for (final t in ShellTab.values)
+            ListTile(
+              leading: Icon(switch (t) {
+                ShellTab.notes => Icons.sticky_note_2_rounded,
+                ShellTab.module => second?.icon ?? Icons.apps_rounded,
+                ShellTab.dashboard => Icons.dashboard_rounded,
+                ShellTab.groups => Icons.group_rounded,
+              }),
+              title: Text(
+                t == ShellTab.module ? (second?.title ?? t.label) : t.label,
+              ),
+              trailing: t == settings.landingTab
+                  ? const Icon(Icons.check_rounded)
+                  : null,
+              onTap: () => Navigator.pop(context, t),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (tab != null) cubit.setLandingTab(tab);
 }
 
 class _SectionLabel extends StatelessWidget {

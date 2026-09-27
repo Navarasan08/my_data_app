@@ -57,16 +57,17 @@ class LoanListPage extends StatelessWidget {
               children: [
                 // Summary bar
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   color: cs.surface,
                   child: Row(
                     children: [
                       Expanded(
                         child: _SummaryTile(
                           label: 'Outstanding',
-                          value:
-                              '₹${_fmt(cubit.totalBorrowed)}',
+                          value: '₹${_fmt(cubit.totalBorrowed)}',
                           color: Colors.red,
                         ),
                       ),
@@ -74,8 +75,7 @@ class LoanListPage extends StatelessWidget {
                       Expanded(
                         child: _SummaryTile(
                           label: 'Monthly EMI',
-                          value:
-                              '₹${_fmt(cubit.totalMonthlyEmi)}',
+                          value: '₹${_fmt(cubit.totalMonthlyEmi)}',
                           color: Colors.orange,
                         ),
                       ),
@@ -83,8 +83,7 @@ class LoanListPage extends StatelessWidget {
                       Expanded(
                         child: _SummaryTile(
                           label: 'Lent Out',
-                          value:
-                              '₹${_fmt(cubit.totalLent)}',
+                          value: '₹${_fmt(cubit.totalLent)}',
                           color: Colors.green,
                         ),
                       ),
@@ -107,8 +106,7 @@ class LoanListPage extends StatelessWidget {
               onPressed: () async {
                 final loan = await Navigator.push<Loan>(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const AddLoanPage()),
+                  MaterialPageRoute(builder: (context) => const AddLoanPage()),
                 );
                 if (loan != null) {
                   cubit.addLoan(loan);
@@ -184,8 +182,11 @@ class _LoanListView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.account_balance_outlined,
-                size: 64, color: cs.onSurfaceVariant),
+            Icon(
+              Icons.account_balance_outlined,
+              size: 64,
+              color: cs.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               'No loans here',
@@ -273,12 +274,18 @@ class _LoanCard extends StatelessWidget {
                         loan.direction == LoanDirection.borrowed
                             ? 'From: ${loan.lenderOrBorrower}'
                             : 'To: ${loan.lenderOrBorrower}',
-                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     const SizedBox(height: 2),
                     Text(
                       loan.type.label,
-                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -290,8 +297,9 @@ class _LoanCard extends StatelessWidget {
                               value: loan.progressPercent,
                               minHeight: 4,
                               backgroundColor: cs.surfaceContainerHighest,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(typeColor),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                typeColor,
+                              ),
                             ),
                           ),
                         ),
@@ -334,7 +342,9 @@ class _LoanCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(8),
@@ -357,7 +367,8 @@ class _LoanCard extends StatelessWidget {
                         builder: (ctx) => AlertDialog(
                           title: const Text('Delete Loan'),
                           content: Text(
-                              'Are you sure you want to delete "${loan.name}"?'),
+                            'Are you sure you want to delete "${loan.name}"?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -366,7 +377,8 @@ class _LoanCard extends StatelessWidget {
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
                               style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red),
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text('Delete'),
                             ),
                           ],
@@ -379,7 +391,9 @@ class _LoanCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(12),
@@ -387,8 +401,11 @@ class _LoanCard extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.delete_outline_rounded,
-                              size: 14, color: Colors.red[400]),
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            size: 14,
+                            color: Colors.red[400],
+                          ),
                           const SizedBox(width: 2),
                           Text(
                             'Delete',
@@ -470,9 +487,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 onPressed: () async {
                   final updated = await Navigator.push<Loan>(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => AddLoanPage(loan: loan),
-                    ),
+                    MaterialPageRoute(builder: (_) => AddLoanPage(loan: loan)),
                   );
                   if (updated != null) {
                     cubit.updateLoan(updated);
@@ -489,7 +504,8 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                       builder: (ctx) => AlertDialog(
                         title: const Text('Close Loan'),
                         content: const Text(
-                            'Mark this loan as closed? This cannot be undone.'),
+                          'Mark this loan as closed? This cannot be undone.',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -516,8 +532,10 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
               if (loan.isClosed)
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green[50],
                     borderRadius: BorderRadius.circular(8),
@@ -525,8 +543,11 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle_rounded,
-                          color: Colors.green[700], size: 18),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green[700],
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Loan Closed',
@@ -544,8 +565,10 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
               if (loan.overdueEmis > 0 && !loan.isClosed)
                 Container(
                   margin: const EdgeInsets.only(bottom: 10),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(8),
@@ -553,8 +576,11 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber_rounded,
-                          color: Colors.red[700], size: 18),
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red[700],
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         '${loan.overdueEmis} EMI(s) overdue',
@@ -576,8 +602,10 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   loan.lenderOrBorrower!.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surface,
                     borderRadius: BorderRadius.circular(10),
@@ -585,8 +613,11 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.person_outline,
-                          size: 18, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.person_outline,
+                        size: 18,
+                        color: cs.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         loan.direction == LoanDirection.borrowed
@@ -605,15 +636,15 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 loan: loan,
                 emiHistory: emiHistory,
                 partHistory: partHistory,
-                onDelete: (r) => _confirmDeleteRepayment(context, cubit, loan, r),
+                onDelete: (r) =>
+                    _confirmDeleteRepayment(context, cubit, loan, r),
               ),
             ],
           ),
           floatingActionButton: loan.isClosed
               ? null
               : FloatingActionButton.extended(
-                  onPressed: () => _showPaymentOptions(
-                      context, cubit, loan),
+                  onPressed: () => _showPaymentOptions(context, cubit, loan),
                   icon: const Icon(Icons.payment_rounded),
                   label: const Text('Record Payment'),
                 ),
@@ -623,12 +654,18 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
   }
 
   Future<void> _confirmDeleteRepayment(
-      BuildContext context, LoanCubit cubit, Loan loan, Repayment r) async {
+    BuildContext context,
+    LoanCubit cubit,
+    Loan loan,
+    Repayment r,
+  ) async {
     final label = r.isPartPayment ? 'Part Payment' : 'EMI #${r.monthNumber}';
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(r.isPartPayment ? 'Delete Part Payment' : 'Delete Repayment'),
+        title: Text(
+          r.isPartPayment ? 'Delete Part Payment' : 'Delete Repayment',
+        ),
         content: Text('Delete $label of ₹${_fmt(r.amount)}?'),
         actions: [
           TextButton(
@@ -648,8 +685,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
     }
   }
 
-  void _showPaymentOptions(
-      BuildContext context, LoanCubit cubit, Loan loan) {
+  void _showPaymentOptions(BuildContext context, LoanCubit cubit, Loan loan) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -658,92 +694,109 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                child: const Icon(Icons.receipt_long_rounded,
-                    color: Colors.blue, size: 22),
               ),
-              title: const Text('Record EMI Payment',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(
-                  'Month ${loan.paidEmiCount + 1} · ₹${_fmt(loan.emiAmount)}'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final repayment = await Navigator.push<Repayment>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddRepaymentPage(
-                      loanId: loan.id,
-                      nextMonthNumber: loan.paidEmiCount + 1,
-                      emiAmount: loan.emiAmount,
-                    ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-                if (repayment != null) {
-                  cubit.addRepayment(loan.id, repayment);
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.blue,
+                    size: 22,
+                  ),
                 ),
-                child: const Icon(Icons.savings_rounded,
-                    color: Colors.green, size: 22),
-              ),
-              title: const Text('Part Payment / Prepayment',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: const Text(
-                  'Lump sum towards principal to reduce outstanding'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final repayment = await Navigator.push<Repayment>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => AddRepaymentPage(
-                      loanId: loan.id,
-                      nextMonthNumber: 0,
-                      emiAmount: 0,
-                      isPartPayment: true,
+                title: const Text(
+                  'Record EMI Payment',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Month ${loan.paidEmiCount + 1} · ₹${_fmt(loan.emiAmount)}',
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final repayment = await Navigator.push<Repayment>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddRepaymentPage(
+                        loanId: loan.id,
+                        nextMonthNumber: loan.paidEmiCount + 1,
+                        emiAmount: loan.emiAmount,
+                      ),
                     ),
+                  );
+                  if (repayment != null) {
+                    cubit.addRepayment(loan.id, repayment);
+                  }
+                },
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                );
-                if (repayment != null) {
-                  if (!context.mounted) return;
-                  _showStrategyDialog(context, cubit, loan, repayment);
-                }
-              },
-            ),
-          ],
-        ),
-      );
+                  child: const Icon(
+                    Icons.savings_rounded,
+                    color: Colors.green,
+                    size: 22,
+                  ),
+                ),
+                title: const Text(
+                  'Part Payment / Prepayment',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: const Text(
+                  'Lump sum towards principal to reduce outstanding',
+                ),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  final repayment = await Navigator.push<Repayment>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddRepaymentPage(
+                        loanId: loan.id,
+                        nextMonthNumber: 0,
+                        emiAmount: 0,
+                        isPartPayment: true,
+                      ),
+                    ),
+                  );
+                  if (repayment != null) {
+                    if (!context.mounted) return;
+                    _showStrategyDialog(context, cubit, loan, repayment);
+                  }
+                },
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
-  void _showStrategyDialog(BuildContext context, LoanCubit cubit, Loan loan, Repayment repayment) {
+  void _showStrategyDialog(
+    BuildContext context,
+    LoanCubit cubit,
+    Loan loan,
+    Repayment repayment,
+  ) {
     final remainingPrincipal = loan.outstandingBalance - repayment.amount;
     final remainingEmis = loan.remainingEmis;
     final newEmi = Loan.calculateNewEmi(
@@ -774,7 +827,10 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 children: [
                   Text(
                     'Part Payment: ₹${_fmt(repayment.amount)}',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -789,10 +845,17 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                         hintText: 'Interest charged on part payment (optional)',
                         hintStyle: const TextStyle(fontSize: 12),
                         isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 8,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                         prefixIcon: const Icon(Icons.currency_rupee, size: 14),
-                        prefixIconConstraints: const BoxConstraints(minWidth: 30),
+                        prefixIconConstraints: const BoxConstraints(
+                          minWidth: 30,
+                        ),
                       ),
                       keyboardType: TextInputType.number,
                       style: const TextStyle(fontSize: 13),
@@ -804,7 +867,13 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   InkWell(
                     onTap: () {
                       Navigator.pop(ctx);
-                      cubit.addPartPayment(loan.id, repayment.copyWith(interestPortion: interestAmount ?? 0), PartPaymentStrategy.reduceTenure);
+                      cubit.addPartPayment(
+                        loan.id,
+                        repayment.copyWith(
+                          interestPortion: interestAmount ?? 0,
+                        ),
+                        PartPaymentStrategy.reduceTenure,
+                      );
                     },
                     child: Container(
                       width: double.infinity,
@@ -819,13 +888,30 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.timelapse_rounded, size: 18, color: Colors.blue[700]),
+                              Icon(
+                                Icons.timelapse_rounded,
+                                size: 18,
+                                color: Colors.blue[700],
+                              ),
                               const SizedBox(width: 8),
-                              Text('Reduce Tenure', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.blue[800])),
+                              Text(
+                                'Reduce Tenure',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.blue[800],
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text('Keep EMI ₹${_fmt(loan.emiAmount)}, reduce to ~$newTenure months', style: TextStyle(fontSize: 12, color: Colors.blue[600])),
+                          Text(
+                            'Keep EMI ₹${_fmt(loan.emiAmount)}, reduce to ~$newTenure months',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue[600],
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -835,7 +921,14 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                   InkWell(
                     onTap: () {
                       Navigator.pop(ctx);
-                      cubit.addPartPayment(loan.id, repayment.copyWith(interestPortion: interestAmount ?? 0), PartPaymentStrategy.reduceEmi, newEmi: customEmi);
+                      cubit.addPartPayment(
+                        loan.id,
+                        repayment.copyWith(
+                          interestPortion: interestAmount ?? 0,
+                        ),
+                        PartPaymentStrategy.reduceEmi,
+                        newEmi: customEmi,
+                      );
                     },
                     child: Container(
                       width: double.infinity,
@@ -850,13 +943,30 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.trending_down_rounded, size: 18, color: Colors.green[700]),
+                              Icon(
+                                Icons.trending_down_rounded,
+                                size: 18,
+                                color: Colors.green[700],
+                              ),
                               const SizedBox(width: 8),
-                              Text('Reduce EMI', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.green[800])),
+                              Text(
+                                'Reduce EMI',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.green[800],
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text('Keep tenure, new EMI: ₹${_fmt(newEmi)}', style: TextStyle(fontSize: 12, color: Colors.green[600])),
+                          Text(
+                            'Keep tenure, new EMI: ₹${_fmt(newEmi)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.green[600],
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           SizedBox(
                             height: 40,
@@ -865,10 +975,20 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                                 hintText: 'Custom EMI (optional)',
                                 hintStyle: const TextStyle(fontSize: 12),
                                 isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                prefixIcon: const Icon(Icons.currency_rupee, size: 14),
-                                prefixIconConstraints: const BoxConstraints(minWidth: 30),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 8,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                prefixIcon: const Icon(
+                                  Icons.currency_rupee,
+                                  size: 14,
+                                ),
+                                prefixIconConstraints: const BoxConstraints(
+                                  minWidth: 30,
+                                ),
                               ),
                               keyboardType: TextInputType.number,
                               style: const TextStyle(fontSize: 13),
@@ -991,15 +1111,11 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             ),
             child: Row(
               children: [
-                Icon(Icons.savings_rounded,
-                    size: 18, color: Colors.green[700]),
+                Icon(Icons.savings_rounded, size: 18, color: Colors.green[700]),
                 const SizedBox(width: 8),
                 Text(
                   'Part Payments: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.green[800],
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.green[800]),
                 ),
                 Text(
                   '₹${_fmt(loan.totalPartPayments)}',
@@ -1011,10 +1127,7 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
                 ),
                 Text(
                   ' (${loan.partPayments.length} payments)',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green[600],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.green[600]),
                 ),
               ],
             ),
@@ -1061,10 +1174,24 @@ class _LoanDetailPageState extends State<LoanDetailPage> {
             ),
             child: Row(
               children: [
-                Icon(Icons.celebration_rounded, size: 18, color: Colors.teal[700]),
+                Icon(
+                  Icons.celebration_rounded,
+                  size: 18,
+                  color: Colors.teal[700],
+                ),
                 const SizedBox(width: 8),
-                Text('Interest Saved: ', style: TextStyle(fontSize: 13, color: Colors.teal[800])),
-                Text('₹${_fmt(loan.interestSaved)}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.teal[800])),
+                Text(
+                  'Interest Saved: ',
+                  style: TextStyle(fontSize: 13, color: Colors.teal[800]),
+                ),
+                Text(
+                  '₹${_fmt(loan.interestSaved)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal[800],
+                  ),
+                ),
               ],
             ),
           ),
@@ -1102,10 +1229,7 @@ class _DashTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -1196,7 +1320,9 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
                     Text(
                       '(${widget.emiHistory.length})',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1212,7 +1338,9 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
                     Text(
                       '(${widget.partHistory.length})',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1237,15 +1365,14 @@ class _RepaymentTabsState extends State<_RepaymentTabs>
 
   Widget _buildList(List<Repayment> items, String emptyMsg) {
     if (items.isEmpty) {
-      return Builder(builder: (context) {
-        final cs = Theme.of(context).colorScheme;
-        return Center(
-          child: Text(
-            emptyMsg,
-            style: TextStyle(color: cs.onSurfaceVariant),
-          ),
-        );
-      });
+      return Builder(
+        builder: (context) {
+          final cs = Theme.of(context).colorScheme;
+          return Center(
+            child: Text(emptyMsg, style: TextStyle(color: cs.onSurfaceVariant)),
+          );
+        },
+      );
     }
     return ListView.builder(
       padding: const EdgeInsets.only(top: 4, bottom: 8),
@@ -1262,10 +1389,7 @@ class _RepaymentTile extends StatelessWidget {
   final Repayment repayment;
   final VoidCallback onDelete;
 
-  const _RepaymentTile({
-    required this.repayment,
-    required this.onDelete,
-  });
+  const _RepaymentTile({required this.repayment, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
@@ -1292,8 +1416,11 @@ class _RepaymentTile extends StatelessWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: repayment.isPartPayment
-                ? Icon(Icons.savings_rounded,
-                    size: 18, color: Colors.green[600])
+                ? Icon(
+                    Icons.savings_rounded,
+                    size: 18,
+                    color: Colors.green[600],
+                  )
                 : Text(
                     '#${repayment.monthNumber}',
                     style: TextStyle(
@@ -1350,8 +1477,11 @@ class _RepaymentTile extends StatelessWidget {
                 color: Colors.red[50],
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(Icons.delete_outline_rounded,
-                  size: 16, color: Colors.red[300]),
+              child: Icon(
+                Icons.delete_outline_rounded,
+                size: 16,
+                color: Colors.red[300],
+              ),
             ),
           ),
         ],
@@ -1438,8 +1568,7 @@ class _AddLoanPageState extends State<AddLoanPage> {
     if (!_formKey.currentState!.validate()) return;
 
     final loan = Loan(
-      id: widget.loan?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.loan?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text.trim(),
       type: _type,
       direction: _direction,
@@ -1498,8 +1627,7 @@ class _AddLoanPageState extends State<AddLoanPage> {
                 prefixIcon: Icon(Icons.category_outlined),
               ),
               items: LoanType.values
-                  .map((t) =>
-                      DropdownMenuItem(value: t, child: Text(t.label)))
+                  .map((t) => DropdownMenuItem(value: t, child: Text(t.label)))
                   .toList(),
               onChanged: (v) {
                 if (v != null) setState(() => _type = v);
@@ -1508,8 +1636,10 @@ class _AddLoanPageState extends State<AddLoanPage> {
             const SizedBox(height: 16),
 
             // Direction segmented button
-            const Text('Direction',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const Text(
+              'Direction',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<LoanDirection>(
               segments: const [
@@ -1525,8 +1655,7 @@ class _AddLoanPageState extends State<AddLoanPage> {
                 ),
               ],
               selected: {_direction},
-              onSelectionChanged: (s) =>
-                  setState(() => _direction = s.first),
+              onSelectionChanged: (s) => setState(() => _direction = s.first),
             ),
             const SizedBox(height: 16),
 
@@ -1714,9 +1843,11 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
   void initState() {
     super.initState();
     _monthController = TextEditingController(
-        text: widget.isPartPayment ? '0' : widget.nextMonthNumber.toString());
+      text: widget.isPartPayment ? '0' : widget.nextMonthNumber.toString(),
+    );
     _amountController = TextEditingController(
-        text: widget.isPartPayment ? '' : widget.emiAmount.toStringAsFixed(2));
+      text: widget.isPartPayment ? '' : widget.emiAmount.toStringAsFixed(2),
+    );
   }
 
   @override
@@ -1740,13 +1871,13 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
       principalPortion: widget.isPartPayment
           ? amount
           : (_principalController.text.isNotEmpty
-              ? double.tryParse(_principalController.text)
-              : null),
+                ? double.tryParse(_principalController.text)
+                : null),
       interestPortion: widget.isPartPayment
           ? 0
           : (_interestController.text.isNotEmpty
-              ? double.tryParse(_interestController.text)
-              : null),
+                ? double.tryParse(_interestController.text)
+                : null),
       paidDate: _paidDate,
       notes: _notesController.text.trim().isEmpty
           ? (widget.isPartPayment ? 'Part payment' : null)
@@ -1761,9 +1892,9 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isPartPayment
-            ? 'Part Payment'
-            : 'Record EMI Payment'),
+        title: Text(
+          widget.isPartPayment ? 'Part Payment' : 'Record EMI Payment',
+        ),
         elevation: 0,
       ),
       body: Form(
@@ -1783,8 +1914,11 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.savings_rounded,
-                        color: Colors.green[700], size: 20),
+                    Icon(
+                      Icons.savings_rounded,
+                      color: Colors.green[700],
+                      size: 20,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
@@ -1895,9 +2029,7 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
               onPressed: _save,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: widget.isPartPayment
-                    ? Colors.green
-                    : null,
+                backgroundColor: widget.isPartPayment ? Colors.green : null,
               ),
               child: Text(
                 widget.isPartPayment
@@ -1912,4 +2044,3 @@ class _AddRepaymentPageState extends State<AddRepaymentPage> {
     );
   }
 }
-

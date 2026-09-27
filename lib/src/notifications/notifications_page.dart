@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/shell/app_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/notifications/model/app_notification.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
@@ -23,6 +24,7 @@ class NotificationsPage extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: const ShellMenuButton(),
             title: const Text('Notifications'),
             centerTitle: true,
             elevation: 0,
@@ -43,7 +45,8 @@ class NotificationsPage extends StatelessWidget {
                       builder: (ctx) => AlertDialog(
                         title: const Text('Clear all notifications'),
                         content: const Text(
-                            'Remove every notification from this list?'),
+                          'Remove every notification from this list?',
+                        ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, false),
@@ -52,7 +55,8 @@ class NotificationsPage extends StatelessWidget {
                           TextButton(
                             onPressed: () => Navigator.pop(ctx, true),
                             style: TextButton.styleFrom(
-                                foregroundColor: Colors.red),
+                              foregroundColor: Colors.red,
+                            ),
                             child: const Text('Clear'),
                           ),
                         ],
@@ -68,19 +72,26 @@ class NotificationsPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.notifications_off_rounded,
-                          size: 56, color: cs.outlineVariant),
+                      Icon(
+                        Icons.notifications_off_rounded,
+                        size: 56,
+                        color: cs.outlineVariant,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'You\'re all caught up',
                         style: TextStyle(
-                            fontSize: 14, color: cs.onSurfaceVariant),
+                          fontSize: 14,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'New reminders will appear here',
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant),
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -221,7 +232,9 @@ class _NotificationTile extends StatelessWidget {
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(6),
@@ -240,7 +253,9 @@ class _NotificationTile extends StatelessWidget {
                           Text(
                             _ago(n.createdAt),
                             style: TextStyle(
-                                fontSize: 10, color: cs.onSurfaceVariant),
+                              fontSize: 10,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),

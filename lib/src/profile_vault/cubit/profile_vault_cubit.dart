@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/profile_vault/model/profile_vault_model.dart';
 import 'package:my_data_app/src/profile_vault/repository/profile_vault_repository.dart';
@@ -5,23 +7,48 @@ import 'package:my_data_app/src/profile_vault/cubit/profile_vault_state.dart';
 
 class ProfileVaultCubit extends Cubit<ProfileVaultState> {
   final ProfileVaultRepository _repository;
+  StreamSubscription<void>? _sub;
 
   ProfileVaultCubit(this._repository)
-      : super(ProfileVaultState(entries: _repository.getAll()));
+    : super(
+        ProfileVaultState(
+          entries: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
+
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        entries: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   void addEntry(VaultEntry entry) {
     _repository.add(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void updateEntry(VaultEntry entry) {
     _repository.update(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void deleteEntry(String id) {
     _repository.delete(id);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void toggleFavorite(String id) {

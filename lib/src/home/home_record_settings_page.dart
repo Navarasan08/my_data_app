@@ -45,11 +45,8 @@ class HomeRecordSettingsPage extends StatelessWidget {
                     iconColor: Colors.orange[700]!,
                     title: 'Categories',
                     subtitle: 'Default and custom expense categories',
-                    onTap: () => _push(
-                      context,
-                      cubit,
-                      const HomeCategoriesPage(),
-                    ),
+                    onTap: () =>
+                        _push(context, cubit, const HomeCategoriesPage()),
                   ),
 
                   // Payment Types
@@ -58,11 +55,8 @@ class HomeRecordSettingsPage extends StatelessWidget {
                     iconColor: Colors.purple[700]!,
                     title: 'Payment Types',
                     subtitle: 'Cash / UPI / card and more',
-                    onTap: () => _push(
-                      context,
-                      cubit,
-                      const HomePaymentTypesPage(),
-                    ),
+                    onTap: () =>
+                        _push(context, cubit, const HomePaymentTypesPage()),
                   ),
 
                   // Export & Import
@@ -94,8 +88,10 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       state.showMonthlyCalendar
                           ? 'Showing records by month with navigation'
                           : 'Showing all records in a single scrollable list',
-                      style:
-                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     value: state.showMonthlyCalendar,
                     onChanged: (val) => cubit.setShowMonthlyCalendar(val),
@@ -108,11 +104,15 @@ class HomeRecordSettingsPage extends StatelessWidget {
                     subtitle: Text(
                       'Day ${state.monthlyStartDay} · '
                       '${_weekendLabel(state.weekendAdjustment)}',
-                      style:
-                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
-                    trailing: Icon(Icons.chevron_right_rounded,
-                        color: cs.onSurfaceVariant),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      color: cs.onSurfaceVariant,
+                    ),
                     onTap: () => _showMonthlyCycleDialog(context, cubit, state),
                   ),
 
@@ -136,7 +136,10 @@ class HomeRecordSettingsPage extends StatelessWidget {
   }
 
   void _showMonthlyCycleDialog(
-      BuildContext context, HomeRecordCubit cubit, HomeRecordState state) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    HomeRecordState state,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => _MonthlyCycleDialog(
@@ -151,7 +154,10 @@ class HomeRecordSettingsPage extends StatelessWidget {
   }
 
   void _showCurrencyDialog(
-      BuildContext context, HomeRecordCubit cubit, HomeRecordState state) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    HomeRecordState state,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -172,8 +178,10 @@ class HomeRecordSettingsPage extends StatelessWidget {
                       color: Colors.green[700],
                     ),
                   ),
-                  title: Text('${c.name} (${c.code})',
-                      style: const TextStyle(fontSize: 14)),
+                  title: Text(
+                    '${c.name} (${c.code})',
+                    style: const TextStyle(fontSize: 14),
+                  ),
                   trailing: selected
                       ? const Icon(Icons.check, color: Colors.green)
                       : null,
@@ -227,10 +235,7 @@ class _SettingsTile extends StatelessWidget {
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(
           subtitle,
           style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
@@ -293,16 +298,20 @@ class _MonthlyCycleDialogState extends State<_MonthlyCycleDialog> {
               const SizedBox(height: 16),
               Row(
                 children: [
-                  const Text('Start day',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Start day',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const Spacer(),
                   DropdownButton<int>(
                     value: _day,
                     items: List.generate(31, (i) => i + 1)
-                        .map((d) => DropdownMenuItem<int>(
-                              value: d,
-                              child: Text('$d'),
-                            ))
+                        .map(
+                          (d) => DropdownMenuItem<int>(
+                            value: d,
+                            child: Text('$d'),
+                          ),
+                        )
                         .toList(),
                     onChanged: (d) {
                       if (d != null) setState(() => _day = d);
@@ -340,7 +349,9 @@ class _MonthlyCycleDialogState extends State<_MonthlyCycleDialog> {
                                   ? 'Move the start back to the previous Friday'
                                   : 'Move the start forward to the next Monday',
                               style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant),
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                     );
                   }).toList(),

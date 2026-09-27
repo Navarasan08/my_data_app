@@ -1,56 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:my_data_app/src/core/sync/single_collection_repository.dart';
+import 'package:my_data_app/src/core/sync/sync_node.dart';
 import 'package:my_data_app/src/profile_vault/model/profile_vault_model.dart';
 
-abstract class ProfileVaultRepository {
+abstract class ProfileVaultRepository implements SyncNode {
   List<VaultEntry> getAll();
   void add(VaultEntry entry);
   void update(VaultEntry entry);
   void delete(String id);
-  Future<void> init();
 }
 
-class FirestoreProfileVaultRepository implements ProfileVaultRepository {
-  final String uid;
-  final FirebaseFirestore _firestore;
-  List<VaultEntry> _entries = [];
-
-  FirestoreProfileVaultRepository({
-    required this.uid,
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
-
-  CollectionReference<Map<String, dynamic>> get _collection =>
-      _firestore.collection('users').doc(uid).collection('vault_entries');
+class FirestoreProfileVaultRepository
+    extends SingleCollectionRepository<VaultEntry>
+    implements ProfileVaultRepository {
+  FirestoreProfileVaultRepository({required super.uid, super.firestore})
+    : super(
+        collectionName: 'vault_entries',
+        fromDoc: (json, _) => VaultEntry.fromJson(json),
+        toJson: (e) => e.toJson(),
+        idOf: (e) => e.id,
+      );
 
   @override
-  Future<void> init() async {
-    final snapshot = await _collection.get();
-    _entries = snapshot.docs
-        .map((doc) => VaultEntry.fromJson(doc.data()))
-        .toList();
-  }
+  void add(VaultEntry entry) => store.save(entry);
 
   @override
-  List<VaultEntry> getAll() => List.unmodifiable(_entries);
+  void update(VaultEntry entry) => store.save(entry);
 
   @override
-  void add(VaultEntry entry) {
-    _entries.add(entry);
-    _collection.doc(entry.id).set(entry.toJson());
-  }
-
-  @override
-  void update(VaultEntry entry) {
-    final index = _entries.indexWhere((e) => e.id == entry.id);
-    if (index != -1) {
-      _entries[index] = entry;
-      _collection.doc(entry.id).set(entry.toJson());
-    }
-  }
-
-  @override
-  void delete(String id) {
-    _entries.removeWhere((e) => e.id == id);
-    _collection.doc(id).delete();
-  }
+  void delete(String id) => store.remove(id);
 }

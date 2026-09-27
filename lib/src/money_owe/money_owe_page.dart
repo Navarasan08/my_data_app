@@ -71,64 +71,67 @@ class MoneyOwePage extends StatelessWidget {
       builder: (ctx) {
         final cs = Theme.of(ctx).colorScheme;
         return SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 12),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.outlineVariant,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.green,
-                child: Icon(Icons.arrow_upward_rounded, color: Colors.white),
-              ),
-              title: const Text('I Gave Money (Lent)'),
-              subtitle: const Text('Someone owes me'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<MoneyOweCubit>(),
-                      child:
-                          const AddDebtPage(direction: DebtDirection.lent),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.green,
+                  child: Icon(Icons.arrow_upward_rounded, color: Colors.white),
+                ),
+                title: const Text('I Gave Money (Lent)'),
+                subtitle: const Text('Someone owes me'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<MoneyOweCubit>(),
+                        child: const AddDebtPage(direction: DebtDirection.lent),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: const CircleAvatar(
-                backgroundColor: Colors.red,
-                child: Icon(Icons.arrow_downward_rounded, color: Colors.white),
+                  );
+                },
               ),
-              title: const Text('I Took Money (Borrowed)'),
-              subtitle: const Text('I owe someone'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<MoneyOweCubit>(),
-                      child: const AddDebtPage(
-                          direction: DebtDirection.borrowed),
-                    ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.red,
+                  child: Icon(
+                    Icons.arrow_downward_rounded,
+                    color: Colors.white,
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-          ],
-        ),
-      );
+                ),
+                title: const Text('I Took Money (Borrowed)'),
+                subtitle: const Text('I owe someone'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<MoneyOweCubit>(),
+                        child: const AddDebtPage(
+                          direction: DebtDirection.borrowed,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
       },
     );
   }
@@ -147,18 +150,29 @@ class _SummaryBar extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
         children: [
-          Expanded(child: _summaryCard('To Receive', toReceive, Colors.green,
-              Icons.arrow_upward_rounded)),
+          Expanded(
+            child: _summaryCard(
+              'To Receive',
+              toReceive,
+              Colors.green,
+              Icons.arrow_upward_rounded,
+            ),
+          ),
           const SizedBox(width: 12),
-          Expanded(child: _summaryCard('To Pay', toPay, Colors.red,
-              Icons.arrow_downward_rounded)),
+          Expanded(
+            child: _summaryCard(
+              'To Pay',
+              toPay,
+              Colors.red,
+              Icons.arrow_downward_rounded,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _summaryCard(
-      String label, double amount, Color color, IconData icon) {
+  Widget _summaryCard(String label, double amount, Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -174,14 +188,17 @@ class _SummaryBar extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: TextStyle(fontSize: 12, color: color.shade700)),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: color.shade700),
+                ),
                 Text(
                   '\u20B9${_fmt(amount)}',
                   style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: color.shade700),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: color.shade700,
+                  ),
                 ),
               ],
             ),
@@ -204,8 +221,10 @@ class _DebtList extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     if (entries.isEmpty) {
       return Center(
-        child: Text(emptyLabel,
-            style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15)),
+        child: Text(
+          emptyLabel,
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
+        ),
       );
     }
     return ListView.builder(
@@ -259,7 +278,10 @@ class _DebtItemCard extends StatelessWidget {
                       ? entry.personName[0].toUpperCase()
                       : '?',
                   style: TextStyle(
-                      color: color, fontWeight: FontWeight.bold, fontSize: 18),
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -273,19 +295,28 @@ class _DebtItemCard extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        decoration:
-                            isSettled ? TextDecoration.lineThrough : null,
+                        decoration: isSettled
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
                     if (entry.reason != null && entry.reason!.isNotEmpty)
-                      Text(entry.reason!,
-                          style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                    Text(dateFmt.format(entry.date),
+                      Text(
+                        entry.reason!,
                         style: TextStyle(
-                            fontSize: 11, color: cs.onSurfaceVariant)),
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    Text(
+                      dateFmt.format(entry.date),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -300,8 +331,7 @@ class _DebtItemCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: isSettled ? cs.onSurfaceVariant : color,
-                      decoration:
-                          isSettled ? TextDecoration.lineThrough : null,
+                      decoration: isSettled ? TextDecoration.lineThrough : null,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -324,8 +354,11 @@ class _DebtItemCard extends StatelessWidget {
               ),
               // Delete button
               IconButton(
-                icon: Icon(Icons.delete_outline,
-                    size: 20, color: cs.onSurfaceVariant),
+                icon: Icon(
+                  Icons.delete_outline,
+                  size: 20,
+                  color: cs.onSurfaceVariant,
+                ),
                 onPressed: () async {
                   final cubit = context.read<MoneyOweCubit>();
                   final confirmed = await showDialog<bool>(
@@ -333,7 +366,8 @@ class _DebtItemCard extends StatelessWidget {
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete Entry'),
                       content: Text(
-                          'Delete "${entry.personName}" entry? This cannot be undone.'),
+                        'Delete "${entry.personName}" entry? This cannot be undone.',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -342,7 +376,8 @@ class _DebtItemCard extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -368,9 +403,14 @@ class _DebtItemCard extends StatelessWidget {
         color: color.withAlpha(30),
         borderRadius: BorderRadius.circular(4),
       ),
-      child: Text(label,
-          style:
-              TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 }
@@ -393,9 +433,10 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
     final cs = Theme.of(context).colorScheme;
     return BlocBuilder<MoneyOweCubit, MoneyOweState>(
       builder: (context, state) {
-        final entry = state.entries
-            .cast<DebtEntry?>()
-            .firstWhere((e) => e!.id == widget.entryId, orElse: () => null);
+        final entry = state.entries.cast<DebtEntry?>().firstWhere(
+          (e) => e!.id == widget.entryId,
+          orElse: () => null,
+        );
         if (entry == null) {
           return Scaffold(
             appBar: AppBar(),
@@ -430,9 +471,13 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(entry.direction.label,
-                            style: TextStyle(
-                                color: color, fontWeight: FontWeight.w600)),
+                        Text(
+                          entry.direction.label,
+                          style: TextStyle(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         if (isSettled)
                           _statusChip('Settled', Colors.green)
                         else if (entry.isOverdue)
@@ -468,7 +513,9 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                       child: Text(
                         '${(entry.settledPercent * 100).toStringAsFixed(0)}% settled',
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant),
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   ],
@@ -486,8 +533,10 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded,
-                          color: Colors.red),
+                      const Icon(
+                        Icons.warning_amber_rounded,
+                        color: Colors.red,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -517,16 +566,20 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
               ],
               // Settlement history
               const SizedBox(height: 20),
-              Text('Settlement History',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: cs.onSurface)),
+              Text(
+                'Settlement History',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 8),
               if (entry.settlements.isEmpty)
-                Text('No payments recorded yet.',
-                    style: TextStyle(
-                        color: cs.onSurfaceVariant, fontSize: 13))
+                Text(
+                  'No payments recorded yet.',
+                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+                )
               else
                 ...entry.settlements.map((s) => _settlementTile(s)),
             ],
@@ -557,22 +610,30 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
   }
 
   Widget _detailRow(String label, String value) {
-    return Builder(builder: (context) {
-      final cs = Theme.of(context).colorScheme;
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label,
-                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
-            Text(value,
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
-          ],
-        ),
-      );
-    });
+    return Builder(
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _statusChip(String label, Color color) {
@@ -582,46 +643,61 @@ class _DebtDetailPageState extends State<DebtDetailPage> {
         color: color.withAlpha(30),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label,
-          style: TextStyle(
-              fontSize: 11, fontWeight: FontWeight.w600, color: color)),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
     );
   }
 
   Widget _settlementTile(DebtSettlement s) {
-    return Builder(builder: (context) {
-      final cs = Theme.of(context).colorScheme;
-      return Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: cs.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.receipt_long, size: 20, color: Colors.green),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('\u20B9${_fmt(s.amount)}',
-                      style: const TextStyle(fontWeight: FontWeight.w600)),
-                  if (s.note != null && s.note!.isNotEmpty)
-                    Text(s.note!,
+    return Builder(
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: cs.outlineVariant),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.receipt_long, size: 20, color: Colors.green),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '\u20B9${_fmt(s.amount)}',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (s.note != null && s.note!.isNotEmpty)
+                      Text(
+                        s.note!,
                         style: TextStyle(
-                            fontSize: 12, color: cs.onSurfaceVariant)),
-                ],
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            Text(_dateFmt.format(s.date),
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-          ],
-        ),
-      );
-    });
+              Text(
+                _dateFmt.format(s.date),
+                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -652,8 +728,9 @@ class _AddDebtPageState extends State<AddDebtPage> {
     final e = widget.existing;
     _nameCtrl = TextEditingController(text: e?.personName ?? '');
     _phoneCtrl = TextEditingController(text: e?.phone ?? '');
-    _amountCtrl =
-        TextEditingController(text: e != null ? e.amount.toString() : '');
+    _amountCtrl = TextEditingController(
+      text: e != null ? e.amount.toString() : '',
+    );
     _reasonCtrl = TextEditingController(text: e?.reason ?? '');
     _date = e?.date ?? DateTime.now();
     _dueDate = e?.dueDate;
@@ -691,14 +768,14 @@ class _AddDebtPageState extends State<AddDebtPage> {
     if (!_formKey.currentState!.validate()) return;
     final cubit = context.read<MoneyOweCubit>();
     final entry = DebtEntry(
-      id: widget.existing?.id ??
+      id:
+          widget.existing?.id ??
           DateTime.now().millisecondsSinceEpoch.toString(),
       personName: _nameCtrl.text.trim(),
       phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       direction: widget.direction,
       amount: double.parse(_amountCtrl.text.trim()),
-      reason:
-          _reasonCtrl.text.trim().isEmpty ? null : _reasonCtrl.text.trim(),
+      reason: _reasonCtrl.text.trim().isEmpty ? null : _reasonCtrl.text.trim(),
       date: _date,
       dueDate: _hasDueDate ? _dueDate : null,
       isSettled: widget.existing?.isSettled ?? false,
@@ -720,9 +797,11 @@ class _AddDebtPageState extends State<AddDebtPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEdit
-            ? 'Edit ${widget.direction.label}'
-            : 'Add ${widget.direction.label}'),
+        title: Text(
+          isEdit
+              ? 'Edit ${widget.direction.label}'
+              : 'Add ${widget.direction.label}',
+        ),
         centerTitle: true,
         elevation: 0,
       ),
@@ -735,8 +814,10 @@ class _AddDebtPageState extends State<AddDebtPage> {
             Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: color.withAlpha(25),
                   borderRadius: BorderRadius.circular(6),
@@ -776,8 +857,9 @@ class _AddDebtPageState extends State<AddDebtPage> {
                 prefixText: '\u20B9 ',
                 border: OutlineInputBorder(),
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Required';
                 if (double.tryParse(v.trim()) == null) return 'Invalid number';
@@ -817,7 +899,8 @@ class _AddDebtPageState extends State<AddDebtPage> {
                 leading: const Icon(Icons.event),
                 title: const Text('Due Date'),
                 subtitle: Text(
-                    _dueDate != null ? dateFmt.format(_dueDate!) : 'Pick date'),
+                  _dueDate != null ? dateFmt.format(_dueDate!) : 'Pick date',
+                ),
                 onTap: () => _pickDate(isDue: true),
               ),
             const SizedBox(height: 24),
@@ -856,8 +939,9 @@ class _AddSettlementPageState extends State<AddSettlementPage> {
   @override
   void initState() {
     super.initState();
-    _amountCtrl =
-        TextEditingController(text: widget.pendingAmount.toStringAsFixed(0));
+    _amountCtrl = TextEditingController(
+      text: widget.pendingAmount.toStringAsFixed(0),
+    );
     _noteCtrl = TextEditingController();
     _date = DateTime.now();
   }
@@ -918,8 +1002,9 @@ class _AddSettlementPageState extends State<AddSettlementPage> {
                 prefixText: '\u20B9 ',
                 border: OutlineInputBorder(),
               ),
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Required';
                 final val = double.tryParse(v.trim());
@@ -944,10 +1029,7 @@ class _AddSettlementPageState extends State<AddSettlementPage> {
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: _save,
-              child: const Text('Save Payment'),
-            ),
+            FilledButton(onPressed: _save, child: const Text('Save Payment')),
           ],
         ),
       ),

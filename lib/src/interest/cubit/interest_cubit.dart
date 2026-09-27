@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/interest/cubit/interest_state.dart';
 import 'package:my_data_app/src/interest/model/interest_model.dart';
@@ -5,25 +7,50 @@ import 'package:my_data_app/src/interest/repository/interest_repository.dart';
 
 class InterestCubit extends Cubit<InterestState> {
   final InterestRepository _repository;
+  StreamSubscription<void>? _sub;
 
   InterestCubit(this._repository)
-      : super(InterestState(records: _repository.getAll()));
+    : super(
+        InterestState(
+          records: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
+
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        records: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   // ── Records ─────────────────────────────────────────────────────────────
 
   void addRecord(InterestRecord r) {
     _repository.add(r);
-    _emit();
+    _sync();
   }
 
   void updateRecord(InterestRecord r) {
     _repository.update(r.copyWith(updatedAt: DateTime.now()));
-    _emit();
+    _sync();
   }
 
   void deleteRecord(String id) {
     _repository.delete(id);
-    _emit();
+    _sync();
   }
 
   void closeRecord(String id) {
@@ -67,15 +94,15 @@ class InterestCubit extends Cubit<InterestState> {
 
   // ── Filtered views ──────────────────────────────────────────────────────
 
-  List<InterestRecord> get lent => state.records
-      .where((r) => r.direction == InterestDirection.lent)
-      .toList()
-    ..sort(_orderActiveFirst);
+  List<InterestRecord> get lent =>
+      state.records.where((r) => r.direction == InterestDirection.lent).toList()
+        ..sort(_orderActiveFirst);
 
-  List<InterestRecord> get borrowed => state.records
-      .where((r) => r.direction == InterestDirection.borrowed)
-      .toList()
-    ..sort(_orderActiveFirst);
+  List<InterestRecord> get borrowed =>
+      state.records
+          .where((r) => r.direction == InterestDirection.borrowed)
+          .toList()
+        ..sort(_orderActiveFirst);
 
   int _orderActiveFirst(InterestRecord a, InterestRecord b) {
     if (a.isClosed != b.isClosed) return a.isClosed ? 1 : -1;
@@ -91,9 +118,8 @@ class InterestCubit extends Cubit<InterestState> {
       .where((r) => !r.isClosed)
       .fold(0.0, (s, r) => s + r.totalOutstanding);
 
-  double get totalInterestEarned => lent.fold(0.0, (s, r) => s + r.totalInterestPaid);
+  double get totalInterestEarned =>
+      lent.fold(0.0, (s, r) => s + r.totalInterestPaid);
   double get totalInterestPaid =>
       borrowed.fold(0.0, (s, r) => s + r.totalInterestPaid);
-
-  void _emit() => emit(state.copyWith(records: _repository.getAll()));
 }

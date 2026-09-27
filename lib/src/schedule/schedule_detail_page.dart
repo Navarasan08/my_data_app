@@ -23,9 +23,8 @@ class ScheduleDetailPage extends StatelessWidget {
         final cubit = context.read<ScheduleCubit>();
         final entry = state.entries.firstWhere(
           (e) => e.id == entryId,
-          orElse: () => state.entries.isEmpty
-              ? _placeholder()
-              : state.entries.first,
+          orElse: () =>
+              state.entries.isEmpty ? _placeholder() : state.entries.first,
         );
 
         // If the entry was deleted, pop back.
@@ -74,9 +73,7 @@ class ScheduleDetailPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: cat.color.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border(
-                    left: BorderSide(color: cat.color, width: 4),
-                  ),
+                  border: Border(left: BorderSide(color: cat.color, width: 4)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -102,8 +99,11 @@ class ScheduleDetailPage extends StatelessWidget {
                         ),
                         const Spacer(),
                         if (entry.isRecurring)
-                          Icon(Icons.repeat_rounded,
-                              size: 14, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.repeat_rounded,
+                            size: 14,
+                            color: cs.onSurfaceVariant,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -119,24 +119,25 @@ class ScheduleDetailPage extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         entry.description!,
-                        style:
-                            TextStyle(fontSize: 13, color: cs.onSurface),
+                        style: TextStyle(fontSize: 13, color: cs.onSurface),
                       ),
                     ],
                     const SizedBox(height: 10),
                     _MetaRow(
                       icon: Icons.event_rounded,
                       label: 'Started',
-                      value: DateFormat('EEE, d MMM yyyy')
-                          .format(entry.startDate),
+                      value: DateFormat(
+                        'EEE, d MMM yyyy',
+                      ).format(entry.startDate),
                     ),
                     if (entry.endDate != null) ...[
                       const SizedBox(height: 4),
                       _MetaRow(
                         icon: Icons.event_busy_rounded,
                         label: 'Ends',
-                        value: DateFormat('EEE, d MMM yyyy')
-                            .format(entry.endDate!),
+                        value: DateFormat(
+                          'EEE, d MMM yyyy',
+                        ).format(entry.endDate!),
                       ),
                     ],
                     if (entry.isRecurring) ...[
@@ -203,12 +204,14 @@ class ScheduleDetailPage extends StatelessWidget {
               if (completed.isEmpty)
                 _EmptyHint(text: 'No occurrences completed yet')
               else
-                ...completed.map((d) => _OccurrenceTile(
-                      date: d,
-                      icon: Icons.check_rounded,
-                      color: Colors.green,
-                      onUndo: () => cubit.toggleCompleteOn(entry.id, d),
-                    )),
+                ...completed.map(
+                  (d) => _OccurrenceTile(
+                    date: d,
+                    icon: Icons.check_rounded,
+                    color: Colors.green,
+                    onUndo: () => cubit.toggleCompleteOn(entry.id, d),
+                  ),
+                ),
               const SizedBox(height: 16),
 
               // Skipped list
@@ -221,20 +224,24 @@ class ScheduleDetailPage extends StatelessWidget {
               if (skipped.isEmpty)
                 _EmptyHint(text: 'No skipped occurrences')
               else
-                ...skipped.map((d) => _OccurrenceTile(
-                      date: d,
-                      icon: Icons.close_rounded,
-                      color: Colors.orange,
-                      onUndo: () {
-                        // restore by removing from skippedDates
-                        final next = entry.skippedDates
-                            .where((s) =>
+                ...skipped.map(
+                  (d) => _OccurrenceTile(
+                    date: d,
+                    icon: Icons.close_rounded,
+                    color: Colors.orange,
+                    onUndo: () {
+                      // restore by removing from skippedDates
+                      final next = entry.skippedDates
+                          .where(
+                            (s) =>
                                 DateTime(s.year, s.month, s.day) !=
-                                DateTime(d.year, d.month, d.day))
-                            .toList();
-                        cubit.updateEntry(entry.copyWith(skippedDates: next));
-                      },
-                    )),
+                                DateTime(d.year, d.month, d.day),
+                          )
+                          .toList();
+                      cubit.updateEntry(entry.copyWith(skippedDates: next));
+                    },
+                  ),
+                ),
               const SizedBox(height: 24),
             ],
           ),
@@ -274,8 +281,11 @@ class ScheduleDetailPage extends StatelessWidget {
     return streak;
   }
 
-  Future<void> _onEdit(BuildContext context, ScheduleCubit cubit,
-      ScheduleEntry entry) async {
+  Future<void> _onEdit(
+    BuildContext context,
+    ScheduleCubit cubit,
+    ScheduleEntry entry,
+  ) async {
     final edited = await Navigator.push<ScheduleEntry>(
       context,
       MaterialPageRoute(
@@ -288,14 +298,16 @@ class ScheduleDetailPage extends StatelessWidget {
     if (edited != null) cubit.updateEntry(edited);
   }
 
-  Future<void> _onDelete(BuildContext context, ScheduleCubit cubit,
-      ScheduleEntry entry) async {
+  Future<void> _onDelete(
+    BuildContext context,
+    ScheduleCubit cubit,
+    ScheduleEntry entry,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Series'),
-        content: Text(
-            'Delete "${entry.title}" and all of its occurrences?'),
+        content: Text('Delete "${entry.title}" and all of its occurrences?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -316,11 +328,11 @@ class ScheduleDetailPage extends StatelessWidget {
   }
 
   ScheduleEntry _placeholder() => ScheduleEntry(
-        id: '',
-        title: '',
-        startDate: DateTime.now(),
-        category: ScheduleCategory.other,
-      );
+    id: '',
+    title: '',
+    startDate: DateTime.now(),
+    category: ScheduleCategory.other,
+  );
 }
 
 class _MetaRow extends StatelessWidget {
@@ -328,8 +340,11 @@ class _MetaRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MetaRow(
-      {required this.icon, required this.label, required this.value});
+  const _MetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -338,8 +353,10 @@ class _MetaRow extends StatelessWidget {
       children: [
         Icon(icon, size: 14, color: cs.onSurfaceVariant),
         const SizedBox(width: 6),
-        Text('$label: ',
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+        Text(
+          '$label: ',
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+        ),
         Expanded(
           child: Text(
             value,
@@ -361,11 +378,12 @@ class _StatCard extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _StatCard(
-      {required this.label,
-      required this.value,
-      required this.icon,
-      required this.color});
+  const _StatCard({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -408,11 +426,12 @@ class _SectionTitle extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _SectionTitle(
-      {required this.title,
-      required this.count,
-      required this.icon,
-      required this.color});
+  const _SectionTitle({
+    required this.title,
+    required this.count,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -433,18 +452,19 @@ class _SectionTitle extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
             decoration: BoxDecoration(
               color: cs.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('$count',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: cs.onSurface,
-                )),
+            child: Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: cs.onSurface,
+              ),
+            ),
           ),
         ],
       ),
@@ -458,11 +478,12 @@ class _OccurrenceTile extends StatelessWidget {
   final Color color;
   final VoidCallback onUndo;
 
-  const _OccurrenceTile(
-      {required this.date,
-      required this.icon,
-      required this.color,
-      required this.onUndo});
+  const _OccurrenceTile({
+    required this.date,
+    required this.icon,
+    required this.color,
+    required this.onUndo,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -495,8 +516,7 @@ class _OccurrenceTile extends StatelessWidget {
           TextButton(
             onPressed: onUndo,
             style: TextButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: const Size(0, 28),
               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),

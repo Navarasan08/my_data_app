@@ -36,7 +36,7 @@ class HomeCategoriesPage extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                     child: Text(
-                      'Default Categories',
+                      'Default Expense Categories',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -52,11 +52,51 @@ class HomeCategoriesPage extends StatelessWidget {
                       children: HomeCategory.defaults.map((cat) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 8),
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
                           child: Chip(
                             avatar: Icon(cat.icon, size: 16, color: cat.color),
-                            label: Text(cat.displayName,
-                                style: const TextStyle(fontSize: 12)),
+                            label: Text(
+                              cat.displayName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const Divider(),
+
+                  // Default income categories section
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Text(
+                      'Default Income Categories',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: cs.onSurface,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 50,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      children: HomeCategory.incomeDefaults.map((cat) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
+                          child: Chip(
+                            avatar: Icon(cat.icon, size: 16, color: cat.color),
+                            label: Text(
+                              cat.displayName,
+                              style: const TextStyle(fontSize: 12),
+                            ),
                           ),
                         );
                       }).toList(),
@@ -94,7 +134,9 @@ class HomeCategoriesPage extends StatelessWidget {
                       final inUse = cubit.isCategoryInUse(cat.id);
                       return Card(
                         margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         child: ListTile(
                           leading: Container(
                             padding: const EdgeInsets.all(8),
@@ -106,26 +148,34 @@ class HomeCategoriesPage extends StatelessWidget {
                           ),
                           title: Text(
                             cat.displayName,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.w600),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
-                          subtitle: inUse
-                              ? const Text('In use',
-                                  style: TextStyle(
-                                      fontSize: 12, color: Colors.green))
-                              : null,
+                          subtitle: Text(
+                            [
+                              cat.isIncome ? 'Income' : 'Expense',
+                              if (inUse) 'In use',
+                            ].join('  ·  '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: inUse ? Colors.green : cs.onSurfaceVariant,
+                            ),
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: Icon(Icons.edit_outlined,
-                                    color: Colors.blue[400]),
+                                icon: Icon(
+                                  Icons.edit_outlined,
+                                  color: Colors.blue[400],
+                                ),
                                 onPressed: () =>
                                     _showCategoryDialog(context, cubit, cat),
                               ),
                               IconButton(
-                                icon: Icon(Icons.delete_outline,
-                                    color: Colors.red[400]),
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red[400],
+                                ),
                                 onPressed: () =>
                                     _confirmDelete(context, cubit, cat, inUse),
                               ),
@@ -144,7 +194,10 @@ class HomeCategoriesPage extends StatelessWidget {
   }
 
   void _showCategoryDialog(
-      BuildContext context, HomeRecordCubit cubit, HomeCategory? existing) {
+    BuildContext context,
+    HomeRecordCubit cubit,
+    HomeCategory? existing,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => _CategoryDialog(
@@ -160,8 +213,12 @@ class HomeCategoriesPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, HomeRecordCubit cubit,
-      HomeCategory category, bool inUse) {
+  void _confirmDelete(
+    BuildContext context,
+    HomeRecordCubit cubit,
+    HomeCategory category,
+    bool inUse,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -194,11 +251,8 @@ class _CategoryDialog extends StatefulWidget {
   final HomeCategory? existing;
   final ValueChanged<HomeCategory> onSave;
 
-  const _CategoryDialog({
-    Key? key,
-    this.existing,
-    required this.onSave,
-  }) : super(key: key);
+  const _CategoryDialog({Key? key, this.existing, required this.onSave})
+    : super(key: key);
 
   @override
   State<_CategoryDialog> createState() => _CategoryDialogState();
@@ -208,6 +262,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   final _nameController = TextEditingController();
   int _selectedIconIndex = 10;
   int _selectedColorIndex = 0;
+  bool _isIncome = false;
 
   bool get _isEditing => widget.existing != null;
 
@@ -218,6 +273,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
       _nameController.text = widget.existing!.displayName;
       _selectedIconIndex = widget.existing!.iconIndex;
       _selectedColorIndex = widget.existing!.colorIndex;
+      _isIncome = widget.existing!.isIncome;
     }
   }
 
@@ -250,7 +306,8 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     color: previewColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
+                      color: previewColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -273,6 +330,20 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ),
               const SizedBox(height: 20),
 
+              // Expense / Income kind. Locked when editing so existing
+              // records that reference this category keep a matching kind.
+              SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: false, label: Text('Expense')),
+                  ButtonSegment(value: true, label: Text('Income')),
+                ],
+                selected: {_isIncome},
+                onSelectionChanged: _isEditing
+                    ? null
+                    : (sel) => setState(() => _isIncome = sel.first),
+              ),
+              const SizedBox(height: 16),
+
               // Name field
               TextField(
                 controller: _nameController,
@@ -286,18 +357,19 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               const SizedBox(height: 16),
 
               // Icon selector
-              Text('Icon',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
+              Text(
+                'Icon',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 120,
                 child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
                     mainAxisSpacing: 6,
                     crossAxisSpacing: 6,
@@ -306,8 +378,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                   itemBuilder: (context, index) {
                     final isSelected = _selectedIconIndex == index;
                     return InkWell(
-                      onTap: () =>
-                          setState(() => _selectedIconIndex = index),
+                      onTap: () => setState(() => _selectedIconIndex = index),
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         decoration: BoxDecoration(
@@ -334,23 +405,25 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               const SizedBox(height: 16),
 
               // Color selector
-              Text('Color',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurface,
-                  )),
+              Text(
+                'Color',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: List.generate(
-                    HomeCategory.availableColors.length, (index) {
+                children: List.generate(HomeCategory.availableColors.length, (
+                  index,
+                ) {
                   final color = HomeCategory.availableColors[index];
                   final isSelected = _selectedColorIndex == index;
                   return InkWell(
-                    onTap: () =>
-                        setState(() => _selectedColorIndex = index),
+                    onTap: () => setState(() => _selectedColorIndex = index),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: 32,
@@ -363,8 +436,11 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                             : Border.all(color: cs.outline, width: 1),
                       ),
                       child: isSelected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 18)
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 18,
+                            )
                           : null,
                     ),
                   );
@@ -384,7 +460,8 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               ? null
               : () {
                   final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
+                  final id =
+                      widget.existing?.id ??
                       'custom_${DateTime.now().millisecondsSinceEpoch}';
                   final category = HomeCategory(
                     id: id,
@@ -392,6 +469,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
                     iconIndex: _selectedIconIndex,
                     colorIndex: _selectedColorIndex,
                     isCustom: true,
+                    isIncome: _isIncome,
                   );
                   widget.onSave(category);
                   Navigator.pop(context);

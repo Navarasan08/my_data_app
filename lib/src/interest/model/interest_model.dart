@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 enum InterestDirection {
-  lent,     // I gave money to someone with interest
+  lent, // I gave money to someone with interest
   borrowed, // I took money from someone with interest
 }
 
@@ -66,9 +66,9 @@ extension RateUnitExt on RateUnit {
 }
 
 enum PaymentKind {
-  interest,   // payment toward interest only
-  principal,  // payment toward principal only
-  mixed,      // a mix of both
+  interest, // payment toward interest only
+  principal, // payment toward principal only
+  mixed, // a mix of both
 }
 
 extension PaymentKindExt on PaymentKind {
@@ -165,23 +165,26 @@ class InterestPayment {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'amount': amount,
-        'paidDate': paidDate.toIso8601String(),
-        'kind': kind.index,
-        'principalPart': principalPart,
-        'interestPart': interestPart,
-        'notes': notes,
-        'photoUrls': photoUrls,
-      };
+    'id': id,
+    'amount': amount,
+    'paidDate': paidDate.toIso8601String(),
+    'kind': kind.index,
+    'principalPart': principalPart,
+    'interestPart': interestPart,
+    'notes': notes,
+    'photoUrls': photoUrls,
+  };
 
   factory InterestPayment.fromJson(Map<String, dynamic> json) =>
       InterestPayment(
         id: json['id'] as String,
         amount: (json['amount'] as num).toDouble(),
         paidDate: DateTime.parse(json['paidDate'] as String),
-        kind: PaymentKind.values[
-            (json['kind'] as int? ?? 0).clamp(0, PaymentKind.values.length - 1)],
+        kind:
+            PaymentKind.values[(json['kind'] as int? ?? 0).clamp(
+              0,
+              PaymentKind.values.length - 1,
+            )],
         principalPart: (json['principalPart'] as num?)?.toDouble(),
         interestPart: (json['interestPart'] as num?)?.toDouble(),
         notes: json['notes'] as String?,
@@ -249,7 +252,8 @@ class InterestRecord {
   /// Months elapsed between [startDate] and [until] (defaults to today,
   /// or to [closedDate] when the record is closed).
   double monthsElapsed({DateTime? until}) {
-    final end = until ?? (isClosed ? (closedDate ?? DateTime.now()) : DateTime.now());
+    final end =
+        until ?? (isClosed ? (closedDate ?? DateTime.now()) : DateTime.now());
     final ms = end.difference(startDate).inMilliseconds;
     if (ms <= 0) return 0;
     final days = ms / Duration.millisecondsPerDay;
@@ -273,17 +277,20 @@ class InterestRecord {
     for (final p in sorted) {
       if (p.paidDate.isBefore(cursor)) continue;
       final months =
-          p.paidDate.difference(cursor).inMilliseconds / Duration.millisecondsPerDay / 30.0;
+          p.paidDate.difference(cursor).inMilliseconds /
+          Duration.millisecondsPerDay /
+          30.0;
       interest += balance * monthlyRate / 100 * months;
       balance -= p.effectivePrincipal;
       if (balance < 0) balance = 0;
       cursor = p.paidDate;
     }
-    final endRef =
-        isClosed ? (closedDate ?? DateTime.now()) : DateTime.now();
+    final endRef = isClosed ? (closedDate ?? DateTime.now()) : DateTime.now();
     if (endRef.isAfter(cursor)) {
       final months =
-          endRef.difference(cursor).inMilliseconds / Duration.millisecondsPerDay / 30.0;
+          endRef.difference(cursor).inMilliseconds /
+          Duration.millisecondsPerDay /
+          30.0;
       interest += balance * monthlyRate / 100 * months;
     }
     return interest < 0 ? 0 : interest;
@@ -342,8 +349,7 @@ class InterestRecord {
           ? null
           : (expectedEndDate ?? this.expectedEndDate),
       isClosed: isClosed ?? this.isClosed,
-      closedDate:
-          clearClosedDate ? null : (closedDate ?? this.closedDate),
+      closedDate: clearClosedDate ? null : (closedDate ?? this.closedDate),
       notes: notes ?? this.notes,
       agreementPhotoUrls: agreementPhotoUrls ?? this.agreementPhotoUrls,
       payments: payments ?? this.payments,
@@ -353,54 +359,59 @@ class InterestRecord {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'direction': direction.index,
-        'personName': personName,
-        'personContact': personContact,
-        'principal': principal,
-        'interestRate': interestRate,
-        'rateUnit': rateUnit.index,
-        'startDate': startDate.toIso8601String(),
-        'expectedEndDate': expectedEndDate?.toIso8601String(),
-        'isClosed': isClosed,
-        'closedDate': closedDate?.toIso8601String(),
-        'notes': notes,
-        'agreementPhotoUrls': agreementPhotoUrls,
-        'payments': payments.map((p) => p.toJson()).toList(),
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'direction': direction.index,
+    'personName': personName,
+    'personContact': personContact,
+    'principal': principal,
+    'interestRate': interestRate,
+    'rateUnit': rateUnit.index,
+    'startDate': startDate.toIso8601String(),
+    'expectedEndDate': expectedEndDate?.toIso8601String(),
+    'isClosed': isClosed,
+    'closedDate': closedDate?.toIso8601String(),
+    'notes': notes,
+    'agreementPhotoUrls': agreementPhotoUrls,
+    'payments': payments.map((p) => p.toJson()).toList(),
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
-  factory InterestRecord.fromJson(Map<String, dynamic> json) =>
-      InterestRecord(
-        id: json['id'] as String,
-        direction: InterestDirection.values[
-            (json['direction'] as int? ?? 0)
-                .clamp(0, InterestDirection.values.length - 1)],
-        personName: json['personName'] as String,
-        personContact: json['personContact'] as String?,
-        principal: (json['principal'] as num).toDouble(),
-        interestRate: (json['interestRate'] as num).toDouble(),
-        rateUnit: RateUnit.values[
-            (json['rateUnit'] as int? ?? 0).clamp(0, RateUnit.values.length - 1)],
-        startDate: DateTime.parse(json['startDate'] as String),
-        expectedEndDate: json['expectedEndDate'] != null
-            ? DateTime.parse(json['expectedEndDate'] as String)
-            : null,
-        isClosed: json['isClosed'] as bool? ?? false,
-        closedDate: json['closedDate'] != null
-            ? DateTime.parse(json['closedDate'] as String)
-            : null,
-        notes: json['notes'] as String?,
-        agreementPhotoUrls:
-            (json['agreementPhotoUrls'] as List<dynamic>?)?.cast<String>() ??
-                const [],
-        payments: (json['payments'] as List<dynamic>?)
-                ?.cast<Map<String, dynamic>>()
-                .map(InterestPayment.fromJson)
-                .toList() ??
-            const [],
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        updatedAt: DateTime.parse(json['updatedAt'] as String),
-      );
+  factory InterestRecord.fromJson(Map<String, dynamic> json) => InterestRecord(
+    id: json['id'] as String,
+    direction:
+        InterestDirection.values[(json['direction'] as int? ?? 0).clamp(
+          0,
+          InterestDirection.values.length - 1,
+        )],
+    personName: json['personName'] as String,
+    personContact: json['personContact'] as String?,
+    principal: (json['principal'] as num).toDouble(),
+    interestRate: (json['interestRate'] as num).toDouble(),
+    rateUnit:
+        RateUnit.values[(json['rateUnit'] as int? ?? 0).clamp(
+          0,
+          RateUnit.values.length - 1,
+        )],
+    startDate: DateTime.parse(json['startDate'] as String),
+    expectedEndDate: json['expectedEndDate'] != null
+        ? DateTime.parse(json['expectedEndDate'] as String)
+        : null,
+    isClosed: json['isClosed'] as bool? ?? false,
+    closedDate: json['closedDate'] != null
+        ? DateTime.parse(json['closedDate'] as String)
+        : null,
+    notes: json['notes'] as String?,
+    agreementPhotoUrls:
+        (json['agreementPhotoUrls'] as List<dynamic>?)?.cast<String>() ??
+        const [],
+    payments:
+        (json['payments'] as List<dynamic>?)
+            ?.cast<Map<String, dynamic>>()
+            .map(InterestPayment.fromJson)
+            .toList() ??
+        const [],
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    updatedAt: DateTime.parse(json['updatedAt'] as String),
+  );
 }

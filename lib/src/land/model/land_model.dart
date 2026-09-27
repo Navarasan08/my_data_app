@@ -14,40 +14,64 @@ enum LandType {
 extension LandTypeExt on LandType {
   String get label {
     switch (this) {
-      case LandType.residentialPlot: return 'Residential Plot';
-      case LandType.agricultural: return 'Agricultural';
-      case LandType.commercial: return 'Commercial';
-      case LandType.industrial: return 'Industrial';
-      case LandType.house: return 'House';
-      case LandType.apartment: return 'Apartment';
-      case LandType.farmHouse: return 'Farm House';
-      case LandType.other: return 'Other';
+      case LandType.residentialPlot:
+        return 'Residential Plot';
+      case LandType.agricultural:
+        return 'Agricultural';
+      case LandType.commercial:
+        return 'Commercial';
+      case LandType.industrial:
+        return 'Industrial';
+      case LandType.house:
+        return 'House';
+      case LandType.apartment:
+        return 'Apartment';
+      case LandType.farmHouse:
+        return 'Farm House';
+      case LandType.other:
+        return 'Other';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case LandType.residentialPlot: return Icons.location_on_rounded;
-      case LandType.agricultural: return Icons.agriculture_rounded;
-      case LandType.commercial: return Icons.store_rounded;
-      case LandType.industrial: return Icons.factory_rounded;
-      case LandType.house: return Icons.home_rounded;
-      case LandType.apartment: return Icons.apartment_rounded;
-      case LandType.farmHouse: return Icons.holiday_village_rounded;
-      case LandType.other: return Icons.map_rounded;
+      case LandType.residentialPlot:
+        return Icons.location_on_rounded;
+      case LandType.agricultural:
+        return Icons.agriculture_rounded;
+      case LandType.commercial:
+        return Icons.store_rounded;
+      case LandType.industrial:
+        return Icons.factory_rounded;
+      case LandType.house:
+        return Icons.home_rounded;
+      case LandType.apartment:
+        return Icons.apartment_rounded;
+      case LandType.farmHouse:
+        return Icons.holiday_village_rounded;
+      case LandType.other:
+        return Icons.map_rounded;
     }
   }
 
   Color get color {
     switch (this) {
-      case LandType.residentialPlot: return Colors.blue;
-      case LandType.agricultural: return Colors.green;
-      case LandType.commercial: return Colors.orange;
-      case LandType.industrial: return Colors.brown;
-      case LandType.house: return Colors.indigo;
-      case LandType.apartment: return Colors.purple;
-      case LandType.farmHouse: return Colors.teal;
-      case LandType.other: return Colors.grey;
+      case LandType.residentialPlot:
+        return Colors.blue;
+      case LandType.agricultural:
+        return Colors.green;
+      case LandType.commercial:
+        return Colors.orange;
+      case LandType.industrial:
+        return Colors.brown;
+      case LandType.house:
+        return Colors.indigo;
+      case LandType.apartment:
+        return Colors.purple;
+      case LandType.farmHouse:
+        return Colors.teal;
+      case LandType.other:
+        return Colors.grey;
     }
   }
 }
@@ -57,34 +81,41 @@ enum AreaUnit { sqft, sqm, acres, cents, guntha, bigha, hectare }
 extension AreaUnitExt on AreaUnit {
   String get label {
     switch (this) {
-      case AreaUnit.sqft: return 'sq.ft';
-      case AreaUnit.sqm: return 'sq.m';
-      case AreaUnit.acres: return 'acres';
-      case AreaUnit.cents: return 'cents';
-      case AreaUnit.guntha: return 'guntha';
-      case AreaUnit.bigha: return 'bigha';
-      case AreaUnit.hectare: return 'hectare';
+      case AreaUnit.sqft:
+        return 'sq.ft';
+      case AreaUnit.sqm:
+        return 'sq.m';
+      case AreaUnit.acres:
+        return 'acres';
+      case AreaUnit.cents:
+        return 'cents';
+      case AreaUnit.guntha:
+        return 'guntha';
+      case AreaUnit.bigha:
+        return 'bigha';
+      case AreaUnit.hectare:
+        return 'hectare';
     }
   }
 }
 
 class LandRecord {
   final String id;
-  final String name;                // nickname / label
+  final String name; // nickname / label
   final LandType type;
   final bool isFavorite;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   // Listing info
-  final String? description;        // long-form description
-  final List<String> photoUrls;     // uploaded photo URLs
-  final double? askingPrice;        // optional "for sale" price
+  final String? description; // long-form description
+  final List<String> photoUrls; // uploaded photo URLs
+  final double? askingPrice; // optional "for sale" price
 
   // Core
-  final String? surveyNumber;       // survey no / sub-division
+  final String? surveyNumber; // survey no / sub-division
   final String? subDivision;
-  final String? pattaNumber;        // patta / title deed number
+  final String? pattaNumber; // patta / title deed number
   final double? areaValue;
   final AreaUnit areaUnit;
 
@@ -103,7 +134,7 @@ class LandRecord {
   // Owner
   final String? ownerName;
   final String? ownerContact;
-  final String? coOwners;           // free text
+  final String? coOwners; // free text
 
   // Purchase
   final DateTime? purchaseDate;
@@ -128,7 +159,7 @@ class LandRecord {
   // Tax / legal
   final String? propertyTaxNumber;
   final DateTime? lastTaxPaidDate;
-  final String? encumbranceStatus;  // free text e.g. "Clear / EC up to 2024"
+  final String? encumbranceStatus; // free text e.g. "Clear / EC up to 2024"
   final String? ecNumber;
 
   // Documents available (comma separated)
@@ -211,8 +242,7 @@ class LandRecord {
   /// Empty values are omitted.
   List<MapEntry<String, Map<String, String>>> asShareSections() {
     String f(String? v) => v == null || v.isEmpty ? '' : v;
-    String d(DateTime? v) =>
-        v == null ? '' : '${v.day}/${v.month}/${v.year}';
+    String d(DateTime? v) => v == null ? '' : '${v.day}/${v.month}/${v.year}';
     String n(num? v) => v == null ? '' : v.toString();
 
     final core = <String, String>{
@@ -277,9 +307,7 @@ class LandRecord {
       'Documents': f(documentsAvailable),
     };
 
-    final other = <String, String>{
-      'Notes': f(notes),
-    };
+    final other = <String, String>{'Notes': f(notes)};
 
     Map<String, String> nonEmpty(Map<String, String> m) {
       final out = <String, String>{};
@@ -432,54 +460,54 @@ class LandRecord {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'type': type.index,
-        'isFavorite': isFavorite,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'description': description,
-        'photoUrls': photoUrls,
-        'askingPrice': askingPrice,
-        'surveyNumber': surveyNumber,
-        'subDivision': subDivision,
-        'pattaNumber': pattaNumber,
-        'areaValue': areaValue,
-        'areaUnit': areaUnit.index,
-        'addressLine': addressLine,
-        'village': village,
-        'taluka': taluka,
-        'district': district,
-        'state': state,
-        'pincode': pincode,
-        'country': country,
-        'landmark': landmark,
-        'latitude': latitude,
-        'longitude': longitude,
-        'ownerName': ownerName,
-        'ownerContact': ownerContact,
-        'coOwners': coOwners,
-        'purchaseDate': purchaseDate?.toIso8601String(),
-        'purchasePrice': purchasePrice,
-        'sellerName': sellerName,
-        'registrationNumber': registrationNumber,
-        'registrationDate': registrationDate?.toIso8601String(),
-        'registrarOffice': registrarOffice,
-        'stampDuty': stampDuty,
-        'registrationFee': registrationFee,
-        'currentMarketValue': currentMarketValue,
-        'guidelineValue': guidelineValue,
-        'boundaryNorth': boundaryNorth,
-        'boundarySouth': boundarySouth,
-        'boundaryEast': boundaryEast,
-        'boundaryWest': boundaryWest,
-        'propertyTaxNumber': propertyTaxNumber,
-        'lastTaxPaidDate': lastTaxPaidDate?.toIso8601String(),
-        'encumbranceStatus': encumbranceStatus,
-        'ecNumber': ecNumber,
-        'documentsAvailable': documentsAvailable,
-        'notes': notes,
-      };
+    'id': id,
+    'name': name,
+    'type': type.index,
+    'isFavorite': isFavorite,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'description': description,
+    'photoUrls': photoUrls,
+    'askingPrice': askingPrice,
+    'surveyNumber': surveyNumber,
+    'subDivision': subDivision,
+    'pattaNumber': pattaNumber,
+    'areaValue': areaValue,
+    'areaUnit': areaUnit.index,
+    'addressLine': addressLine,
+    'village': village,
+    'taluka': taluka,
+    'district': district,
+    'state': state,
+    'pincode': pincode,
+    'country': country,
+    'landmark': landmark,
+    'latitude': latitude,
+    'longitude': longitude,
+    'ownerName': ownerName,
+    'ownerContact': ownerContact,
+    'coOwners': coOwners,
+    'purchaseDate': purchaseDate?.toIso8601String(),
+    'purchasePrice': purchasePrice,
+    'sellerName': sellerName,
+    'registrationNumber': registrationNumber,
+    'registrationDate': registrationDate?.toIso8601String(),
+    'registrarOffice': registrarOffice,
+    'stampDuty': stampDuty,
+    'registrationFee': registrationFee,
+    'currentMarketValue': currentMarketValue,
+    'guidelineValue': guidelineValue,
+    'boundaryNorth': boundaryNorth,
+    'boundarySouth': boundarySouth,
+    'boundaryEast': boundaryEast,
+    'boundaryWest': boundaryWest,
+    'propertyTaxNumber': propertyTaxNumber,
+    'lastTaxPaidDate': lastTaxPaidDate?.toIso8601String(),
+    'encumbranceStatus': encumbranceStatus,
+    'ecNumber': ecNumber,
+    'documentsAvailable': documentsAvailable,
+    'notes': notes,
+  };
 
   factory LandRecord.fromJson(Map<String, dynamic> json) {
     DateTime? parse(dynamic v) =>
@@ -489,21 +517,24 @@ class LandRecord {
     return LandRecord(
       id: json['id'] as String,
       name: json['name'] as String,
-      type: LandType.values[
-          (json['type'] as int).clamp(0, LandType.values.length - 1)],
+      type: LandType
+          .values[(json['type'] as int).clamp(0, LandType.values.length - 1)],
       isFavorite: json['isFavorite'] as bool? ?? false,
       createdAt: parse(json['createdAt']) ?? DateTime.now(),
       updatedAt: parse(json['updatedAt']) ?? DateTime.now(),
       description: json['description'] as String?,
-      photoUrls: (json['photoUrls'] as List<dynamic>?)?.cast<String>() ?? const [],
+      photoUrls:
+          (json['photoUrls'] as List<dynamic>?)?.cast<String>() ?? const [],
       askingPrice: toDouble(json['askingPrice']),
       surveyNumber: json['surveyNumber'] as String?,
       subDivision: json['subDivision'] as String?,
       pattaNumber: json['pattaNumber'] as String?,
       areaValue: toDouble(json['areaValue']),
       areaUnit: json['areaUnit'] != null
-          ? AreaUnit.values[
-              (json['areaUnit'] as int).clamp(0, AreaUnit.values.length - 1)]
+          ? AreaUnit.values[(json['areaUnit'] as int).clamp(
+              0,
+              AreaUnit.values.length - 1,
+            )]
           : AreaUnit.sqft,
       addressLine: json['addressLine'] as String?,
       village: json['village'] as String?,

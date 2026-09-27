@@ -76,8 +76,7 @@ class AppNotification {
 
   /// Stable key used to dedupe notifications. Two notifications with the same
   /// (sourceModule, sourceItemId, sourceDate) are considered the same event.
-  String get dedupeKey =>
-      '$sourceModule:$sourceItemId:${sourceDate ?? ""}';
+  String get dedupeKey => '$sourceModule:$sourceItemId:${sourceDate ?? ""}';
 
   AppNotification copyWith({
     String? id,
@@ -108,18 +107,18 @@ class AppNotification {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'body': body,
-        'sourceModule': sourceModule,
-        'sourceItemId': sourceItemId,
-        'sourceDate': sourceDate,
-        'severity': severity.index,
-        'createdAt': createdAt.toIso8601String(),
-        'isRead': isRead,
-        'isDismissed': isDismissed,
-        'meta': meta,
-      };
+    'id': id,
+    'title': title,
+    'body': body,
+    'sourceModule': sourceModule,
+    'sourceItemId': sourceItemId,
+    'sourceDate': sourceDate,
+    'severity': severity.index,
+    'createdAt': createdAt.toIso8601String(),
+    'isRead': isRead,
+    'isDismissed': isDismissed,
+    'meta': meta,
+  };
 
   factory AppNotification.fromJson(Map<String, dynamic> json) =>
       AppNotification(
@@ -129,13 +128,16 @@ class AppNotification {
         sourceModule: json['sourceModule'] as String,
         sourceItemId: json['sourceItemId'] as String,
         sourceDate: json['sourceDate'] as String?,
-        severity: NotificationSeverity.values[
-            (json['severity'] as int? ?? 1)
-                .clamp(0, NotificationSeverity.values.length - 1)],
+        severity:
+            NotificationSeverity.values[(json['severity'] as int? ?? 1).clamp(
+              0,
+              NotificationSeverity.values.length - 1,
+            )],
         createdAt: DateTime.parse(json['createdAt'] as String),
         isRead: json['isRead'] as bool? ?? false,
         isDismissed: json['isDismissed'] as bool? ?? false,
-        meta: ((json['meta'] as Map?) ?? const {})
-            .map((k, v) => MapEntry(k.toString(), v.toString())),
+        meta: ((json['meta'] as Map?) ?? const {}).map(
+          (k, v) => MapEntry(k.toString(), v.toString()),
+        ),
       );
 }

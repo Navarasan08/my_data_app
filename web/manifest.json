@@ -1,11 +1,11 @@
 {
-    "name": "my_data_app",
-    "short_name": "my_data_app",
+    "name": "Gloria - My Record Keeper",
+    "short_name": "Gloria",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Your personal record keeper: expenses, notes, reminders and more.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

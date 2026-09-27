@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
 import 'package:my_data_app/src/home/home_record_model.dart';
 
 enum HomeViewMode { all, monthly }
@@ -27,13 +28,33 @@ class HomeCurrency {
     required this.name,
   });
 
-  static const inr = HomeCurrency(code: 'INR', symbol: '\u20B9', name: 'Indian Rupee');
+  static const inr = HomeCurrency(
+    code: 'INR',
+    symbol: '\u20B9',
+    name: 'Indian Rupee',
+  );
   static const usd = HomeCurrency(code: 'USD', symbol: '\$', name: 'US Dollar');
   static const eur = HomeCurrency(code: 'EUR', symbol: '\u20AC', name: 'Euro');
-  static const gbp = HomeCurrency(code: 'GBP', symbol: '\u00A3', name: 'British Pound');
-  static const aed = HomeCurrency(code: 'AED', symbol: 'AED', name: 'UAE Dirham');
-  static const sar = HomeCurrency(code: 'SAR', symbol: 'SAR', name: 'Saudi Riyal');
-  static const jpy = HomeCurrency(code: 'JPY', symbol: '\u00A5', name: 'Japanese Yen');
+  static const gbp = HomeCurrency(
+    code: 'GBP',
+    symbol: '\u00A3',
+    name: 'British Pound',
+  );
+  static const aed = HomeCurrency(
+    code: 'AED',
+    symbol: 'AED',
+    name: 'UAE Dirham',
+  );
+  static const sar = HomeCurrency(
+    code: 'SAR',
+    symbol: 'SAR',
+    name: 'Saudi Riyal',
+  );
+  static const jpy = HomeCurrency(
+    code: 'JPY',
+    symbol: '\u00A5',
+    name: 'Japanese Yen',
+  );
 
   static const List<HomeCurrency> all = [inr, usd, eur, gbp, aed, sar, jpy];
 
@@ -101,6 +122,14 @@ class HomeRecordState {
   /// app bar.
   final bool isCalendarView;
 
+  /// Where [records] came from. `loading` before the first snapshot,
+  /// `cached` until the server confirms, `live` after. The page uses this to
+  /// show "syncing" instead of "no records" while data is still arriving.
+  final SyncStatus syncStatus;
+
+  /// True while a local edit is still waiting to reach the server.
+  final bool hasPendingWrites;
+
   const HomeRecordState({
     required this.records,
     required this.selectedDate,
@@ -113,7 +142,12 @@ class HomeRecordState {
     this.monthlyStartDay = 1,
     this.weekendAdjustment = WeekendAdjustment.exact,
     this.isCalendarView = false,
+    this.syncStatus = SyncStatus.loading,
+    this.hasPendingWrites = false,
   });
+
+  bool get isLoading => syncStatus.isLoading;
+  bool get isLive => syncStatus.isLive;
 
   HomeRecordState copyWith({
     List<HomeRecord>? records,
@@ -127,6 +161,8 @@ class HomeRecordState {
     int? monthlyStartDay,
     WeekendAdjustment? weekendAdjustment,
     bool? isCalendarView,
+    SyncStatus? syncStatus,
+    bool? hasPendingWrites,
   }) {
     return HomeRecordState(
       records: records ?? this.records,
@@ -140,6 +176,8 @@ class HomeRecordState {
       monthlyStartDay: monthlyStartDay ?? this.monthlyStartDay,
       weekendAdjustment: weekendAdjustment ?? this.weekendAdjustment,
       isCalendarView: isCalendarView ?? this.isCalendarView,
+      syncStatus: syncStatus ?? this.syncStatus,
+      hasPendingWrites: hasPendingWrites ?? this.hasPendingWrites,
     );
   }
 }

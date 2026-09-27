@@ -24,8 +24,7 @@ class SettleUpPage extends StatelessWidget {
         final cubit = context.read<GroupCubit>();
         final group = cubit.getGroup(groupId);
         if (group == null) {
-          return const Scaffold(
-              body: Center(child: Text('Group not found')));
+          return const Scaffold(body: Center(child: Text('Group not found')));
         }
 
         final plan = cubit.settlementPlan(groupId);
@@ -44,11 +43,14 @@ class SettleUpPage extends StatelessWidget {
               _BalanceSummary(group: group, balances: balances),
               const SizedBox(height: 16),
 
-              Text('Suggested transfers',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface)),
+              Text(
+                'Suggested transfers',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               if (plan.isEmpty)
                 Container(
@@ -59,15 +61,20 @@ class SettleUpPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.check_circle_rounded,
-                          color: Colors.green[700]),
+                      Icon(
+                        Icons.check_circle_rounded,
+                        color: Colors.green[700],
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text('Everyone is settled up.',
-                            style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.green[800],
-                                fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'Everyone is settled up.',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.green[800],
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -82,19 +89,21 @@ class SettleUpPage extends StatelessWidget {
                 ),
 
               const SizedBox(height: 24),
-              Text('History',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: cs.onSurface)),
+              Text(
+                'History',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               if (history.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
                     'No payments recorded yet.',
-                    style:
-                        TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
                 )
               else
@@ -119,28 +128,33 @@ class SettleUpPage extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: const Text('Mark as paid'),
         content: Text(
-            'Record that $fromName paid $toName ₹${_money.format(t.amount)}?'),
+          'Record that $fromName paid $toName ₹${_money.format(t.amount)}?',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Confirm')),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm'),
+          ),
         ],
       ),
     );
     if (confirmed != true) return;
     final now = DateTime.now();
-    await cubit.recordSettlement(GroupSettlement(
-      id: now.microsecondsSinceEpoch.toString(),
-      groupId: group.id,
-      fromUid: t.fromUid,
-      toUid: t.toUid,
-      amount: t.amount,
-      settledAt: now,
-      recordedByUid: cubit.currentUid,
-    ));
+    await cubit.recordSettlement(
+      GroupSettlement(
+        id: now.microsecondsSinceEpoch.toString(),
+        groupId: group.id,
+        fromUid: t.fromUid,
+        toUid: t.toUid,
+        amount: t.amount,
+        settledAt: now,
+        recordedByUid: cubit.currentUid,
+      ),
+    );
   }
 }
 
@@ -161,11 +175,14 @@ class _BalanceSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Net balances',
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface)),
+          Text(
+            'Net balances',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: cs.onSurface,
+            ),
+          ),
           const SizedBox(height: 8),
           ...group.memberIds.map((uid) {
             final m = group.members[uid];
@@ -175,27 +192,34 @@ class _BalanceSummary extends StatelessWidget {
             final color = isOwed
                 ? Colors.green[700]
                 : owes
-                    ? Colors.red[700]
-                    : cs.onSurfaceVariant;
+                ? Colors.red[700]
+                : cs.onSurfaceVariant;
             final label = isOwed
                 ? 'gets back ₹${_money.format(bal)}'
                 : owes
-                    ? 'owes ₹${_money.format(-bal)}'
-                    : 'settled';
+                ? 'owes ₹${_money.format(-bal)}'
+                : 'settled';
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 3),
               child: Row(
                 children: [
                   Expanded(
-                    child: Text(m?.label ?? uid,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500)),
+                    child: Text(
+                      m?.label ?? uid,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                  Text(label,
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: color,
-                          fontWeight: FontWeight.w600)),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: color,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ],
               ),
             );
@@ -240,28 +264,30 @@ class _TransferRow extends StatelessWidget {
                     style: TextStyle(fontSize: 13, color: cs.onSurface),
                     children: [
                       TextSpan(
-                          text: from,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w700)),
+                        text: from,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                       const TextSpan(text: '  →  '),
                       TextSpan(
-                          text: to,
-                          style:
-                              const TextStyle(fontWeight: FontWeight.w700)),
+                        text: to,
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text('₹${_money.format(transfer.amount)}',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: group.color)),
+                Text(
+                  '₹${_money.format(transfer.amount)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: group.color,
+                  ),
+                ),
               ],
             ),
           ),
-          TextButton(
-              onPressed: onMarkPaid, child: const Text('Mark paid')),
+          TextButton(onPressed: onMarkPaid, child: const Text('Mark paid')),
         ],
       ),
     );
@@ -287,29 +313,41 @@ class _SettlementRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle_outline_rounded,
-              size: 18, color: Colors.green[700]),
+          Icon(
+            Icons.check_circle_outline_rounded,
+            size: 18,
+            color: Colors.green[700],
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('$from  →  $to',
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
-                Text(DateFormat('d MMM yyyy').format(s.settledAt),
-                    style: TextStyle(
-                        fontSize: 11, color: cs.onSurfaceVariant)),
+                Text(
+                  '$from  →  $to',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  DateFormat('d MMM yyyy').format(s.settledAt),
+                  style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                ),
               ],
             ),
           ),
-          Text('₹${_money.format(s.amount)}',
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.bold)),
+          Text(
+            '₹${_money.format(s.amount)}',
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(width: 4),
           IconButton(
-            icon: Icon(Icons.delete_outline_rounded,
-                size: 18, color: Colors.red[300]),
+            icon: Icon(
+              Icons.delete_outline_rounded,
+              size: 18,
+              color: Colors.red[300],
+            ),
             tooltip: 'Undo settlement',
             onPressed: () async {
               final confirmed = await showDialog<bool>(
@@ -317,23 +355,26 @@ class _SettlementRow extends StatelessWidget {
                 builder: (ctx) => AlertDialog(
                   title: const Text('Undo settlement'),
                   content: const Text(
-                      'Remove this recorded payment? Balances will be restored.'),
+                    'Remove this recorded payment? Balances will be restored.',
+                  ),
                   actions: [
                     TextButton(
-                        onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('Cancel')),
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
                     TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        style: TextButton.styleFrom(
-                            foregroundColor: Colors.red),
-                        child: const Text('Remove')),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: TextButton.styleFrom(foregroundColor: Colors.red),
+                      child: const Text('Remove'),
+                    ),
                   ],
                 ),
               );
               if (confirmed == true && context.mounted) {
-                await context
-                    .read<GroupCubit>()
-                    .deleteSettlement(group.id, s.id);
+                await context.read<GroupCubit>().deleteSettlement(
+                  group.id,
+                  s.id,
+                );
               }
             },
           ),

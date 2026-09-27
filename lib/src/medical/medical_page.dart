@@ -47,18 +47,20 @@ class MedicalHomePage extends StatelessWidget {
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: [
-                    ...members.map((m) => _MemberChip(
-                          member: m,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlocProvider.value(
-                                value: cubit,
-                                child: MemberDetailPage(memberId: m.id),
-                              ),
+                    ...members.map(
+                      (m) => _MemberChip(
+                        member: m,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BlocProvider.value(
+                              value: cubit,
+                              child: MemberDetailPage(memberId: m.id),
                             ),
                           ),
-                        )),
+                        ),
+                      ),
+                    ),
                     _AddMemberChip(
                       onTap: () async {
                         final member = await Navigator.push<FamilyMember>(
@@ -102,7 +104,8 @@ class MedicalHomePage extends StatelessWidget {
                     const SizedBox(width: 8),
                     _QuickStat(
                       label: 'Expenses',
-                      value: '\u20B9${_inr.format(cubit.totalExpenses.round())}',
+                      value:
+                          '\u20B9${_inr.format(cubit.totalExpenses.round())}',
                       icon: Icons.receipt_long_rounded,
                       color: Colors.green,
                     ),
@@ -128,17 +131,21 @@ class MedicalHomePage extends StatelessWidget {
                       color: Colors.orange.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(10),
                       border: Border(
-                        left: BorderSide(
-                            color: Colors.orange[400]!, width: 3),
+                        left: BorderSide(color: Colors.orange[400]!, width: 3),
                       ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
                       child: Row(
                         children: [
-                          Icon(Icons.event_rounded,
-                              size: 18, color: Colors.orange[600]),
+                          Icon(
+                            Icons.event_rounded,
+                            size: 18,
+                            color: Colors.orange[600],
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Column(
@@ -147,8 +154,9 @@ class MedicalHomePage extends StatelessWidget {
                                 Text(
                                   f.record.title,
                                   style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -156,15 +164,18 @@ class MedicalHomePage extends StatelessWidget {
                                 Text(
                                   '${f.member.name} \u00B7 ${DateFormat('dd MMM yyyy').format(f.record.followUpDate!)}',
                                   style: TextStyle(
-                                      fontSize: 11,
-                                      color: cs.onSurfaceVariant),
+                                    fontSize: 11,
+                                    color: cs.onSurfaceVariant,
+                                  ),
                                 ),
                               ],
                             ),
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: daysLeft <= 3
                                   ? Colors.red[50]
@@ -197,59 +208,74 @@ class MedicalHomePage extends StatelessWidget {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 8),
-                ...activeMeds.take(5).map((m) => Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.04),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border(
-                          left: BorderSide(
-                              color: Colors.teal[400]!, width: 3),
+                ...activeMeds
+                    .take(5)
+                    .map(
+                      (m) => Container(
+                        margin: const EdgeInsets.only(bottom: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.teal.withValues(alpha: 0.04),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border(
+                            left: BorderSide(
+                              color: Colors.teal[400]!,
+                              width: 3,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        child: Row(
-                          children: [
-                            Icon(Icons.medication_rounded,
-                                size: 18, color: Colors.teal[600]),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    m.medication.name,
-                                    style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    [
-                                      if (m.medication.dosage != null)
-                                        m.medication.dosage!,
-                                      m.medication.timingLabel,
-                                    ].join(' \u00B7 '),
-                                    style: TextStyle(
-                                        fontSize: 11,
-                                        color: cs.onSurfaceVariant),
-                                  ),
-                                ],
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.medication_rounded,
+                                size: 18,
+                                color: Colors.teal[600],
                               ),
-                            ),
-                            Text(
-                              m.member.name,
-                              style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant),
-                            ),
-                          ],
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      m.medication.name,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      [
+                                        if (m.medication.dosage != null)
+                                          m.medication.dosage!,
+                                        m.medication.timingLabel,
+                                      ].join(' \u00B7 '),
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: cs.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                m.member.name,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    )),
+                    ),
                 const SizedBox(height: 16),
               ],
 
@@ -280,7 +306,8 @@ class MedicalHomePage extends StatelessWidget {
                         builder: (ctx) => AlertDialog(
                           title: const Text('Delete Record'),
                           content: Text(
-                              'Are you sure you want to delete "${r.title}"?'),
+                            'Are you sure you want to delete "${r.title}"?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, false),
@@ -289,7 +316,8 @@ class MedicalHomePage extends StatelessWidget {
                             TextButton(
                               onPressed: () => Navigator.pop(ctx, true),
                               style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red),
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text('Delete'),
                             ),
                           ],
@@ -308,19 +336,26 @@ class MedicalHomePage extends StatelessWidget {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.medical_services_outlined,
-                            size: 64, color: cs.onSurfaceVariant),
+                        Icon(
+                          Icons.medical_services_outlined,
+                          size: 64,
+                          color: cs.onSurfaceVariant,
+                        ),
                         const SizedBox(height: 16),
                         Text(
                           'No medical records yet',
                           style: TextStyle(
-                              fontSize: 16, color: cs.onSurfaceVariant),
+                            fontSize: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           'Add a family member to get started',
                           style: TextStyle(
-                              fontSize: 14, color: cs.onSurfaceVariant),
+                            fontSize: 14,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -348,8 +383,8 @@ class _MemberChip extends StatelessWidget {
     final color = member.relation == Relation.self
         ? Colors.blue
         : member.gender == Gender.female
-            ? Colors.pink
-            : Colors.indigo;
+        ? Colors.pink
+        : Colors.indigo;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -361,13 +396,12 @@ class _MemberChip extends StatelessWidget {
               radius: 22,
               backgroundColor: color.withValues(alpha: 0.15),
               child: Text(
-                member.name.isNotEmpty
-                    ? member.name[0].toUpperCase()
-                    : '?',
+                member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: color),
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ),
             const SizedBox(height: 4),
@@ -409,15 +443,20 @@ class _AddMemberChip extends StatelessWidget {
             CircleAvatar(
               radius: 22,
               backgroundColor: cs.surfaceContainerLow,
-              child: Icon(Icons.add_rounded, color: cs.onSurfaceVariant, size: 22),
+              child: Icon(
+                Icons.add_rounded,
+                color: cs.onSurfaceVariant,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               'Add',
               style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: cs.onSurfaceVariant),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: cs.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -456,13 +495,19 @@ class _QuickStat extends StatelessWidget {
             Text(
               value,
               style: TextStyle(
-                  fontSize: 14, fontWeight: FontWeight.bold, color: color),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             Text(
               label,
-              style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7)),
+              style: TextStyle(
+                fontSize: 10,
+                color: color.withValues(alpha: 0.7),
+              ),
             ),
           ],
         ),
@@ -497,9 +542,7 @@ class _RecordCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border(
-          left: BorderSide(color: color, width: 3),
-        ),
+        border: Border(left: BorderSide(color: color, width: 3)),
       ),
       child: InkWell(
         onTap: onTap,
@@ -517,7 +560,9 @@ class _RecordCard extends StatelessWidget {
                     Text(
                       record.title,
                       style: const TextStyle(
-                          fontSize: 14, fontWeight: FontWeight.w500),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -528,8 +573,10 @@ class _RecordCard extends StatelessWidget {
                         if (record.hospitalName != null) record.hospitalName!,
                         DateFormat('dd MMM yyyy').format(record.date),
                       ].join(' \u00B7 '),
-                      style:
-                          TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -537,7 +584,9 @@ class _RecordCard extends StatelessWidget {
                       const SizedBox(height: 3),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(4),
@@ -545,7 +594,9 @@ class _RecordCard extends StatelessWidget {
                         child: Text(
                           member!.name,
                           style: TextStyle(
-                              fontSize: 10, color: cs.onSurfaceVariant),
+                            fontSize: 10,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
@@ -574,8 +625,11 @@ class _RecordCard extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -639,15 +693,19 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
                 },
               ),
               IconButton(
-                icon: Icon(Icons.delete_outline_rounded,
-                    size: 20, color: Colors.red[400]),
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 20,
+                  color: Colors.red[400],
+                ),
                 onPressed: () async {
                   final confirmed = await showDialog<bool>(
                     context: context,
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete Member'),
                       content: Text(
-                          'Delete "${member.name}" and all their records?'),
+                        'Delete "${member.name}" and all their records?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -656,7 +714,8 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -688,12 +747,14 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
                       isSelected: _filterType == null,
                       onTap: () => setState(() => _filterType = null),
                     ),
-                    ...RecordType.values.map((type) => _FilterChip(
-                          label: type.label,
-                          isSelected: _filterType == type,
-                          color: type.color,
-                          onTap: () => setState(() => _filterType = type),
-                        )),
+                    ...RecordType.values.map(
+                      (type) => _FilterChip(
+                        label: type.label,
+                        isSelected: _filterType == type,
+                        color: type.color,
+                        onTap: () => setState(() => _filterType = type),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -706,48 +767,52 @@ class _MemberDetailPageState extends State<MemberDetailPage> {
                   child: Center(
                     child: Text(
                       'No records found',
-                      style:
-                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 )
               else
-                ...records.map((r) => _RecordCard(
-                      record: r,
-                      member: member,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => BlocProvider.value(
-                            value: cubit,
-                            child: RecordDetailPage(recordId: r.id),
-                          ),
+                ...records.map(
+                  (r) => _RecordCard(
+                    record: r,
+                    member: member,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: cubit,
+                          child: RecordDetailPage(recordId: r.id),
                         ),
                       ),
-                      onDelete: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Record'),
-                            content: Text(
-                                'Delete "${r.title}"?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, false),
-                                child: const Text('Cancel'),
+                    ),
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Record'),
+                          content: Text('Delete "${r.title}"?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
                               ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) cubit.deleteRecord(r.id);
-                      },
-                    )),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) cubit.deleteRecord(r.id);
+                    },
+                  ),
+                ),
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
@@ -782,9 +847,7 @@ class _MemberInfoSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.blue.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border(
-          left: BorderSide(color: Colors.blue[400]!, width: 3),
-        ),
+        border: Border(left: BorderSide(color: Colors.blue[400]!, width: 3)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -795,18 +858,21 @@ class _MemberInfoSection extends StatelessWidget {
             runSpacing: 8,
             children: [
               _InfoTile(
-                  label: 'Gender',
-                  value: member.gender.label,
-                  icon: member.gender.icon),
+                label: 'Gender',
+                value: member.gender.label,
+                icon: member.gender.icon,
+              ),
               if (member.age != null)
                 _InfoTile(
-                    label: 'Age',
-                    value: '${member.age} yrs',
-                    icon: Icons.cake_rounded),
+                  label: 'Age',
+                  value: '${member.age} yrs',
+                  icon: Icons.cake_rounded,
+                ),
               _InfoTile(
-                  label: 'Blood',
-                  value: member.bloodGroup.label,
-                  icon: Icons.bloodtype_rounded),
+                label: 'Blood',
+                value: member.bloodGroup.label,
+                icon: Icons.bloodtype_rounded,
+              ),
               if (member.height != null || member.weight != null)
                 _InfoTile(
                   label: 'H / W',
@@ -820,8 +886,10 @@ class _MemberInfoSection extends StatelessWidget {
           // Allergies
           if (member.allergies.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Text('Allergies',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+            const Text(
+              'Allergies',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             Wrap(
               spacing: 6,
@@ -835,8 +903,10 @@ class _MemberInfoSection extends StatelessWidget {
           // Chronic Conditions
           if (member.chronicConditions.isNotEmpty) ...[
             const SizedBox(height: 10),
-            const Text('Chronic Conditions',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+            const Text(
+              'Chronic Conditions',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 4),
             Wrap(
               spacing: 6,
@@ -869,7 +939,11 @@ class _MemberInfoSection extends StatelessWidget {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.shield_rounded, size: 14, color: cs.onSurfaceVariant),
+                Icon(
+                  Icons.shield_rounded,
+                  size: 14,
+                  color: cs.onSurfaceVariant,
+                ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -893,8 +967,11 @@ class _InfoTile extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _InfoTile(
-      {required this.label, required this.value, required this.icon});
+  const _InfoTile({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -907,11 +984,14 @@ class _InfoTile extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant)),
-            Text(value,
-                style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w500)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 9, color: cs.onSurfaceVariant),
+            ),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ],
@@ -935,7 +1015,11 @@ class _MiniChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
+        style: TextStyle(
+          fontSize: 11,
+          color: color,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -964,11 +1048,11 @@ class _FilterChip extends StatelessWidget {
         margin: const EdgeInsets.only(right: 8),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? c.withValues(alpha: 0.15) : cs.surfaceContainerLow,
+          color: isSelected
+              ? c.withValues(alpha: 0.15)
+              : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? c : cs.outline,
-          ),
+          border: Border.all(color: isSelected ? c : cs.outline),
         ),
         child: Text(
           label,
@@ -1022,7 +1106,9 @@ class RecordDetailPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (_) => AddRecordPage(
-                          memberId: record.memberId, record: record),
+                        memberId: record.memberId,
+                        record: record,
+                      ),
                     ),
                   );
                   if (edited != null) cubit.updateRecord(edited);
@@ -1035,8 +1121,10 @@ class RecordDetailPage extends StatelessWidget {
             children: [
               // ── Type Badge ──────────────────────────────────────────────
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
@@ -1049,9 +1137,10 @@ class RecordDetailPage extends StatelessWidget {
                     Text(
                       record.type.label,
                       style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: color),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
                     ),
                   ],
                 ),
@@ -1061,60 +1150,69 @@ class RecordDetailPage extends StatelessWidget {
               // ── Doctor / Hospital / Speciality ──────────────────────────
               if (record.doctorName != null) ...[
                 _DetailRow(
-                    icon: Icons.person_rounded,
-                    label: 'Doctor',
-                    value: record.doctorName!),
+                  icon: Icons.person_rounded,
+                  label: 'Doctor',
+                  value: record.doctorName!,
+                ),
               ],
               if (record.hospitalName != null) ...[
                 _DetailRow(
-                    icon: Icons.local_hospital_rounded,
-                    label: 'Hospital',
-                    value: record.hospitalName!),
+                  icon: Icons.local_hospital_rounded,
+                  label: 'Hospital',
+                  value: record.hospitalName!,
+                ),
               ],
               if (record.speciality != null) ...[
                 _DetailRow(
-                    icon: Icons.medical_information_rounded,
-                    label: 'Speciality',
-                    value: record.speciality!),
+                  icon: Icons.medical_information_rounded,
+                  label: 'Speciality',
+                  value: record.speciality!,
+                ),
               ],
 
               // ── Dates ───────────────────────────────────────────────────
               _DetailRow(
-                  icon: Icons.calendar_today_rounded,
-                  label: 'Date',
-                  value: DateFormat('dd MMM yyyy').format(record.date)),
+                icon: Icons.calendar_today_rounded,
+                label: 'Date',
+                value: DateFormat('dd MMM yyyy').format(record.date),
+              ),
               if (record.followUpDate != null) ...[
-                Builder(builder: (context) {
-                  final daysUntil = record.followUpDate!
-                      .difference(DateTime.now())
-                      .inDays;
-                  return _DetailRow(
-                    icon: Icons.event_rounded,
-                    label: 'Follow-up',
-                    value:
-                        '${DateFormat('dd MMM yyyy').format(record.followUpDate!)} ($daysUntil day${daysUntil == 1 ? '' : 's'} ${daysUntil >= 0 ? 'left' : 'ago'})',
-                  );
-                }),
+                Builder(
+                  builder: (context) {
+                    final daysUntil = record.followUpDate!
+                        .difference(DateTime.now())
+                        .inDays;
+                    return _DetailRow(
+                      icon: Icons.event_rounded,
+                      label: 'Follow-up',
+                      value:
+                          '${DateFormat('dd MMM yyyy').format(record.followUpDate!)} ($daysUntil day${daysUntil == 1 ? '' : 's'} ${daysUntil >= 0 ? 'left' : 'ago'})',
+                    );
+                  },
+                ),
               ],
 
               // ── Diagnosis ───────────────────────────────────────────────
-              if (record.diagnosis != null &&
-                  record.diagnosis!.isNotEmpty) ...[
+              if (record.diagnosis != null && record.diagnosis!.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text('Diagnosis',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Diagnosis',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
-                Text(record.diagnosis!,
-                    style: TextStyle(fontSize: 13, color: cs.onSurface)),
+                Text(
+                  record.diagnosis!,
+                  style: TextStyle(fontSize: 13, color: cs.onSurface),
+                ),
               ],
 
               // ── Symptoms ────────────────────────────────────────────────
               if (record.symptoms.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                const Text('Symptoms',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Symptoms',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
@@ -1128,106 +1226,123 @@ class RecordDetailPage extends StatelessWidget {
               // ── Medications ─────────────────────────────────────────────
               if (record.medications.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Medications',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Medications',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
-                ...record.medications.map((med) => Container(
-                      margin: const EdgeInsets.only(bottom: 6),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withValues(alpha: 0.04),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border(
-                          left: BorderSide(
-                              color: Colors.teal[400]!, width: 3),
-                        ),
+                ...record.medications.map(
+                  (med) => Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.teal.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border(
+                        left: BorderSide(color: Colors.teal[400]!, width: 3),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  med.name,
-                                  style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                med.name,
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
-                              if (med.isActive)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[50],
-                                    borderRadius: BorderRadius.circular(4),
+                            ),
+                            if (med.isActive)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50],
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.green[700],
                                   ),
-                                  child: Text('Active',
-                                      style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.green[700])),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          [
+                            if (med.dosage != null) med.dosage!,
+                            med.frequency.label,
+                            med.mealTiming.label,
+                          ].join(' \u00B7 '),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
+                        if (med.morning ||
+                            med.afternoon ||
+                            med.evening ||
+                            med.night) ...[
+                          const SizedBox(height: 4),
+                          Wrap(
+                            spacing: 6,
+                            children: [
+                              if (med.morning)
+                                _TimingSlot(
+                                  label: 'Morning',
+                                  icon: Icons.wb_sunny_rounded,
+                                ),
+                              if (med.afternoon)
+                                _TimingSlot(
+                                  label: 'Afternoon',
+                                  icon: Icons.wb_cloudy_rounded,
+                                ),
+                              if (med.evening)
+                                _TimingSlot(
+                                  label: 'Evening',
+                                  icon: Icons.wb_twilight_rounded,
+                                ),
+                              if (med.night)
+                                _TimingSlot(
+                                  label: 'Night',
+                                  icon: Icons.nights_stay_rounded,
                                 ),
                             ],
                           ),
+                        ],
+                        if (med.durationDays > 0) ...[
                           const SizedBox(height: 4),
                           Text(
-                            [
-                              if (med.dosage != null) med.dosage!,
-                              med.frequency.label,
-                              med.mealTiming.label,
-                            ].join(' \u00B7 '),
+                            '${DateFormat('dd MMM').format(med.startDate!)} - ${DateFormat('dd MMM').format(med.endDate!)} (${med.durationDays} days)',
                             style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant),
+                              fontSize: 10,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
-                          if (med.morning ||
-                              med.afternoon ||
-                              med.evening ||
-                              med.night) ...[
-                            const SizedBox(height: 4),
-                            Wrap(
-                              spacing: 6,
-                              children: [
-                                if (med.morning)
-                                  _TimingSlot(
-                                      label: 'Morning',
-                                      icon: Icons.wb_sunny_rounded),
-                                if (med.afternoon)
-                                  _TimingSlot(
-                                      label: 'Afternoon',
-                                      icon: Icons.wb_cloudy_rounded),
-                                if (med.evening)
-                                  _TimingSlot(
-                                      label: 'Evening',
-                                      icon: Icons.wb_twilight_rounded),
-                                if (med.night)
-                                  _TimingSlot(
-                                      label: 'Night',
-                                      icon: Icons.nights_stay_rounded),
-                              ],
-                            ),
-                          ],
-                          if (med.durationDays > 0) ...[
-                            const SizedBox(height: 4),
-                            Text(
-                              '${DateFormat('dd MMM').format(med.startDate!)} - ${DateFormat('dd MMM').format(med.endDate!)} (${med.durationDays} days)',
-                              style: TextStyle(
-                                  fontSize: 10, color: cs.onSurfaceVariant),
-                            ),
-                          ],
                         ],
-                      ),
-                    )),
+                      ],
+                    ),
+                  ),
+                ),
               ],
 
               // ── Lab Results ─────────────────────────────────────────────
               if (record.labResults.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Lab Results',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Lab Results',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
@@ -1239,102 +1354,138 @@ class RecordDetailPage extends StatelessWidget {
                       // Header
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: cs.surfaceContainerLow,
                           borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(8)),
+                            top: Radius.circular(8),
+                          ),
                         ),
                         child: Row(
                           children: [
                             const Expanded(
-                                flex: 3,
-                                child: Text('Test',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600))),
+                              flex: 3,
+                              child: Text(
+                                'Test',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                             const Expanded(
-                                flex: 2,
-                                child: Text('Value',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600))),
+                              flex: 2,
+                              child: Text(
+                                'Value',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                             const Expanded(
-                                flex: 2,
-                                child: Text('Normal',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600))),
+                              flex: 2,
+                              child: Text(
+                                'Normal',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                             SizedBox(
-                                width: 50,
-                                child: Text('',
-                                    style: TextStyle(
-                                        fontSize: 10,
-                                        color: cs.onSurfaceVariant))),
+                              width: 50,
+                              child: Text(
+                                '',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      ...record.labResults.map((lr) => Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              border: Border(
-                                  top: BorderSide(color: cs.outlineVariant)),
+                      ...record.labResults.map(
+                        (lr) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: cs.outlineVariant),
                             ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: Text(lr.testName,
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500)),
-                                ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(
-                                    '${lr.value ?? '-'}${lr.unit != null ? ' ${lr.unit}' : ''}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: lr.isAbnormal
-                                          ? Colors.red[700]
-                                          : cs.onSurface,
-                                      fontWeight: lr.isAbnormal
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                    ),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  lr.testName,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                Expanded(
-                                  flex: 2,
-                                  child: Text(lr.normalRange ?? '-',
-                                      style: TextStyle(
-                                          fontSize: 11,
-                                          color: cs.onSurfaceVariant)),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  '${lr.value ?? '-'}${lr.unit != null ? ' ${lr.unit}' : ''}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: lr.isAbnormal
+                                        ? Colors.red[700]
+                                        : cs.onSurface,
+                                    fontWeight: lr.isAbnormal
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
+                                  ),
                                 ),
-                                SizedBox(
-                                  width: 50,
-                                  child: lr.isAbnormal
-                                      ? Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 1),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red[50],
-                                            borderRadius:
-                                                BorderRadius.circular(4),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  lr.normalRange ?? '-',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 50,
+                                child: lr.isAbnormal
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                          vertical: 1,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red[50],
+                                          borderRadius: BorderRadius.circular(
+                                            4,
                                           ),
-                                          child: Text('Abnormal',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.red[700])),
-                                        )
-                                      : const SizedBox.shrink(),
-                                ),
-                              ],
-                            ),
-                          )),
+                                        ),
+                                        child: Text(
+                                          'Abnormal',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 8,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.red[700],
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1348,24 +1499,30 @@ class RecordDetailPage extends StatelessWidget {
                     Text(
                       '\u20B9${_inr.format(record.amount!.round())}',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700]),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green[700],
+                      ),
                     ),
                     const SizedBox(width: 8),
                     if (record.isCovered)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.blue[50],
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: Text('Insurance covered',
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.blue[700])),
+                        child: Text(
+                          'Insurance covered',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue[700],
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -1374,12 +1531,15 @@ class RecordDetailPage extends StatelessWidget {
               // ── Notes ───────────────────────────────────────────────────
               if (record.notes != null && record.notes!.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text('Notes',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Notes',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
-                Text(record.notes!,
-                    style: TextStyle(fontSize: 13, color: cs.onSurface)),
+                Text(
+                  record.notes!,
+                  style: TextStyle(fontSize: 13, color: cs.onSurface),
+                ),
               ],
 
               // ── Member name ─────────────────────────────────────────────
@@ -1387,13 +1547,18 @@ class RecordDetailPage extends StatelessWidget {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Icon(Icons.person_rounded,
-                        size: 14, color: cs.onSurfaceVariant),
+                    Icon(
+                      Icons.person_rounded,
+                      size: 14,
+                      color: cs.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '${member.name} (${member.relation.label})',
-                      style:
-                          TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -1413,8 +1578,11 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow(
-      {required this.icon, required this.label, required this.value});
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1425,12 +1593,15 @@ class _DetailRow extends StatelessWidget {
         children: [
           Icon(icon, size: 16, color: cs.onSurfaceVariant),
           const SizedBox(width: 8),
-          Text('$label: ',
-              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+          Text(
+            '$label: ',
+            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+          ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w500)),
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
           ),
         ],
       ),
@@ -1451,8 +1622,7 @@ class _TimingSlot extends StatelessWidget {
       children: [
         Icon(icon, size: 12, color: Colors.teal[400]),
         const SizedBox(width: 2),
-        Text(label,
-            style: TextStyle(fontSize: 10, color: Colors.teal[600])),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.teal[600])),
       ],
     );
   }
@@ -1527,8 +1697,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final member = FamilyMember(
-      id: widget.member?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.member?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       name: _nameController.text.trim(),
       relation: _relation,
       gender: _gender,
@@ -1585,21 +1754,27 @@ class _AddMemberPageState extends State<AddMemberPage> {
                 prefixIcon: Icon(Icons.group_rounded),
               ),
               items: Relation.values
-                  .map((r) =>
-                      DropdownMenuItem(value: r, child: Text(r.label)))
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r.label)))
                   .toList(),
               onChanged: (v) => setState(() => _relation = v!),
             ),
             const SizedBox(height: 16),
 
             // Gender
-            const Text('Gender',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+            const Text(
+              'Gender',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+            ),
             const SizedBox(height: 8),
             SegmentedButton<Gender>(
               segments: Gender.values
-                  .map((g) => ButtonSegment(
-                      value: g, label: Text(g.label), icon: Icon(g.icon)))
+                  .map(
+                    (g) => ButtonSegment(
+                      value: g,
+                      label: Text(g.label),
+                      icon: Icon(g.icon),
+                    ),
+                  )
                   .toList(),
               selected: {_gender},
               onSelectionChanged: (s) => setState(() => _gender = s.first),
@@ -1615,8 +1790,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                     ? 'Date of Birth'
                     : DateFormat('dd MMM yyyy').format(_dob!),
               ),
-              subtitle:
-                  _dob == null ? null : const Text('Tap to change'),
+              subtitle: _dob == null ? null : const Text('Tap to change'),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
@@ -1638,8 +1812,7 @@ class _AddMemberPageState extends State<AddMemberPage> {
                 prefixIcon: Icon(Icons.bloodtype_rounded),
               ),
               items: BloodGroup.values
-                  .map((b) =>
-                      DropdownMenuItem(value: b, child: Text(b.label)))
+                  .map((b) => DropdownMenuItem(value: b, child: Text(b.label)))
                   .toList(),
               onChanged: (v) => setState(() => _bloodGroup = v!),
             ),
@@ -1735,8 +1908,10 @@ class _AddMemberPageState extends State<AddMemberPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Member' : 'Save Member',
-                  style: const TextStyle(fontSize: 16)),
+              child: Text(
+                _isEditing ? 'Update Member' : 'Save Member',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
             const SizedBox(height: 16),
           ],
@@ -1799,18 +1974,19 @@ class _ChipAddField extends StatelessWidget {
             spacing: 6,
             runSpacing: 4,
             children: items
-                .map((item) => Chip(
-                      label: Text(item,
-                          style:
-                              TextStyle(fontSize: 12, color: chipColor)),
-                      backgroundColor:
-                          chipColor.withValues(alpha: 0.08),
-                      deleteIcon: Icon(Icons.close, size: 16, color: chipColor),
-                      onDeleted: () => onRemove(item),
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
-                      visualDensity: VisualDensity.compact,
-                    ))
+                .map(
+                  (item) => Chip(
+                    label: Text(
+                      item,
+                      style: TextStyle(fontSize: 12, color: chipColor),
+                    ),
+                    backgroundColor: chipColor.withValues(alpha: 0.08),
+                    deleteIcon: Icon(Icons.close, size: 16, color: chipColor),
+                    onDeleted: () => onRemove(item),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                )
                 .toList(),
           ),
         ],
@@ -1828,7 +2004,7 @@ class AddRecordPage extends StatefulWidget {
   final MedicalRecord? record;
 
   const AddRecordPage({Key? key, required this.memberId, this.record})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<AddRecordPage> createState() => _AddRecordPageState();
@@ -1873,8 +2049,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
       _symptoms = List<String>.from(r.symptoms);
       _medications = List<Medication>.from(r.medications);
       _labResults = List<LabResult>.from(r.labResults);
-      _amountController.text =
-          r.amount != null ? r.amount!.toStringAsFixed(0) : '';
+      _amountController.text = r.amount != null
+          ? r.amount!.toStringAsFixed(0)
+          : '';
       _isCovered = r.isCovered;
       _notesController.text = r.notes ?? '';
     }
@@ -1896,8 +2073,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     final record = MedicalRecord(
-      id: widget.record?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.record?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       memberId: widget.memberId,
       type: _recordType,
       title: _titleController.text.trim(),
@@ -1940,7 +2116,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
   }
 
   void _showMedicationSheet(
-      Medication? existing, ValueChanged<Medication> onSave) {
+    Medication? existing,
+    ValueChanged<Medication> onSave,
+  ) {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final dosageCtrl = TextEditingController(text: existing?.dosage ?? '');
     final notesCtrl = TextEditingController(text: existing?.notes ?? '');
@@ -1960,203 +2138,213 @@ class _AddRecordPageState extends State<AddRecordPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setSheetState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    existing != null ? 'Edit Medication' : 'Add Medication',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Name *',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: dosageCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Dosage (e.g. 500mg)',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<MedicationFrequency>(
-                    value: freq,
-                    decoration: const InputDecoration(
-                      labelText: 'Frequency',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: MedicationFrequency.values
-                        .map((f) => DropdownMenuItem(
-                            value: f, child: Text(f.label)))
-                        .toList(),
-                    onChanged: (v) =>
-                        setSheetState(() => freq = v!),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<MealTiming>(
-                    value: meal,
-                    decoration: const InputDecoration(
-                      labelText: 'Meal Timing',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                    items: MealTiming.values
-                        .map((m) => DropdownMenuItem(
-                            value: m, child: Text(m.label)))
-                        .toList(),
-                    onChanged: (v) =>
-                        setSheetState(() => meal = v!),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Timing',
-                      style: TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      FilterChip(
-                        label: const Text('Morning'),
-                        selected: morning,
-                        onSelected: (v) =>
-                            setSheetState(() => morning = v),
-                      ),
-                      FilterChip(
-                        label: const Text('Afternoon'),
-                        selected: afternoon,
-                        onSelected: (v) =>
-                            setSheetState(() => afternoon = v),
-                      ),
-                      FilterChip(
-                        label: const Text('Evening'),
-                        selected: evening,
-                        onSelected: (v) =>
-                            setSheetState(() => evening = v),
-                      ),
-                      FilterChip(
-                        label: const Text('Night'),
-                        selected: night,
-                        onSelected: (v) =>
-                            setSheetState(() => night = v),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text(
-                            startDate == null
-                                ? 'Start Date'
-                                : DateFormat('dd MMM').format(startDate!),
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          leading:
-                              const Icon(Icons.calendar_today, size: 18),
-                          onTap: () async {
-                            final d = await showDatePicker(
-                              context: ctx,
-                              initialDate: startDate ?? DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2030),
-                            );
-                            if (d != null) {
-                              setSheetState(() => startDate = d);
-                            }
-                          },
-                        ),
-                      ),
-                      Expanded(
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
-                          title: Text(
-                            endDate == null
-                                ? 'End Date'
-                                : DateFormat('dd MMM').format(endDate!),
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          leading:
-                              const Icon(Icons.calendar_today, size: 18),
-                          onTap: () async {
-                            final d = await showDatePicker(
-                              context: ctx,
-                              initialDate: endDate ?? DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2030),
-                            );
-                            if (d != null) {
-                              setSheetState(() => endDate = d);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: notesCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Notes',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (nameCtrl.text.trim().isEmpty) return;
-                        onSave(Medication(
-                          name: nameCtrl.text.trim(),
-                          dosage: dosageCtrl.text.trim().isEmpty
-                              ? null
-                              : dosageCtrl.text.trim(),
-                          frequency: freq,
-                          mealTiming: meal,
-                          morning: morning,
-                          afternoon: afternoon,
-                          evening: evening,
-                          night: night,
-                          startDate: startDate,
-                          endDate: endDate,
-                          notes: notesCtrl.text.trim().isEmpty
-                              ? null
-                              : notesCtrl.text.trim(),
-                        ));
-                        Navigator.pop(ctx);
-                      },
-                      child: Text(existing != null ? 'Update' : 'Add'),
-                    ),
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
               ),
-            ),
-          );
-        });
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      existing != null ? 'Edit Medication' : 'Add Medication',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: nameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Name *',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: dosageCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Dosage (e.g. 500mg)',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<MedicationFrequency>(
+                      value: freq,
+                      decoration: const InputDecoration(
+                        labelText: 'Frequency',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: MedicationFrequency.values
+                          .map(
+                            (f) => DropdownMenuItem(
+                              value: f,
+                              child: Text(f.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) => setSheetState(() => freq = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<MealTiming>(
+                      value: meal,
+                      decoration: const InputDecoration(
+                        labelText: 'Meal Timing',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                      items: MealTiming.values
+                          .map(
+                            (m) => DropdownMenuItem(
+                              value: m,
+                              child: Text(m.label),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (v) => setSheetState(() => meal = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Timing',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      children: [
+                        FilterChip(
+                          label: const Text('Morning'),
+                          selected: morning,
+                          onSelected: (v) => setSheetState(() => morning = v),
+                        ),
+                        FilterChip(
+                          label: const Text('Afternoon'),
+                          selected: afternoon,
+                          onSelected: (v) => setSheetState(() => afternoon = v),
+                        ),
+                        FilterChip(
+                          label: const Text('Evening'),
+                          selected: evening,
+                          onSelected: (v) => setSheetState(() => evening = v),
+                        ),
+                        FilterChip(
+                          label: const Text('Night'),
+                          selected: night,
+                          onSelected: (v) => setSheetState(() => night = v),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: Text(
+                              startDate == null
+                                  ? 'Start Date'
+                                  : DateFormat('dd MMM').format(startDate!),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            leading: const Icon(Icons.calendar_today, size: 18),
+                            onTap: () async {
+                              final d = await showDatePicker(
+                                context: ctx,
+                                initialDate: startDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
+                              if (d != null) {
+                                setSheetState(() => startDate = d);
+                              }
+                            },
+                          ),
+                        ),
+                        Expanded(
+                          child: ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: Text(
+                              endDate == null
+                                  ? 'End Date'
+                                  : DateFormat('dd MMM').format(endDate!),
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                            leading: const Icon(Icons.calendar_today, size: 18),
+                            onTap: () async {
+                              final d = await showDatePicker(
+                                context: ctx,
+                                initialDate: endDate ?? DateTime.now(),
+                                firstDate: DateTime(2020),
+                                lastDate: DateTime(2030),
+                              );
+                              if (d != null) {
+                                setSheetState(() => endDate = d);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: notesCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (nameCtrl.text.trim().isEmpty) return;
+                          onSave(
+                            Medication(
+                              name: nameCtrl.text.trim(),
+                              dosage: dosageCtrl.text.trim().isEmpty
+                                  ? null
+                                  : dosageCtrl.text.trim(),
+                              frequency: freq,
+                              mealTiming: meal,
+                              morning: morning,
+                              afternoon: afternoon,
+                              evening: evening,
+                              night: night,
+                              startDate: startDate,
+                              endDate: endDate,
+                              notes: notesCtrl.text.trim().isEmpty
+                                  ? null
+                                  : notesCtrl.text.trim(),
+                            ),
+                          );
+                          Navigator.pop(ctx);
+                        },
+                        child: Text(existing != null ? 'Update' : 'Add'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2168,15 +2356,13 @@ class _AddRecordPageState extends State<AddRecordPage> {
   }
 
   void _showLabResultSheet(
-      LabResult? existing, ValueChanged<LabResult> onSave) {
-    final testCtrl =
-        TextEditingController(text: existing?.testName ?? '');
-    final valueCtrl =
-        TextEditingController(text: existing?.value ?? '');
-    final unitCtrl =
-        TextEditingController(text: existing?.unit ?? '');
-    final rangeCtrl =
-        TextEditingController(text: existing?.normalRange ?? '');
+    LabResult? existing,
+    ValueChanged<LabResult> onSave,
+  ) {
+    final testCtrl = TextEditingController(text: existing?.testName ?? '');
+    final valueCtrl = TextEditingController(text: existing?.value ?? '');
+    final unitCtrl = TextEditingController(text: existing?.unit ?? '');
+    final rangeCtrl = TextEditingController(text: existing?.normalRange ?? '');
     var isAbnormal = existing?.isAbnormal ?? false;
 
     showModalBottomSheet(
@@ -2186,105 +2372,114 @@ class _AddRecordPageState extends State<AddRecordPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setSheetState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Add Lab Result',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: testCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Test Name *',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: TextField(
-                          controller: valueCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Value',
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextField(
-                          controller: unitCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Unit',
-                            border: OutlineInputBorder(),
-                            isDense: true,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: rangeCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Normal Range',
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text('Abnormal',
-                        style: TextStyle(fontSize: 14)),
-                    value: isAbnormal,
-                    onChanged: (v) =>
-                        setSheetState(() => isAbnormal = v),
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (testCtrl.text.trim().isEmpty) return;
-                        onSave(LabResult(
-                          testName: testCtrl.text.trim(),
-                          value: valueCtrl.text.trim().isEmpty
-                              ? null
-                              : valueCtrl.text.trim(),
-                          unit: unitCtrl.text.trim().isEmpty
-                              ? null
-                              : unitCtrl.text.trim(),
-                          normalRange: rangeCtrl.text.trim().isEmpty
-                              ? null
-                              : rangeCtrl.text.trim(),
-                          isAbnormal: isAbnormal,
-                        ));
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('Add'),
-                    ),
-                  ),
-                ],
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
               ),
-            ),
-          );
-        });
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Add Lab Result',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: testCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Test Name *',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: valueCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Value',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: unitCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Unit',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: rangeCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Normal Range',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text(
+                        'Abnormal',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      value: isAbnormal,
+                      onChanged: (v) => setSheetState(() => isAbnormal = v),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (testCtrl.text.trim().isEmpty) return;
+                          onSave(
+                            LabResult(
+                              testName: testCtrl.text.trim(),
+                              value: valueCtrl.text.trim().isEmpty
+                                  ? null
+                                  : valueCtrl.text.trim(),
+                              unit: unitCtrl.text.trim().isEmpty
+                                  ? null
+                                  : unitCtrl.text.trim(),
+                              normalRange: rangeCtrl.text.trim().isEmpty
+                                  ? null
+                                  : rangeCtrl.text.trim(),
+                              isAbnormal: isAbnormal,
+                            ),
+                          );
+                          Navigator.pop(ctx);
+                        },
+                        child: const Text('Add'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
       },
     );
   }
@@ -2311,16 +2506,18 @@ class _AddRecordPageState extends State<AddRecordPage> {
                 prefixIcon: Icon(Icons.category_rounded),
               ),
               items: RecordType.values
-                  .map((t) => DropdownMenuItem(
-                        value: t,
-                        child: Row(
-                          children: [
-                            Icon(t.icon, size: 18, color: t.color),
-                            const SizedBox(width: 8),
-                            Text(t.label),
-                          ],
-                        ),
-                      ))
+                  .map(
+                    (t) => DropdownMenuItem(
+                      value: t,
+                      child: Row(
+                        children: [
+                          Icon(t.icon, size: 18, color: t.color),
+                          const SizedBox(width: 8),
+                          Text(t.label),
+                        ],
+                      ),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) => setState(() => _recordType = v!),
             ),
@@ -2392,14 +2589,15 @@ class _AddRecordPageState extends State<AddRecordPage> {
             // Follow-up
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Follow-up Date',
-                  style: TextStyle(fontSize: 14)),
+              title: const Text(
+                'Follow-up Date',
+                style: TextStyle(fontSize: 14),
+              ),
               value: _hasFollowUp,
               onChanged: (v) => setState(() {
                 _hasFollowUp = v;
                 if (v && _followUpDate == null) {
-                  _followUpDate =
-                      DateTime.now().add(const Duration(days: 14));
+                  _followUpDate = DateTime.now().add(const Duration(days: 14));
                 }
               }),
             ),
@@ -2416,10 +2614,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
                   final d = await showDatePicker(
                     context: context,
                     initialDate:
-                        _followUpDate ?? DateTime.now().add(const Duration(days: 14)),
+                        _followUpDate ??
+                        DateTime.now().add(const Duration(days: 14)),
                     firstDate: DateTime.now(),
-                    lastDate:
-                        DateTime.now().add(const Duration(days: 365)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
                   );
                   if (d != null) setState(() => _followUpDate = d);
                 },
@@ -2453,9 +2651,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Medications',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Medications',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 TextButton.icon(
                   onPressed: _addMedication,
                   icon: const Icon(Icons.add, size: 18),
@@ -2473,37 +2672,47 @@ class _AddRecordPageState extends State<AddRecordPage> {
                     color: Colors.teal.withValues(alpha: 0.04),
                     borderRadius: BorderRadius.circular(10),
                     border: Border(
-                      left: BorderSide(
-                          color: Colors.teal[400]!, width: 3),
+                      left: BorderSide(color: Colors.teal[400]!, width: 3),
                     ),
                   ),
                   child: ListTile(
                     dense: true,
-                    title: Text(med.name,
-                        style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w500)),
+                    title: Text(
+                      med.name,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     subtitle: Text(
                       [
                         if (med.dosage != null) med.dosage!,
                         med.frequency.label,
                       ].join(' \u00B7 '),
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         InkWell(
                           onTap: () => _editMedication(i),
-                          child: Icon(Icons.edit_outlined,
-                              size: 18, color: cs.onSurfaceVariant),
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 18,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         InkWell(
-                          onTap: () => setState(
-                              () => _medications.removeAt(i)),
-                          child: Icon(Icons.delete_outline_rounded,
-                              size: 18, color: Colors.red[300]),
+                          onTap: () => setState(() => _medications.removeAt(i)),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: Colors.red[300],
+                          ),
                         ),
                       ],
                     ),
@@ -2516,9 +2725,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Lab Results',
-                    style:
-                        TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const Text(
+                  'Lab Results',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 TextButton.icon(
                   onPressed: _addLabResult,
                   icon: const Icon(Icons.add, size: 18),
@@ -2533,7 +2743,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 4),
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 8),
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: lr.isAbnormal
                         ? Colors.red.withValues(alpha: 0.04)
@@ -2541,9 +2753,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border(
                       left: BorderSide(
-                        color: lr.isAbnormal
-                            ? Colors.red[400]!
-                            : cs.outline,
+                        color: lr.isAbnormal ? Colors.red[400]! : cs.outline,
                         width: 3,
                       ),
                     ),
@@ -2554,14 +2764,19 @@ class _AddRecordPageState extends State<AddRecordPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(lr.testName,
-                                style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500)),
+                            Text(
+                              lr.testName,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                             Text(
                               '${lr.value ?? '-'} ${lr.unit ?? ''} (${lr.normalRange ?? '-'})',
                               style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant),
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -2569,23 +2784,30 @@ class _AddRecordPageState extends State<AddRecordPage> {
                       if (lr.isAbnormal)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 1),
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
                           margin: const EdgeInsets.only(right: 8),
                           decoration: BoxDecoration(
                             color: Colors.red[50],
                             borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Text('Abnormal',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.red[700])),
+                          child: Text(
+                            'Abnormal',
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red[700],
+                            ),
+                          ),
                         ),
                       InkWell(
-                        onTap: () =>
-                            setState(() => _labResults.removeAt(i)),
-                        child: Icon(Icons.delete_outline_rounded,
-                            size: 18, color: Colors.red[300]),
+                        onTap: () => setState(() => _labResults.removeAt(i)),
+                        child: Icon(
+                          Icons.delete_outline_rounded,
+                          size: 18,
+                          color: Colors.red[300],
+                        ),
                       ),
                     ],
                   ),
@@ -2608,8 +2830,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
             // Insurance
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Covered by insurance',
-                  style: TextStyle(fontSize: 14)),
+              title: const Text(
+                'Covered by insurance',
+                style: TextStyle(fontSize: 14),
+              ),
               value: _isCovered,
               onChanged: (v) => setState(() => _isCovered = v),
             ),
@@ -2633,8 +2857,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: Text(_isEditing ? 'Update Record' : 'Save Record',
-                  style: const TextStyle(fontSize: 16)),
+              child: Text(
+                _isEditing ? 'Update Record' : 'Save Record',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
             const SizedBox(height: 16),
           ],

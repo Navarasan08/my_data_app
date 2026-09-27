@@ -18,21 +18,39 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Gloria - your personal record keeper.">
 
   <!-- iOS meta tags & icons -->
+  <!-- apple-mobile-web-app-capable makes "Add to Home Screen" launch the app
+       standalone, without Safari's chrome and without its edge-swipe history
+       gesture, which is what blanks the app when swiped from the left. -->
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="my_data_app">
+  <meta name="apple-mobile-web-app-title" content="Gloria">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>STATS</title>
+  <title>Gloria</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    // In a mobile browser the edge swipe is a history navigation. Flutter
+    // keeps a sentinel entry so "back" at the root never leaves the page, but
+    // after Safari's swipe animation the canvas can be left un-repainted
+    // (a blank screen). Nudging a resize right after the pop makes the
+    // engine draw a fresh frame.
+    window.addEventListener('popstate', function () {
+      setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 60);
+    });
+    // Same repaint nudge when the page is restored from the back/forward cache.
+    window.addEventListener('pageshow', function (e) {
+      if (e.persisted) window.dispatchEvent(new Event('resize'));
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

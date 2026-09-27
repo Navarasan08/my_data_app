@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/notifications/model/app_notification.dart';
 import 'package:my_data_app/src/notifications/repository/notification_repository.dart';
@@ -12,9 +14,34 @@ import 'package:my_data_app/src/notifications/notification_service.dart';
 class NotificationCubit extends Cubit<NotificationState> {
   final NotificationRepository _repository;
   final LocalNotificationService _local;
+  StreamSubscription<void>? _sub;
 
   NotificationCubit(this._repository, this._local)
-      : super(NotificationState(items: _repository.getAll()));
+    : super(
+        NotificationState(
+          items: _repository.getAll(),
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
+
+  /// Pulls the repository's current list and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        items: _repository.getAll(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   // ── Public API used by other modules ────────────────────────────────────
 
@@ -22,8 +49,9 @@ class NotificationCubit extends Cubit<NotificationState> {
   /// [AppNotification.dedupeKey] already exists, its content is updated and
   /// the existing OS notification is re-shown (e.g. severity escalates).
   void push(AppNotification n) {
-    final existing =
-        state.items.where((x) => x.dedupeKey == n.dedupeKey).toList();
+    final existing = state.items
+        .where((x) => x.dedupeKey == n.dedupeKey)
+        .toList();
     if (existing.isNotEmpty) {
       // Refresh existing — keep id, but update body/severity/etc.
       final old = existing.first;
@@ -36,12 +64,12 @@ class NotificationCubit extends Cubit<NotificationState> {
       );
       _repository.update(refreshed);
       _local.show(refreshed);
-      _emit();
+      _sync();
       return;
     }
     _repository.add(n);
     _local.show(n);
-    _emit();
+    _sync();
   }
 
   /// Remove all notifications matching a given source. Producers call this
@@ -51,15 +79,19 @@ class NotificationCubit extends Cubit<NotificationState> {
     required String sourceItemId,
     String? sourceDate,
   }) {
-    final removed = state.items.where((n) =>
-        n.sourceModule == sourceModule &&
-        n.sourceItemId == sourceItemId &&
-        (sourceDate == null || n.sourceDate == sourceDate)).toList();
+    final removed = state.items
+        .where(
+          (n) =>
+              n.sourceModule == sourceModule &&
+              n.sourceItemId == sourceItemId &&
+              (sourceDate == null || n.sourceDate == sourceDate),
+        )
+        .toList();
     for (final n in removed) {
       _repository.delete(n.id);
       _local.cancel(n.id);
     }
-    if (removed.isNotEmpty) _emit();
+    if (removed.isNotEmpty) _sync();
   }
 
   /// Remove every notification belonging to a source item (any date).
@@ -75,7 +107,7 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (state.items[i].isRead) return;
     final updated = state.items[i].copyWith(isRead: true);
     _repository.update(updated);
-    _emit();
+    _sync();
   }
 
   void markAllRead() {
@@ -86,13 +118,13 @@ class NotificationCubit extends Cubit<NotificationState> {
         changed = true;
       }
     }
-    if (changed) _emit();
+    if (changed) _sync();
   }
 
   void dismiss(String id) {
     _repository.delete(id);
     _local.cancel(id);
-    _emit();
+    _sync();
   }
 
   void clearAll() {
@@ -100,7 +132,7 @@ class NotificationCubit extends Cubit<NotificationState> {
       _local.cancel(n.id);
     }
     _repository.deleteAll();
-    _emit();
+    _sync();
   }
 
   // ── Computed ────────────────────────────────────────────────────────────
@@ -115,6 +147,4 @@ class NotificationCubit extends Cubit<NotificationState> {
     });
     return list;
   }
-
-  void _emit() => emit(state.copyWith(items: _repository.getAll()));
 }

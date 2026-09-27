@@ -28,10 +28,7 @@ class AppTheme {
       seedColor: seedColor,
       brightness: Brightness.light,
     );
-    return _build(
-      scheme: scheme,
-      scaffoldBackground: const Color(0xFFF6F8FB),
-    );
+    return _build(scheme: scheme, scaffoldBackground: const Color(0xFFF6F8FB));
   }
 
   static ThemeData dark() {
@@ -39,10 +36,7 @@ class AppTheme {
       seedColor: seedColor,
       brightness: Brightness.dark,
     );
-    return _build(
-      scheme: scheme,
-      scaffoldBackground: const Color(0xFF0B1220),
-    );
+    return _build(scheme: scheme, scaffoldBackground: const Color(0xFF0B1220));
   }
 
   static ThemeData _build({
@@ -77,8 +71,10 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: scheme.surfaceContainerLowest,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         hintStyle: TextStyle(color: scheme.onSurfaceVariant),
         labelStyle: TextStyle(color: scheme.onSurfaceVariant),
         floatingLabelStyle: TextStyle(color: scheme.primary),
@@ -148,8 +144,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
@@ -157,16 +152,12 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         backgroundColor: scheme.inverseSurface,
         contentTextStyle: TextStyle(color: scheme.onInverseSurface),
       ),
       dialogTheme: DialogThemeData(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       dividerTheme: DividerThemeData(
         color: scheme.outlineVariant,

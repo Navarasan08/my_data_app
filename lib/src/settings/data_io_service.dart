@@ -46,7 +46,7 @@ class DataIoService {
   final FirebaseFirestore _firestore;
 
   DataIoService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // Size guard: warn above this, block above the upper bound.
   static const int warnBytes = 20 * 1024 * 1024;
@@ -99,10 +99,7 @@ class DataIoService {
       id: 'schedule',
       label: 'Schedule',
       icon: Icons.event_outlined,
-      collections: {
-        'schedules': 'startDate',
-        'schedule_categories': null,
-      },
+      collections: {'schedules': 'startDate', 'schedule_categories': null},
     ),
     ExportModule(
       id: 'food_menu',
@@ -132,10 +129,7 @@ class DataIoService {
       id: 'medical',
       label: 'Medical',
       icon: Icons.medical_services_outlined,
-      collections: {
-        'family_members': null,
-        'medical_records': 'date',
-      },
+      collections: {'family_members': null, 'medical_records': 'date'},
     ),
     ExportModule(
       id: 'vault',
@@ -172,10 +166,7 @@ class DataIoService {
       id: 'diet',
       label: 'Diet',
       icon: Icons.local_dining_outlined,
-      collections: {
-        'diet_items': null,
-        'diet_entries': 'date',
-      },
+      collections: {'diet_items': null, 'diet_entries': 'date'},
     ),
     ExportModule(
       id: 'days_counter',
@@ -240,8 +231,9 @@ class DataIoService {
         ? null
         : DateTime(to.year, to.month, to.day, 23, 59, 59, 999);
 
-    final selected =
-        moduleIds == null ? modules : modules.where((m) => moduleIds.contains(m.id));
+    final selected = moduleIds == null
+        ? modules
+        : modules.where((m) => moduleIds.contains(m.id));
 
     final collections = <String, List<Map<String, dynamic>>>{};
     final settings = <String, Map<String, dynamic>?>{};
@@ -258,10 +250,7 @@ class DataIoService {
           final data = d.data();
           if (!_passesDateFilter(data, dateField, fromTs, toTs)) continue;
 
-          final item = <String, dynamic>{
-            '__id': d.id,
-            'data': data,
-          };
+          final item = <String, dynamic>{'__id': d.id, 'data': data};
           if (nested != null) {
             final subMap = <String, List<Map<String, dynamic>>>{};
             for (final sub in nested) {
@@ -322,10 +311,7 @@ class DataIoService {
     final file = File('${dir.path}/my_data_app_export_$stamp.json');
     await file.writeAsString(json);
     await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path)],
-        text: 'my_data_app data export',
-      ),
+      ShareParams(files: [XFile(file.path)], text: 'my_data_app data export'),
     );
     return file;
   }
@@ -372,7 +358,8 @@ class DataIoService {
     }
     if (decoded['collections'] is! Map || decoded['settings'] is! Map) {
       throw const FormatException(
-          'Export file is missing "collections" or "settings".');
+        'Export file is missing "collections" or "settings".',
+      );
     }
     return decoded;
   }
@@ -424,8 +411,8 @@ class DataIoService {
               for (final subRow in subItems) {
                 if (subRow is! Map) continue;
                 final subId = subRow['__id'] as String?;
-                final subData =
-                    (subRow['data'] as Map?)?.cast<String, dynamic>();
+                final subData = (subRow['data'] as Map?)
+                    ?.cast<String, dynamic>();
                 if (subId == null || subData == null) continue;
                 writer.set(docRef.collection(sub).doc(subId), subData);
               }
@@ -453,8 +440,7 @@ class DataIoService {
     await writer.flush();
   }
 
-  Future<void> _wipeAll(
-      DocumentReference<Map<String, dynamic>> userDoc) async {
+  Future<void> _wipeAll(DocumentReference<Map<String, dynamic>> userDoc) async {
     final writer = _BatchedWriter(_firestore);
 
     for (final col in _allCollections) {
@@ -463,8 +449,11 @@ class DataIoService {
       for (final d in snap.docs) {
         if (nested != null) {
           for (final sub in nested) {
-            final subSnap =
-                await userDoc.collection(col).doc(d.id).collection(sub).get();
+            final subSnap = await userDoc
+                .collection(col)
+                .doc(d.id)
+                .collection(sub)
+                .get();
             for (final s in subSnap.docs) {
               writer.delete(s.reference);
               await writer.commitIfFull();

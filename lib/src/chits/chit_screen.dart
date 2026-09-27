@@ -28,8 +28,14 @@ class ChitFundListPage extends StatelessWidget {
               elevation: 0,
               bottom: const TabBar(
                 tabs: [
-                  Tab(text: 'Participating', icon: Icon(Icons.group_work_rounded, size: 20)),
-                  Tab(text: 'My Chits', icon: Icon(Icons.star_rounded, size: 20)),
+                  Tab(
+                    text: 'Participating',
+                    icon: Icon(Icons.group_work_rounded, size: 20),
+                  ),
+                  Tab(
+                    text: 'My Chits',
+                    icon: Icon(Icons.star_rounded, size: 20),
+                  ),
                 ],
               ),
             ),
@@ -48,7 +54,9 @@ class ChitFundListPage extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (_) => BlocProvider.value(
                             value: cubit,
-                            child: ParticipantChitDetailPage(chitFundId: chitFund.id),
+                            child: ParticipantChitDetailPage(
+                              chitFundId: chitFund.id,
+                            ),
                           ),
                         ),
                       );
@@ -57,7 +65,10 @@ class ChitFundListPage extends StatelessWidget {
                       final edited = await Navigator.push<ChitFund>(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => AddChitFundPage(chitFund: chitFund, initialRole: ChitRole.participant),
+                          builder: (_) => AddChitFundPage(
+                            chitFund: chitFund,
+                            initialRole: ChitRole.participant,
+                          ),
                         ),
                       );
                       if (edited != null) {
@@ -70,7 +81,8 @@ class ChitFundListPage extends StatelessWidget {
                         builder: (context) => AlertDialog(
                           title: const Text('Remove Chit Fund'),
                           content: Text(
-                              'Are you sure you want to remove "${chitFund.name}" from your list?'),
+                            'Are you sure you want to remove "${chitFund.name}" from your list?',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -78,7 +90,9 @@ class ChitFundListPage extends StatelessWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text('Remove'),
                             ),
                           ],
@@ -94,7 +108,8 @@ class ChitFundListPage extends StatelessWidget {
                 _ChitListView(
                   chitFunds: ownerChits,
                   emptyMessage: 'No chit groups created yet',
-                  emptySubMessage: 'Tap the + button to create your first chit group',
+                  emptySubMessage:
+                      'Tap the + button to create your first chit group',
                   itemBuilder: (chitFund) => ChitFundCard(
                     chitFund: chitFund,
                     onTap: () {
@@ -112,7 +127,8 @@ class ChitFundListPage extends StatelessWidget {
                       final editedChitFund = await Navigator.push<ChitFund>(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddChitFundPage(chitFund: chitFund),
+                          builder: (context) =>
+                              AddChitFundPage(chitFund: chitFund),
                         ),
                       );
                       if (editedChitFund != null) {
@@ -125,7 +141,8 @@ class ChitFundListPage extends StatelessWidget {
                         builder: (context) => AlertDialog(
                           title: const Text('Delete Chit Group'),
                           content: Text(
-                              'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.'),
+                            'Are you sure you want to delete "${chitFund.name}"? All members and auction records will also be deleted.',
+                          ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
@@ -133,7 +150,9 @@ class ChitFundListPage extends StatelessWidget {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              style: TextButton.styleFrom(foregroundColor: Colors.red),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text('Delete'),
                             ),
                           ],
@@ -192,7 +211,10 @@ class ChitFundListPage extends StatelessWidget {
                       color: Colors.deepPurple.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.star_rounded, color: Colors.deepPurple),
+                    child: const Icon(
+                      Icons.star_rounded,
+                      color: Colors.deepPurple,
+                    ),
                   ),
                   title: const Text('Create Chit Group (as Owner)'),
                   subtitle: const Text('Start and manage your own chit fund'),
@@ -201,7 +223,8 @@ class ChitFundListPage extends StatelessWidget {
                     final newChitFund = await Navigator.push<ChitFund>(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AddChitFundPage(initialRole: ChitRole.owner),
+                        builder: (context) =>
+                            const AddChitFundPage(initialRole: ChitRole.owner),
                       ),
                     );
                     if (newChitFund != null) {
@@ -217,16 +240,23 @@ class ChitFundListPage extends StatelessWidget {
                       color: Colors.teal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.group_work_rounded, color: Colors.teal),
+                    child: const Icon(
+                      Icons.group_work_rounded,
+                      color: Colors.teal,
+                    ),
                   ),
                   title: const Text('Join Chit Fund (as Participant)'),
-                  subtitle: const Text('Track a chit fund you are participating in'),
+                  subtitle: const Text(
+                    'Track a chit fund you are participating in',
+                  ),
                   onTap: () async {
                     Navigator.pop(sheetContext);
                     final newChitFund = await Navigator.push<ChitFund>(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const AddChitFundPage(initialRole: ChitRole.participant),
+                        builder: (context) => const AddChitFundPage(
+                          initialRole: ChitRole.participant,
+                        ),
                       ),
                     );
                     if (newChitFund != null) {
@@ -264,7 +294,11 @@ class _ChitListView extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.group_work_outlined, size: 80, color: cs.onSurfaceVariant),
+            Icon(
+              Icons.group_work_outlined,
+              size: 80,
+              color: cs.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               emptyMessage,
@@ -339,7 +373,11 @@ class _ParticipantChitCard extends StatelessWidget {
                   color: Colors.deepPurple.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.group_work_rounded, size: 22, color: Colors.deepPurple),
+                child: const Icon(
+                  Icons.group_work_rounded,
+                  size: 22,
+                  color: Colors.deepPurple,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -348,7 +386,10 @@ class _ParticipantChitCard extends StatelessWidget {
                   children: [
                     Text(
                       chitFund.name,
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -356,34 +397,51 @@ class _ParticipantChitCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'By ${chitFund.organizerName}',
-                        style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: statusColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             _getStatusText(chitFund.status),
-                            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: statusColor),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: statusColor,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           '${chitFund.myPaidCount}/${chitFund.durationMonths} paid',
-                          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Monthly: ₹${chitFund.monthlyContribution.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: cs.onSurface),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurface,
+                      ),
                     ),
                   ],
                 ),
@@ -403,7 +461,11 @@ class _ParticipantChitCard extends StatelessWidget {
                             color: Colors.blue[50],
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Icon(Icons.edit_outlined, size: 16, color: Colors.blue[300]),
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: Colors.blue[300],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 4),
@@ -416,7 +478,11 @@ class _ParticipantChitCard extends StatelessWidget {
                             color: Colors.red[50],
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                          child: Icon(
+                            Icons.delete_outline_rounded,
+                            size: 16,
+                            color: Colors.red[300],
+                          ),
                         ),
                       ),
                     ],
@@ -425,16 +491,28 @@ class _ParticipantChitCard extends StatelessWidget {
                   if (nextPayment != null) ...[
                     Text(
                       'Due ${DateFormat('MMM dd').format(nextPayment.dueDate)}',
-                      style: TextStyle(fontSize: 11, color: Colors.orange[700], fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.orange[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       '₹${nextPayment.amount.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.orange[800]),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange[800],
+                      ),
                     ),
                   ] else
                     Text(
                       'All paid',
-                      style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                 ],
               ),
@@ -522,7 +600,11 @@ class ChitFundCard extends StatelessWidget {
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.group_work_rounded, size: 22, color: statusColor),
+                    child: Icon(
+                      Icons.group_work_rounded,
+                      size: 22,
+                      color: statusColor,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -542,7 +624,10 @@ class ChitFundCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: statusColor.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(4),
@@ -579,7 +664,11 @@ class ChitFundCard extends StatelessWidget {
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 16,
+                        color: Colors.red[300],
+                      ),
                     ),
                   ),
                 ],
@@ -588,14 +677,15 @@ class ChitFundCard extends StatelessWidget {
               // Members progress
               Row(
                 children: [
-                  Icon(Icons.people_outline_rounded, size: 14, color: cs.onSurfaceVariant),
+                  Icon(
+                    Icons.people_outline_rounded,
+                    size: 14,
+                    color: cs.onSurfaceVariant,
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     '${chitFund.members.length}/${chitFund.totalMembers} members',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: cs.onSurfaceVariant,
-                    ),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -632,7 +722,8 @@ class ChitFundCard extends StatelessWidget {
 class ParticipantChitDetailPage extends StatelessWidget {
   final String chitFundId;
 
-  const ParticipantChitDetailPage({Key? key, required this.chitFundId}) : super(key: key);
+  const ParticipantChitDetailPage({Key? key, required this.chitFundId})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -649,7 +740,9 @@ class ParticipantChitDetailPage extends StatelessWidget {
           );
         }
 
-        final payments = chitFund.members.isNotEmpty ? chitFund.members.first.payments : <Payment>[];
+        final payments = chitFund.members.isNotEmpty
+            ? chitFund.members.first.payments
+            : <Payment>[];
         final paidCount = payments.where((p) => p.isPaid).length;
         final pendingCount = payments.where((p) => !p.isPaid).length;
 
@@ -665,7 +758,10 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   final edited = await Navigator.push<ChitFund>(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => AddChitFundPage(chitFund: chitFund, initialRole: ChitRole.participant),
+                      builder: (_) => AddChitFundPage(
+                        chitFund: chitFund,
+                        initialRole: ChitRole.participant,
+                      ),
                     ),
                   );
                   if (edited != null) {
@@ -691,7 +787,10 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   children: [
                     const Text(
                       'Chit Details',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _DetailRow(
@@ -706,7 +805,8 @@ class ParticipantChitDetailPage extends StatelessWidget {
                     ),
                     _DetailRow(
                       label: 'Members',
-                      value: '${chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths}',
+                      value:
+                          '${chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths}',
                       icon: Icons.people,
                     ),
                     _DetailRow(
@@ -755,11 +855,19 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.calculate_rounded, size: 18, color: Colors.blue[700]),
+                        Icon(
+                          Icons.calculate_rounded,
+                          size: 18,
+                          color: Colors.blue[700],
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Payment Formula',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.blue[900]),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[900],
+                          ),
                         ),
                       ],
                     ),
@@ -783,11 +891,18 @@ class ParticipantChitDetailPage extends StatelessWidget {
                           children: [
                             Text(
                               'Brokerage: ${chitFund.brokeragePercent}%',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.orange[900]),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.orange[900],
+                              ),
                             ),
                             Text(
                               'Total: ₹${_formatMoney(chitFund.totalBrokeragePerMonth)}/mo  →  Per member: ₹${_formatMoney(chitFund.brokeragePerMember)}/mo',
-                              style: TextStyle(fontSize: 11, color: Colors.orange[800]),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.orange[800],
+                              ),
                             ),
                           ],
                         ),
@@ -847,7 +962,11 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.emoji_events_rounded, color: Colors.amber[800], size: 24),
+                      Icon(
+                        Icons.emoji_events_rounded,
+                        color: Colors.amber[800],
+                        size: 24,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -886,7 +1005,10 @@ class ParticipantChitDetailPage extends StatelessWidget {
                     padding: const EdgeInsets.all(24),
                     child: Text(
                       'No payments recorded',
-                      style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 )
@@ -895,7 +1017,9 @@ class ParticipantChitDetailPage extends StatelessWidget {
                   return _ParticipantPaymentItem(
                     payment: payment,
                     chitFundId: chitFundId,
-                    totalMembers: chitFund.totalMembers > 0 ? chitFund.totalMembers : chitFund.durationMonths,
+                    totalMembers: chitFund.totalMembers > 0
+                        ? chitFund.totalMembers
+                        : chitFund.durationMonths,
                     baseAmount: chitFund.monthlyContribution,
                     totalChitAmount: chitFund.totalAmount,
                   );
@@ -974,7 +1098,8 @@ class _ParticipantPaymentItem extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final cubit = context.read<ChitCubit>();
     final isPaid = payment.isPaid;
-    final hasDiscount = payment.auctionDiscount != null && payment.auctionDiscount! > 0;
+    final hasDiscount =
+        payment.auctionDiscount != null && payment.auctionDiscount! > 0;
     final dividend = payment.dividend;
     final actualAmount = payment.actualAmount;
     final color = isPaid ? Colors.green : Colors.orange;
@@ -1010,7 +1135,11 @@ class _ParticipantPaymentItem extends StatelessWidget {
                         child: Center(
                           child: Text(
                             '${payment.monthNumber}',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: color, fontSize: 12),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
@@ -1022,20 +1151,31 @@ class _ParticipantPaymentItem extends StatelessWidget {
                           children: [
                             Text(
                               'Month ${payment.monthNumber}',
-                              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                             Text(
                               'Due ${DateFormat('MMM dd, yy').format(payment.dueDate)}',
-                              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       // Actual amount
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: hasDiscount ? Colors.teal[50] : cs.surfaceContainerLow,
+                          color: hasDiscount
+                              ? Colors.teal[50]
+                              : cs.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Column(
@@ -1056,7 +1196,9 @@ class _ParticipantPaymentItem extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
-                                color: hasDiscount ? Colors.teal[800] : cs.onSurface,
+                                color: hasDiscount
+                                    ? Colors.teal[800]
+                                    : cs.onSurface,
                               ),
                             ),
                           ],
@@ -1076,7 +1218,9 @@ class _ParticipantPaymentItem extends StatelessWidget {
                         },
                         borderRadius: BorderRadius.circular(6),
                         child: Icon(
-                          isPaid ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+                          isPaid
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked,
                           size: 22,
                           color: isPaid ? Colors.green : cs.onSurfaceVariant,
                         ),
@@ -1087,56 +1231,89 @@ class _ParticipantPaymentItem extends StatelessWidget {
                   if (isPaid && hasDiscount) ...[
                     const SizedBox(height: 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
-                        color: payment.isWonByMe ? Colors.amber[50] : cs.surfaceContainerLow,
+                        color: payment.isWonByMe
+                            ? Colors.amber[50]
+                            : cs.surfaceContainerLow,
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Row(
                         children: [
                           Icon(
-                            payment.isWonByMe ? Icons.emoji_events_rounded : Icons.gavel_rounded,
+                            payment.isWonByMe
+                                ? Icons.emoji_events_rounded
+                                : Icons.gavel_rounded,
                             size: 14,
-                            color: payment.isWonByMe ? Colors.amber[700] : cs.onSurfaceVariant,
+                            color: payment.isWonByMe
+                                ? Colors.amber[700]
+                                : cs.onSurfaceVariant,
                           ),
                           const SizedBox(width: 6),
                           if (payment.isWonByMe)
                             Text(
                               'I won this auction',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.amber[800]),
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.amber[800],
+                              ),
                             )
-                          else if (payment.auctionWinner != null && payment.auctionWinner!.isNotEmpty)
+                          else if (payment.auctionWinner != null &&
+                              payment.auctionWinner!.isNotEmpty)
                             Text(
                               'Won by ${payment.auctionWinner}',
-                              style: TextStyle(fontSize: 11, color: cs.onSurface),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurface,
+                              ),
                             )
                           else
                             Text(
                               'Someone else won',
-                              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           const Spacer(),
                           Text(
                             'Bid: ₹${payment.auctionValue?.toStringAsFixed(0) ?? '0'}',
-                            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                           if (payment.brokeragePerMember > 0) ...[
                             const SizedBox(width: 6),
                             Text(
                               '+₹${payment.brokeragePerMember.toStringAsFixed(0)}',
-                              style: TextStyle(fontSize: 10, color: Colors.orange[700]),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.orange[700],
+                              ),
                             ),
                           ],
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.teal[50],
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               '−₹${dividend.toStringAsFixed(0)}',
-                              style: TextStyle(fontSize: 10, color: Colors.teal[700], fontWeight: FontWeight.w600),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.teal[700],
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
                         ],
@@ -1149,10 +1326,14 @@ class _ParticipantPaymentItem extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerRight,
                       child: InkWell(
-                        onTap: () => _showPaymentDialog(context, cubit, isEdit: true),
+                        onTap: () =>
+                            _showPaymentDialog(context, cubit, isEdit: true),
                         child: Text(
                           'Edit auction details',
-                          style: TextStyle(fontSize: 10, color: Colors.blue[400]),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.blue[400],
+                          ),
                         ),
                       ),
                     ),
@@ -1166,7 +1347,11 @@ class _ParticipantPaymentItem extends StatelessWidget {
     );
   }
 
-  void _showPaymentDialog(BuildContext context, ChitCubit cubit, {bool isEdit = false}) {
+  void _showPaymentDialog(
+    BuildContext context,
+    ChitCubit cubit, {
+    bool isEdit = false,
+  }) {
     final auctionValueController = TextEditingController(
       text: payment.auctionDiscount?.toStringAsFixed(0) ?? '',
     );
@@ -1181,22 +1366,33 @@ class _ParticipantPaymentItem extends StatelessWidget {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             final cs = Theme.of(context).colorScheme;
-            final discountAmount = double.tryParse(auctionValueController.text) ?? 0;
-            final myDividend = totalMembers > 0 && discountAmount > 0 ? discountAmount / totalMembers : 0.0;
+            final discountAmount =
+                double.tryParse(auctionValueController.text) ?? 0;
+            final myDividend = totalMembers > 0 && discountAmount > 0
+                ? discountAmount / totalMembers
+                : 0.0;
             final brokerage = payment.brokeragePerMember;
             final actualPay = baseAmount - myDividend + brokerage;
 
             return AlertDialog(
-              title: Text(isEdit
-                  ? 'Edit Month ${payment.monthNumber}'
-                  : 'Month ${payment.monthNumber} — Mark Paid'),
+              title: Text(
+                isEdit
+                    ? 'Edit Month ${payment.monthNumber}'
+                    : 'Month ${payment.monthNumber} — Mark Paid',
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Who won?
-                    const Text('Who won the auction?', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Who won the auction?',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1207,22 +1403,39 @@ class _ParticipantPaymentItem extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: wonByMe ? Colors.amber[50] : cs.surfaceContainerLow,
+                                color: wonByMe
+                                    ? Colors.amber[50]
+                                    : cs.surfaceContainerLow,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: wonByMe ? Colors.amber[400]! : cs.outline,
+                                  color: wonByMe
+                                      ? Colors.amber[400]!
+                                      : cs.outline,
                                   width: wonByMe ? 2 : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.emoji_events_rounded, color: wonByMe ? Colors.amber[700] : cs.onSurfaceVariant, size: 24),
+                                  Icon(
+                                    Icons.emoji_events_rounded,
+                                    color: wonByMe
+                                        ? Colors.amber[700]
+                                        : cs.onSurfaceVariant,
+                                    size: 24,
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text('Me', style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: wonByMe ? FontWeight.bold : FontWeight.normal,
-                                    color: wonByMe ? Colors.amber[900] : cs.onSurfaceVariant,
-                                  )),
+                                  Text(
+                                    'Me',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: wonByMe
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: wonByMe
+                                          ? Colors.amber[900]
+                                          : cs.onSurfaceVariant,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1236,22 +1449,39 @@ class _ParticipantPaymentItem extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               decoration: BoxDecoration(
-                                color: !wonByMe ? Colors.blue[50] : cs.surfaceContainerLow,
+                                color: !wonByMe
+                                    ? Colors.blue[50]
+                                    : cs.surfaceContainerLow,
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: !wonByMe ? Colors.blue[400]! : cs.outline,
+                                  color: !wonByMe
+                                      ? Colors.blue[400]!
+                                      : cs.outline,
                                   width: !wonByMe ? 2 : 1,
                                 ),
                               ),
                               child: Column(
                                 children: [
-                                  Icon(Icons.person_rounded, color: !wonByMe ? Colors.blue[700] : cs.onSurfaceVariant, size: 24),
+                                  Icon(
+                                    Icons.person_rounded,
+                                    color: !wonByMe
+                                        ? Colors.blue[700]
+                                        : cs.onSurfaceVariant,
+                                    size: 24,
+                                  ),
                                   const SizedBox(height: 4),
-                                  Text('Someone else', style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: !wonByMe ? FontWeight.bold : FontWeight.normal,
-                                    color: !wonByMe ? Colors.blue[900] : cs.onSurfaceVariant,
-                                  )),
+                                  Text(
+                                    'Someone else',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: !wonByMe
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: !wonByMe
+                                          ? Colors.blue[900]
+                                          : cs.onSurfaceVariant,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -1284,7 +1514,8 @@ class _ParticipantPaymentItem extends StatelessWidget {
                         hintText: 'e.g., 80000',
                         border: const OutlineInputBorder(),
                         prefixText: '₹ ',
-                        helperText: 'Total chit: ₹${totalChitAmount.toStringAsFixed(0)}',
+                        helperText:
+                            'Total chit: ₹${totalChitAmount.toStringAsFixed(0)}',
                       ),
                       onChanged: (_) => setDialogState(() {}),
                     ),
@@ -1301,19 +1532,41 @@ class _ParticipantPaymentItem extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            _calcRow('Auction Discount', '₹${discountAmount.toStringAsFixed(0)}'),
-                            _calcRow('Your Dividend (÷$totalMembers)', '−₹${myDividend.toStringAsFixed(0)}'),
+                            _calcRow(
+                              'Auction Discount',
+                              '₹${discountAmount.toStringAsFixed(0)}',
+                            ),
+                            _calcRow(
+                              'Your Dividend (÷$totalMembers)',
+                              '−₹${myDividend.toStringAsFixed(0)}',
+                            ),
                             if (brokerage > 0)
-                              _calcRow('Brokerage', '+₹${brokerage.toStringAsFixed(0)}'),
+                              _calcRow(
+                                'Brokerage',
+                                '+₹${brokerage.toStringAsFixed(0)}',
+                              ),
                             const Divider(height: 12),
-                            _calcRow('Base Amount', '₹${baseAmount.toStringAsFixed(0)}'),
+                            _calcRow(
+                              'Base Amount',
+                              '₹${baseAmount.toStringAsFixed(0)}',
+                            ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('You Pay', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'You Pay',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 Text(
                                   '₹${actualPay.toStringAsFixed(0)}',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green[700]),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green[700],
+                                  ),
                                 ),
                               ],
                             ),
@@ -1330,10 +1583,16 @@ class _ParticipantPaymentItem extends StatelessWidget {
                 ),
                 FilledButton(
                   onPressed: () {
-                    final discount = double.tryParse(auctionValueController.text);
+                    final discount = double.tryParse(
+                      auctionValueController.text,
+                    );
                     if (discount == null || discount <= 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a valid auction discount amount')),
+                        const SnackBar(
+                          content: Text(
+                            'Please enter a valid auction discount amount',
+                          ),
+                        ),
                       );
                       return;
                     }
@@ -1342,7 +1601,9 @@ class _ParticipantPaymentItem extends StatelessWidget {
                       paymentId: payment.id,
                       auctionDiscount: discount,
                       isWonByMe: wonByMe,
-                      auctionWinner: !wonByMe ? winnerNameController.text : null,
+                      auctionWinner: !wonByMe
+                          ? winnerNameController.text
+                          : null,
                     );
                     Navigator.pop(ctx);
                   },
@@ -1357,19 +1618,27 @@ class _ParticipantPaymentItem extends StatelessWidget {
   }
 
   Widget _calcRow(String label, String value) {
-    return Builder(builder: (context) {
-      final cs = Theme.of(context).colorScheme;
-      return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: TextStyle(fontSize: 12, color: cs.onSurface)),
-            Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          ],
-        ),
-      );
-    });
+    return Builder(
+      builder: (context) {
+        final cs = Theme.of(context).colorScheme;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: TextStyle(fontSize: 12, color: cs.onSurface)),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -1421,7 +1690,11 @@ class AddChitFundPage extends StatefulWidget {
   final ChitFund? chitFund;
   final ChitRole initialRole;
 
-  const AddChitFundPage({Key? key, this.chitFund, this.initialRole = ChitRole.owner}) : super(key: key);
+  const AddChitFundPage({
+    Key? key,
+    this.chitFund,
+    this.initialRole = ChitRole.owner,
+  }) : super(key: key);
 
   @override
   State<AddChitFundPage> createState() => _AddChitFundPageState();
@@ -1464,10 +1737,12 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       _organizerNameController.text = widget.chitFund!.organizerName ?? '';
       _organizerPhoneController.text = widget.chitFund!.organizerPhone ?? '';
       if (widget.chitFund!.myMonthNumber != null) {
-        _auctionMonthController.text = widget.chitFund!.myMonthNumber.toString();
+        _auctionMonthController.text = widget.chitFund!.myMonthNumber
+            .toString();
       }
       if (widget.chitFund!.myAuctionAmount != null) {
-        _amountReceivedController.text = widget.chitFund!.myAuctionAmount.toString();
+        _amountReceivedController.text = widget.chitFund!.myAuctionAmount
+            .toString();
       }
     }
   }
@@ -1492,7 +1767,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
     if (brokerage <= 0 || monthlyContribution <= 0) return null;
     final totalAmount = double.tryParse(_totalAmountController.text) ?? 0;
     final members = int.tryParse(_membersController.text) ?? 1;
-    final perMember = members > 0 ? (totalAmount * brokerage / 100) / members : 0;
+    final perMember = members > 0
+        ? (totalAmount * brokerage / 100) / members
+        : 0;
     return 'Brokerage/member: ₹${perMember.toStringAsFixed(0)}/mo → You pay: ₹${(monthlyContribution + perMember).toStringAsFixed(0)}';
   }
 
@@ -1502,19 +1779,31 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
     return members > 0 ? totalAmount / members : 0;
   }
 
-  List<Payment> _generatePayments(int durationMonths, double monthlyAmount, DateTime startDate, {int? totalMembers, double brokeragePerMember = 0}) {
+  List<Payment> _generatePayments(
+    int durationMonths,
+    double monthlyAmount,
+    DateTime startDate, {
+    int? totalMembers,
+    double brokeragePerMember = 0,
+  }) {
     final payments = <Payment>[];
     for (int i = 1; i <= durationMonths; i++) {
-      final dueDate = DateTime(startDate.year, startDate.month + (i - 1), startDate.day);
-      payments.add(Payment(
-        id: '${DateTime.now().millisecondsSinceEpoch}_$i',
-        memberId: 'self',
-        monthNumber: i,
-        amount: monthlyAmount,
-        totalMembers: totalMembers ?? durationMonths,
-        brokeragePerMember: brokeragePerMember,
-        dueDate: dueDate,
-      ));
+      final dueDate = DateTime(
+        startDate.year,
+        startDate.month + (i - 1),
+        startDate.day,
+      );
+      payments.add(
+        Payment(
+          id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+          memberId: 'self',
+          monthNumber: i,
+          amount: monthlyAmount,
+          totalMembers: totalMembers ?? durationMonths,
+          brokeragePerMember: brokeragePerMember,
+          dueDate: dueDate,
+        ),
+      );
     }
     return payments;
   }
@@ -1524,15 +1813,24 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       final totalAmount = double.parse(_totalAmountController.text);
       final durationMonths = int.parse(_durationController.text);
       final totalMembers = int.parse(_membersController.text);
-      final monthlyContribution = totalAmount / (totalMembers > 0 ? totalMembers : 1);
+      final monthlyContribution =
+          totalAmount / (totalMembers > 0 ? totalMembers : 1);
       final brokeragePercent = double.tryParse(_brokerageController.text) ?? 0;
-      final brokeragePerMember = totalMembers > 0 ? (totalAmount * brokeragePercent / 100) / totalMembers : 0.0;
+      final brokeragePerMember = totalMembers > 0
+          ? (totalAmount * brokeragePercent / 100) / totalMembers
+          : 0.0;
 
       List<Member> members = widget.chitFund?.members ?? [];
       if (_role == ChitRole.participant) {
         if (members.isEmpty) {
           // First time — generate fresh payments
-          final payments = _generatePayments(durationMonths, monthlyContribution, _startDate, totalMembers: totalMembers, brokeragePerMember: brokeragePerMember);
+          final payments = _generatePayments(
+            durationMonths,
+            monthlyContribution,
+            _startDate,
+            totalMembers: totalMembers,
+            brokeragePerMember: brokeragePerMember,
+          );
           members = [
             Member(
               id: 'self',
@@ -1546,30 +1844,39 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
           final existingPayments = members.first.payments;
           final newPayments = <Payment>[];
           for (int i = 1; i <= durationMonths; i++) {
-            final dueDate = DateTime(_startDate.year, _startDate.month + (i - 1), _startDate.day);
+            final dueDate = DateTime(
+              _startDate.year,
+              _startDate.month + (i - 1),
+              _startDate.day,
+            );
             // Find existing payment for this month
-            final existing = existingPayments.where((p) => p.monthNumber == i).isNotEmpty
+            final existing =
+                existingPayments.where((p) => p.monthNumber == i).isNotEmpty
                 ? existingPayments.firstWhere((p) => p.monthNumber == i)
                 : null;
             if (existing != null) {
               // Preserve paid status, auction details — update date, amount, brokerage
-              newPayments.add(existing.copyWith(
-                amount: monthlyContribution,
-                dueDate: dueDate,
-                totalMembers: totalMembers,
-                brokeragePerMember: brokeragePerMember,
-              ));
+              newPayments.add(
+                existing.copyWith(
+                  amount: monthlyContribution,
+                  dueDate: dueDate,
+                  totalMembers: totalMembers,
+                  brokeragePerMember: brokeragePerMember,
+                ),
+              );
             } else {
               // New month added (duration increased)
-              newPayments.add(Payment(
-                id: '${DateTime.now().millisecondsSinceEpoch}_$i',
-                memberId: 'self',
-                monthNumber: i,
-                amount: monthlyContribution,
-                totalMembers: totalMembers,
-                brokeragePerMember: brokeragePerMember,
-                dueDate: dueDate,
-              ));
+              newPayments.add(
+                Payment(
+                  id: '${DateTime.now().millisecondsSinceEpoch}_$i',
+                  memberId: 'self',
+                  monthNumber: i,
+                  amount: monthlyContribution,
+                  totalMembers: totalMembers,
+                  brokeragePerMember: brokeragePerMember,
+                  dueDate: dueDate,
+                ),
+              );
             }
           }
           members = [
@@ -1580,7 +1887,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
       }
 
       final chitFund = ChitFund(
-        id: widget.chitFund?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            widget.chitFund?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         role: _role,
         totalAmount: totalAmount,
@@ -1590,19 +1899,29 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
         brokeragePercent: brokeragePercent,
         startDate: _startDate,
         status: _selectedStatus,
-        description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+        description: _descriptionController.text.isEmpty
+            ? null
+            : _descriptionController.text,
         members: members,
         auctions: widget.chitFund?.auctions ?? [],
-        organizerName: _role == ChitRole.participant && _organizerNameController.text.isNotEmpty
+        organizerName:
+            _role == ChitRole.participant &&
+                _organizerNameController.text.isNotEmpty
             ? _organizerNameController.text
             : widget.chitFund?.organizerName,
-        organizerPhone: _role == ChitRole.participant && _organizerPhoneController.text.isNotEmpty
+        organizerPhone:
+            _role == ChitRole.participant &&
+                _organizerPhoneController.text.isNotEmpty
             ? _organizerPhoneController.text
             : widget.chitFund?.organizerPhone,
-        myMonthNumber: _role == ChitRole.participant && _auctionMonthController.text.isNotEmpty
+        myMonthNumber:
+            _role == ChitRole.participant &&
+                _auctionMonthController.text.isNotEmpty
             ? int.tryParse(_auctionMonthController.text)
             : widget.chitFund?.myMonthNumber,
-        myAuctionAmount: _role == ChitRole.participant && _amountReceivedController.text.isNotEmpty
+        myAuctionAmount:
+            _role == ChitRole.participant &&
+                _amountReceivedController.text.isNotEmpty
             ? double.tryParse(_amountReceivedController.text)
             : widget.chitFund?.myAuctionAmount,
       );
@@ -1680,7 +1999,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                   child: TextFormField(
                     controller: _membersController,
                     decoration: InputDecoration(
-                      labelText: _role == ChitRole.owner ? 'Total Members *' : 'Total Members *',
+                      labelText: _role == ChitRole.owner
+                          ? 'Total Members *'
+                          : 'Total Members *',
                       hintText: '20',
                       border: const OutlineInputBorder(),
                       prefixIcon: const Icon(Icons.people),
@@ -1754,7 +2075,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                 suffixText: '%',
                 helperText: _getBrokerageHelper(monthlyContribution),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
@@ -1865,8 +2188,9 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                  _isEditing ? 'Update Chit Group' : 'Create Chit Group',
-                  style: const TextStyle(fontSize: 16)),
+                _isEditing ? 'Update Chit Group' : 'Create Chit Group',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -1890,7 +2214,8 @@ class _AddChitFundPageState extends State<AddChitFundPage> {
 class ChitFundDetailsPage extends StatefulWidget {
   final String chitFundId;
 
-  const ChitFundDetailsPage({Key? key, required this.chitFundId}) : super(key: key);
+  const ChitFundDetailsPage({Key? key, required this.chitFundId})
+    : super(key: key);
 
   @override
   State<ChitFundDetailsPage> createState() => _ChitFundDetailsPageState();
@@ -1945,13 +2270,17 @@ class _ChitFundDetailsPageState extends State<ChitFundDetailsPage>
               _OverviewTab(chitFund: chitFund),
               _MembersTab(
                 chitFund: chitFund,
-                onAddMember: (member) => cubit.addMember(widget.chitFundId, member),
-                onUpdateMember: (member) => cubit.updateMember(widget.chitFundId, member),
+                onAddMember: (member) =>
+                    cubit.addMember(widget.chitFundId, member),
+                onUpdateMember: (member) =>
+                    cubit.updateMember(widget.chitFundId, member),
               ),
               _AuctionsTab(
                 chitFund: chitFund,
-                onAddAuction: (auction) => cubit.addAuction(widget.chitFundId, auction),
-                onUpdateAuction: (auction) => cubit.updateAuction(widget.chitFundId, auction),
+                onAddAuction: (auction) =>
+                    cubit.addAuction(widget.chitFundId, auction),
+                onUpdateAuction: (auction) =>
+                    cubit.updateAuction(widget.chitFundId, auction),
               ),
             ],
           ),
@@ -2063,7 +2392,9 @@ class _OverviewTab extends StatelessWidget {
                     value: progress,
                     minHeight: 20,
                     backgroundColor: cs.surfaceContainerHighest,
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.green,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -2173,10 +2504,11 @@ class _MembersTab extends StatelessWidget {
   final Function(Member) onAddMember;
   final Function(Member) onUpdateMember;
 
-  const _MembersTab(
-      {required this.chitFund,
-      required this.onAddMember,
-      required this.onUpdateMember});
+  const _MembersTab({
+    required this.chitFund,
+    required this.onAddMember,
+    required this.onUpdateMember,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2211,7 +2543,10 @@ class _MembersTab extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Member'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ],
@@ -2224,11 +2559,18 @@ class _MembersTab extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.people_outline, size: 64, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.people_outline,
+                        size: 64,
+                        color: cs.onSurfaceVariant,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No members added yet',
-                        style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -2264,7 +2606,8 @@ class MemberCard extends StatelessWidget {
   final Member member;
   final VoidCallback? onEdit;
 
-  const MemberCard({Key? key, required this.member, this.onEdit}) : super(key: key);
+  const MemberCard({Key? key, required this.member, this.onEdit})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -2311,9 +2654,15 @@ class MemberCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (member.phone != null)
-              Text('Phone: ${member.phone}', style: const TextStyle(fontSize: 12)),
+              Text(
+                'Phone: ${member.phone}',
+                style: const TextStyle(fontSize: 12),
+              ),
             if (member.email != null)
-              Text('Email: ${member.email}', style: const TextStyle(fontSize: 12)),
+              Text(
+                'Email: ${member.email}',
+                style: const TextStyle(fontSize: 12),
+              ),
           ],
         ),
         trailing: onEdit != null
@@ -2369,7 +2718,9 @@ class _AddMemberPageState extends State<AddMemberPage> {
   void _saveMember() {
     if (_formKey.currentState!.validate()) {
       final member = Member(
-        id: widget.member?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            widget.member?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         phone: _phoneController.text.isEmpty ? null : _phoneController.text,
         email: _emailController.text.isEmpty ? null : _emailController.text,
@@ -2437,8 +2788,9 @@ class _AddMemberPageState extends State<AddMemberPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                  _isEditing ? 'Update Member' : 'Add Member',
-                  style: const TextStyle(fontSize: 16)),
+                _isEditing ? 'Update Member' : 'Add Member',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -2453,10 +2805,11 @@ class _AuctionsTab extends StatelessWidget {
   final Function(Auction) onAddAuction;
   final Function(Auction) onUpdateAuction;
 
-  const _AuctionsTab(
-      {required this.chitFund,
-      required this.onAddAuction,
-      required this.onUpdateAuction});
+  const _AuctionsTab({
+    required this.chitFund,
+    required this.onAddAuction,
+    required this.onUpdateAuction,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -2491,7 +2844,10 @@ class _AuctionsTab extends StatelessWidget {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Auction'),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ],
@@ -2508,7 +2864,10 @@ class _AuctionsTab extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         'No auctions recorded yet',
-                        style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -2547,7 +2906,8 @@ class AuctionCard extends StatelessWidget {
   final Auction auction;
   final VoidCallback? onEdit;
 
-  const AuctionCard({Key? key, required this.auction, this.onEdit}) : super(key: key);
+  const AuctionCard({Key? key, required this.auction, this.onEdit})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -2567,7 +2927,11 @@ class AuctionCard extends StatelessWidget {
                     color: Colors.deepPurple[50],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.gavel, color: Colors.deepPurple[700], size: 24),
+                  child: Icon(
+                    Icons.gavel,
+                    color: Colors.deepPurple[700],
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -2583,7 +2947,10 @@ class AuctionCard extends StatelessWidget {
                       ),
                       Text(
                         DateFormat('MMM dd, yyyy').format(auction.auctionDate),
-                        style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -2622,8 +2989,10 @@ class AuctionCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Bid Amount:',
-                          style: TextStyle(fontSize: 13, color: cs.onSurface)),
+                      Text(
+                        'Bid Amount:',
+                        style: TextStyle(fontSize: 13, color: cs.onSurface),
+                      ),
                       Text(
                         '₹${auction.bidAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -2636,8 +3005,10 @@ class AuctionCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Discount:',
-                          style: TextStyle(fontSize: 13, color: cs.onSurface)),
+                      Text(
+                        'Discount:',
+                        style: TextStyle(fontSize: 13, color: cs.onSurface),
+                      ),
                       Text(
                         '₹${auction.discountAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -2691,7 +3062,8 @@ class AddAuctionPage extends StatefulWidget {
   final ChitFund chitFund;
   final Auction? auction;
 
-  const AddAuctionPage({Key? key, required this.chitFund, this.auction}) : super(key: key);
+  const AddAuctionPage({Key? key, required this.chitFund, this.auction})
+    : super(key: key);
 
   @override
   State<AddAuctionPage> createState() => _AddAuctionPageState();
@@ -2716,10 +3088,13 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       _notesController.text = widget.auction!.notes ?? '';
       _auctionDate = widget.auction!.auctionDate;
       _monthNumber = widget.auction!.monthNumber;
-      _selectedWinner = widget.chitFund.members
+      _selectedWinner =
+          widget.chitFund.members
               .where((m) => m.id == widget.auction!.winnerId)
               .isNotEmpty
-          ? widget.chitFund.members.firstWhere((m) => m.id == widget.auction!.winnerId)
+          ? widget.chitFund.members.firstWhere(
+              (m) => m.id == widget.auction!.winnerId,
+            )
           : null;
     } else {
       _monthNumber = widget.chitFund.auctions.length + 1;
@@ -2746,9 +3121,9 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
   void _saveAuction() {
     if (_formKey.currentState!.validate()) {
       if (_selectedWinner == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a winner')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Please select a winner')));
         return;
       }
 
@@ -2756,7 +3131,9 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
       final discount = widget.chitFund.totalAmount - bidAmount;
 
       final auction = Auction(
-        id: widget.auction?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id:
+            widget.auction?.id ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         monthNumber: _monthNumber,
         auctionDate: _auctionDate,
         winnerId: _selectedWinner!.id,
@@ -2803,7 +3180,10 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     const SizedBox(height: 8),
                     Text(
                       'Total Chit Amount: ₹${widget.chitFund.totalAmount.toStringAsFixed(0)}',
-                      style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -2879,8 +3259,10 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Discount:',
-                            style: TextStyle(fontWeight: FontWeight.w500)),
+                        const Text(
+                          'Discount:',
+                          style: TextStyle(fontWeight: FontWeight.w500),
+                        ),
                         Text(
                           '₹${discount.toStringAsFixed(0)}',
                           style: const TextStyle(
@@ -2895,8 +3277,10 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Amount Received:',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        const Text(
+                          'Amount Received:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         Text(
                           '₹${amountReceived.toStringAsFixed(0)}',
                           style: TextStyle(
@@ -2928,8 +3312,9 @@ class _AddAuctionPageState extends State<AddAuctionPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                  _isEditing ? 'Update Auction' : 'Save Auction',
-                  style: const TextStyle(fontSize: 16)),
+                _isEditing ? 'Update Auction' : 'Save Auction',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),

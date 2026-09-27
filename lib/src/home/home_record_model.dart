@@ -7,12 +7,18 @@ class HomeCategory {
   final int colorIndex;
   final bool isCustom;
 
+  /// True for income categories (Salary, Business, …). Records carry the
+  /// same flag; expense records use expense categories and income records
+  /// use income categories.
+  final bool isIncome;
+
   const HomeCategory({
     required this.id,
     required this.displayName,
     required this.iconIndex,
     required this.colorIndex,
     this.isCustom = false,
+    this.isIncome = false,
   });
 
   IconData get icon =>
@@ -67,6 +73,12 @@ class HomeCategory {
     Icons.subscriptions_rounded, // 43 - subscriptions
     Icons.local_taxi_rounded, // 44 - taxi/auto
     Icons.temple_hindu_rounded, // 45 - temple/pooja
+    Icons.work_rounded, // 46 - salary/job
+    Icons.business_center_rounded, // 47 - business
+    Icons.trending_up_rounded, // 48 - investments
+    Icons.attach_money_rounded, // 49 - money/other income
+    Icons.replay_rounded, // 50 - refunds
+    Icons.currency_exchange_rounded, // 51 - interest/exchange
   ];
 
   static final List<Color> availableColors = [
@@ -89,36 +101,67 @@ class HomeCategory {
 
   // Default categories (order matches old enum for backward compat)
   static final furniture = HomeCategory(
-      id: 'furniture', displayName: 'Furniture', iconIndex: 0, colorIndex: 0);
+    id: 'furniture',
+    displayName: 'Furniture',
+    iconIndex: 0,
+    colorIndex: 0,
+  );
   static final water = HomeCategory(
-      id: 'water', displayName: 'Water', iconIndex: 1, colorIndex: 1);
-  static final gas =
-      HomeCategory(id: 'gas', displayName: 'Gas', iconIndex: 2, colorIndex: 2);
+    id: 'water',
+    displayName: 'Water',
+    iconIndex: 1,
+    colorIndex: 1,
+  );
+  static final gas = HomeCategory(
+    id: 'gas',
+    displayName: 'Gas',
+    iconIndex: 2,
+    colorIndex: 2,
+  );
   static final electricity = HomeCategory(
-      id: 'electricity',
-      displayName: 'Electricity',
-      iconIndex: 3,
-      colorIndex: 3);
+    id: 'electricity',
+    displayName: 'Electricity',
+    iconIndex: 3,
+    colorIndex: 3,
+  );
   static final groceries = HomeCategory(
-      id: 'groceries', displayName: 'Groceries', iconIndex: 4, colorIndex: 4);
+    id: 'groceries',
+    displayName: 'Groceries',
+    iconIndex: 4,
+    colorIndex: 4,
+  );
   static final maintenance = HomeCategory(
-      id: 'maintenance',
-      displayName: 'Maintenance',
-      iconIndex: 5,
-      colorIndex: 5);
+    id: 'maintenance',
+    displayName: 'Maintenance',
+    iconIndex: 5,
+    colorIndex: 5,
+  );
   static final appliances = HomeCategory(
-      id: 'appliances',
-      displayName: 'Appliances',
-      iconIndex: 6,
-      colorIndex: 6);
+    id: 'appliances',
+    displayName: 'Appliances',
+    iconIndex: 6,
+    colorIndex: 6,
+  );
   static final rent = HomeCategory(
-      id: 'rent', displayName: 'Rent', iconIndex: 7, colorIndex: 7);
+    id: 'rent',
+    displayName: 'Rent',
+    iconIndex: 7,
+    colorIndex: 7,
+  );
   static final internet = HomeCategory(
-      id: 'internet', displayName: 'Internet', iconIndex: 8, colorIndex: 8);
+    id: 'internet',
+    displayName: 'Internet',
+    iconIndex: 8,
+    colorIndex: 8,
+  );
   static final cleaning = HomeCategory(
-      id: 'cleaning', displayName: 'Cleaning', iconIndex: 9, colorIndex: 9);
+    id: 'cleaning',
+    displayName: 'Cleaning',
+    iconIndex: 9,
+    colorIndex: 9,
+  );
   // static final milk = HomeCategory(
-      // id: 'milk', displayName: 'Milk', iconIndex: 25, colorIndex: 1);
+  // id: 'milk', displayName: 'Milk', iconIndex: 25, colorIndex: 1);
   // static final rice = HomeCategory(
   //     id: 'rice', displayName: 'Rice & Grains', iconIndex: 26, colorIndex: 0);
   // static final batter = HomeCategory(
@@ -128,17 +171,29 @@ class HomeCategory {
   // static final fish = HomeCategory(
   //     id: 'fish', displayName: 'Fish & Meat', iconIndex: 35, colorIndex: 10);
   static final medical = HomeCategory(
-      id: 'medical', displayName: 'Medical', iconIndex: 12, colorIndex: 10);
+    id: 'medical',
+    displayName: 'Medical',
+    iconIndex: 12,
+    colorIndex: 10,
+  );
   // static final education = HomeCategory(
   //     id: 'education', displayName: 'Education', iconIndex: 13, colorIndex: 13);
   static final clothing = HomeCategory(
-      id: 'clothing', displayName: 'Clothing', iconIndex: 38, colorIndex: 8);
+    id: 'clothing',
+    displayName: 'Clothing',
+    iconIndex: 38,
+    colorIndex: 8,
+  );
   // static final pooja = HomeCategory(
   //     id: 'pooja', displayName: 'Pooja & Temple', iconIndex: 45, colorIndex: 14);
   // static final emi = HomeCategory(
   //     id: 'emi', displayName: 'EMI & Loans', iconIndex: 42, colorIndex: 7);
   static final subscriptions = HomeCategory(
-      id: 'subscriptions', displayName: 'Subscriptions', iconIndex: 43, colorIndex: 11);
+    id: 'subscriptions',
+    displayName: 'Subscriptions',
+    iconIndex: 43,
+    colorIndex: 11,
+  );
 
   static final List<HomeCategory> defaults = [
     groceries,
@@ -164,20 +219,92 @@ class HomeCategory {
     subscriptions,
   ];
 
-  static HomeCategory findById(
-      String id, List<HomeCategory> customCategories) {
+  // Default income categories
+  static final salary = HomeCategory(
+    id: 'salary',
+    displayName: 'Salary',
+    iconIndex: 46,
+    colorIndex: 4,
+    isIncome: true,
+  );
+  static final businessIncome = HomeCategory(
+    id: 'business_income',
+    displayName: 'Business',
+    iconIndex: 47,
+    colorIndex: 6,
+    isIncome: true,
+  );
+  static final investment = HomeCategory(
+    id: 'investment',
+    displayName: 'Investments',
+    iconIndex: 48,
+    colorIndex: 7,
+    isIncome: true,
+  );
+  static final rentalIncome = HomeCategory(
+    id: 'rental_income',
+    displayName: 'Rental',
+    iconIndex: 7,
+    colorIndex: 0,
+    isIncome: true,
+  );
+  static final interestIncome = HomeCategory(
+    id: 'interest_income',
+    displayName: 'Interest',
+    iconIndex: 51,
+    colorIndex: 3,
+    isIncome: true,
+  );
+  static final giftIncome = HomeCategory(
+    id: 'gift_income',
+    displayName: 'Gifts',
+    iconIndex: 40,
+    colorIndex: 11,
+    isIncome: true,
+  );
+  static final refund = HomeCategory(
+    id: 'refund',
+    displayName: 'Refunds',
+    iconIndex: 50,
+    colorIndex: 9,
+    isIncome: true,
+  );
+  static final otherIncome = HomeCategory(
+    id: 'other_income',
+    displayName: 'Other Income',
+    iconIndex: 49,
+    colorIndex: 5,
+    isIncome: true,
+  );
+
+  static final List<HomeCategory> incomeDefaults = [
+    salary,
+    businessIncome,
+    investment,
+    rentalIncome,
+    interestIncome,
+    giftIncome,
+    refund,
+    otherIncome,
+  ];
+
+  static HomeCategory findById(String id, List<HomeCategory> customCategories) {
     for (final cat in defaults) {
+      if (cat.id == id) return cat;
+    }
+    for (final cat in incomeDefaults) {
       if (cat.id == id) return cat;
     }
     for (final cat in customCategories) {
       if (cat.id == id) return cat;
     }
     return HomeCategory(
-        id: id,
-        displayName: id,
-        iconIndex: 10,
-        colorIndex: 5,
-        isCustom: true);
+      id: id,
+      displayName: id,
+      iconIndex: 10,
+      colorIndex: 5,
+      isCustom: true,
+    );
   }
 
   static HomeCategory fromLegacyIndex(int index) {
@@ -186,20 +313,22 @@ class HomeCategory {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'iconIndex': iconIndex,
-        'colorIndex': colorIndex,
-        'isCustom': isCustom,
-      };
+    'id': id,
+    'displayName': displayName,
+    'iconIndex': iconIndex,
+    'colorIndex': colorIndex,
+    'isCustom': isCustom,
+    'isIncome': isIncome,
+  };
 
   factory HomeCategory.fromJson(Map<String, dynamic> json) => HomeCategory(
-        id: json['id'] as String,
-        displayName: json['displayName'] as String,
-        iconIndex: json['iconIndex'] as int,
-        colorIndex: json['colorIndex'] as int,
-        isCustom: json['isCustom'] as bool? ?? false,
-      );
+    id: json['id'] as String,
+    displayName: json['displayName'] as String,
+    iconIndex: json['iconIndex'] as int,
+    colorIndex: json['colorIndex'] as int,
+    isCustom: json['isCustom'] as bool? ?? false,
+    isIncome: json['isIncome'] as bool? ?? false,
+  );
 
   @override
   bool operator ==(Object other) => other is HomeCategory && other.id == id;
@@ -230,18 +359,18 @@ class PaymentType {
       availableColors[colorIndex.clamp(0, availableColors.length - 1)];
 
   static final List<IconData> availableIcons = [
-    Icons.payments_rounded,                 // 0 - cash
-    Icons.qr_code_rounded,                  // 1 - upi
-    Icons.credit_card_rounded,              // 2 - card
-    Icons.account_balance_rounded,          // 3 - netbanking
-    Icons.account_balance_wallet_rounded,   // 4 - wallet
-    Icons.savings_rounded,                  // 5 - savings
-    Icons.receipt_long_rounded,             // 6 - cheque
-    Icons.handshake_rounded,                // 7 - borrowed
-    Icons.card_giftcard_rounded,            // 8 - gift card
-    Icons.local_atm_rounded,                // 9 - atm
-    Icons.phone_android_rounded,            // 10 - mobile
-    Icons.currency_exchange_rounded,        // 11 - other
+    Icons.payments_rounded, // 0 - cash
+    Icons.qr_code_rounded, // 1 - upi
+    Icons.credit_card_rounded, // 2 - card
+    Icons.account_balance_rounded, // 3 - netbanking
+    Icons.account_balance_wallet_rounded, // 4 - wallet
+    Icons.savings_rounded, // 5 - savings
+    Icons.receipt_long_rounded, // 6 - cheque
+    Icons.handshake_rounded, // 7 - borrowed
+    Icons.card_giftcard_rounded, // 8 - gift card
+    Icons.local_atm_rounded, // 9 - atm
+    Icons.phone_android_rounded, // 10 - mobile
+    Icons.currency_exchange_rounded, // 11 - other
   ];
 
   static final List<Color> availableColors = [
@@ -270,27 +399,26 @@ class PaymentType {
     String? displayName,
     int? iconIndex,
     int? colorIndex,
-  }) =>
-      PaymentType(
-        id: id,
-        displayName: displayName ?? this.displayName,
-        iconIndex: iconIndex ?? this.iconIndex,
-        colorIndex: colorIndex ?? this.colorIndex,
-      );
+  }) => PaymentType(
+    id: id,
+    displayName: displayName ?? this.displayName,
+    iconIndex: iconIndex ?? this.iconIndex,
+    colorIndex: colorIndex ?? this.colorIndex,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'displayName': displayName,
-        'iconIndex': iconIndex,
-        'colorIndex': colorIndex,
-      };
+    'id': id,
+    'displayName': displayName,
+    'iconIndex': iconIndex,
+    'colorIndex': colorIndex,
+  };
 
   factory PaymentType.fromJson(Map<String, dynamic> json) => PaymentType(
-        id: json['id'] as String,
-        displayName: json['displayName'] as String,
-        iconIndex: (json['iconIndex'] as int? ?? 0),
-        colorIndex: (json['colorIndex'] as int? ?? 0),
-      );
+    id: json['id'] as String,
+    displayName: json['displayName'] as String,
+    iconIndex: (json['iconIndex'] as int? ?? 0),
+    colorIndex: (json['colorIndex'] as int? ?? 0),
+  );
 
   @override
   bool operator ==(Object other) => other is PaymentType && other.id == id;
@@ -348,6 +476,10 @@ class HomeRecord {
   final String? eventId;
   final String? eventName;
 
+  /// True when this record is money received (income) rather than spent.
+  /// Absent in stored JSON for older records, which are all expenses.
+  final bool isIncome;
+
   const HomeRecord({
     required this.id,
     required this.title,
@@ -361,6 +493,7 @@ class HomeRecord {
     this.paymentType,
     this.eventId,
     this.eventName,
+    this.isIncome = false,
   });
 
   String get quantityLabel {
@@ -387,6 +520,7 @@ class HomeRecord {
     String? eventId,
     String? eventName,
     bool clearEvent = false,
+    bool? isIncome,
   }) {
     return HomeRecord(
       id: id ?? this.id,
@@ -398,10 +532,10 @@ class HomeRecord {
       notes: notes ?? this.notes,
       quantity: clearQuantity ? null : (quantity ?? this.quantity),
       unit: clearQuantity ? null : (unit ?? this.unit),
-      paymentType:
-          clearPaymentType ? null : (paymentType ?? this.paymentType),
+      paymentType: clearPaymentType ? null : (paymentType ?? this.paymentType),
       eventId: clearEvent ? null : (eventId ?? this.eventId),
       eventName: clearEvent ? null : (eventName ?? this.eventName),
+      isIncome: isIncome ?? this.isIncome,
     );
   }
 
@@ -419,18 +553,23 @@ class HomeRecord {
       if (paymentType != null) 'paymentType': paymentType!.toJson(),
       if (eventId != null) 'eventId': eventId,
       if (eventName != null) 'eventName': eventName,
+      if (isIncome) 'isIncome': true,
     };
   }
 
-  factory HomeRecord.fromJson(Map<String, dynamic> json,
-      {List<HomeCategory> customCategories = const []}) {
+  factory HomeRecord.fromJson(
+    Map<String, dynamic> json, {
+    List<HomeCategory> customCategories = const [],
+  }) {
     final categoryValue = json['category'];
     HomeCategory category;
     if (categoryValue is int) {
       category = HomeCategory.fromLegacyIndex(categoryValue);
     } else {
-      category =
-          HomeCategory.findById(categoryValue as String, customCategories);
+      category = HomeCategory.findById(
+        categoryValue as String,
+        customCategories,
+      );
     }
 
     PaymentType? paymentType;
@@ -456,6 +595,7 @@ class HomeRecord {
       paymentType: paymentType,
       eventId: json['eventId'] as String?,
       eventName: json['eventName'] as String?,
+      isIncome: json['isIncome'] as bool? ?? false,
     );
   }
 }

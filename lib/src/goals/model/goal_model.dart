@@ -5,59 +5,96 @@ enum GoalFrequency { daily, weekly, monthly, custom }
 extension GoalFrequencyExt on GoalFrequency {
   String get label {
     switch (this) {
-      case GoalFrequency.daily: return 'Daily';
-      case GoalFrequency.weekly: return 'Weekly';
-      case GoalFrequency.monthly: return 'Monthly';
-      case GoalFrequency.custom: return 'Custom';
+      case GoalFrequency.daily:
+        return 'Daily';
+      case GoalFrequency.weekly:
+        return 'Weekly';
+      case GoalFrequency.monthly:
+        return 'Monthly';
+      case GoalFrequency.custom:
+        return 'Custom';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case GoalFrequency.daily: return Icons.today_rounded;
-      case GoalFrequency.weekly: return Icons.view_week_rounded;
-      case GoalFrequency.monthly: return Icons.calendar_month_rounded;
-      case GoalFrequency.custom: return Icons.tune_rounded;
+      case GoalFrequency.daily:
+        return Icons.today_rounded;
+      case GoalFrequency.weekly:
+        return Icons.view_week_rounded;
+      case GoalFrequency.monthly:
+        return Icons.calendar_month_rounded;
+      case GoalFrequency.custom:
+        return Icons.tune_rounded;
     }
   }
 }
 
-enum GoalCategory { health, fitness, learning, finance, productivity, habit, other }
+enum GoalCategory {
+  health,
+  fitness,
+  learning,
+  finance,
+  productivity,
+  habit,
+  other,
+}
 
 extension GoalCategoryExt on GoalCategory {
   String get label {
     switch (this) {
-      case GoalCategory.health: return 'Health';
-      case GoalCategory.fitness: return 'Fitness';
-      case GoalCategory.learning: return 'Learning';
-      case GoalCategory.finance: return 'Finance';
-      case GoalCategory.productivity: return 'Productivity';
-      case GoalCategory.habit: return 'Habit';
-      case GoalCategory.other: return 'Other';
+      case GoalCategory.health:
+        return 'Health';
+      case GoalCategory.fitness:
+        return 'Fitness';
+      case GoalCategory.learning:
+        return 'Learning';
+      case GoalCategory.finance:
+        return 'Finance';
+      case GoalCategory.productivity:
+        return 'Productivity';
+      case GoalCategory.habit:
+        return 'Habit';
+      case GoalCategory.other:
+        return 'Other';
     }
   }
 
   IconData get icon {
     switch (this) {
-      case GoalCategory.health: return Icons.favorite_rounded;
-      case GoalCategory.fitness: return Icons.fitness_center_rounded;
-      case GoalCategory.learning: return Icons.menu_book_rounded;
-      case GoalCategory.finance: return Icons.savings_rounded;
-      case GoalCategory.productivity: return Icons.rocket_launch_rounded;
-      case GoalCategory.habit: return Icons.loop_rounded;
-      case GoalCategory.other: return Icons.flag_rounded;
+      case GoalCategory.health:
+        return Icons.favorite_rounded;
+      case GoalCategory.fitness:
+        return Icons.fitness_center_rounded;
+      case GoalCategory.learning:
+        return Icons.menu_book_rounded;
+      case GoalCategory.finance:
+        return Icons.savings_rounded;
+      case GoalCategory.productivity:
+        return Icons.rocket_launch_rounded;
+      case GoalCategory.habit:
+        return Icons.loop_rounded;
+      case GoalCategory.other:
+        return Icons.flag_rounded;
     }
   }
 
   Color get color {
     switch (this) {
-      case GoalCategory.health: return Colors.red;
-      case GoalCategory.fitness: return Colors.orange;
-      case GoalCategory.learning: return Colors.blue;
-      case GoalCategory.finance: return Colors.green;
-      case GoalCategory.productivity: return Colors.purple;
-      case GoalCategory.habit: return Colors.teal;
-      case GoalCategory.other: return Colors.grey;
+      case GoalCategory.health:
+        return Colors.red;
+      case GoalCategory.fitness:
+        return Colors.orange;
+      case GoalCategory.learning:
+        return Colors.blue;
+      case GoalCategory.finance:
+        return Colors.green;
+      case GoalCategory.productivity:
+        return Colors.purple;
+      case GoalCategory.habit:
+        return Colors.teal;
+      case GoalCategory.other:
+        return Colors.grey;
     }
   }
 }
@@ -73,16 +110,16 @@ class GoalLog {
   const GoalLog({required this.date, required this.status, this.note});
 
   Map<String, dynamic> toJson() => {
-        'date': date,
-        'status': status.index,
-        'note': note,
-      };
+    'date': date,
+    'status': status.index,
+    'note': note,
+  };
 
   factory GoalLog.fromJson(Map<String, dynamic> json) => GoalLog(
-        date: json['date'] as String,
-        status: GoalDayStatus.values[(json['status'] as int).clamp(0, 2)],
-        note: json['note'] as String?,
-      );
+    date: json['date'] as String,
+    status: GoalDayStatus.values[(json['status'] as int).clamp(0, 2)],
+    note: json['note'] as String?,
+  );
 }
 
 class Goal {
@@ -120,13 +157,11 @@ class Goal {
   int get failureCount =>
       logs.where((l) => l.status == GoalDayStatus.failure).length;
 
-  int get skipCount =>
-      logs.where((l) => l.status == GoalDayStatus.skip).length;
+  int get skipCount => logs.where((l) => l.status == GoalDayStatus.skip).length;
 
   int get totalTracked => logs.length;
 
-  double get successRate =>
-      totalTracked > 0 ? successCount / totalTracked : 0;
+  double get successRate => totalTracked > 0 ? successCount / totalTracked : 0;
 
   int get currentStreak {
     if (logs.isEmpty) return 0;
@@ -167,7 +202,9 @@ class Goal {
   }
 
   bool isDueForDate(DateTime date) {
-    if (date.isBefore(DateTime(startDate.year, startDate.month, startDate.day))) {
+    if (date.isBefore(
+      DateTime(startDate.year, startDate.month, startDate.day),
+    )) {
       return false;
     }
     if (deadline != null && date.isAfter(deadline!)) return false;
@@ -193,8 +230,14 @@ class Goal {
   bool get isCompleted {
     if (deadline == null) return false;
     final now = DateTime.now();
-    final endOfDeadline =
-        DateTime(deadline!.year, deadline!.month, deadline!.day, 23, 59, 59);
+    final endOfDeadline = DateTime(
+      deadline!.year,
+      deadline!.month,
+      deadline!.day,
+      23,
+      59,
+      59,
+    );
     return now.isAfter(endOfDeadline);
   }
 
@@ -214,51 +257,58 @@ class Goal {
     bool? autoMarkFailures,
     List<GoalLog>? logs,
   }) => Goal(
-        id: id ?? this.id,
-        title: title ?? this.title,
-        description: description ?? this.description,
-        category: category ?? this.category,
-        frequency: frequency ?? this.frequency,
-        customDays: customDays ?? this.customDays,
-        startDate: startDate ?? this.startDate,
-        deadline: deadline ?? this.deadline,
-        isArchived: isArchived ?? this.isArchived,
-        autoMarkFailures: autoMarkFailures ?? this.autoMarkFailures,
-        logs: logs ?? this.logs,
-      );
+    id: id ?? this.id,
+    title: title ?? this.title,
+    description: description ?? this.description,
+    category: category ?? this.category,
+    frequency: frequency ?? this.frequency,
+    customDays: customDays ?? this.customDays,
+    startDate: startDate ?? this.startDate,
+    deadline: deadline ?? this.deadline,
+    isArchived: isArchived ?? this.isArchived,
+    autoMarkFailures: autoMarkFailures ?? this.autoMarkFailures,
+    logs: logs ?? this.logs,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'description': description,
-        'category': category.index,
-        'frequency': frequency.index,
-        'customDays': customDays,
-        'startDate': startDate.toIso8601String(),
-        'deadline': deadline?.toIso8601String(),
-        'isArchived': isArchived,
-        'autoMarkFailures': autoMarkFailures,
-        'logs': logs.map((l) => l.toJson()).toList(),
-      };
+    'id': id,
+    'title': title,
+    'description': description,
+    'category': category.index,
+    'frequency': frequency.index,
+    'customDays': customDays,
+    'startDate': startDate.toIso8601String(),
+    'deadline': deadline?.toIso8601String(),
+    'isArchived': isArchived,
+    'autoMarkFailures': autoMarkFailures,
+    'logs': logs.map((l) => l.toJson()).toList(),
+  };
 
   factory Goal.fromJson(Map<String, dynamic> json) => Goal(
-        id: json['id'] as String,
-        title: json['title'] as String,
-        description: json['description'] as String?,
-        category: GoalCategory.values[
-            (json['category'] as int).clamp(0, GoalCategory.values.length - 1)],
-        frequency: GoalFrequency.values[
-            (json['frequency'] as int).clamp(0, GoalFrequency.values.length - 1)],
-        customDays: (json['customDays'] as List<dynamic>?)?.cast<int>(),
-        startDate: DateTime.parse(json['startDate'] as String),
-        deadline: json['deadline'] != null
-            ? DateTime.parse(json['deadline'] as String)
-            : null,
-        isArchived: json['isArchived'] as bool? ?? false,
-        autoMarkFailures: json['autoMarkFailures'] as bool? ?? false,
-        logs: (json['logs'] as List<dynamic>?)
-                ?.map((l) => GoalLog.fromJson(l as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+    id: json['id'] as String,
+    title: json['title'] as String,
+    description: json['description'] as String?,
+    category:
+        GoalCategory.values[(json['category'] as int).clamp(
+          0,
+          GoalCategory.values.length - 1,
+        )],
+    frequency:
+        GoalFrequency.values[(json['frequency'] as int).clamp(
+          0,
+          GoalFrequency.values.length - 1,
+        )],
+    customDays: (json['customDays'] as List<dynamic>?)?.cast<int>(),
+    startDate: DateTime.parse(json['startDate'] as String),
+    deadline: json['deadline'] != null
+        ? DateTime.parse(json['deadline'] as String)
+        : null,
+    isArchived: json['isArchived'] as bool? ?? false,
+    autoMarkFailures: json['autoMarkFailures'] as bool? ?? false,
+    logs:
+        (json['logs'] as List<dynamic>?)
+            ?.map((l) => GoalLog.fromJson(l as Map<String, dynamic>))
+            .toList() ??
+        [],
+  );
 }

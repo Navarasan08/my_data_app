@@ -35,16 +35,17 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     super.dispose();
   }
 
-  static final _emailRegex =
-      RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+  static final _emailRegex = RegExp(
+    r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+  );
 
   void _addEmail() {
     final raw = _emailInput.text.trim().toLowerCase();
     if (raw.isEmpty) return;
     if (!_emailRegex.hasMatch(raw)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid email')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Enter a valid email')));
       return;
     }
     if (_pendingEmails.contains(raw)) {
@@ -85,17 +86,19 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
         if (failures.isNotEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    'Created. Could not invite: ${failures.join(", ")}')),
+              content: Text(
+                'Created. Could not invite: ${failures.join(", ")}',
+              ),
+            ),
           );
         }
         Navigator.pop(context, group);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create group: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to create group: $e')));
         setState(() => _saving = false);
       }
     }
@@ -108,10 +111,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
     final icon = GroupFund.availableIcons[_iconIndex];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('New Group'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('New Group'), elevation: 0),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 600),
@@ -155,17 +155,19 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 ),
                 const SizedBox(height: 20),
 
-                Text('Icon',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Icon',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children:
-                      List.generate(GroupFund.availableIcons.length, (i) {
+                  children: List.generate(GroupFund.availableIcons.length, (i) {
                     final selected = i == _iconIndex;
                     return InkWell(
                       onTap: () => setState(() => _iconIndex = i),
@@ -185,8 +187,7 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                         child: Icon(
                           GroupFund.availableIcons[i],
                           size: 22,
-                          color:
-                              selected ? color : cs.onSurfaceVariant,
+                          color: selected ? color : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -194,17 +195,21 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 ),
                 const SizedBox(height: 16),
 
-                Text('Color',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Color',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: List.generate(GroupFund.availableColors.length,
-                      (i) {
+                  children: List.generate(GroupFund.availableColors.length, (
+                    i,
+                  ) {
                     final c = GroupFund.availableColors[i];
                     final selected = i == _colorIndex;
                     return InkWell(
@@ -221,8 +226,11 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                               : Border.all(color: cs.outline),
                         ),
                         child: selected
-                            ? const Icon(Icons.check,
-                                size: 18, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                     );
@@ -230,11 +238,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                 ),
                 const SizedBox(height: 24),
 
-                Text('Invite People (optional)',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Invite People (optional)',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
@@ -263,12 +274,16 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                     spacing: 6,
                     runSpacing: 6,
                     children: _pendingEmails
-                        .map((e) => Chip(
-                              label: Text(e,
-                                  style: const TextStyle(fontSize: 12)),
-                              onDeleted: () => setState(
-                                  () => _pendingEmails.remove(e)),
-                            ))
+                        .map(
+                          (e) => Chip(
+                            label: Text(
+                              e,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            onDeleted: () =>
+                                setState(() => _pendingEmails.remove(e)),
+                          ),
+                        )
                         .toList(),
                   ),
                 ],
@@ -286,10 +301,14 @@ class _CreateGroupPageState extends State<CreateGroupPage> {
                           height: 18,
                           width: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Create Group',
-                          style: TextStyle(fontSize: 16)),
+                      : const Text(
+                          'Create Group',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ],
             ),

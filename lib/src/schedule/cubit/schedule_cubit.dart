@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/schedule/model/schedule_model.dart';
 import 'package:my_data_app/src/schedule/repository/schedule_repository.dart';
@@ -13,27 +15,51 @@ class ScheduleOccurrence {
 
 class ScheduleCubit extends Cubit<ScheduleState> {
   final ScheduleRepository _repository;
+  StreamSubscription<void>? _sub;
 
   ScheduleCubit(this._repository)
-      : super(ScheduleState(
+    : super(
+        ScheduleState(
           entries: _repository.getAll(),
           selectedDate: DateTime.now(),
           customCategories: _repository.getCustomCategories(),
-        ));
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
+
+  /// Pulls the repository's current lists and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        entries: _repository.getAll(),
+        customCategories: _repository.getCustomCategories(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   void addEntry(ScheduleEntry entry) {
     _repository.add(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void updateEntry(ScheduleEntry entry) {
     _repository.update(entry);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   void deleteEntry(String id) {
     _repository.delete(id);
-    emit(state.copyWith(entries: _repository.getAll()));
+    _sync();
   }
 
   /// Toggle completion for a single occurrence date (per-task model).
@@ -42,8 +68,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     final d = DateTime(date.year, date.month, date.day);
     final list = List<DateTime>.from(entry.completedDates);
     if (entry.isCompletedOn(d)) {
-      list.removeWhere(
-          (c) => DateTime(c.year, c.month, c.day) == d);
+      list.removeWhere((c) => DateTime(c.year, c.month, c.day) == d);
     } else {
       list.add(d);
     }
@@ -61,10 +86,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     final completed = entry.completedDates
         .where((c) => DateTime(c.year, c.month, c.day) != d)
         .toList();
-    updateEntry(entry.copyWith(
-      skippedDates: list,
-      completedDates: completed,
-    ));
+    updateEntry(entry.copyWith(skippedDates: list, completedDates: completed));
   }
 
   /// Edit a single occurrence: skip the original at [date] and create a new
@@ -95,12 +117,14 @@ class ScheduleCubit extends Cubit<ScheduleState> {
 
   // ── Category management ─────────────────────────────────────────────────
 
-  List<ScheduleCategory> get allCategories =>
-      [...ScheduleCategory.defaults, ...state.customCategories];
+  List<ScheduleCategory> get allCategories => [
+    ...ScheduleCategory.defaults,
+    ...state.customCategories,
+  ];
 
   void addCustomCategory(ScheduleCategory category) {
     _repository.addCustomCategory(category);
-    emit(state.copyWith(customCategories: _repository.getCustomCategories()));
+    _sync();
   }
 
   void updateCustomCategory(ScheduleCategory category) {
@@ -116,16 +140,12 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     for (final e in updated) {
       if (e.category.id == category.id) _repository.update(e);
     }
-    emit(state.copyWith(
-      customCategories: _repository.getCustomCategories(),
-      entries: _repository.getAll(),
-    ));
+    _sync();
   }
 
   /// Delete a custom category. Any entries referring to it are migrated to
   /// [fallback] (defaults to "Other").
-  void deleteCustomCategory(String categoryId,
-      {ScheduleCategory? fallback}) {
+  void deleteCustomCategory(String categoryId, {ScheduleCategory? fallback}) {
     final fb = fallback ?? ScheduleCategory.other;
 
     // Migrate entries to fallback first
@@ -136,10 +156,7 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     }
 
     _repository.deleteCustomCategory(categoryId);
-    emit(state.copyWith(
-      customCategories: _repository.getCustomCategories(),
-      entries: _repository.getAll(),
-    ));
+    _sync();
   }
 
   bool isCategoryInUse(String categoryId) {
@@ -181,15 +198,13 @@ class ScheduleCubit extends Cubit<ScheduleState> {
     final occ = filteredOccurrences;
     final map = <String, List<ScheduleOccurrence>>{};
     for (final o in occ) {
-      final key =
-          '${o.date.year}-${o.date.month.toString().padLeft(2, '0')}';
+      final key = '${o.date.year}-${o.date.month.toString().padLeft(2, '0')}';
       (map[key] ??= []).add(o);
     }
     return map;
   }
 
-  int get pendingCount =>
-      state.entries.where((e) => !e.isCompleted).length;
+  int get pendingCount => state.entries.where((e) => !e.isCompleted).length;
 
   int get filteredCount => filteredOccurrences.length;
 }

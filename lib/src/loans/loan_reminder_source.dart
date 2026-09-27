@@ -23,14 +23,17 @@ class LoanReminderSource implements ReminderSource {
       if (loan.remainingEmis <= 0) continue;
       final due = loan.nextEmiDate;
       if (due.isBefore(windowStart) || due.isAfter(windowEnd)) continue;
-      out.add(ReminderItem(
-        itemId: loan.id,
-        dueDate: due,
-        title: '${loan.name} EMI',
-        body: 'EMI ${loan.paidEmiCount + 1} of ${loan.tenureMonths}'
-            ' — ₹${loan.emiAmount.toStringAsFixed(0)}',
-        meta: {'type': loan.type.name},
-      ));
+      out.add(
+        ReminderItem(
+          itemId: loan.id,
+          dueDate: due,
+          title: '${loan.name} EMI',
+          body:
+              'EMI ${loan.paidEmiCount + 1} of ${loan.tenureMonths}'
+              ' — ₹${loan.emiAmount.toStringAsFixed(0)}',
+          meta: {'type': loan.type.name},
+        ),
+      );
     }
     return out;
   }

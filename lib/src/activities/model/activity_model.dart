@@ -132,8 +132,7 @@ class ActivityRecord {
       category: category ?? this.category,
       startDate: startDate ?? this.startDate,
       endDate: clearEndDate ? null : (endDate ?? this.endDate),
-      description:
-          clearDescription ? null : (description ?? this.description),
+      description: clearDescription ? null : (description ?? this.description),
       location: clearLocation ? null : (location ?? this.location),
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -141,20 +140,22 @@ class ActivityRecord {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'title': title,
-        'category': category.index,
-        'startDate': startDate.toIso8601String(),
-        'endDate': endDate?.toIso8601String(),
-        'description': description,
-        'location': location,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-      };
+    'id': id,
+    'title': title,
+    'category': category.index,
+    'startDate': startDate.toIso8601String(),
+    'endDate': endDate?.toIso8601String(),
+    'description': description,
+    'location': location,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+  };
 
   factory ActivityRecord.fromJson(Map<String, dynamic> json) {
-    final catIdx = (json['category'] as int? ?? 0)
-        .clamp(0, ActivityCategory.values.length - 1);
+    final catIdx = (json['category'] as int? ?? 0).clamp(
+      0,
+      ActivityCategory.values.length - 1,
+    );
     return ActivityRecord(
       id: json['id'] as String,
       title: json['title'] as String,

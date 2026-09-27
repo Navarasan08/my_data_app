@@ -29,12 +29,18 @@ class ActivityPage extends StatelessWidget {
                 height: 44,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   children: [
                     Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: ChoiceChip(
-                        label: const Text('All', style: TextStyle(fontSize: 12)),
+                        label: const Text(
+                          'All',
+                          style: TextStyle(fontSize: 12),
+                        ),
                         selected: state.selectedCategories.isEmpty,
                         onSelected: (_) => cubit.clearCategoryFilter(),
                         showCheckmark: false,
@@ -47,7 +53,10 @@ class ActivityPage extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 6),
                         child: ChoiceChip(
                           avatar: Icon(c.icon, size: 14, color: c.color),
-                          label: Text(c.label, style: const TextStyle(fontSize: 12)),
+                          label: Text(
+                            c.label,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                           selected: selected,
                           onSelected: (_) => cubit.toggleCategory(c),
                           selectedColor: c.color.withValues(alpha: 0.2),
@@ -67,18 +76,28 @@ class ActivityPage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.history_rounded, size: 56, color: cs.outlineVariant),
+                            Icon(
+                              Icons.history_rounded,
+                              size: 56,
+                              color: cs.outlineVariant,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               state.selectedCategories.isNotEmpty
                                   ? 'No activities for the selected categories'
                                   : 'No activities yet',
-                              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               'Tap + to log a trip, certificate or milestone',
-                              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -104,7 +123,10 @@ class ActivityPage extends StatelessWidget {
   }
 
   Widget _buildYearGroupedList(
-      BuildContext context, ActivityCubit cubit, List<ActivityRecord> records) {
+    BuildContext context,
+    ActivityCubit cubit,
+    List<ActivityRecord> records,
+  ) {
     final cs = Theme.of(context).colorScheme;
     final grouped = <String, List<ActivityRecord>>{};
     for (final r in records) {
@@ -133,7 +155,10 @@ class ActivityPage extends StatelessWidget {
                 children: [
                   Text(
                     year,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
@@ -143,39 +168,45 @@ class ActivityPage extends StatelessWidget {
                 ],
               ),
             ),
-            ...list.map((r) => _ActivityCard(
-                  record: r,
-                  onEdit: () async {
-                    final edited = await Navigator.push<ActivityRecord>(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => AddActivityPage(record: r)),
-                    );
-                    if (edited != null) cubit.updateRecord(edited);
-                  },
-                  onDelete: () async {
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Delete Activity'),
-                        content:
-                            Text('Delete "${r.title}"? This cannot be undone.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            style: TextButton.styleFrom(foregroundColor: Colors.red),
-                            child: const Text('Delete'),
-                          ),
-                        ],
+            ...list.map(
+              (r) => _ActivityCard(
+                record: r,
+                onEdit: () async {
+                  final edited = await Navigator.push<ActivityRecord>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddActivityPage(record: r),
+                    ),
+                  );
+                  if (edited != null) cubit.updateRecord(edited);
+                },
+                onDelete: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (ctx) => AlertDialog(
+                      title: const Text('Delete Activity'),
+                      content: Text(
+                        'Delete "${r.title}"? This cannot be undone.',
                       ),
-                    );
-                    if (ok == true) cubit.deleteRecord(r.id);
-                  },
-                )),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok == true) cubit.deleteRecord(r.id);
+                },
+              ),
+            ),
           ],
         );
       },
@@ -239,12 +270,16 @@ class _ActivityCard extends StatelessWidget {
                       [
                         c.label,
                         _dateLabel(),
-                        if (record.location != null && record.location!.isNotEmpty)
+                        if (record.location != null &&
+                            record.location!.isNotEmpty)
                           record.location!,
                       ].join('  ·  '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -259,8 +294,11 @@ class _ActivityCard extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -386,8 +424,9 @@ class _AddActivityPageState extends State<AddActivityPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.title_rounded),
                   ),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please enter a title'
+                      : null,
                 ),
                 const SizedBox(height: 16),
 
@@ -399,16 +438,18 @@ class _AddActivityPageState extends State<AddActivityPage> {
                     prefixIcon: Icon(Icons.category_rounded),
                   ),
                   items: ActivityCategory.values
-                      .map((c) => DropdownMenuItem(
-                            value: c,
-                            child: Row(
-                              children: [
-                                Icon(c.icon, size: 20, color: c.color),
-                                const SizedBox(width: 8),
-                                Text(c.label),
-                              ],
-                            ),
-                          ))
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Row(
+                            children: [
+                              Icon(c.icon, size: 20, color: c.color),
+                              const SizedBox(width: 8),
+                              Text(c.label),
+                            ],
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v != null) setState(() => _category = v);
@@ -446,7 +487,9 @@ class _AddActivityPageState extends State<AddActivityPage> {
                   ),
                   leading: const Icon(Icons.event_rounded),
                   title: Text(_isRange ? 'Start date' : 'Date'),
-                  subtitle: Text(DateFormat('EEEE, d MMM yyyy').format(_startDate)),
+                  subtitle: Text(
+                    DateFormat('EEEE, d MMM yyyy').format(_startDate),
+                  ),
                   onTap: _pickStartDate,
                 ),
                 if (_isRange) ...[
@@ -459,9 +502,11 @@ class _AddActivityPageState extends State<AddActivityPage> {
                     ),
                     leading: const Icon(Icons.event_available_rounded),
                     title: const Text('End date'),
-                    subtitle: Text(_endDate == null
-                        ? 'Tap to pick'
-                        : DateFormat('EEEE, d MMM yyyy').format(_endDate!)),
+                    subtitle: Text(
+                      _endDate == null
+                          ? 'Tap to pick'
+                          : DateFormat('EEEE, d MMM yyyy').format(_endDate!),
+                    ),
                     onTap: _pickEndDate,
                   ),
                 ],

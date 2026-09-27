@@ -15,8 +15,8 @@ class InterestPhotoService {
     required this.uid,
     FirebaseStorage? storage,
     ImagePicker? picker,
-  })  : _storage = storage ?? FirebaseStorage.instance,
-        _picker = picker ?? ImagePicker();
+  }) : _storage = storage ?? FirebaseStorage.instance,
+       _picker = picker ?? ImagePicker();
 
   Reference _baseRef(String recordId, {String? paymentId}) {
     var ref = _storage
@@ -39,7 +39,10 @@ class InterestPhotoService {
     for (int i = 0; i < files.length; i++) {
       final file = files[i];
       final ts = DateTime.now().millisecondsSinceEpoch;
-      final ref = _baseRef(recordId, paymentId: paymentId).child('${ts}_$i.jpg');
+      final ref = _baseRef(
+        recordId,
+        paymentId: paymentId,
+      ).child('${ts}_$i.jpg');
       await ref.putFile(
         File(file.path),
         SettableMetadata(contentType: 'image/jpeg'),

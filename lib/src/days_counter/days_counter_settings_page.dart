@@ -59,8 +59,10 @@ class DaysCounterSettingsPage extends StatelessWidget {
                   child: Center(
                     child: Text(
                       'No event types yet',
-                      style:
-                          TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 )
@@ -69,7 +71,9 @@ class DaysCounterSettingsPage extends StatelessWidget {
                   final inUse = cubit.isEventTypeInUse(t.id);
                   return Card(
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     child: ListTile(
                       leading: Container(
                         padding: const EdgeInsets.all(8),
@@ -81,27 +85,32 @@ class DaysCounterSettingsPage extends StatelessWidget {
                       ),
                       title: Text(
                         t.displayName,
-                        style:
-                            const TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       subtitle: inUse
                           ? const Text(
                               'In use',
                               style: TextStyle(
-                                  fontSize: 12, color: Colors.green),
+                                fontSize: 12,
+                                color: Colors.green,
+                              ),
                             )
                           : null,
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: Icon(Icons.edit_outlined,
-                                color: Colors.blue[400]),
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              color: Colors.blue[400],
+                            ),
                             onPressed: () => _openDialog(context, cubit, t),
                           ),
                           IconButton(
-                            icon: Icon(Icons.delete_outline,
-                                color: Colors.red[400]),
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: Colors.red[400],
+                            ),
                             onPressed: () =>
                                 _confirmDelete(context, cubit, t, inUse),
                           ),
@@ -118,8 +127,11 @@ class DaysCounterSettingsPage extends StatelessWidget {
     );
   }
 
-  void _openDialog(BuildContext context, DaysCounterCubit cubit,
-      DaysCounterEventType? existing) {
+  void _openDialog(
+    BuildContext context,
+    DaysCounterCubit cubit,
+    DaysCounterEventType? existing,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => _EventTypeDialog(
@@ -135,8 +147,12 @@ class DaysCounterSettingsPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, DaysCounterCubit cubit,
-      DaysCounterEventType t, bool inUse) {
+  void _confirmDelete(
+    BuildContext context,
+    DaysCounterCubit cubit,
+    DaysCounterEventType t,
+    bool inUse,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -219,7 +235,8 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                     color: previewColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                        color: previewColor.withValues(alpha: 0.3)),
+                      color: previewColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -252,17 +269,19 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 14),
-              Text('Icon',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface)),
+              Text(
+                'Icon',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               SizedBox(
                 height: 110,
                 child: GridView.builder(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 7,
                     mainAxisSpacing: 6,
                     crossAxisSpacing: 6,
@@ -286,9 +305,7 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                         child: Icon(
                           DaysCounterEventType.availableIcons[i],
                           size: 20,
-                          color: selected
-                              ? previewColor
-                              : cs.onSurfaceVariant,
+                          color: selected ? previewColor : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -296,40 +313,47 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
                 ),
               ),
               const SizedBox(height: 14),
-              Text('Color',
-                  style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: cs.onSurface)),
+              Text(
+                'Color',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurface,
+                ),
+              ),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: List.generate(
-                    DaysCounterEventType.availableColors.length, (i) {
-                  final c = DaysCounterEventType.availableColors[i];
-                  final selected = _colorIndex == i;
-                  return InkWell(
-                    onTap: () => setState(() => _colorIndex = i),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: c,
-                        shape: BoxShape.circle,
-                        border: selected
-                            ? Border.all(color: cs.onSurface, width: 3)
-                            : Border.all(
-                                color: cs.outline, width: 1),
+                  DaysCounterEventType.availableColors.length,
+                  (i) {
+                    final c = DaysCounterEventType.availableColors[i];
+                    final selected = _colorIndex == i;
+                    return InkWell(
+                      onTap: () => setState(() => _colorIndex = i),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: c,
+                          shape: BoxShape.circle,
+                          border: selected
+                              ? Border.all(color: cs.onSurface, width: 3)
+                              : Border.all(color: cs.outline, width: 1),
+                        ),
+                        child: selected
+                            ? const Icon(
+                                Icons.check,
+                                color: Colors.white,
+                                size: 16,
+                              )
+                            : null,
                       ),
-                      child: selected
-                          ? const Icon(Icons.check,
-                              color: Colors.white, size: 16)
-                          : null,
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -345,14 +369,17 @@ class _EventTypeDialogState extends State<_EventTypeDialog> {
               ? null
               : () {
                   final name = _nameController.text.trim();
-                  final id = widget.existing?.id ??
+                  final id =
+                      widget.existing?.id ??
                       'dct_${DateTime.now().millisecondsSinceEpoch}';
-                  widget.onSave(DaysCounterEventType(
-                    id: id,
-                    displayName: name,
-                    iconIndex: _iconIndex,
-                    colorIndex: _colorIndex,
-                  ));
+                  widget.onSave(
+                    DaysCounterEventType(
+                      id: id,
+                      displayName: name,
+                      iconIndex: _iconIndex,
+                      colorIndex: _colorIndex,
+                    ),
+                  );
                   Navigator.pop(context);
                 },
           child: Text(_isEditing ? 'Update' : 'Add'),

@@ -1,38 +1,54 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:my_data_app/src/core/sync/sync_indicator.dart';
+import 'package:my_data_app/src/core/sync/sync_snapshot.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/dashboard_page.dart';
 import 'package:my_data_app/src/events/my_events_page.dart';
-import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
-import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
 import 'package:my_data_app/src/notifications/notification_service.dart';
-import 'package:my_data_app/src/notifications/notifications_page.dart';
-import 'package:my_data_app/src/profile/profile_page.dart';
-import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
-import 'package:my_data_app/src/schedule/schedule_detail_page.dart';
-import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
-import 'package:my_data_app/src/loans/loan_page.dart';
-import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
-import 'package:my_data_app/src/chits/chit_screen.dart';
-import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
-import 'package:my_data_app/src/checklist/checklist_page.dart';
+import 'package:my_data_app/src/quick_notes/quick_notes_page.dart';
+import 'package:my_data_app/src/shell/app_drawer.dart';
+import 'package:my_data_app/src/shell/feature_pages.dart';
 
-/// Top-level shell with bottom navigation: Home / My Events / Alerts / Profile.
+/// Top-level shell: a left drawer (profile, settings) and four bottom tabs —
+/// Quick Notes, a user-chosen module (Expense Tracker by default), the
+/// Dashboard, and Groups. Alerts live behind the bell on the Dashboard
+/// header. Which tab opens first is a setting.
 class MainShell extends StatefulWidget {
   /// The shared local notifications service. Tap callbacks are wired here.
   final LocalNotificationService notificationService;
 
-  const MainShell({super.key, required this.notificationService});
+  /// Combined sync state of every module; drives the hairline activity bar
+  /// at the top of the shell while data is still loading or unconfirmed.
+  final ValueListenable<SyncStatus> syncStatus;
+
+  const MainShell({
+    super.key,
+    required this.notificationService,
+    required this.syncStatus,
+  });
 
   @override
   State<MainShell> createState() => _MainShellState();
 }
 
 class _MainShellState extends State<MainShell> {
-  int _index = 0;
+  static const _notesIndex = 0;
+  static const _moduleIndex = 1;
+  static const _dashboardIndex = 2;
+  static const _groupsIndex = 3;
+
+  late int _index;
+
+  /// Once the user picks a tab we stop following the landing-tab setting,
+  /// which may still be arriving from Firestore on a cold start.
+  bool _userNavigated = false;
 
   @override
   void initState() {
     super.initState();
+    _index = _indexFor(context.read<DashboardSettingsCubit>().state.landingTab);
     // OS-notification taps are funneled through here too. Payload format:
     // <sourceModule>|<sourceItemId>|<sourceDate?>
     widget.notificationService.onTap = (payload) {
@@ -45,183 +61,133 @@ class _MainShellState extends State<MainShell> {
     };
   }
 
-  /// Open the right module for a tapped notification (in-app or OS).
-  void _routeTo(String module, String itemId, String? dateStr) {
-    switch (module) {
-      case 'schedule':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ScheduleCubit>(),
-              child: ScheduleDetailPage(entryId: itemId),
-            ));
-        break;
-      case 'loans':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<LoanCubit>(),
-              child: LoanDetailPage(loanId: itemId),
-            ));
-        break;
-      case 'chits':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ChitCubit>(),
-              child: ChitFundDetailsPage(chitFundId: itemId),
-            ));
-        break;
-      case 'checklists':
-        _pushOnHome((ctx) => BlocProvider.value(
-              value: ctx.read<ChecklistCubit>(),
-              child: ChecklistDetailPage(groupId: itemId),
-            ));
-        break;
-      default:
-        setState(() => _index = 2);
-    }
+  static int _indexFor(ShellTab tab) => switch (tab) {
+    ShellTab.notes => _notesIndex,
+    ShellTab.module => _moduleIndex,
+    ShellTab.dashboard => _dashboardIndex,
+    ShellTab.groups => _groupsIndex,
+  };
+
+  void _select(int i) {
+    _userNavigated = true;
+    setState(() => _index = i);
   }
 
-  /// Switch to the Home tab and push a detail page on the next frame, so the
+  /// Open the right page for a tapped OS notification.
+  void _routeTo(String module, String itemId, String? dateStr) {
+    _pushOnDashboard((ctx) {
+      return buildNotificationTarget(ctx, module, itemId) ??
+          buildNotificationsRoute(ctx);
+    });
+  }
+
+  /// Switch to the Dashboard tab and push a page on the next frame, so the
   /// page builder can read cubits from the freshly-active context.
-  void _pushOnHome(Widget Function(BuildContext) builder) {
-    setState(() => _index = 0);
+  void _pushOnDashboard(Widget Function(BuildContext) builder) {
+    _select(_dashboardIndex);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => builder(context)),
-      );
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => builder(context)));
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<DashboardSettingsCubit>().state;
+    final cs = Theme.of(context).colorScheme;
+    if (!_userNavigated) {
+      final wanted = _indexFor(settings.landingTab);
+      if (wanted != _index) _index = wanted;
+    }
+    final moduleId = settings.secondTabFeatureId;
+    final moduleFeature = settings.featureById(moduleId);
+    final modulePage =
+        buildFeaturePage(context, moduleId) ??
+        buildFeaturePage(context, 'home')!;
+
     final pages = <Widget>[
+      const QuickNotesPage(),
+      // Keyed by module id so switching the setting rebuilds the tab.
+      KeyedSubtree(key: ValueKey('tab_$moduleId'), child: modulePage),
       const DashboardPage(),
       const MyEventsPage(),
-      NotificationsPage(
-        onOpen: (n) => _routeTo(n.sourceModule, n.sourceItemId, n.sourceDate),
-      ),
-      const ProfilePage(),
     ];
 
     // Intercept the system / browser back button.
-    //   * If the user is on a non-Home tab → switch to Home (don't exit).
-    //   * If on Home and at the root route → swallow the pop (prevents the
-    //     "blank page" on web when the browser tries to navigate past the
-    //     app's first history entry).
+    //   * If the user is on a non-Dashboard tab → switch to Dashboard.
+    //   * If on Dashboard and at the root route → swallow the pop (prevents
+    //     the "blank page" on web when the browser tries to navigate past
+    //     the app's first history entry).
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
-        if (_index != 0) {
-          setState(() => _index = 0);
-        }
-        // else: silently absorb the pop, keeping the user inside the app.
+        if (_index != _dashboardIndex) _select(_dashboardIndex);
       },
       child: Scaffold(
-      body: IndexedStack(
-        index: _index,
-        children: pages,
-      ),
-      bottomNavigationBar: BlocBuilder<NotificationCubit, NotificationState>(
-        builder: (context, state) {
-          final unread = context.read<NotificationCubit>().unreadCount;
-          final cs = Theme.of(context).colorScheme;
-          // Wrap the NavigationBar so it has a soft top edge separating it
-          // from the content above (M3 doesn't ship one by default).
-          return DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: cs.outlineVariant, width: 0.6),
+        drawer: const AppDrawer(),
+        body: Column(
+          children: [
+            SyncIndicator(status: widget.syncStatus),
+            Expanded(
+              child: IndexedStack(index: _index, children: pages),
+            ),
+          ],
+        ),
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: cs.outlineVariant, width: 0.6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, -2),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, -2),
+            ],
+          ),
+          child: NavigationBar(
+            selectedIndex: _index,
+            onDestinationSelected: _select,
+            destinations: [
+              const NavigationDestination(
+                icon: Icon(Icons.sticky_note_2_outlined),
+                selectedIcon: Icon(Icons.sticky_note_2_rounded),
+                label: 'Notes',
+              ),
+              NavigationDestination(
+                icon: Icon(
+                  moduleFeature?.icon ?? Icons.account_balance_wallet_rounded,
                 ),
-              ],
-            ),
-            child: NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
-              destinations: [
-                const NavigationDestination(
-                  icon: Icon(Icons.dashboard_outlined),
-                  selectedIcon: Icon(Icons.dashboard_rounded),
-                  label: 'Home',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.event_outlined),
-                  selectedIcon: Icon(Icons.event_rounded),
-                  label: 'My Events',
-                ),
-                NavigationDestination(
-                  icon: _NotificationIcon(
-                    unread: unread,
-                    icon: Icons.notifications_outlined,
-                  ),
-                  selectedIcon: _NotificationIcon(
-                    unread: unread,
-                    icon: Icons.notifications_rounded,
-                  ),
-                  label: 'Alerts',
-                ),
-                const NavigationDestination(
-                  icon: Icon(Icons.person_outline_rounded),
-                  selectedIcon: Icon(Icons.person_rounded),
-                  label: 'Profile',
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                label: _shortTitle(moduleFeature?.title ?? 'Expenses'),
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.dashboard_outlined),
+                selectedIcon: Icon(Icons.dashboard_rounded),
+                label: 'Dashboard',
+              ),
+              const NavigationDestination(
+                icon: Icon(Icons.group_outlined),
+                selectedIcon: Icon(Icons.group_rounded),
+                label: 'Groups',
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
-}
 
-/// Notification icon with a refined unread badge. Cleaner than the default
-/// Material `Badge` — smaller, tighter, and color-correct for both light
-/// and dark themes.
-class _NotificationIcon extends StatelessWidget {
-  final int unread;
-  final IconData icon;
-
-  const _NotificationIcon({required this.unread, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Icon(icon),
-        if (unread > 0)
-          Positioned(
-            top: -4,
-            right: -6,
-            child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
-              decoration: BoxDecoration(
-                color: Colors.red[500],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.surface,
-                  width: 1.4,
-                ),
-              ),
-              child: Text(
-                unread > 99 ? '99+' : '$unread',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
+  /// Bottom-bar labels have little room; drop a trailing "Tracker" etc.
+  static String _shortTitle(String title) {
+    const drop = [' Tracker', ' Records', ' Manager'];
+    var t = title;
+    for (final d in drop) {
+      if (t.endsWith(d)) t = t.substring(0, t.length - d.length);
+    }
+    return t;
   }
 }

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/events/cubit/event_state.dart';
+import 'package:my_data_app/src/events/event_analysis_page.dart';
 
 final _fmt = NumberFormat('#,##,###', 'en_IN');
 
@@ -96,11 +97,15 @@ class _EventList extends StatelessWidget {
           children: [
             Icon(Icons.event_note_rounded, size: 48, color: cs.outlineVariant),
             const SizedBox(height: 12),
-            Text(emptyTitle,
-                style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant)),
+            Text(
+              emptyTitle,
+              style: TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+            ),
             const SizedBox(height: 4),
-            Text(emptySub,
-                style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
+            Text(
+              emptySub,
+              style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+            ),
           ],
         ),
       );
@@ -186,27 +191,41 @@ class _EventCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(event.name,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis),
+                        Text(
+                          event.name,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                         const SizedBox(height: 2),
                         Row(
                           children: [
-                            Text('$count ${count == 1 ? "expense" : "expenses"}',
-                                style: TextStyle(
-                                    fontSize: 12, color: cs.onSurfaceVariant)),
+                            Text(
+                              '$count ${count == 1 ? "expense" : "expenses"}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
                             if (event.eventDate != null) ...[
-                              Text('  ·  ',
-                                  style: TextStyle(
-                                      fontSize: 12, color: cs.onSurfaceVariant)),
                               Text(
-                                DateFormat('d MMM yyyy').format(event.eventDate!),
+                                '  ·  ',
                                 style: TextStyle(
-                                    fontSize: 12, color: cs.onSurfaceVariant),
+                                  fontSize: 12,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                              Text(
+                                DateFormat(
+                                  'd MMM yyyy',
+                                ).format(event.eventDate!),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cs.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ],
@@ -217,17 +236,21 @@ class _EventCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text('₹${_fmt.format(total)}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: overBudget ? Colors.red : color,
-                          )),
+                      Text(
+                        '₹${_fmt.format(total)}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: overBudget ? Colors.red : color,
+                        ),
+                      ),
                       if (event.budget != null)
                         Text(
                           'of ₹${_fmt.format(event.budget)}',
                           style: TextStyle(
-                              fontSize: 10, color: cs.onSurfaceVariant),
+                            fontSize: 10,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                     ],
                   ),
@@ -242,7 +265,8 @@ class _EventCard extends StatelessWidget {
                     minHeight: 4,
                     backgroundColor: cs.surfaceContainerHighest,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                        overBudget ? Colors.red : color),
+                      overBudget ? Colors.red : color,
+                    ),
                   ),
                 ),
               ],
@@ -268,9 +292,7 @@ class EventDetailPage extends StatelessWidget {
         final cubit = context.read<EventCubit>();
         final event = cubit.getEvent(eventId);
         if (event == null) {
-          return const Scaffold(
-            body: Center(child: Text('Event not found')),
-          );
+          return const Scaffold(body: Center(child: Text('Event not found')));
         }
 
         final expenses = cubit.expensesFor(eventId);
@@ -289,12 +311,28 @@ class EventDetailPage extends StatelessWidget {
               // Persisted on the event (no updatedAt bump, so it doesn't
               // reorder the event list).
               IconButton(
-                icon: Icon(event.showCalendar
-                    ? Icons.view_list_rounded
-                    : Icons.calendar_month_rounded),
+                icon: Icon(
+                  event.showCalendar
+                      ? Icons.view_list_rounded
+                      : Icons.calendar_month_rounded,
+                ),
                 tooltip: event.showCalendar ? 'List view' : 'Month view',
                 onPressed: () => cubit.updateEvent(
-                    event.copyWith(showCalendar: !event.showCalendar)),
+                  event.copyWith(showCalendar: !event.showCalendar),
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.pie_chart_rounded),
+                tooltip: 'Analysis',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => BlocProvider.value(
+                      value: cubit,
+                      child: EventAnalysisPage(eventId: event.id),
+                    ),
+                  ),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.settings_rounded),
@@ -329,11 +367,13 @@ class EventDetailPage extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Total Spent',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: cs.onSurface,
-                                  )),
+                              Text(
+                                'Total Spent',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: cs.onSurface,
+                                ),
+                              ),
                               const SizedBox(height: 2),
                               Text(
                                 '₹${_fmt.format(total)}',
@@ -349,11 +389,11 @@ class EventDetailPage extends StatelessWidget {
                         if (event.budget != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
                             decoration: BoxDecoration(
-                              color: overBudget
-                                  ? Colors.red[50]
-                                  : cs.surface,
+                              color: overBudget ? Colors.red[50] : cs.surface,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
                                 color: overBudget
@@ -364,19 +404,23 @@ class EventDetailPage extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
-                                Text('Budget',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      color: cs.onSurfaceVariant,
-                                    )),
-                                Text('₹${_fmt.format(event.budget)}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: overBudget
-                                          ? Colors.red[700]
-                                          : cs.onSurface,
-                                    )),
+                                Text(
+                                  'Budget',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                ),
+                                Text(
+                                  '₹${_fmt.format(event.budget)}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: overBudget
+                                        ? Colors.red[700]
+                                        : cs.onSurface,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -389,10 +433,10 @@ class EventDetailPage extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: (total / event.budget!).clamp(0.0, 1.0),
                           minHeight: 6,
-                          backgroundColor:
-                              cs.surface.withValues(alpha: 0.6),
+                          backgroundColor: cs.surface.withValues(alpha: 0.6),
                           valueColor: AlwaysStoppedAnimation<Color>(
-                              overBudget ? Colors.red : event.color),
+                            overBudget ? Colors.red : event.color,
+                          ),
                         ),
                       ),
                     ],
@@ -407,27 +451,32 @@ class EventDetailPage extends StatelessWidget {
                               padding: const EdgeInsets.only(right: 6),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
                                   color: cs.surface,
                                   borderRadius: BorderRadius.circular(16),
-                                  border:
-                                      Border.all(color: cs.outline),
+                                  border: Border.all(color: cs.outline),
                                 ),
                                 child: Row(
                                   children: [
-                                    Text(e.key,
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w500,
-                                        )),
+                                    Text(
+                                      e.key,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
                                     const SizedBox(width: 6),
-                                    Text('₹${_fmt.format(e.value)}',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: event.color,
-                                        )),
+                                    Text(
+                                      '₹${_fmt.format(e.value)}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: event.color,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -449,13 +498,13 @@ class EventDetailPage extends StatelessWidget {
                         cubit: cubit,
                       )
                     : sorted.isEmpty
-                        ? const _EmptyExpenses()
-                        : _GroupedExpenseList(
-                            event: event,
-                            expenses: sorted,
-                            cubit: cubit,
-                            showDates: event.showDateSeparators,
-                          ),
+                    ? const _EmptyExpenses()
+                    : _GroupedExpenseList(
+                        event: event,
+                        expenses: sorted,
+                        cubit: cubit,
+                        showDates: event.showDateSeparators,
+                      ),
               ),
             ],
           ),
@@ -474,8 +523,10 @@ class EventDetailPage extends StatelessWidget {
             },
             backgroundColor: event.color,
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add Expense',
-                style: TextStyle(color: Colors.white)),
+            label: const Text(
+              'Add Expense',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         );
       },
@@ -537,42 +588,62 @@ class _ExpenseRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(expense.title,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis),
+                    Text(
+                      expense.title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Text(DateFormat('d MMM yy').format(expense.date),
-                            style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant)),
+                        Text(
+                          DateFormat('d MMM yy').format(expense.date),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: cs.onSurfaceVariant,
+                          ),
+                        ),
                         if (expense.category != null &&
                             expense.category!.isNotEmpty) ...[
-                          Text('  ·  ',
-                              style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant)),
-                          Text(expense.category!,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              )),
+                          Text(
+                            '  ·  ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            expense.category!,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ],
                         if (expense.paidTo != null &&
                             expense.paidTo!.isNotEmpty) ...[
-                          Text('  ·  ',
-                              style: TextStyle(
-                                  fontSize: 11, color: cs.onSurfaceVariant)),
+                          Text(
+                            '  ·  ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
                           Flexible(
-                            child: Text(expense.paidTo!,
-                                style: TextStyle(
-                                    fontSize: 11, color: cs.onSurfaceVariant),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              expense.paidTo!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                       ],
@@ -581,11 +652,13 @@ class _ExpenseRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
-              Text('₹${_fmt.format(expense.amount)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  )),
+              Text(
+                '₹${_fmt.format(expense.amount)}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(width: 6),
               InkWell(
                 onTap: () async {
@@ -602,7 +675,8 @@ class _ExpenseRow extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -619,8 +693,11 @@ class _ExpenseRow extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded,
-                      size: 14, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 14,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -680,8 +757,9 @@ class _AddEventPageState extends State<AddEventPage> {
     final ev = EventFund(
       id: widget.existing?.id ?? now.millisecondsSinceEpoch.toString(),
       name: _name.text.trim(),
-      description:
-          _description.text.trim().isEmpty ? null : _description.text.trim(),
+      description: _description.text.trim().isEmpty
+          ? null
+          : _description.text.trim(),
       iconIndex: _iconIndex,
       colorIndex: _colorIndex,
       budget: double.tryParse(_budget.text.trim()),
@@ -795,17 +873,19 @@ class _AddEventPageState extends State<AddEventPage> {
                 ),
                 const SizedBox(height: 20),
 
-                Text('Icon',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Icon',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: List.generate(EventFund.availableIcons.length,
-                      (i) {
+                  children: List.generate(EventFund.availableIcons.length, (i) {
                     final selected = i == _iconIndex;
                     return InkWell(
                       onTap: () => setState(() => _iconIndex = i),
@@ -825,8 +905,7 @@ class _AddEventPageState extends State<AddEventPage> {
                         child: Icon(
                           EventFund.availableIcons[i],
                           size: 22,
-                          color:
-                              selected ? previewColor : cs.onSurfaceVariant,
+                          color: selected ? previewColor : cs.onSurfaceVariant,
                         ),
                       ),
                     );
@@ -834,17 +913,21 @@ class _AddEventPageState extends State<AddEventPage> {
                 ),
                 const SizedBox(height: 16),
 
-                Text('Color',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Color',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: List.generate(EventFund.availableColors.length,
-                      (i) {
+                  children: List.generate(EventFund.availableColors.length, (
+                    i,
+                  ) {
                     final c = EventFund.availableColors[i];
                     final selected = i == _colorIndex;
                     return InkWell(
@@ -861,8 +944,11 @@ class _AddEventPageState extends State<AddEventPage> {
                               : Border.all(color: cs.outline),
                         ),
                         child: selected
-                            ? const Icon(Icons.check,
-                                size: 18, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                     );
@@ -875,8 +961,10 @@ class _AddEventPageState extends State<AddEventPage> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: Text(_isEditing ? 'Update Event' : 'Create Event',
-                      style: const TextStyle(fontSize: 16)),
+                  child: Text(
+                    _isEditing ? 'Update Event' : 'Create Event',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -893,7 +981,7 @@ class AddExpensePage extends StatefulWidget {
   final EventFund event;
   final EventExpense? existing;
   const AddExpensePage({Key? key, required this.event, this.existing})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<AddExpensePage> createState() => _AddExpensePageState();
@@ -974,8 +1062,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
               padding: const EdgeInsets.all(16),
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -984,12 +1074,14 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     children: [
                       Icon(widget.event.icon, size: 18, color: color),
                       const SizedBox(width: 8),
-                      Text(widget.event.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: color,
-                          )),
+                      Text(
+                        widget.event.name,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: color,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -1071,17 +1163,21 @@ class _AddExpensePageState extends State<AddExpensePage> {
                         onTap: () => setState(() => _category.text = s),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: color.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Text(s,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: color,
-                                fontWeight: FontWeight.w600,
-                              )),
+                          child: Text(
+                            s,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       );
                     }).toList(),
@@ -1112,10 +1208,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
                       value: null,
                       child: Text('—'),
                     ),
-                    ...kPaymentModes.map((m) => DropdownMenuItem<String?>(
-                          value: m,
-                          child: Text(m),
-                        )),
+                    ...kPaymentModes.map(
+                      (m) =>
+                          DropdownMenuItem<String?>(value: m, child: Text(m)),
+                    ),
                   ],
                   onChanged: (v) => setState(() => _paymentMode = v),
                 ),
@@ -1139,8 +1235,10 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     backgroundColor: color,
                     foregroundColor: Colors.white,
                   ),
-                  child: Text(_isEditing ? 'Update Expense' : 'Add Expense',
-                      style: const TextStyle(fontSize: 16)),
+                  child: Text(
+                    _isEditing ? 'Update Expense' : 'Add Expense',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ],
             ),
@@ -1165,11 +1263,15 @@ class _EmptyExpenses extends StatelessWidget {
         children: [
           Icon(Icons.receipt_long_rounded, size: 44, color: cs.outlineVariant),
           const SizedBox(height: 10),
-          Text('No expenses yet',
-              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant)),
+          Text(
+            'No expenses yet',
+            style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+          ),
           const SizedBox(height: 4),
-          Text('Tap + to record your first expense',
-              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+          Text(
+            'Tap + to record your first expense',
+            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -1209,8 +1311,10 @@ class _GroupedExpenseList extends StatelessWidget {
       itemBuilder: (context, i) {
         final key = keys[i];
         final monthExpenses = grouped[key]!;
-        final monthTotal =
-            monthExpenses.fold<double>(0, (s, e) => s + e.amount);
+        final monthTotal = monthExpenses.fold<double>(
+          0,
+          (s, e) => s + e.amount,
+        );
         final monthDate = DateTime.parse('$key-01');
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1218,8 +1322,7 @@ class _GroupedExpenseList extends StatelessWidget {
             Container(
               width: double.infinity,
               margin: const EdgeInsets.only(top: 8, bottom: 4),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(8),
@@ -1229,31 +1332,38 @@ class _GroupedExpenseList extends StatelessWidget {
                   Text(
                     DateFormat('MMMM yyyy').format(monthDate),
                     style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.bold),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
-                  Text('₹${_fmt.format(monthTotal)}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: event.color,
-                      )),
+                  Text(
+                    '₹${_fmt.format(monthTotal)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: event.color,
+                    ),
+                  ),
                   const SizedBox(width: 6),
-                  Text('(${monthExpenses.length})',
-                      style: TextStyle(
-                          fontSize: 12, color: cs.onSurfaceVariant)),
+                  Text(
+                    '(${monthExpenses.length})',
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ),
             if (showDates)
               ..._buildDayGroups(cs, monthExpenses)
             else
-              ...monthExpenses.map((e) => _ExpenseRow(
-                    expense: e,
-                    color: event.color,
-                    cubit: cubit,
-                    event: event,
-                  )),
+              ...monthExpenses.map(
+                (e) => _ExpenseRow(
+                  expense: e,
+                  color: event.color,
+                  cubit: cubit,
+                  event: event,
+                ),
+              ),
           ],
         );
       },
@@ -1263,7 +1373,9 @@ class _GroupedExpenseList extends StatelessWidget {
   /// Day sub-headers within a month: one lighter header per date (newest
   /// first) followed by that day's expense rows.
   List<Widget> _buildDayGroups(
-      ColorScheme cs, List<EventExpense> monthExpenses) {
+    ColorScheme cs,
+    List<EventExpense> monthExpenses,
+  ) {
     final byDay = <String, List<EventExpense>>{};
     for (final e in monthExpenses) {
       final key = DateFormat('yyyy-MM-dd').format(e.date);
@@ -1281,8 +1393,7 @@ class _GroupedExpenseList extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(4, 6, 4, 2),
           child: Row(
             children: [
-              Icon(Icons.event_rounded,
-                  size: 13, color: cs.onSurfaceVariant),
+              Icon(Icons.event_rounded, size: 13, color: cs.onSurfaceVariant),
               const SizedBox(width: 6),
               Text(
                 DateFormat('EEE, d MMM').format(dayDate),
@@ -1293,26 +1404,33 @@ class _GroupedExpenseList extends StatelessWidget {
                 ),
               ),
               const Spacer(),
-              Text('₹${_fmt.format(dayTotal)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: cs.onSurfaceVariant,
-                  )),
+              Text(
+                '₹${_fmt.format(dayTotal)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(width: 6),
-              Text('(${dayExpenses.length})',
-                  style:
-                      TextStyle(fontSize: 11, color: cs.onSurfaceVariant)),
+              Text(
+                '(${dayExpenses.length})',
+                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+              ),
             ],
           ),
         ),
       );
-      widgets.addAll(dayExpenses.map((e) => _ExpenseRow(
+      widgets.addAll(
+        dayExpenses.map(
+          (e) => _ExpenseRow(
             expense: e,
             color: event.color,
             cubit: cubit,
             event: event,
-          )));
+          ),
+        ),
+      );
     }
     return widgets;
   }
@@ -1381,10 +1499,12 @@ class _EventMonthCalendarState extends State<_EventMonthCalendar> {
     final today = DateTime(now.year, now.month, now.day);
 
     final dayExpenses = widget.expenses
-        .where((e) =>
-            e.date.year == _selectedDay.year &&
-            e.date.month == _selectedDay.month &&
-            e.date.day == _selectedDay.day)
+        .where(
+          (e) =>
+              e.date.year == _selectedDay.year &&
+              e.date.month == _selectedDay.month &&
+              e.date.day == _selectedDay.day,
+        )
         .toList();
     final dayTotal = dayExpenses.fold<double>(0, (s, e) => s + e.amount);
 
@@ -1407,7 +1527,9 @@ class _EventMonthCalendarState extends State<_EventMonthCalendar> {
                   DateFormat('MMMM yyyy').format(_month),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               IconButton(
@@ -1423,59 +1545,65 @@ class _EventMonthCalendarState extends State<_EventMonthCalendar> {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Row(
             children: dow
-                .map((d) => Expanded(
-                      child: Center(
-                        child: Text(d,
-                            style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: cs.onSurfaceVariant)),
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
         ),
         const SizedBox(height: 4),
         // Grid
-        LayoutBuilder(builder: (context, constraints) {
-          const hPad = 8.0;
-          const spacing = 4.0;
-          const aspect = 0.95;
-          final cellW = (constraints.maxWidth - hPad * 2 - spacing * 6) / 7;
-          final cellH = cellW / aspect;
-          final gridH = rows * cellH + (rows - 1) * spacing;
-          return SizedBox(
-            height: gridH + 8,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                mainAxisSpacing: spacing,
-                crossAxisSpacing: spacing,
-                childAspectRatio: aspect,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            const hPad = 8.0;
+            const spacing = 4.0;
+            const aspect = 0.95;
+            final cellW = (constraints.maxWidth - hPad * 2 - spacing * 6) / 7;
+            final cellH = cellW / aspect;
+            final gridH = rows * cellH + (rows - 1) * spacing;
+            return SizedBox(
+              height: gridH + 8,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(hPad, 0, hPad, 8),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  mainAxisSpacing: spacing,
+                  crossAxisSpacing: spacing,
+                  childAspectRatio: aspect,
+                ),
+                itemCount: totalCells,
+                itemBuilder: (context, i) {
+                  final dayNum = i - leading + 1;
+                  if (dayNum < 1 || dayNum > daysInMonth) {
+                    return const SizedBox.shrink();
+                  }
+                  final date = DateTime(_month.year, _month.month, dayNum);
+                  final amt = dailyTotals[dayNum] ?? 0;
+                  return _EventDayCell(
+                    day: dayNum,
+                    isToday: date == today,
+                    isSelected: date == _selectedDay,
+                    amountLabel: amt > 0 ? '₹${_fmt.format(amt)}' : '',
+                    color: color,
+                    onTap: () => setState(() => _selectedDay = date),
+                  );
+                },
               ),
-              itemCount: totalCells,
-              itemBuilder: (context, i) {
-                final dayNum = i - leading + 1;
-                if (dayNum < 1 || dayNum > daysInMonth) {
-                  return const SizedBox.shrink();
-                }
-                final date = DateTime(_month.year, _month.month, dayNum);
-                final amt = dailyTotals[dayNum] ?? 0;
-                return _EventDayCell(
-                  day: dayNum,
-                  isToday: date == today,
-                  isSelected: date == _selectedDay,
-                  amountLabel: amt > 0 ? '₹${_fmt.format(amt)}' : '',
-                  color: color,
-                  onTap: () => setState(() => _selectedDay = date),
-                );
-              },
-            ),
-          );
-        }),
+            );
+          },
+        ),
         const Divider(height: 1),
         // Selected-day header
         Padding(
@@ -1488,19 +1616,25 @@ class _EventMonthCalendarState extends State<_EventMonthCalendar> {
                 child: Text(
                   DateFormat('EEEE, d MMM yyyy').format(_selectedDay),
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w700),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               if (dayExpenses.isNotEmpty) ...[
-                Text('₹${_fmt.format(dayTotal)}',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
+                Text(
+                  '₹${_fmt.format(dayTotal)}',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
                 const SizedBox(width: 6),
-                Text('(${dayExpenses.length})',
-                    style: TextStyle(
-                        fontSize: 12, color: cs.onSurfaceVariant)),
+                Text(
+                  '(${dayExpenses.length})',
+                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                ),
               ],
             ],
           ),
@@ -1512,12 +1646,19 @@ class _EventMonthCalendarState extends State<_EventMonthCalendar> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.event_busy_rounded,
-                          size: 34, color: cs.outlineVariant),
+                      Icon(
+                        Icons.event_busy_rounded,
+                        size: 34,
+                        color: cs.outlineVariant,
+                      ),
                       const SizedBox(height: 8),
-                      Text('No expenses on this day',
-                          style: TextStyle(
-                              fontSize: 12, color: cs.onSurfaceVariant)),
+                      Text(
+                        'No expenses on this day',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 )
@@ -1596,14 +1737,16 @@ class _EventDayCell extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$day',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: (isToday || isSelected)
-                      ? FontWeight.bold
-                      : FontWeight.w600,
-                  color: cs.onSurface,
-                )),
+            Text(
+              '$day',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: (isToday || isSelected)
+                    ? FontWeight.bold
+                    : FontWeight.w600,
+                color: cs.onSurface,
+              ),
+            ),
             const Spacer(),
             if (hasExpense)
               Align(
@@ -1611,13 +1754,15 @@ class _EventDayCell extends StatelessWidget {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.bottomRight,
-                  child: Text(amountLabel,
-                      maxLines: 1,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: color,
-                      )),
+                  child: Text(
+                    amountLabel,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: color,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -1643,9 +1788,7 @@ class EventSettingsPage extends StatelessWidget {
         final cubit = context.read<EventCubit>();
         final event = cubit.getEvent(eventId);
         if (event == null) {
-          return const Scaffold(
-            body: Center(child: Text('Event not found')),
-          );
+          return const Scaffold(body: Center(child: Text('Event not found')));
         }
 
         return Scaffold(
@@ -1679,17 +1822,23 @@ class EventSettingsPage extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(event.name,
-                              style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            event.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           if (event.description != null &&
                               event.description!.isNotEmpty) ...[
                             const SizedBox(height: 2),
-                            Text(event.description!,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: cs.onSurfaceVariant)),
+                            Text(
+                              event.description!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: cs.onSurfaceVariant,
+                              ),
+                            ),
                           ],
                         ],
                       ),
@@ -1726,19 +1875,23 @@ class EventSettingsPage extends StatelessWidget {
                       color: Colors.teal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(Icons.calendar_view_day_rounded,
-                        color: Colors.teal[700], size: 22),
+                    child: Icon(
+                      Icons.calendar_view_day_rounded,
+                      color: Colors.teal[700],
+                      size: 22,
+                    ),
                   ),
-                  title: const Text('Show date separators',
-                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  title: const Text(
+                    'Show date separators',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   subtitle: Text(
                     'Add a per-day header under each month in list view',
-                    style:
-                        TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                    style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
                   ),
                   value: event.showDateSeparators,
-                  onChanged: (v) => cubit.updateEvent(
-                      event.copyWith(showDateSeparators: v)),
+                  onChanged: (v) =>
+                      cubit.updateEvent(event.copyWith(showDateSeparators: v)),
                 ),
               ),
               _EventSettingTile(
@@ -1763,7 +1916,8 @@ class EventSettingsPage extends StatelessWidget {
                     builder: (ctx) => AlertDialog(
                       title: const Text('Delete Event'),
                       content: Text(
-                          'Delete "${event.name}" and all its expenses?'),
+                        'Delete "${event.name}" and all its expenses?',
+                      ),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, false),
@@ -1772,7 +1926,8 @@ class EventSettingsPage extends StatelessWidget {
                         TextButton(
                           onPressed: () => Navigator.pop(ctx, true),
                           style: TextButton.styleFrom(
-                              foregroundColor: Colors.red),
+                            foregroundColor: Colors.red,
+                          ),
                           child: const Text('Delete'),
                         ),
                       ],
@@ -1824,12 +1979,12 @@ class _EventSettingTile extends StatelessWidget {
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
-        title: Text(title,
-            style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(subtitle,
-            style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant)),
-        trailing:
-            Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+        ),
+        trailing: Icon(Icons.chevron_right_rounded, color: cs.onSurfaceVariant),
         onTap: onTap,
       ),
     );

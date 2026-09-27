@@ -16,8 +16,7 @@ class PeriodTrackerPage extends StatelessWidget {
     return BlocBuilder<PeriodCubit, PeriodState>(
       builder: (context, state) {
         final cubit = context.read<PeriodCubit>();
-        final monthYear =
-            DateFormat('MMMM yyyy').format(state.selectedMonth);
+        final monthYear = DateFormat('MMMM yyyy').format(state.selectedMonth);
         final recentEntries = cubit.sortedEntries;
 
         return Scaffold(
@@ -30,8 +29,10 @@ class PeriodTrackerPage extends StatelessWidget {
             children: [
               // Month selector
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 color: cs.surface,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -56,10 +57,7 @@ class PeriodTrackerPage extends StatelessWidget {
               ),
 
               // Calendar
-              _CalendarGrid(
-                selectedMonth: state.selectedMonth,
-                cubit: cubit,
-              ),
+              _CalendarGrid(selectedMonth: state.selectedMonth, cubit: cubit),
 
               const SizedBox(height: 8),
 
@@ -70,14 +68,10 @@ class PeriodTrackerPage extends StatelessWidget {
                   spacing: 16,
                   runSpacing: 8,
                   children: [
-                    _LegendItem(
-                        color: Colors.pink[300]!, label: 'Period'),
-                    _LegendItem(
-                        color: Colors.pink[100]!, label: 'Predicted'),
-                    _LegendItem(
-                        color: Colors.green[200]!, label: 'Fertile'),
-                    _LegendItem(
-                        color: Colors.blue[400]!, label: 'Ovulation'),
+                    _LegendItem(color: Colors.pink[300]!, label: 'Period'),
+                    _LegendItem(color: Colors.pink[100]!, label: 'Predicted'),
+                    _LegendItem(color: Colors.green[200]!, label: 'Fertile'),
+                    _LegendItem(color: Colors.blue[400]!, label: 'Ovulation'),
                   ],
                 ),
               ),
@@ -109,68 +103,76 @@ class PeriodTrackerPage extends StatelessWidget {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.calendar_today_rounded,
-                            size: 48, color: cs.onSurfaceVariant),
+                        Icon(
+                          Icons.calendar_today_rounded,
+                          size: 48,
+                          color: cs.onSurfaceVariant,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'No periods logged yet',
                           style: TextStyle(
-                              fontSize: 16, color: cs.onSurfaceVariant),
+                            fontSize: 16,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           'Tap + to log your first period',
                           style: TextStyle(
-                              fontSize: 13, color: cs.onSurfaceVariant),
+                            fontSize: 13,
+                            color: cs.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
                   ),
                 )
               else
-                ...recentEntries.map((entry) => _PeriodEntryCard(
-                      entry: entry,
-                      gapDays: cubit.cycleGapForEntry(entry),
-                      onEdit: () async {
-                        final edited = await Navigator.push<PeriodEntry>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                AddPeriodEntryPage(entry: entry),
+                ...recentEntries.map(
+                  (entry) => _PeriodEntryCard(
+                    entry: entry,
+                    gapDays: cubit.cycleGapForEntry(entry),
+                    onEdit: () async {
+                      final edited = await Navigator.push<PeriodEntry>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddPeriodEntryPage(entry: entry),
+                        ),
+                      );
+                      if (edited != null) {
+                        cubit.updateEntry(edited);
+                      }
+                    },
+                    onDelete: () async {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Entry'),
+                          content: const Text(
+                            'Are you sure you want to delete this period entry?',
                           ),
-                        );
-                        if (edited != null) {
-                          cubit.updateEntry(edited);
-                        }
-                      },
-                      onDelete: () async {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete Entry'),
-                            content: const Text(
-                                'Are you sure you want to delete this period entry?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(ctx, false),
-                                child: const Text('Cancel'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
                               ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(ctx, true),
-                                style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          cubit.deleteEntry(entry.id);
-                        }
-                      },
-                    )),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) {
+                        cubit.deleteEntry(entry.id);
+                      }
+                    },
+                  ),
+                ),
 
               const SizedBox(height: 80),
             ],
@@ -179,8 +181,7 @@ class PeriodTrackerPage extends StatelessWidget {
             onPressed: () async {
               final newEntry = await Navigator.push<PeriodEntry>(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const AddPeriodEntryPage()),
+                MaterialPageRoute(builder: (_) => const AddPeriodEntryPage()),
               );
               if (newEntry != null) {
                 cubit.addEntry(newEntry);
@@ -237,8 +238,11 @@ class _CalendarGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final firstDay = DateTime(selectedMonth.year, selectedMonth.month, 1);
-    final daysInMonth =
-        DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
+    final daysInMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      0,
+    ).day;
     // Monday = 1, Sunday = 7
     final startWeekday = firstDay.weekday;
     final today = DateTime.now();
@@ -264,18 +268,20 @@ class _CalendarGrid extends StatelessWidget {
           // Day headers
           Row(
             children: dayHeaders
-                .map((d) => Expanded(
-                      child: Center(
-                        child: Text(
-                          d,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: cs.onSurfaceVariant,
-                          ),
+                .map(
+                  (d) => Expanded(
+                    child: Center(
+                      child: Text(
+                        d,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
-                    ))
+                    ),
+                  ),
+                )
                 .toList(),
           ),
           const SizedBox(height: 8),
@@ -291,8 +297,12 @@ class _CalendarGrid extends StatelessWidget {
 
                 final day = dayIndex + 1;
                 final date = DateTime(
-                    selectedMonth.year, selectedMonth.month, day);
-                final isToday = date.year == today.year &&
+                  selectedMonth.year,
+                  selectedMonth.month,
+                  day,
+                );
+                final isToday =
+                    date.year == today.year &&
                     date.month == today.month &&
                     date.day == today.day;
 
@@ -334,8 +344,9 @@ class _CalendarGrid extends StatelessWidget {
                         '$day',
                         style: TextStyle(
                           fontSize: 14,
-                          fontWeight:
-                              isToday ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isToday
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: textColor,
                         ),
                       ),
@@ -507,9 +518,7 @@ class _PeriodEntryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.pink.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border(
-          left: BorderSide(color: Colors.pink[300]!, width: 3),
-        ),
+        border: Border(left: BorderSide(color: Colors.pink[300]!, width: 3)),
       ),
       child: InkWell(
         onTap: onEdit,
@@ -526,19 +535,28 @@ class _PeriodEntryCard extends StatelessWidget {
                   children: [
                     Text(
                       '${DateFormat('MMM d').format(entry.startDate)} — ${DateFormat('MMM d, yyyy').format(entry.endDate)}',
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     Text(
                       '${entry.periodLength} days${entry.notes != null && entry.notes!.isNotEmpty ? '  ·  ${entry.notes}' : ''}',
-                      style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                     if (gapDays != null) ...[
                       const SizedBox(height: 4),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.loop_rounded,
-                              size: 13, color: Colors.purple[400]),
+                          Icon(
+                            Icons.loop_rounded,
+                            size: 13,
+                            color: Colors.purple[400],
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '$gapDays days since previous period',
@@ -562,7 +580,11 @@ class _PeriodEntryCard extends StatelessWidget {
                     color: Colors.red[50],
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Icon(Icons.delete_outline_rounded, size: 16, color: Colors.red[300]),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: Colors.red[300],
+                  ),
                 ),
               ),
             ],
@@ -612,14 +634,15 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
   void _save() {
     if (_endDate.isBefore(_startDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('End date must be on or after start date')),
+        const SnackBar(
+          content: Text('End date must be on or after start date'),
+        ),
       );
       return;
     }
 
     final entry = PeriodEntry(
-      id: widget.entry?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.entry?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       startDate: _startDate,
       endDate: _endDate,
       notes: _notesController.text.isEmpty ? null : _notesController.text,
@@ -674,8 +697,11 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.water_drop_rounded,
-                    color: Colors.pink[400], size: 28),
+                Icon(
+                  Icons.water_drop_rounded,
+                  color: Colors.pink[400],
+                  size: 28,
+                ),
                 const SizedBox(width: 10),
                 Text(
                   '$duration day${duration != 1 ? 's' : ''}',
@@ -697,8 +723,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: cs.outline),
             ),
-            leading: Icon(Icons.play_circle_rounded,
-                color: Colors.pink[400]),
+            leading: Icon(Icons.play_circle_rounded, color: Colors.pink[400]),
             title: const Text('Start Date'),
             subtitle: Text(
               DateFormat('EEEE, MMM d, yyyy').format(_startDate),
@@ -715,8 +740,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(color: cs.outline),
             ),
-            leading: Icon(Icons.stop_circle_rounded,
-                color: Colors.pink[400]),
+            leading: Icon(Icons.stop_circle_rounded, color: Colors.pink[400]),
             title: const Text('End Date'),
             subtitle: Text(
               DateFormat('EEEE, MMM d, yyyy').format(_endDate),
@@ -742,8 +766,7 @@ class _AddPeriodEntryPageState extends State<AddPeriodEntryPage> {
 
           ElevatedButton.icon(
             onPressed: _save,
-            icon: Icon(
-                _isEditing ? Icons.save_rounded : Icons.add_rounded),
+            icon: Icon(_isEditing ? Icons.save_rounded : Icons.add_rounded),
             label: Text(_isEditing ? 'Update Entry' : 'Save Entry'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pink[400],

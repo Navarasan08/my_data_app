@@ -25,18 +25,18 @@ class DebtSettlement {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'amount': amount,
-        'date': date.toIso8601String(),
-        'note': note,
-      };
+    'id': id,
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'note': note,
+  };
 
   factory DebtSettlement.fromJson(Map<String, dynamic> json) => DebtSettlement(
-        id: json['id'] as String,
-        amount: (json['amount'] as num).toDouble(),
-        date: DateTime.parse(json['date'] as String),
-        note: json['note'] as String?,
-      );
+    id: json['id'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    date: DateTime.parse(json['date'] as String),
+    note: json['note'] as String?,
+  );
 }
 
 class DebtEntry {
@@ -64,8 +64,7 @@ class DebtEntry {
     this.settlements = const [],
   });
 
-  double get totalSettled =>
-      settlements.fold(0.0, (sum, s) => sum + s.amount);
+  double get totalSettled => settlements.fold(0.0, (sum, s) => sum + s.amount);
 
   double get pendingAmount => (amount - totalSettled).clamp(0, double.infinity);
 
@@ -79,7 +78,8 @@ class DebtEntry {
     return dueDate!.difference(DateTime.now()).inDays;
   }
 
-  bool get isOverdue => dueDate != null && dueDate!.isBefore(DateTime.now()) && !isFullySettled;
+  bool get isOverdue =>
+      dueDate != null && dueDate!.isBefore(DateTime.now()) && !isFullySettled;
 
   DebtEntry copyWith({
     String? id,
@@ -93,46 +93,47 @@ class DebtEntry {
     bool? isSettled,
     List<DebtSettlement>? settlements,
   }) => DebtEntry(
-        id: id ?? this.id,
-        personName: personName ?? this.personName,
-        phone: phone ?? this.phone,
-        direction: direction ?? this.direction,
-        amount: amount ?? this.amount,
-        reason: reason ?? this.reason,
-        date: date ?? this.date,
-        dueDate: dueDate ?? this.dueDate,
-        isSettled: isSettled ?? this.isSettled,
-        settlements: settlements ?? this.settlements,
-      );
+    id: id ?? this.id,
+    personName: personName ?? this.personName,
+    phone: phone ?? this.phone,
+    direction: direction ?? this.direction,
+    amount: amount ?? this.amount,
+    reason: reason ?? this.reason,
+    date: date ?? this.date,
+    dueDate: dueDate ?? this.dueDate,
+    isSettled: isSettled ?? this.isSettled,
+    settlements: settlements ?? this.settlements,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'personName': personName,
-        'phone': phone,
-        'direction': direction.index,
-        'amount': amount,
-        'reason': reason,
-        'date': date.toIso8601String(),
-        'dueDate': dueDate?.toIso8601String(),
-        'isSettled': isSettled,
-        'settlements': settlements.map((s) => s.toJson()).toList(),
-      };
+    'id': id,
+    'personName': personName,
+    'phone': phone,
+    'direction': direction.index,
+    'amount': amount,
+    'reason': reason,
+    'date': date.toIso8601String(),
+    'dueDate': dueDate?.toIso8601String(),
+    'isSettled': isSettled,
+    'settlements': settlements.map((s) => s.toJson()).toList(),
+  };
 
   factory DebtEntry.fromJson(Map<String, dynamic> json) => DebtEntry(
-        id: json['id'] as String,
-        personName: json['personName'] as String,
-        phone: json['phone'] as String?,
-        direction: DebtDirection.values[(json['direction'] as int).clamp(0, 1)],
-        amount: (json['amount'] as num).toDouble(),
-        reason: json['reason'] as String?,
-        date: DateTime.parse(json['date'] as String),
-        dueDate: json['dueDate'] != null
-            ? DateTime.parse(json['dueDate'] as String)
-            : null,
-        isSettled: json['isSettled'] as bool? ?? false,
-        settlements: (json['settlements'] as List<dynamic>?)
-                ?.map((s) => DebtSettlement.fromJson(s as Map<String, dynamic>))
-                .toList() ??
-            [],
-      );
+    id: json['id'] as String,
+    personName: json['personName'] as String,
+    phone: json['phone'] as String?,
+    direction: DebtDirection.values[(json['direction'] as int).clamp(0, 1)],
+    amount: (json['amount'] as num).toDouble(),
+    reason: json['reason'] as String?,
+    date: DateTime.parse(json['date'] as String),
+    dueDate: json['dueDate'] != null
+        ? DateTime.parse(json['dueDate'] as String)
+        : null,
+    isSettled: json['isSettled'] as bool? ?? false,
+    settlements:
+        (json['settlements'] as List<dynamic>?)
+            ?.map((s) => DebtSettlement.fromJson(s as Map<String, dynamic>))
+            .toList() ??
+        [],
+  );
 }

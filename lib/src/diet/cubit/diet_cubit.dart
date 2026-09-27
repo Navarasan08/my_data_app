@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/diet/cubit/diet_state.dart';
 import 'package:my_data_app/src/diet/model/diet_model.dart';
@@ -5,32 +7,53 @@ import 'package:my_data_app/src/diet/repository/diet_repository.dart';
 
 class DietCubit extends Cubit<DietState> {
   final DietRepository _repository;
+  StreamSubscription<void>? _sub;
 
   DietCubit(this._repository)
-      : super(DietState(
+    : super(
+        DietState(
           items: _repository.getItems(),
           entries: _repository.getEntries(),
           selectedMonth: DateTime(DateTime.now().year, DateTime.now().month, 1),
-        ));
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
+
+  /// Pulls the repository's current lists and sync status into state. Runs
+  /// on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        items: _repository.getItems(),
+        entries: _repository.getEntries(),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
 
   // ── Food items ──────────────────────────────────────────────────────────
 
   void addItem(FoodItem item) {
     _repository.addItem(item);
-    emit(state.copyWith(items: _repository.getItems()));
+    _sync();
   }
 
   void updateItem(FoodItem item) {
     _repository.updateItem(item.copyWith(updatedAt: DateTime.now()));
-    emit(state.copyWith(items: _repository.getItems()));
+    _sync();
   }
 
   void deleteItem(String itemId) {
     _repository.deleteItem(itemId);
-    emit(state.copyWith(
-      items: _repository.getItems(),
-      entries: _repository.getEntries(),
-    ));
+    _sync();
   }
 
   FoodItem? itemById(String id) {
@@ -42,26 +65,26 @@ class DietCubit extends Cubit<DietState> {
 
   void addEntry(FoodEntry entry) {
     _repository.addEntry(entry);
-    emit(state.copyWith(entries: _repository.getEntries()));
+    _sync();
   }
 
   void updateEntry(FoodEntry entry) {
     _repository.updateEntry(entry);
-    emit(state.copyWith(entries: _repository.getEntries()));
+    _sync();
   }
 
   void deleteEntry(String entryId) {
     _repository.deleteEntry(entryId);
-    emit(state.copyWith(entries: _repository.getEntries()));
+    _sync();
   }
 
   // ── Month navigation ────────────────────────────────────────────────────
 
   void changeMonth(int delta) {
     final cur = state.selectedMonth;
-    emit(state.copyWith(
-      selectedMonth: DateTime(cur.year, cur.month + delta, 1),
-    ));
+    emit(
+      state.copyWith(selectedMonth: DateTime(cur.year, cur.month + delta, 1)),
+    );
   }
 
   void resetToCurrentMonth() {
@@ -91,10 +114,12 @@ class DietCubit extends Cubit<DietState> {
   List<FoodEntry> entriesForItemInMonth(String itemId) {
     final m = state.selectedMonth;
     return state.entries
-        .where((e) =>
-            e.foodItemId == itemId &&
-            e.date.year == m.year &&
-            e.date.month == m.month)
+        .where(
+          (e) =>
+              e.foodItemId == itemId &&
+              e.date.year == m.year &&
+              e.date.month == m.month,
+        )
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }
@@ -116,10 +141,12 @@ class DietCubit extends Cubit<DietState> {
     for (int i = months - 1; i >= 0; i--) {
       final m = DateTime(now.year, now.month - i, 1);
       final total = state.entries
-          .where((e) =>
-              e.foodItemId == itemId &&
-              e.date.year == m.year &&
-              e.date.month == m.month)
+          .where(
+            (e) =>
+                e.foodItemId == itemId &&
+                e.date.year == m.year &&
+                e.date.month == m.month,
+          )
           .fold<double>(0, (s, e) => s + e.quantity);
       result[m] = total;
     }

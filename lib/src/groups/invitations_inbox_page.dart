@@ -16,10 +16,7 @@ class InvitationsInboxPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Group invitations'),
-        elevation: 0,
-      ),
+      appBar: AppBar(title: const Text('Group invitations'), elevation: 0),
       body: BlocBuilder<GroupCubit, GroupState>(
         builder: (context, state) {
           final invites = state.pendingInvitations;
@@ -28,12 +25,16 @@ class InvitationsInboxPage extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.mark_email_read_rounded,
-                      size: 44, color: cs.outlineVariant),
+                  Icon(
+                    Icons.mark_email_read_rounded,
+                    size: 44,
+                    color: cs.outlineVariant,
+                  ),
                   const SizedBox(height: 10),
-                  Text('No pending invitations',
-                      style: TextStyle(
-                          fontSize: 13, color: cs.onSurfaceVariant)),
+                  Text(
+                    'No pending invitations',
+                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             );
@@ -63,21 +64,17 @@ class _InvitationCardState extends State<_InvitationCard> {
   Future<void> _accept() async {
     setState(() => _busy = true);
     try {
-      await context
-          .read<GroupCubit>()
-          .acceptInvitation(widget.invitation);
+      await context.read<GroupCubit>().acceptInvitation(widget.invitation);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Joined "${widget.invitation.groupName}"')),
+          SnackBar(content: Text('Joined "${widget.invitation.groupName}"')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not accept: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not accept: $e')));
         setState(() => _busy = false);
       }
     }
@@ -86,14 +83,12 @@ class _InvitationCardState extends State<_InvitationCard> {
   Future<void> _decline() async {
     setState(() => _busy = true);
     try {
-      await context
-          .read<GroupCubit>()
-          .declineInvitation(widget.invitation);
+      await context.read<GroupCubit>().declineInvitation(widget.invitation);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not decline: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not decline: $e')));
         setState(() => _busy = false);
       }
     }
@@ -103,10 +98,16 @@ class _InvitationCardState extends State<_InvitationCard> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final inv = widget.invitation;
-    final color = GroupFund.availableColors[
-        inv.groupColorIndex.clamp(0, GroupFund.availableColors.length - 1)];
-    final icon = GroupFund.availableIcons[
-        inv.groupIconIndex.clamp(0, GroupFund.availableIcons.length - 1)];
+    final color =
+        GroupFund.availableColors[inv.groupColorIndex.clamp(
+          0,
+          GroupFund.availableColors.length - 1,
+        )];
+    final icon =
+        GroupFund.availableIcons[inv.groupIconIndex.clamp(
+          0,
+          GroupFund.availableIcons.length - 1,
+        )];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -134,14 +135,20 @@ class _InvitationCardState extends State<_InvitationCard> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(inv.groupName,
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.w700)),
+                    Text(
+                      inv.groupName,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                     const SizedBox(height: 2),
                     Text(
                       'Invited by ${inv.invitedByName} · ${DateFormat('d MMM').format(inv.createdAt)}',
                       style: TextStyle(
-                          fontSize: 11, color: cs.onSurfaceVariant),
+                        fontSize: 11,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -167,7 +174,9 @@ class _InvitationCardState extends State<_InvitationCard> {
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Accept'),
                 ),

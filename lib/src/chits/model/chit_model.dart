@@ -1,4 +1,5 @@
 enum ChitStatus { active, completed, upcoming }
+
 enum ChitRole { owner, participant }
 
 class ChitFund {
@@ -74,15 +75,13 @@ class ChitFund {
   /// Total base amount (without any discount)
   double get myTotalBase {
     if (role != ChitRole.participant || members.isEmpty) return 0;
-    return members.first.payments
-        .fold(0.0, (sum, p) => sum + p.amount);
+    return members.first.payments.fold(0.0, (sum, p) => sum + p.amount);
   }
 
   /// Total savings from auction dividends
   double get myTotalSavings {
     if (role != ChitRole.participant || members.isEmpty) return 0;
-    return members.first.payments
-        .fold(0.0, (sum, p) => sum + p.dividend);
+    return members.first.payments.fold(0.0, (sum, p) => sum + p.dividend);
   }
 
   int get myPaidCount {
@@ -92,17 +91,17 @@ class ChitFund {
 
   Payment? get myNextPayment {
     if (role != ChitRole.participant || members.isEmpty) return null;
-    final pending = members.first.payments
-        .where((p) => !p.isPaid)
-        .toList()
+    final pending = members.first.payments.where((p) => !p.isPaid).toList()
       ..sort((a, b) => a.dueDate.compareTo(b.dueDate));
     return pending.isNotEmpty ? pending.first : null;
   }
 
   int get currentMonth {
     final now = DateTime.now();
-    final diff = DateTime(now.year, now.month)
-        .difference(DateTime(startDate.year, startDate.month));
+    final diff = DateTime(
+      now.year,
+      now.month,
+    ).difference(DateTime(startDate.year, startDate.month));
     return (diff.inDays / 30).floor() + 1;
   }
 
@@ -188,11 +187,13 @@ class ChitFund {
           ? DateTime.parse(json['endDate'] as String)
           : null,
       status: ChitStatus.values[json['status'] as int],
-      members: (json['members'] as List<dynamic>?)
+      members:
+          (json['members'] as List<dynamic>?)
               ?.map((m) => Member.fromJson(m as Map<String, dynamic>))
               .toList() ??
           [],
-      auctions: (json['auctions'] as List<dynamic>?)
+      auctions:
+          (json['auctions'] as List<dynamic>?)
               ?.map((a) => Auction.fromJson(a as Map<String, dynamic>))
               .toList() ??
           [],
@@ -263,7 +264,8 @@ class Member {
       phone: json['phone'] as String?,
       email: json['email'] as String?,
       isOrganizer: json['isOrganizer'] as bool? ?? false,
-      payments: (json['payments'] as List<dynamic>?)
+      payments:
+          (json['payments'] as List<dynamic>?)
               ?.map((p) => Payment.fromJson(p as Map<String, dynamic>))
               .toList() ??
           [],
@@ -338,10 +340,14 @@ class Payment {
       memberId: memberId ?? this.memberId,
       monthNumber: monthNumber ?? this.monthNumber,
       amount: amount ?? this.amount,
-      auctionDiscount: clearAuctionDiscount ? null : (auctionDiscount ?? this.auctionDiscount),
+      auctionDiscount: clearAuctionDiscount
+          ? null
+          : (auctionDiscount ?? this.auctionDiscount),
       totalMembers: totalMembers ?? this.totalMembers,
       auctionValue: auctionValue ?? this.auctionValue,
-      auctionWinner: clearAuctionWinner ? null : (auctionWinner ?? this.auctionWinner),
+      auctionWinner: clearAuctionWinner
+          ? null
+          : (auctionWinner ?? this.auctionWinner),
       isWonByMe: isWonByMe ?? this.isWonByMe,
       brokeragePerMember: brokeragePerMember ?? this.brokeragePerMember,
       dueDate: dueDate ?? this.dueDate,

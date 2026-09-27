@@ -2,46 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/reminder/cubit/bill_cubit.dart';
-import 'package:my_data_app/src/reminder/reminder_page.dart';
 import 'package:my_data_app/src/vehicle/cubit/vehicle_cubit.dart';
-import 'package:my_data_app/src/vehicle/vehicle_manager_page.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
-import 'package:my_data_app/src/chits/chit_screen.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
-import 'package:my_data_app/src/checklist/checklist_page.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
-import 'package:my_data_app/src/periods/period_page.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
-import 'package:my_data_app/src/home/home_record_page.dart';
-import 'package:my_data_app/src/events/cubit/event_cubit.dart';
 import 'package:my_data_app/src/schedule/cubit/schedule_cubit.dart';
-import 'package:my_data_app/src/schedule/schedule_page.dart';
 import 'package:my_data_app/src/food_menu/cubit/food_menu_cubit.dart';
-import 'package:my_data_app/src/food_menu/food_menu_page.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
-import 'package:my_data_app/src/loans/loan_page.dart';
 import 'package:my_data_app/src/goals/cubit/goal_cubit.dart';
-import 'package:my_data_app/src/goals/goal_page.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
-import 'package:my_data_app/src/money_owe/money_owe_page.dart';
 import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
-import 'package:my_data_app/src/medical/medical_page.dart';
 import 'package:my_data_app/src/profile_vault/cubit/profile_vault_cubit.dart';
-import 'package:my_data_app/src/profile_vault/profile_vault_page.dart';
 import 'package:my_data_app/src/land/cubit/land_cubit.dart';
-import 'package:my_data_app/src/land/land_page.dart';
 import 'package:my_data_app/src/interest/cubit/interest_cubit.dart';
-import 'package:my_data_app/src/interest/interest_page.dart';
 import 'package:my_data_app/src/activities/cubit/activity_cubit.dart';
-import 'package:my_data_app/src/activities/activity_page.dart';
 import 'package:my_data_app/src/diet/cubit/diet_cubit.dart';
-import 'package:my_data_app/src/diet/diet_page.dart';
 import 'package:my_data_app/src/days_counter/cubit/days_counter_cubit.dart';
-import 'package:my_data_app/src/days_counter/days_counter_page.dart';
 import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
+import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_state.dart';
+import 'package:my_data_app/src/shell/feature_pages.dart';
 import 'package:my_data_app/src/shell/widgets/app_header.dart';
 import 'package:my_data_app/src/shell/widgets/app_version_text.dart';
-import 'package:my_data_app/src/theme/theme_cubit.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -62,7 +46,7 @@ class _DashboardPageState extends State<DashboardPage> {
       'diet',
       'days_counter',
     ],
-    'Health': ['periods', 'medical'],
+    'Health': ['periods', 'pregnancy', 'medical'],
     'Personal': ['vehicles', 'vault', 'land'],
   };
 
@@ -97,6 +81,8 @@ class _DashboardPageState extends State<DashboardPage> {
         return 'Track habits & goals';
       case 'money_owe':
         return 'Lend & borrow tracker';
+      case 'pregnancy':
+        return 'Week-by-week checks & guidance';
       case 'medical':
         return 'Medical records & health';
       case 'vault':
@@ -136,6 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     switch (id) {
       case 'bills':
@@ -180,130 +167,16 @@ class _DashboardPageState extends State<DashboardPage> {
             .length;
       case 'days_counter':
         return (daysCounterState.events as List).length;
+      case 'pregnancy':
+        return (pregnancyState.checks as List).where((c) => !c.done).length;
       default:
         return 0;
     }
   }
 
   void _navigateToFeature(BuildContext context, String id) {
-    Widget page;
-    switch (id) {
-      case 'bills':
-        page = BlocProvider.value(
-          value: context.read<BillCubit>(),
-          child: const BillsPage(),
-        );
-        break;
-      case 'vehicles':
-        page = BlocProvider.value(
-          value: context.read<VehicleCubit>(),
-          child: const VehicleListPage(),
-        );
-        break;
-      case 'chits':
-        page = BlocProvider.value(
-          value: context.read<ChitCubit>(),
-          child: const ChitFundListPage(),
-        );
-        break;
-      case 'checklists':
-        page = BlocProvider.value(
-          value: context.read<ChecklistCubit>(),
-          child: const ChecklistListPage(),
-        );
-        break;
-      case 'periods':
-        page = BlocProvider.value(
-          value: context.read<PeriodCubit>(),
-          child: const PeriodTrackerPage(),
-        );
-        break;
-      case 'home':
-        // Provide EventCubit alongside HomeRecordCubit so records can be
-        // linked to event/group funds and navigate to them.
-        page = MultiBlocProvider(
-          providers: [
-            BlocProvider.value(value: context.read<HomeRecordCubit>()),
-            BlocProvider.value(value: context.read<EventCubit>()),
-          ],
-          child: const HomeRecordPage(),
-        );
-        break;
-      case 'schedules':
-        page = BlocProvider.value(
-          value: context.read<ScheduleCubit>(),
-          child: const SchedulePage(),
-        );
-        break;
-      case 'food_menu':
-        page = BlocProvider.value(
-          value: context.read<FoodMenuCubit>(),
-          child: const FoodMenuPage(),
-        );
-        break;
-      case 'loans':
-        page = BlocProvider.value(
-          value: context.read<LoanCubit>(),
-          child: const LoanListPage(),
-        );
-        break;
-      case 'goals':
-        page = BlocProvider.value(
-          value: context.read<GoalCubit>(),
-          child: const GoalListPage(),
-        );
-        break;
-      case 'money_owe':
-        page = BlocProvider.value(
-          value: context.read<MoneyOweCubit>(),
-          child: const MoneyOwePage(),
-        );
-        break;
-      case 'medical':
-        page = BlocProvider.value(
-          value: context.read<MedicalCubit>(),
-          child: const MedicalHomePage(),
-        );
-        break;
-      case 'vault':
-        page = BlocProvider.value(
-          value: context.read<ProfileVaultCubit>(),
-          child: const ProfileVaultHomePage(),
-        );
-        break;
-      case 'land':
-        page = BlocProvider.value(
-          value: context.read<LandCubit>(),
-          child: const LandListPage(),
-        );
-        break;
-      case 'interest':
-        page = BlocProvider.value(
-          value: context.read<InterestCubit>(),
-          child: const InterestListPage(),
-        );
-        break;
-      case 'activities':
-        page = BlocProvider.value(
-          value: context.read<ActivityCubit>(),
-          child: const ActivityPage(),
-        );
-        break;
-      case 'diet':
-        page = BlocProvider.value(
-          value: context.read<DietCubit>(),
-          child: const DietPage(),
-        );
-        break;
-      case 'days_counter':
-        page = BlocProvider.value(
-          value: context.read<DaysCounterCubit>(),
-          child: const DaysCounterPage(),
-        );
-        break;
-      default:
-        return;
-    }
+    final page = buildFeaturePage(context, id);
+    if (page == null) return;
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
@@ -328,6 +201,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
@@ -381,6 +255,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         );
                         return _FeatureRow(
                           icon: f.icon,
@@ -430,6 +305,7 @@ class _DashboardPageState extends State<DashboardPage> {
     activityState,
     dietState,
     daysCounterState,
+    pregnancyState,
   ) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -500,6 +376,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               activityState,
                               dietState,
                               daysCounterState,
+                              pregnancyState,
                             );
                             return _FeatureGridCard(
                               icon: f.icon,
@@ -549,6 +426,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final activityState = context.watch<ActivityCubit>().state;
     final dietState = context.watch<DietCubit>().state;
     final daysCounterState = context.watch<DaysCounterCubit>().state;
+    final pregnancyState = context.watch<PregnancyCubit>().state;
     final dashSettings = context.watch<DashboardSettingsCubit>().state;
     final visibleFeatures = dashSettings.visibleFeatures;
     final isGrid = dashSettings.isGridView;
@@ -557,32 +435,7 @@ class _DashboardPageState extends State<DashboardPage> {
       body: SafeArea(
         child: Column(
           children: [
-            AppHeader(
-              actions: [
-                HeaderIconButton(
-                  icon: isGrid
-                      ? Icons.view_list_rounded
-                      : Icons.grid_view_rounded,
-                  tooltip: isGrid ? 'List view' : 'Grid view',
-                  onPressed: () => context
-                      .read<DashboardSettingsCubit>()
-                      .toggleViewMode(),
-                ),
-                BlocBuilder<ThemeCubit, ThemeMode>(
-                  builder: (context, themeMode) {
-                    final isDark = themeMode == ThemeMode.dark;
-                    return HeaderIconButton(
-                      icon: isDark
-                          ? Icons.light_mode_rounded
-                          : Icons.dark_mode_rounded,
-                      tooltip: isDark ? 'Light mode' : 'Dark mode',
-                      onPressed: () =>
-                          context.read<ThemeCubit>().toggle(),
-                    );
-                  },
-                ),
-              ],
-            ),
+            AppHeader(actions: [const _AlertsButton()]),
 
             // Scrollable content — crossfades between list and grid view.
             Expanded(
@@ -616,6 +469,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         ),
                       )
                     : KeyedSubtree(
@@ -641,6 +495,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           activityState,
                           dietState,
                           daysCounterState,
+                          pregnancyState,
                         ),
                       ),
               ),
@@ -662,7 +517,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 }
-
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -905,3 +759,63 @@ class _AnimatedCount extends StatelessWidget {
   }
 }
 
+/// Bell in the dashboard header with the unread count; opens Alerts.
+class _AlertsButton extends StatelessWidget {
+  const _AlertsButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<NotificationCubit, NotificationState>(
+      builder: (context, _) {
+        final unread = context.read<NotificationCubit>().unreadCount;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            HeaderIconButton(
+              icon: Icons.notifications_rounded,
+              tooltip: 'Alerts',
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => buildNotificationsRoute(context),
+                ),
+              ),
+            ),
+            if (unread > 0)
+              Positioned(
+                top: -2,
+                right: -2,
+                child: IgnorePointer(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 1,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red[500],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white, width: 1.4),
+                    ),
+                    child: Text(
+                      unread > 99 ? '99+' : '$unread',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}

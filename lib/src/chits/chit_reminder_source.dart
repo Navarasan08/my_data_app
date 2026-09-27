@@ -24,15 +24,17 @@ class ChitReminderSource implements ReminderSource {
       if (fund.members.isEmpty) continue;
       for (final p in fund.members.first.payments) {
         if (p.isPaid) continue;
-        if (p.dueDate.isBefore(windowStart) ||
-            p.dueDate.isAfter(windowEnd)) continue;
-        out.add(ReminderItem(
-          itemId: fund.id,
-          dueDate: p.dueDate,
-          title: '${fund.name} — month ${p.monthNumber}',
-          body: '₹${p.amount.toStringAsFixed(0)} due',
-          meta: {'monthNumber': p.monthNumber.toString()},
-        ));
+        if (p.dueDate.isBefore(windowStart) || p.dueDate.isAfter(windowEnd))
+          continue;
+        out.add(
+          ReminderItem(
+            itemId: fund.id,
+            dueDate: p.dueDate,
+            title: '${fund.name} — month ${p.monthNumber}',
+            body: '₹${p.amount.toStringAsFixed(0)} due',
+            meta: {'monthNumber': p.monthNumber.toString()},
+          ),
+        );
       }
     }
     return out;

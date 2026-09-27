@@ -30,19 +30,26 @@ class VehicleListPage extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.directions_car_outlined,
-                          size: 80, color: cs.onSurfaceVariant),
+                      Icon(
+                        Icons.directions_car_outlined,
+                        size: 80,
+                        color: cs.onSurfaceVariant,
+                      ),
                       const SizedBox(height: 16),
                       Text(
                         'No vehicles added yet',
-                        style:
-                            TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Tap the + button to add your first vehicle',
-                        style:
-                            TextStyle(fontSize: 14, color: cs.onSurfaceVariant),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -83,18 +90,18 @@ class VehicleListPage extends StatelessWidget {
                           builder: (context) => AlertDialog(
                             title: const Text('Delete Vehicle'),
                             content: Text(
-                                'Are you sure you want to delete "${vehicle.name}"? All associated records will also be deleted.'),
+                              'Are you sure you want to delete "${vehicle.name}"? All associated records will also be deleted.',
+                            ),
                             actions: [
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, false),
+                                onPressed: () => Navigator.pop(context, false),
                                 child: const Text('Cancel'),
                               ),
                               TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, true),
+                                onPressed: () => Navigator.pop(context, true),
                                 style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red),
+                                  foregroundColor: Colors.red,
+                                ),
                                 child: const Text('Delete'),
                               ),
                             ],
@@ -111,8 +118,7 @@ class VehicleListPage extends StatelessWidget {
             onPressed: () async {
               final newVehicle = await Navigator.push<Vehicle>(
                 context,
-                MaterialPageRoute(
-                    builder: (context) => const AddVehiclePage()),
+                MaterialPageRoute(builder: (context) => const AddVehiclePage()),
               );
               if (newVehicle != null) {
                 cubit.addVehicle(newVehicle);
@@ -147,10 +153,10 @@ class VehicleCard extends StatelessWidget {
     final serviceColor = vehicle.daysLeftForService == null
         ? Colors.blue
         : vehicle.daysLeftForService! < 0
-            ? Colors.red
-            : vehicle.daysLeftForService! <= 7
-                ? Colors.orange
-                : Colors.blue;
+        ? Colors.red
+        : vehicle.daysLeftForService! <= 7
+        ? Colors.orange
+        : Colors.blue;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -172,8 +178,11 @@ class VehicleCard extends StatelessWidget {
                   color: serviceColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(Icons.directions_car_rounded,
-                    size: 22, color: serviceColor),
+                child: Icon(
+                  Icons.directions_car_rounded,
+                  size: 22,
+                  color: serviceColor,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -199,8 +208,7 @@ class VehicleCard extends StatelessWidget {
                     ),
                     if (vehicle.daysLeftForService != null) ...[
                       const SizedBox(height: 6),
-                      _ServiceDueBadge(
-                          daysLeft: vehicle.daysLeftForService!),
+                      _ServiceDueBadge(daysLeft: vehicle.daysLeftForService!),
                     ],
                   ],
                 ),
@@ -209,7 +217,9 @@ class VehicleCard extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 6, vertical: 3),
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: cs.surfaceContainerLow,
                       borderRadius: BorderRadius.circular(6),
@@ -233,8 +243,11 @@ class VehicleCard extends StatelessWidget {
                         color: Colors.red[50],
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: Icon(Icons.delete_outline_rounded,
-                          size: 16, color: Colors.red[300]),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 16,
+                        color: Colors.red[300],
+                      ),
                     ),
                   ),
                 ],
@@ -246,7 +259,6 @@ class VehicleCard extends StatelessWidget {
     );
   }
 }
-
 
 class _ServiceDueBadge extends StatelessWidget {
   final int daysLeft;
@@ -368,17 +380,16 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
   void _saveVehicle() {
     if (_formKey.currentState!.validate()) {
       final vehicle = Vehicle(
-        id: widget.vehicle?.id ??
+        id:
+            widget.vehicle?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         name: _nameController.text,
         brand: _brandController.text,
         model: _modelController.text,
         year: _yearController.text,
         registrationNumber: _registrationController.text,
-        vinNumber:
-            _vinController.text.isEmpty ? null : _vinController.text,
-        color:
-            _colorController.text.isEmpty ? null : _colorController.text,
+        vinNumber: _vinController.text.isEmpty ? null : _vinController.text,
+        color: _colorController.text.isEmpty ? null : _colorController.text,
         purchaseDate: _purchaseDate,
         purchasePrice: _priceController.text.isEmpty
             ? null
@@ -409,8 +420,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.drive_file_rename_outline),
               ),
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Required' : null,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             Row(
@@ -480,8 +490,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.tag),
               ),
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Required' : null,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -497,8 +506,7 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Purchase Date'),
-              subtitle:
-                  Text(DateFormat('MMM dd, yyyy').format(_purchaseDate)),
+              subtitle: Text(DateFormat('MMM dd, yyyy').format(_purchaseDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
@@ -530,8 +538,9 @@ class _AddVehiclePageState extends State<AddVehiclePage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                  _isEditing ? 'Update Vehicle' : 'Save Vehicle',
-                  style: const TextStyle(fontSize: 16)),
+                _isEditing ? 'Update Vehicle' : 'Save Vehicle',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -545,7 +554,7 @@ class VehicleDetailsPage extends StatefulWidget {
   final String vehicleId;
 
   const VehicleDetailsPage({Key? key, required this.vehicleId})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<VehicleDetailsPage> createState() => _VehicleDetailsPageState();
@@ -565,18 +574,27 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
 
     if (filterFromDate != null) {
       records = records
-          .where((r) =>
-              r.date.isAfter(filterFromDate!) ||
-              r.date.isAtSameMomentAs(filterFromDate!))
+          .where(
+            (r) =>
+                r.date.isAfter(filterFromDate!) ||
+                r.date.isAtSameMomentAs(filterFromDate!),
+          )
           .toList();
     }
 
     if (filterToDate != null) {
       final endOfDay = DateTime(
-          filterToDate!.year, filterToDate!.month, filterToDate!.day, 23, 59);
+        filterToDate!.year,
+        filterToDate!.month,
+        filterToDate!.day,
+        23,
+        59,
+      );
       records = records
-          .where((r) =>
-              r.date.isBefore(endOfDay) || r.date.isAtSameMomentAs(endOfDay))
+          .where(
+            (r) =>
+                r.date.isBefore(endOfDay) || r.date.isAtSameMomentAs(endOfDay),
+          )
           .toList();
     }
 
@@ -625,7 +643,8 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
         }
 
         final filteredRecords = _getFilteredRecords(vehicle);
-        final hasActiveFilters = filterType != null ||
+        final hasActiveFilters =
+            filterType != null ||
             filterFromDate != null ||
             filterToDate != null;
 
@@ -658,15 +677,20 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.inbox_outlined,
-                                size: 64, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 64,
+                              color: cs.onSurfaceVariant,
+                            ),
                             const SizedBox(height: 16),
                             Text(
                               hasActiveFilters
                                   ? 'No records match your filters'
                                   : 'No records yet',
                               style: TextStyle(
-                                  fontSize: 16, color: cs.onSurfaceVariant),
+                                fontSize: 16,
+                                color: cs.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
@@ -681,15 +705,17 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                             onEdit: () async {
                               final editedRecord =
                                   await Navigator.push<VehicleRecord>(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      AddRecordPage(record: record),
-                                ),
-                              );
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          AddRecordPage(record: record),
+                                    ),
+                                  );
                               if (editedRecord != null) {
                                 cubit.updateRecord(
-                                    widget.vehicleId, editedRecord);
+                                  widget.vehicleId,
+                                  editedRecord,
+                                );
                               }
                             },
                             onDelete: () async {
@@ -698,7 +724,8 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                                 builder: (context) => AlertDialog(
                                   title: const Text('Delete Record'),
                                   content: Text(
-                                      'Are you sure you want to delete "${record.title}"?'),
+                                    'Are you sure you want to delete "${record.title}"?',
+                                  ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
@@ -709,15 +736,15 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
                                       onPressed: () =>
                                           Navigator.pop(context, true),
                                       style: TextButton.styleFrom(
-                                          foregroundColor: Colors.red),
+                                        foregroundColor: Colors.red,
+                                      ),
                                       child: const Text('Delete'),
                                     ),
                                   ],
                                 ),
                               );
                               if (confirmed == true) {
-                                cubit.deleteRecord(
-                                    widget.vehicleId, record.id);
+                                cubit.deleteRecord(widget.vehicleId, record.id);
                               }
                             },
                           );
@@ -730,9 +757,7 @@ class _VehicleDetailsPageState extends State<VehicleDetailsPage> {
             onPressed: () async {
               final newRecord = await Navigator.push<VehicleRecord>(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const AddRecordPage(),
-                ),
+                MaterialPageRoute(builder: (context) => const AddRecordPage()),
               );
               if (newRecord != null) {
                 cubit.addRecord(widget.vehicleId, newRecord);
@@ -788,8 +813,7 @@ class _VehicleDashboard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.directions_car_rounded,
-                  color: Colors.white, size: 22),
+              Icon(Icons.directions_car_rounded, color: Colors.white, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -837,7 +861,8 @@ class _VehicleDashboard extends StatelessWidget {
                 icon: Icons.route_rounded,
                 label: 'Since Service',
                 value: _formatKm(vehicle.kmSinceLastService),
-                color: vehicle.kmSinceLastService != null &&
+                color:
+                    vehicle.kmSinceLastService != null &&
                         vehicle.kmSinceLastService! > 5000
                     ? Colors.orange
                     : Colors.green,
@@ -975,7 +1000,10 @@ class _DashTile extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              fontSize: 10,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
             textAlign: TextAlign.center,
           ),
         ],
@@ -989,12 +1017,12 @@ class RecordCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const RecordCard(
-      {Key? key,
-      required this.record,
-      required this.onEdit,
-      required this.onDelete})
-      : super(key: key);
+  const RecordCard({
+    Key? key,
+    required this.record,
+    required this.onEdit,
+    required this.onDelete,
+  }) : super(key: key);
 
   IconData _getIcon() {
     switch (record.type) {
@@ -1080,14 +1108,19 @@ class RecordCard extends StatelessWidget {
                             ),
                           ),
                           if (record.isImportant)
-                            Icon(Icons.star,
-                                color: Colors.amber[700], size: 18),
+                            Icon(
+                              Icons.star,
+                              color: Colors.amber[700],
+                              size: 18,
+                            ),
                         ],
                       ),
                       Text(
                         DateFormat('MMM dd, yyyy').format(record.date),
                         style: TextStyle(
-                            fontSize: 13, color: cs.onSurfaceVariant),
+                          fontSize: 13,
+                          color: cs.onSurfaceVariant,
+                        ),
                       ),
                     ],
                   ),
@@ -1125,20 +1158,14 @@ class RecordCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 4,
               children: [
-                _DetailChip(
-                  icon: Icons.category,
-                  label: _getTypeLabel(),
-                ),
+                _DetailChip(icon: Icons.category, label: _getTypeLabel()),
                 if (record.odometer != null)
                   _DetailChip(
                     icon: Icons.speed,
                     label: '${record.odometer!.toStringAsFixed(0)} km',
                   ),
                 if (record.location != null)
-                  _DetailChip(
-                    icon: Icons.location_on,
-                    label: record.location!,
-                  ),
+                  _DetailChip(icon: Icons.location_on, label: record.location!),
                 if (record.nextServiceDate != null)
                   _DetailChip(
                     icon: Icons.event_available,
@@ -1174,10 +1201,7 @@ class _DetailChip extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: cs.onSurface),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: cs.onSurface),
-          ),
+          Text(label, style: TextStyle(fontSize: 11, color: cs.onSurface)),
         ],
       ),
     );
@@ -1238,7 +1262,8 @@ class _AddRecordPageState extends State<AddRecordPage> {
   void _saveRecord() {
     if (_formKey.currentState!.validate()) {
       final record = VehicleRecord(
-        id: widget.record?.id ??
+        id:
+            widget.record?.id ??
             DateTime.now().millisecondsSinceEpoch.toString(),
         type: _selectedType,
         date: _selectedDate,
@@ -1256,8 +1281,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
             ? null
             : _locationController.text,
         isImportant: _isImportant,
-        nextServiceDate:
-            _selectedType == RecordType.service ? _nextServiceDate : null,
+        nextServiceDate: _selectedType == RecordType.service
+            ? _nextServiceDate
+            : null,
       );
       Navigator.pop(context, record);
     }
@@ -1304,8 +1330,7 @@ class _AddRecordPageState extends State<AddRecordPage> {
                 border: OutlineInputBorder(),
                 prefixIcon: Icon(Icons.title),
               ),
-              validator: (value) =>
-                  value?.isEmpty ?? true ? 'Required' : null,
+              validator: (value) => value?.isEmpty ?? true ? 'Required' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -1322,16 +1347,14 @@ class _AddRecordPageState extends State<AddRecordPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('Date'),
-              subtitle:
-                  Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
+              subtitle: Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
               trailing: const Icon(Icons.calendar_today),
               onTap: () async {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _selectedDate,
                   firstDate: DateTime(2000),
-                  lastDate:
-                      DateTime.now().add(const Duration(days: 365)),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
                 );
                 if (date != null) {
                   setState(() => _selectedDate = date);
@@ -1375,10 +1398,12 @@ class _AddRecordPageState extends State<AddRecordPage> {
               const SizedBox(height: 16),
               ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.event_available,
-                    color: _nextServiceDate != null
-                        ? Colors.blue[700]
-                        : Colors.grey),
+                leading: Icon(
+                  Icons.event_available,
+                  color: _nextServiceDate != null
+                      ? Colors.blue[700]
+                      : Colors.grey,
+                ),
                 title: const Text('Next Service Date'),
                 subtitle: Text(
                   _nextServiceDate != null
@@ -1401,10 +1426,10 @@ class _AddRecordPageState extends State<AddRecordPage> {
                   final date = await showDatePicker(
                     context: context,
                     initialDate:
-                        _nextServiceDate ?? DateTime.now().add(const Duration(days: 90)),
+                        _nextServiceDate ??
+                        DateTime.now().add(const Duration(days: 90)),
                     firstDate: DateTime.now(),
-                    lastDate:
-                        DateTime.now().add(const Duration(days: 365 * 5)),
+                    lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
                   );
                   if (date != null) {
                     setState(() => _nextServiceDate = date);
@@ -1427,8 +1452,9 @@ class _AddRecordPageState extends State<AddRecordPage> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                  _isEditing ? 'Update Record' : 'Save Record',
-                  style: const TextStyle(fontSize: 16)),
+                _isEditing ? 'Update Record' : 'Save Record',
+                style: const TextStyle(fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -1518,8 +1544,7 @@ class _FilterDialogState extends State<FilterDialog> {
                     label: Text(_getTypeLabel(type)),
                     selected: _selectedType == type,
                     onSelected: (selected) {
-                      setState(
-                          () => _selectedType = selected ? type : null);
+                      setState(() => _selectedType = selected ? type : null);
                     },
                   );
                 }),
@@ -1534,14 +1559,15 @@ class _FilterDialogState extends State<FilterDialog> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('From Date'),
-              subtitle: Text(_fromDate != null
-                  ? DateFormat('MMM dd, yyyy').format(_fromDate!)
-                  : 'Not set'),
+              subtitle: Text(
+                _fromDate != null
+                    ? DateFormat('MMM dd, yyyy').format(_fromDate!)
+                    : 'Not set',
+              ),
               trailing: _fromDate != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () =>
-                          setState(() => _fromDate = null),
+                      onPressed: () => setState(() => _fromDate = null),
                     )
                   : null,
               onTap: () async {
@@ -1559,14 +1585,15 @@ class _FilterDialogState extends State<FilterDialog> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('To Date'),
-              subtitle: Text(_toDate != null
-                  ? DateFormat('MMM dd, yyyy').format(_toDate!)
-                  : 'Not set'),
+              subtitle: Text(
+                _toDate != null
+                    ? DateFormat('MMM dd, yyyy').format(_toDate!)
+                    : 'Not set',
+              ),
               trailing: _toDate != null
                   ? IconButton(
                       icon: const Icon(Icons.clear),
-                      onPressed: () =>
-                          setState(() => _toDate = null),
+                      onPressed: () => setState(() => _toDate = null),
                     )
                   : null,
               onTap: () async {

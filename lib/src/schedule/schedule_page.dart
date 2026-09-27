@@ -37,8 +37,12 @@ class SchedulePage extends StatelessWidget {
 
   /// Delete handler. For recurring entries, prompt: this occurrence vs entire
   /// series. For one-time entries, just confirm and delete.
-  Future<void> _onDelete(BuildContext context, ScheduleCubit cubit,
-      ScheduleEntry entry, DateTime date) async {
+  Future<void> _onDelete(
+    BuildContext context,
+    ScheduleCubit cubit,
+    ScheduleEntry entry,
+    DateTime date,
+  ) async {
     if (!entry.isRecurring) {
       final confirmed = await showDialog<bool>(
         context: context,
@@ -72,8 +76,11 @@ class SchedulePage extends StatelessWidget {
     }
   }
 
-  Future<_Scope?> _scopeDialog(BuildContext context,
-      {required String action, required ScheduleEntry entry}) {
+  Future<_Scope?> _scopeDialog(
+    BuildContext context, {
+    required String action,
+    required ScheduleEntry entry,
+  }) {
     return showDialog<_Scope>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -161,7 +168,9 @@ class SchedulePage extends StatelessWidget {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.orange[50],
                           borderRadius: BorderRadius.circular(8),
@@ -187,8 +196,11 @@ class SchedulePage extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.event_available_rounded,
-                                size: 48, color: cs.outline),
+                            Icon(
+                              Icons.event_available_rounded,
+                              size: 48,
+                              color: cs.outline,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               state.filter == ScheduleFilter.thisMonth
@@ -203,8 +215,7 @@ class SchedulePage extends StatelessWidget {
                         ),
                       )
                     : ListView(
-                        padding:
-                            const EdgeInsets.fromLTRB(12, 8, 12, 80),
+                        padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
                         children: grouped.entries.map((monthGroup) {
                           final key = monthGroup.key;
                           final occ = monthGroup.value;
@@ -212,18 +223,19 @@ class SchedulePage extends StatelessWidget {
                             int.parse(key.split('-')[0]),
                             int.parse(key.split('-')[1]),
                           );
-                          final monthLabel =
-                              DateFormat('MMMM yyyy').format(monthDate);
+                          final monthLabel = DateFormat(
+                            'MMMM yyyy',
+                          ).format(monthDate);
                           final now = DateTime.now();
-                          final isCurrentMonth = monthDate.year == now.year &&
+                          final isCurrentMonth =
+                              monthDate.year == now.year &&
                               monthDate.month == now.month;
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding:
-                                    const EdgeInsets.fromLTRB(4, 12, 4, 8),
+                                padding: const EdgeInsets.fromLTRB(4, 12, 4, 8),
                                 child: Row(
                                   children: [
                                     Text(
@@ -240,11 +252,14 @@ class SchedulePage extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Colors.blue,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
                                         ),
                                         child: const Text(
                                           'NOW',
@@ -268,26 +283,35 @@ class SchedulePage extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              ...occ.map((o) => _ScheduleItem(
-                                    entry: o.entry,
-                                    occurrenceDate: o.date,
-                                    daysLeftLabel: _daysLeftLabel(o.date),
-                                    daysLeftColor: _daysLeftColor(o.date),
-                                    onToggle: () => cubit
-                                        .toggleCompleteOn(o.entry.id, o.date),
-                                    onTap: () => Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => BlocProvider.value(
-                                          value: cubit,
-                                          child: ScheduleDetailPage(
-                                              entryId: o.entry.id),
+                              ...occ.map(
+                                (o) => _ScheduleItem(
+                                  entry: o.entry,
+                                  occurrenceDate: o.date,
+                                  daysLeftLabel: _daysLeftLabel(o.date),
+                                  daysLeftColor: _daysLeftColor(o.date),
+                                  onToggle: () => cubit.toggleCompleteOn(
+                                    o.entry.id,
+                                    o.date,
+                                  ),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => BlocProvider.value(
+                                        value: cubit,
+                                        child: ScheduleDetailPage(
+                                          entryId: o.entry.id,
                                         ),
                                       ),
                                     ),
-                                    onLongPress: () => _onDelete(
-                                        context, cubit, o.entry, o.date),
-                                  )),
+                                  ),
+                                  onLongPress: () => _onDelete(
+                                    context,
+                                    cubit,
+                                    o.entry,
+                                    o.date,
+                                  ),
+                                ),
+                              ),
                             ],
                           );
                         }).toList(),
@@ -339,8 +363,7 @@ class _FilterChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? Colors.blue[700] : cs.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
@@ -426,8 +449,7 @@ class _ScheduleItem extends StatelessWidget {
                       ),
                     ),
                     child: isDone
-                        ? Icon(Icons.check_rounded,
-                            size: 12, color: cat.color)
+                        ? Icon(Icons.check_rounded, size: 12, color: cat.color)
                         : null,
                   ),
                 ),
@@ -495,8 +517,7 @@ class _ScheduleItem extends StatelessWidget {
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         height: 1.25,
-                        decoration:
-                            isDone ? TextDecoration.lineThrough : null,
+                        decoration: isDone ? TextDecoration.lineThrough : null,
                         color: isDone ? cs.onSurfaceVariant : cs.onSurface,
                       ),
                       maxLines: 2,
@@ -513,13 +534,18 @@ class _ScheduleItem extends StatelessWidget {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.repeat_rounded,
-                                  size: 11, color: cs.onSurfaceVariant),
+                              Icon(
+                                Icons.repeat_rounded,
+                                size: 11,
+                                color: cs.onSurfaceVariant,
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 repeatLabel + endLabel,
                                 style: TextStyle(
-                                    fontSize: 11, color: cs.onSurfaceVariant),
+                                  fontSize: 11,
+                                  color: cs.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           )
@@ -527,12 +553,16 @@ class _ScheduleItem extends StatelessWidget {
                           Text(
                             cat.label,
                             style: TextStyle(
-                                fontSize: 11, color: cs.onSurfaceVariant),
+                              fontSize: 11,
+                              color: cs.onSurfaceVariant,
+                            ),
                           ),
                         if (entry.isRecurring && entry.completedCount > 0)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 1),
+                              horizontal: 5,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: cat.color.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -549,7 +579,9 @@ class _ScheduleItem extends StatelessWidget {
                         if (!isDone)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 1),
+                              horizontal: 6,
+                              vertical: 1,
+                            ),
                             decoration: BoxDecoration(
                               color: daysLeftColor.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(6),
@@ -571,8 +603,11 @@ class _ScheduleItem extends StatelessWidget {
 
               // Trailing chevron (subtle affordance for tap → detail)
               const SizedBox(width: 4),
-              Icon(Icons.chevron_right_rounded,
-                  size: 18, color: cs.onSurfaceVariant),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: cs.onSurfaceVariant,
+              ),
             ],
           ),
         ),
@@ -588,7 +623,7 @@ class AddSchedulePage extends StatefulWidget {
   final DateTime? initialDate;
 
   const AddSchedulePage({Key? key, this.entry, this.initialDate})
-      : super(key: key);
+    : super(key: key);
 
   @override
   State<AddSchedulePage> createState() => _AddSchedulePageState();
@@ -661,8 +696,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
     }
 
     final entry = ScheduleEntry(
-      id: widget.entry?.id ??
-          DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.entry?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
       title: _titleController.text.trim(),
       description: _descController.text.trim().isEmpty
           ? null
@@ -739,8 +773,7 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
                 Builder(
                   builder: (ctx) {
-                    final categories =
-                        ctx.read<ScheduleCubit>().allCategories;
+                    final categories = ctx.read<ScheduleCubit>().allCategories;
                     // Ensure selected value is present in items
                     final selected = categories.contains(_category)
                         ? _category
@@ -786,7 +819,8 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                   leading: const Icon(Icons.calendar_today_rounded),
                   title: const Text('Start Date *'),
                   subtitle: Text(
-                      DateFormat('EEEE, MMM d, yyyy').format(_startDate)),
+                    DateFormat('EEEE, MMM d, yyyy').format(_startDate),
+                  ),
                   onTap: _pickStartDate,
                 ),
                 const SizedBox(height: 12),
@@ -799,9 +833,11 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                   ),
                   leading: const Icon(Icons.event_rounded),
                   title: const Text('End Date'),
-                  subtitle: Text(_endDate != null
-                      ? DateFormat('EEEE, MMM d, yyyy').format(_endDate!)
-                      : 'Optional — leave blank for ongoing'),
+                  subtitle: Text(
+                    _endDate != null
+                        ? DateFormat('EEEE, MMM d, yyyy').format(_endDate!)
+                        : 'Optional — leave blank for ongoing',
+                  ),
                   trailing: _endDate != null
                       ? IconButton(
                           icon: const Icon(Icons.clear, size: 18),
@@ -813,11 +849,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 const SizedBox(height: 16),
 
                 // Repeat mode
-                Text('Repeat',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurface)),
+                Text(
+                  'Repeat',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: cs.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 6,
@@ -825,13 +864,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                   children: RecurrenceMode.values.map((m) {
                     final selected = _repeatMode == m;
                     return ChoiceChip(
-                      label: Text(m.label,
-                          style: const TextStyle(fontSize: 12)),
+                      label: Text(
+                        m.label,
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       selected: selected,
                       showCheckmark: false,
                       visualDensity: VisualDensity.compact,
-                      materialTapTargetSize:
-                          MaterialTapTargetSize.shrinkWrap,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       onSelected: (_) {
                         setState(() {
                           _repeatMode = m;
@@ -869,11 +909,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 // Weekly days selector
                 if (_repeatMode == RecurrenceMode.weeklyOnDays) ...[
                   const SizedBox(height: 12),
-                  Text('Days of week *',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface)),
+                  Text(
+                    'Days of week *',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurface,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,
@@ -886,17 +929,18 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                         'Thu',
                         'Fri',
                         'Sat',
-                        'Sun'
+                        'Sun',
                       ];
                       final selected = _customDays.contains(day);
                       return FilterChip(
-                        label: Text(names[i],
-                            style: const TextStyle(fontSize: 11)),
+                        label: Text(
+                          names[i],
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         selected: selected,
                         showCheckmark: false,
                         visualDensity: VisualDensity.compact,
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         onSelected: (v) {
                           setState(() {
                             if (v) {
@@ -915,11 +959,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                 // Monthly days selector
                 if (_repeatMode == RecurrenceMode.monthlyOnDays) ...[
                   const SizedBox(height: 12),
-                  Text('Days of month *',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: cs.onSurface)),
+                  Text(
+                    'Days of month *',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: cs.onSurface,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 4,
@@ -928,13 +975,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
                       final day = i + 1;
                       final selected = _customDays.contains(day);
                       return FilterChip(
-                        label: Text('$day',
-                            style: const TextStyle(fontSize: 11)),
+                        label: Text(
+                          '$day',
+                          style: const TextStyle(fontSize: 11),
+                        ),
                         selected: selected,
                         showCheckmark: false,
                         visualDensity: VisualDensity.compact,
-                        materialTapTargetSize:
-                            MaterialTapTargetSize.shrinkWrap,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         onSelected: (v) {
                           setState(() {
                             if (v) {
@@ -982,10 +1030,14 @@ class _AddSchedulePageState extends State<AddSchedulePage> {
 
   String _intervalHint() {
     switch (_repeatMode) {
-      case RecurrenceMode.everyNDays: return 'Every N days';
-      case RecurrenceMode.everyNWeeks: return 'Every N weeks';
-      case RecurrenceMode.everyNMonths: return 'Every N months';
-      default: return 'N';
+      case RecurrenceMode.everyNDays:
+        return 'Every N days';
+      case RecurrenceMode.everyNWeeks:
+        return 'Every N weeks';
+      case RecurrenceMode.everyNMonths:
+        return 'Every N months';
+      default:
+        return 'N';
     }
   }
 }

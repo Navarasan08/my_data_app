@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:my_data_app/src/events/model/event_model.dart';
 import 'package:my_data_app/src/events/repository/event_repository.dart';
@@ -5,12 +7,18 @@ import 'package:my_data_app/src/events/cubit/event_state.dart';
 
 class EventCubit extends Cubit<EventState> {
   final EventRepository _repository;
+  StreamSubscription<void>? _sub;
 
   EventCubit(this._repository)
-      : super(EventState(
+    : super(
+        EventState(
           events: _repository.getAllEvents(),
           expensesByEvent: _buildMap(_repository),
-        ));
+          syncStatus: _repository.syncStatus,
+        ),
+      ) {
+    _sub = _repository.changes.listen((_) => _sync());
+  }
 
   static Map<String, List<EventExpense>> _buildMap(EventRepository repo) {
     final map = <String, List<EventExpense>>{};
@@ -20,35 +28,46 @@ class EventCubit extends Cubit<EventState> {
     return map;
   }
 
+  /// Pulls the repository's current events, expenses and sync status into
+  /// state. Runs on every realtime change and after each local write.
+  void _sync() {
+    emit(
+      state.copyWith(
+        events: _repository.getAllEvents(),
+        expensesByEvent: _buildMap(_repository),
+        syncStatus: _repository.syncStatus,
+      ),
+    );
+  }
+
+  @override
+  Future<void> close() async {
+    await _sub?.cancel();
+    return super.close();
+  }
+
   // ── Events ──────────────────────────────────────────────────────────────
 
   void addEvent(EventFund event) {
     _repository.addEvent(event);
-    emit(state.copyWith(
-      events: _repository.getAllEvents(),
-      expensesByEvent: _buildMap(_repository),
-    ));
+    _sync();
   }
 
   void updateEvent(EventFund event) {
     _repository.updateEvent(event);
-    emit(state.copyWith(events: _repository.getAllEvents()));
+    _sync();
   }
 
   void deleteEvent(String eventId) {
     _repository.deleteEvent(eventId);
-    emit(state.copyWith(
-      events: _repository.getAllEvents(),
-      expensesByEvent: _buildMap(_repository),
-    ));
+    _sync();
   }
 
   void toggleArchive(String eventId) {
     final e = state.events.firstWhere((x) => x.id == eventId);
-    updateEvent(e.copyWith(
-      isArchived: !e.isArchived,
-      updatedAt: DateTime.now(),
-    ));
+    updateEvent(
+      e.copyWith(isArchived: !e.isArchived, updatedAt: DateTime.now()),
+    );
   }
 
   EventFund? getEvent(String eventId) {
@@ -60,17 +79,17 @@ class EventCubit extends Cubit<EventState> {
 
   void addExpense(EventExpense expense) {
     _repository.addExpense(expense);
-    emit(state.copyWith(expensesByEvent: _buildMap(_repository)));
+    _sync();
   }
 
   void updateExpense(EventExpense expense) {
     _repository.updateExpense(expense);
-    emit(state.copyWith(expensesByEvent: _buildMap(_repository)));
+    _sync();
   }
 
   void deleteExpense(String eventId, String expenseId) {
     _repository.deleteExpense(eventId, expenseId);
-    emit(state.copyWith(expensesByEvent: _buildMap(_repository)));
+    _sync();
   }
 
   // ── Computed ────────────────────────────────────────────────────────────
@@ -83,14 +102,17 @@ class EventCubit extends Cubit<EventState> {
 
   /// Total spent per active event, keyed by event id. Used to auto-fill the
   /// amount when a home record is linked to an event.
-  Map<String, double> get activeEventTotals =>
-      {for (final e in activeEvents) e.id: totalSpentFor(e.id)};
+  Map<String, double> get activeEventTotals => {
+    for (final e in activeEvents) e.id: totalSpentFor(e.id),
+  };
 
   /// Sum grouped by category for an event.
   Map<String, double> categoryBreakdown(String eventId) {
     final map = <String, double>{};
     for (final e in expensesFor(eventId)) {
-      final key = (e.category?.trim().isEmpty ?? true) ? 'Uncategorized' : e.category!.trim();
+      final key = (e.category?.trim().isEmpty ?? true)
+          ? 'Uncategorized'
+          : e.category!.trim();
       map[key] = (map[key] ?? 0) + e.amount;
     }
     return map;

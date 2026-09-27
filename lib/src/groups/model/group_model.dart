@@ -110,19 +110,19 @@ class GroupFund {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'description': description,
-        'iconIndex': iconIndex,
-        'colorIndex': colorIndex,
-        'createdBy': createdBy,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt.toIso8601String(),
-        'memberIds': memberIds,
-        'members': members.map((k, v) => MapEntry(k, v.toJson())),
-        'isArchived': isArchived,
-        'currency': currency,
-      };
+    'id': id,
+    'name': name,
+    'description': description,
+    'iconIndex': iconIndex,
+    'colorIndex': colorIndex,
+    'createdBy': createdBy,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt.toIso8601String(),
+    'memberIds': memberIds,
+    'members': members.map((k, v) => MapEntry(k, v.toJson())),
+    'isArchived': isArchived,
+    'currency': currency,
+  };
 
   factory GroupFund.fromJson(Map<String, dynamic> json) {
     final rawMembers = (json['members'] as Map?) ?? const {};
@@ -165,28 +165,28 @@ class GroupMember {
     this.role = GroupMemberRole.member,
   });
 
-  String get label =>
-      (displayName != null && displayName!.trim().isNotEmpty)
-          ? displayName!
-          : email;
+  String get label => (displayName != null && displayName!.trim().isNotEmpty)
+      ? displayName!
+      : email;
 
   Map<String, dynamic> toJson() => {
-        'uid': uid,
-        'email': email,
-        'displayName': displayName,
-        'joinedAt': joinedAt.toIso8601String(),
-        'role': role.index,
-      };
+    'uid': uid,
+    'email': email,
+    'displayName': displayName,
+    'joinedAt': joinedAt.toIso8601String(),
+    'role': role.index,
+  };
 
   factory GroupMember.fromJson(Map<String, dynamic> json) => GroupMember(
-        uid: json['uid'] as String,
-        email: json['email'] as String,
-        displayName: json['displayName'] as String?,
-        joinedAt: DateTime.parse(json['joinedAt'] as String),
-        role: GroupMemberRole.values[
-            (json['role'] as int? ?? GroupMemberRole.member.index)
-                .clamp(0, GroupMemberRole.values.length - 1)],
-      );
+    uid: json['uid'] as String,
+    email: json['email'] as String,
+    displayName: json['displayName'] as String?,
+    joinedAt: DateTime.parse(json['joinedAt'] as String),
+    role:
+        GroupMemberRole.values[(json['role'] as int? ??
+                GroupMemberRole.member.index)
+            .clamp(0, GroupMemberRole.values.length - 1)],
+  );
 }
 
 /// How a [GroupExpense]'s amount is divided among participants.
@@ -211,24 +211,19 @@ class GroupSplit {
     required this.owed,
   });
 
-  GroupSplit copyWith({String? uid, double? value, double? owed}) =>
-      GroupSplit(
-        uid: uid ?? this.uid,
-        value: value ?? this.value,
-        owed: owed ?? this.owed,
-      );
+  GroupSplit copyWith({String? uid, double? value, double? owed}) => GroupSplit(
+    uid: uid ?? this.uid,
+    value: value ?? this.value,
+    owed: owed ?? this.owed,
+  );
 
-  Map<String, dynamic> toJson() => {
-        'uid': uid,
-        'value': value,
-        'owed': owed,
-      };
+  Map<String, dynamic> toJson() => {'uid': uid, 'value': value, 'owed': owed};
 
   factory GroupSplit.fromJson(Map<String, dynamic> json) => GroupSplit(
-        uid: json['uid'] as String,
-        value: (json['value'] as num).toDouble(),
-        owed: (json['owed'] as num).toDouble(),
-      );
+    uid: json['uid'] as String,
+    value: (json['value'] as num).toDouble(),
+    owed: (json['owed'] as num).toDouble(),
+  );
 }
 
 class GroupExpense {
@@ -300,43 +295,46 @@ class GroupExpense {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'groupId': groupId,
-        'title': title,
-        'amount': amount,
-        'paidByUid': paidByUid,
-        'date': date.toIso8601String(),
-        'splitMode': splitMode.index,
-        'splits': splits.map((s) => s.toJson()).toList(),
-        'category': category,
-        'notes': notes,
-        'createdByUid': createdByUid,
-        'createdAt': createdAt.toIso8601String(),
-        'lastEditedByUid': lastEditedByUid,
-        'lastEditedAt': lastEditedAt?.toIso8601String(),
-      };
+    'id': id,
+    'groupId': groupId,
+    'title': title,
+    'amount': amount,
+    'paidByUid': paidByUid,
+    'date': date.toIso8601String(),
+    'splitMode': splitMode.index,
+    'splits': splits.map((s) => s.toJson()).toList(),
+    'category': category,
+    'notes': notes,
+    'createdByUid': createdByUid,
+    'createdAt': createdAt.toIso8601String(),
+    'lastEditedByUid': lastEditedByUid,
+    'lastEditedAt': lastEditedAt?.toIso8601String(),
+  };
 
   factory GroupExpense.fromJson(Map<String, dynamic> json) => GroupExpense(
-        id: json['id'] as String,
-        groupId: json['groupId'] as String,
-        title: json['title'] as String,
-        amount: (json['amount'] as num).toDouble(),
-        paidByUid: json['paidByUid'] as String,
-        date: DateTime.parse(json['date'] as String),
-        splitMode: SplitMode.values[(json['splitMode'] as int? ?? 0)
-            .clamp(0, SplitMode.values.length - 1)],
-        splits: (json['splits'] as List)
-            .map((e) => GroupSplit.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList(),
-        category: json['category'] as String?,
-        notes: json['notes'] as String?,
-        createdByUid: json['createdByUid'] as String,
-        createdAt: DateTime.parse(json['createdAt'] as String),
-        lastEditedByUid: json['lastEditedByUid'] as String?,
-        lastEditedAt: json['lastEditedAt'] != null
-            ? DateTime.parse(json['lastEditedAt'] as String)
-            : null,
-      );
+    id: json['id'] as String,
+    groupId: json['groupId'] as String,
+    title: json['title'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    paidByUid: json['paidByUid'] as String,
+    date: DateTime.parse(json['date'] as String),
+    splitMode:
+        SplitMode.values[(json['splitMode'] as int? ?? 0).clamp(
+          0,
+          SplitMode.values.length - 1,
+        )],
+    splits: (json['splits'] as List)
+        .map((e) => GroupSplit.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList(),
+    category: json['category'] as String?,
+    notes: json['notes'] as String?,
+    createdByUid: json['createdByUid'] as String,
+    createdAt: DateTime.parse(json['createdAt'] as String),
+    lastEditedByUid: json['lastEditedByUid'] as String?,
+    lastEditedAt: json['lastEditedAt'] != null
+        ? DateTime.parse(json['lastEditedAt'] as String)
+        : null,
+  );
 }
 
 /// A recorded payment from one member to another, marking part of the
@@ -363,15 +361,15 @@ class GroupSettlement {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'groupId': groupId,
-        'fromUid': fromUid,
-        'toUid': toUid,
-        'amount': amount,
-        'settledAt': settledAt.toIso8601String(),
-        'recordedByUid': recordedByUid,
-        'notes': notes,
-      };
+    'id': id,
+    'groupId': groupId,
+    'fromUid': fromUid,
+    'toUid': toUid,
+    'amount': amount,
+    'settledAt': settledAt.toIso8601String(),
+    'recordedByUid': recordedByUid,
+    'notes': notes,
+  };
 
   factory GroupSettlement.fromJson(Map<String, dynamic> json) =>
       GroupSettlement(
@@ -444,19 +442,19 @@ class GroupInvitation {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'groupId': groupId,
-        'groupName': groupName,
-        'groupIconIndex': groupIconIndex,
-        'groupColorIndex': groupColorIndex,
-        'invitedByUid': invitedByUid,
-        'invitedByName': invitedByName,
-        'inviteeEmail': inviteeEmail,
-        'inviteeUid': inviteeUid,
-        'status': status.index,
-        'createdAt': createdAt.toIso8601String(),
-        'respondedAt': respondedAt?.toIso8601String(),
-      };
+    'id': id,
+    'groupId': groupId,
+    'groupName': groupName,
+    'groupIconIndex': groupIconIndex,
+    'groupColorIndex': groupColorIndex,
+    'invitedByUid': invitedByUid,
+    'invitedByName': invitedByName,
+    'inviteeEmail': inviteeEmail,
+    'inviteeUid': inviteeUid,
+    'status': status.index,
+    'createdAt': createdAt.toIso8601String(),
+    'respondedAt': respondedAt?.toIso8601String(),
+  };
 
   factory GroupInvitation.fromJson(Map<String, dynamic> json) =>
       GroupInvitation(
@@ -469,8 +467,11 @@ class GroupInvitation {
         invitedByName: json['invitedByName'] as String,
         inviteeEmail: json['inviteeEmail'] as String,
         inviteeUid: json['inviteeUid'] as String?,
-        status: GroupInvitationStatus.values[(json['status'] as int? ?? 0)
-            .clamp(0, GroupInvitationStatus.values.length - 1)],
+        status:
+            GroupInvitationStatus.values[(json['status'] as int? ?? 0).clamp(
+              0,
+              GroupInvitationStatus.values.length - 1,
+            )],
         createdAt: DateTime.parse(json['createdAt'] as String),
         respondedAt: json['respondedAt'] != null
             ? DateTime.parse(json['respondedAt'] as String)
