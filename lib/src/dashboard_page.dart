@@ -36,7 +36,15 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   static const _categoryIds = {
-    'Finance': ['bills', 'chits', 'loans', 'home', 'money_owe', 'interest'],
+    'Finance': [
+      'monthly_stats',
+      'bills',
+      'chits',
+      'loans',
+      'home',
+      'money_owe',
+      'interest',
+    ],
     'Lifestyle': [
       'schedules',
       'food_menu',
@@ -59,6 +67,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   String _getSubtitle(String id) {
     switch (id) {
+      case 'monthly_stats':
+        return 'Income, commitments & balance';
       case 'bills':
         return 'Monthly bills & due dates';
       case 'vehicles':

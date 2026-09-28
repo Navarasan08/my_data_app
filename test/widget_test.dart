@@ -36,6 +36,9 @@ import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
 import 'package:my_data_app/src/medical/repository/medical_repository.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/money_owe/repository/money_owe_repository.dart';
+import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
+import 'package:my_data_app/src/notifications/notification_service.dart';
+import 'package:my_data_app/src/notifications/repository/notification_repository.dart';
 import 'package:my_data_app/src/periods/cubit/period_cubit.dart';
 import 'package:my_data_app/src/periods/repository/period_repository.dart';
 import 'package:my_data_app/src/pregnancy/cubit/pregnancy_cubit.dart';
@@ -124,6 +127,10 @@ void main() {
 
     final pregnancyRepo = FirestorePregnancyRepository(uid: uid, firestore: fs)
       ..start();
+    final notificationRepo = FirestoreNotificationRepository(
+      uid: uid,
+      firestore: fs,
+    )..start();
     final dashboardSettings = DashboardSettingsCubit(uid: uid, firestore: fs)
       ..start();
 
@@ -150,6 +157,10 @@ void main() {
           BlocProvider(create: (_) => DietCubit(dietRepo)),
           BlocProvider(create: (_) => DaysCounterCubit(daysCounterRepo)),
           BlocProvider(create: (_) => PregnancyCubit(pregnancyRepo)),
+          BlocProvider(
+            create: (_) =>
+                NotificationCubit(notificationRepo, LocalNotificationService()),
+          ),
           BlocProvider.value(value: dashboardSettings),
           BlocProvider<AuthCubit>(create: (_) => _FakeAuthCubit()),
           BlocProvider(create: (_) => ThemeCubit()),
@@ -160,7 +171,7 @@ void main() {
 
     // First frame: nothing has loaded yet and the page must still render.
     expect(find.byType(DashboardPage), findsOneWidget);
-    expect(find.text('Expense Tracker'), findsOneWidget);
+    expect(find.text('Monthly Stats'), findsOneWidget);
 
     // Let every listener deliver its (empty, live) snapshot and rebuild.
     await tester.pumpAndSettle();

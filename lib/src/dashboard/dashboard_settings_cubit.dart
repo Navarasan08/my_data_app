@@ -58,7 +58,7 @@ class DashboardSettingsState {
   final List<FeatureItem> features;
   final bool isGridView;
 
-  /// Feature id shown on the second bottom tab. Expense Tracker by default.
+  /// Feature id shown on the second bottom tab. Monthly Stats by default.
   final String secondTabFeatureId;
 
   /// Which tab the app opens on.
@@ -67,7 +67,7 @@ class DashboardSettingsState {
   const DashboardSettingsState({
     required this.features,
     this.isGridView = true,
-    this.secondTabFeatureId = 'home',
+    this.secondTabFeatureId = 'monthly_stats',
     this.landingTab = ShellTab.dashboard,
   });
 
@@ -132,137 +132,144 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
 
   static List<FeatureItem> _defaultFeatures() => [
     FeatureItem(
+      id: 'monthly_stats',
+      title: 'Monthly Stats',
+      icon: Icons.query_stats_rounded,
+      gradient: [Colors.teal, Colors.green],
+      order: 0,
+    ),
+    FeatureItem(
       id: 'bills',
       title: 'Bills',
       icon: Icons.receipt_long_rounded,
       gradient: [Colors.orange, Colors.deepOrange],
-      order: 0,
+      order: 1,
     ),
     FeatureItem(
       id: 'vehicles',
       title: 'Vehicles',
       icon: Icons.directions_car_rounded,
       gradient: [Colors.blue, Colors.indigo],
-      order: 1,
+      order: 2,
     ),
     FeatureItem(
       id: 'chits',
       title: 'Chit Funds',
       icon: Icons.group_work_rounded,
       gradient: [Colors.purple, Colors.deepPurple],
-      order: 2,
+      order: 3,
     ),
     FeatureItem(
       id: 'checklists',
       title: 'Checklists',
       icon: Icons.checklist_rounded,
       gradient: [Colors.teal, Colors.green],
-      order: 3,
+      order: 4,
     ),
     FeatureItem(
       id: 'periods',
       title: 'Period Tracker',
       icon: Icons.favorite_rounded,
       gradient: [Colors.pink, Colors.pink],
-      order: 4,
+      order: 5,
     ),
     FeatureItem(
       id: 'home',
       title: 'Expense Tracker',
       icon: Icons.account_balance_wallet_rounded,
       gradient: [Colors.green, Colors.green],
-      order: 5,
+      order: 6,
     ),
     FeatureItem(
       id: 'schedules',
       title: 'Schedules',
       icon: Icons.calendar_month_rounded,
       gradient: [Colors.cyan, Colors.blue],
-      order: 6,
+      order: 7,
     ),
     FeatureItem(
       id: 'food_menu',
       title: 'Food Menu',
       icon: Icons.restaurant_menu_rounded,
       gradient: [Colors.deepOrange, Colors.red],
-      order: 7,
+      order: 8,
     ),
     FeatureItem(
       id: 'loans',
       title: 'Loans',
       icon: Icons.account_balance_rounded,
       gradient: [Colors.blueGrey, Colors.indigo],
-      order: 8,
+      order: 9,
     ),
     FeatureItem(
       id: 'goals',
       title: 'Goal Tracker',
       icon: Icons.track_changes_rounded,
       gradient: [Colors.teal, Colors.green],
-      order: 9,
+      order: 10,
     ),
     FeatureItem(
       id: 'money_owe',
       title: 'Lend & Owe',
       icon: Icons.handshake_rounded,
       gradient: [Colors.amber, Colors.orange],
-      order: 10,
+      order: 11,
     ),
     FeatureItem(
       id: 'medical',
       title: 'Medical',
       icon: Icons.medical_services_rounded,
       gradient: [Colors.red, Colors.pink],
-      order: 11,
+      order: 12,
     ),
     FeatureItem(
       id: 'vault',
       title: 'Profile Vault',
       icon: Icons.folder_special_rounded,
       gradient: [Colors.indigo, Colors.deepPurple],
-      order: 12,
+      order: 13,
     ),
     FeatureItem(
       id: 'land',
       title: 'My Lands',
       icon: Icons.landscape_rounded,
       gradient: [Colors.green, Colors.brown],
-      order: 13,
+      order: 14,
     ),
     FeatureItem(
       id: 'interest',
       title: 'Interest',
       icon: Icons.percent_rounded,
       gradient: [Colors.amber, Colors.orange],
-      order: 14,
+      order: 15,
     ),
     FeatureItem(
       id: 'activities',
       title: 'Activity Log',
       icon: Icons.history_rounded,
       gradient: [Colors.blue, Colors.indigo],
-      order: 15,
+      order: 16,
     ),
     FeatureItem(
       id: 'diet',
       title: 'Diet Tracker',
       icon: Icons.restaurant_menu_rounded,
       gradient: [Colors.green, Colors.teal],
-      order: 16,
+      order: 17,
     ),
     FeatureItem(
       id: 'days_counter',
       title: 'Days Counter',
       icon: Icons.hourglass_top_rounded,
       gradient: [Colors.pink, Colors.deepPurple],
-      order: 17,
+      order: 18,
     ),
     FeatureItem(
       id: 'pregnancy',
       title: 'Pregnancy Assist',
       icon: Icons.pregnant_woman_rounded,
       gradient: [Colors.pink, Colors.purple],
-      order: 18,
+      order: 19,
     ),
   ];
 
