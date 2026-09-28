@@ -117,4 +117,67 @@ void main() {
       expect(cubit.state.checklists.map((g) => g.id), ['remote']);
     },
   );
+
+  // ── Tab buckets ──────────────────────────────────────────────────────────
+
+  ChecklistGroup listDue(
+    String id, {
+    required int daysFromNow,
+    int itemCount = 2,
+    int doneCount = 0,
+  }) {
+    return ChecklistGroup(
+      id: id,
+      name: id,
+      targetDate: DateTime.now().add(Duration(days: daysFromNow)),
+      createdDate: DateTime(2025, 1, 1),
+      items: [
+        for (var i = 0; i < itemCount; i++)
+          ChecklistItem(
+            id: '$id-$i',
+            title: 'task $i',
+            isCompleted: i < doneCount,
+          ),
+      ],
+    );
+  }
+
+  test('tab buckets: each list lands in exactly one bucket', () async {
+    await pumpEventQueue();
+    // Started → in progress.
+    cubit.addChecklist(listDue('started', daysFromNow: 30, doneCount: 1));
+    // Untouched but overdue → in progress.
+    cubit.addChecklist(listDue('overdue', daysFromNow: -2));
+    // Untouched, due later → upcoming.
+    cubit.addChecklist(listDue('fresh', daysFromNow: 10));
+    // Everything ticked → completed.
+    cubit.addChecklist(listDue('done', daysFromNow: 5, doneCount: 2));
+
+    expect(
+      cubit.inProgress.map((c) => c.id),
+      containsAll(['started', 'overdue']),
+    );
+    expect(cubit.upcoming.map((c) => c.id), ['fresh']);
+    expect(cubit.completed.map((c) => c.id), ['done']);
+
+    final total =
+        cubit.inProgress.length +
+        cubit.upcoming.length +
+        cubit.completed.length;
+    expect(total, cubit.state.checklists.length);
+  });
+
+  test('tab buckets: in progress sorts most urgent first', () async {
+    await pumpEventQueue();
+    cubit.addChecklist(listDue('later', daysFromNow: 9, doneCount: 1));
+    cubit.addChecklist(listDue('urgent', daysFromNow: -1));
+    expect(cubit.inProgress.map((c) => c.id), ['urgent', 'later']);
+  });
+
+  test('tab buckets: empty checklist with a future date is upcoming', () async {
+    await pumpEventQueue();
+    cubit.addChecklist(listDue('empty', daysFromNow: 3, itemCount: 0));
+    expect(cubit.upcoming.map((c) => c.id), ['empty']);
+    expect(cubit.completed, isEmpty);
+  });
 }

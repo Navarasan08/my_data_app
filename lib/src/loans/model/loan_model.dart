@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 enum LoanType { home, car, personal, education, business, gold, credit, other }
@@ -125,11 +127,19 @@ class Loan {
   double get totalPrincipalPaid =>
       repayments.fold(0.0, (sum, r) => sum + (r.principalPortion ?? 0));
 
-  double get outstandingBalance =>
-      (principalAmount - totalPrincipalPaid - totalPartPayments).clamp(
-        0,
-        double.infinity,
-      );
+  /// Principal still owed. Part payments carry their amount in
+  /// [Repayment.principalPortion] too, so only EMI portions are summed here —
+  /// counting [totalPrincipalPaid] as well would subtract part payments twice.
+  double get outstandingBalance {
+    final emiPrincipal = emiRepayments.fold(
+      0.0,
+      (sum, r) => sum + (r.principalPortion ?? 0),
+    );
+    return (principalAmount - emiPrincipal - totalPartPayments).clamp(
+      0,
+      double.infinity,
+    );
+  }
 
   double get totalPayable => emiAmount * tenureMonths;
 
@@ -137,29 +147,42 @@ class Loan {
 
   int get paidEmiCount => emiRepayments.length;
 
-  int get remainingEmis => tenureMonths - paidEmiCount;
+  int get remainingEmis => (tenureMonths - paidEmiCount).clamp(0, tenureMonths);
 
   double get progressPercent =>
       tenureMonths > 0 ? (paidEmiCount / tenureMonths).clamp(0.0, 1.0) : 0;
+
+  /// Due date of EMI [n] (1-based): [n] months after [startDate], on the
+  /// start's day-of-month clamped to the target month's length (a loan
+  /// started on the 31st is due on the 28th/29th/30th in shorter months).
+  DateTime emiDueDate(int n) {
+    final y = startDate.year;
+    final m = startDate.month + n;
+    final daysInMonth = DateTime(y, m + 1, 0).day;
+    return DateTime(y, m, startDate.day.clamp(1, daysInMonth));
+  }
 
   int get elapsedMonths {
     final now = DateTime.now();
     return (now.year - startDate.year) * 12 + now.month - startDate.month;
   }
 
-  int get overdueEmis {
-    final due = elapsedMonths;
-    final paid = paidEmiCount;
-    return (due - paid).clamp(0, tenureMonths);
+  /// How many EMIs have fallen due so far: those whose due date is on or
+  /// before today, never more than the tenure.
+  int get dueEmiCount {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    var due = elapsedMonths;
+    // The current month's EMI counts only once its day-of-month has passed.
+    if (due >= 1 && due <= tenureMonths && emiDueDate(due).isAfter(today)) {
+      due -= 1;
+    }
+    return due.clamp(0, tenureMonths);
   }
 
-  DateTime get nextEmiDate {
-    return DateTime(
-      startDate.year,
-      startDate.month + paidEmiCount + 1,
-      startDate.day,
-    );
-  }
+  int get overdueEmis => (dueEmiCount - paidEmiCount).clamp(0, tenureMonths);
+
+  DateTime get nextEmiDate => emiDueDate(paidEmiCount + 1);
 
   String get directionLabel =>
       direction == LoanDirection.borrowed ? 'Borrowed' : 'Lent';
@@ -245,20 +268,14 @@ class Loan {
         [],
   );
 
-  /// Calculate EMI from principal, rate, tenure
+  /// Standard EMI formula: P·r·(1+r)ⁿ / ((1+r)ⁿ − 1), with r the monthly
+  /// rate. A zero rate degenerates to straight-line principal.
   static double calculateEmi(double principal, double annualRate, int months) {
+    if (months <= 0) return 0;
     if (annualRate == 0) return principal / months;
     final r = annualRate / 12 / 100;
-    final emi = principal * r * _pow(1 + r, months) / (_pow(1 + r, months) - 1);
-    return emi;
-  }
-
-  static double _pow(double base, int exp) {
-    double result = 1;
-    for (int i = 0; i < exp; i++) {
-      result *= base;
-    }
-    return result;
+    final factor = math.pow(1 + r, months).toDouble();
+    return principal * r * factor / (factor - 1);
   }
 
   // ── Advanced computed properties ──────────────────────────────────────
@@ -267,10 +284,14 @@ class Loan {
   double get effectivePrincipal =>
       (principalAmount - totalPartPayments).clamp(0, double.infinity);
 
-  /// Total interest over full loan life (original schedule)
+  /// Total interest over full loan life (original schedule). Clamped to
+  /// zero so an understated EMI can't produce negative interest.
   double get totalInterestOriginal {
     if (interestRate == 0) return 0;
-    return (emiAmount * tenureMonths) - principalAmount;
+    return ((emiAmount * tenureMonths) - principalAmount).clamp(
+      0,
+      double.infinity,
+    );
   }
 
   /// Interest already paid (sum of interest portions from all repayments)
@@ -308,7 +329,10 @@ class Loan {
           emi: emiAmount,
           principal: principal,
           interest: 0,
-          balance: principalAmount - (principal * (i + 1)),
+          balance: (principalAmount - (principal * (i + 1))).clamp(
+            0,
+            double.infinity,
+          ),
         );
       });
     }
@@ -319,12 +343,14 @@ class Loan {
       final interest = balance * monthlyRate;
       final principal = (emiAmount - interest).clamp(0.0, balance);
       balance -= principal;
-      // Apply any part payments at this month
+      // Apply any part payments at this month. Payments dated before the
+      // first EMI land on month 1 rather than dropping off the schedule.
       for (final pp in partPayments) {
         final ppMonth =
-            (pp.paidDate.year - startDate.year) * 12 +
-            pp.paidDate.month -
-            startDate.month;
+            ((pp.paidDate.year - startDate.year) * 12 +
+                    pp.paidDate.month -
+                    startDate.month)
+                .clamp(1, tenureMonths);
         if (ppMonth == i + 1) {
           balance = (balance - pp.amount).clamp(0, double.infinity);
         }
@@ -352,37 +378,20 @@ class Loan {
     return calculateEmi(remainingPrincipal, annualRate, remainingMonths);
   }
 
-  /// Calculate new tenure with same EMI after part payment
+  /// Months needed to clear [remainingPrincipal] at the same [emi]:
+  /// n = −ln(1 − P·r/E) / ln(1+r). Returns 999 when the EMI doesn't even
+  /// cover the monthly interest (the balance would never shrink).
   static int calculateNewTenure(
     double remainingPrincipal,
     double annualRate,
     double emi,
   ) {
+    if (emi <= 0) return 999;
     if (annualRate == 0) return (remainingPrincipal / emi).ceil();
     final r = annualRate / 12 / 100;
     if (emi <= remainingPrincipal * r) return 999; // EMI too low
-    final n = -_log(1 - (remainingPrincipal * r / emi)) / _log(1 + r);
+    final n = -math.log(1 - (remainingPrincipal * r / emi)) / math.log(1 + r);
     return n.ceil();
-  }
-
-  static double _log(double x) {
-    if (x <= 0) return 0;
-    // Natural log using Taylor series approximation
-    return _ln(x);
-  }
-
-  static double _ln(double x) {
-    if (x <= 0) return double.negativeInfinity;
-    if (x == 1) return 0;
-    double result = 0;
-    double term = (x - 1) / (x + 1);
-    double termSquared = term * term;
-    double currentTerm = term;
-    for (int i = 1; i <= 100; i += 2) {
-      result += currentTerm / i;
-      currentTerm *= termSquared;
-    }
-    return 2 * result;
   }
 }
 

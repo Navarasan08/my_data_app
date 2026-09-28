@@ -115,7 +115,6 @@ class LoanCubit extends Cubit<LoanState> {
       final target = elapsed.clamp(0, loan.tenureMonths);
 
       final rebuiltEmis = <Repayment>[];
-      double balance = loan.principalAmount;
 
       for (int m = 1; m <= target; m++) {
         final paidDate = DateTime(
@@ -139,7 +138,6 @@ class LoanCubit extends Cubit<LoanState> {
           loan.interestRate,
           loan.emiAmount,
         );
-        balance = effectiveBalance - split.principal;
         rebuiltEmis.add(
           Repayment(
             id: '${loan.id}_auto_${DateTime.now().millisecondsSinceEpoch}_$m',
@@ -152,9 +150,6 @@ class LoanCubit extends Cubit<LoanState> {
           ),
         );
       }
-
-      // Unused local suppression; keep for clarity of intent
-      balance = balance;
 
       toSave = loan.copyWith(repayments: [...rebuiltEmis, ...partPayments]);
     }
@@ -173,7 +168,9 @@ class LoanCubit extends Cubit<LoanState> {
 
   void addRepayment(String loanId, Repayment repayment) {
     final loan = state.loans.firstWhere((l) => l.id == loanId);
-    // Auto-calculate principal/interest split if not provided
+    // Fill in whichever side of the principal/interest split is missing —
+    // outstandingBalance only shrinks through principalPortion, so a
+    // repayment must never be stored with both halves null.
     Repayment finalRepayment = repayment;
     if (repayment.principalPortion == null &&
         repayment.interestPortion == null) {
@@ -182,6 +179,16 @@ class LoanCubit extends Cubit<LoanState> {
       finalRepayment = repayment.copyWith(
         principalPortion: split.principal,
         interestPortion: split.interest,
+      );
+    } else if (repayment.principalPortion == null) {
+      finalRepayment = repayment.copyWith(
+        principalPortion: (repayment.amount - repayment.interestPortion!)
+            .clamp(0.0, repayment.amount),
+      );
+    } else if (repayment.interestPortion == null) {
+      finalRepayment = repayment.copyWith(
+        interestPortion: (repayment.amount - repayment.principalPortion!)
+            .clamp(0.0, repayment.amount),
       );
     }
     final updated = loan.copyWith(
@@ -287,8 +294,10 @@ class LoanCubit extends Cubit<LoanState> {
       .where((l) => !l.isClosed)
       .fold(0.0, (sum, l) => sum + l.outstandingBalance);
 
+  /// Sum of EMIs still being paid: open borrowed loans with EMIs left. A
+  /// fully-paid loan that just hasn't been closed doesn't owe a monthly EMI.
   double get totalMonthlyEmi => activeLoans
-      .where((l) => l.direction == LoanDirection.borrowed)
+      .where((l) => l.direction == LoanDirection.borrowed && l.remainingEmis > 0)
       .fold(0.0, (sum, l) => sum + l.emiAmount);
 
   double get totalInterestPaidAll => state.loans

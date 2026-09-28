@@ -33,38 +33,45 @@ class AppHeader extends StatelessWidget {
     final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
 
     final hour = DateTime.now().hour;
-    final greeting = hour < 12
-        ? 'Good Morning'
+    final (greeting, greetingIcon) = hour < 12
+        ? ('Good Morning', Icons.wb_sunny_rounded)
         : hour < 17
-        ? 'Good Afternoon'
-        : 'Good Evening';
+        ? ('Good Afternoon', Icons.wb_twilight_rounded)
+        : ('Good Evening', Icons.nightlight_round);
 
     final hasOtherAccounts = context.read<AuthCubit>().otherAccounts.isNotEmpty;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 22),
       clipBehavior: Clip.antiAlias,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: AppTheme.brandGradient,
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(28),
-          bottomRight: Radius.circular(28),
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(32),
+          bottomRight: Radius.circular(32),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.brandAccent.withValues(alpha: 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Stack(
         children: [
-          // Decorative blobs — same pattern as the auth headers, gives the
-          // gradient some surface texture.
+          // Decorative texture: one soft blob and one thin ring, echoing the
+          // auth screens without competing with the text.
           Positioned(
-            top: -50,
-            right: -40,
+            top: -70,
+            right: -50,
             child: Container(
-              width: 160,
-              height: 160,
+              width: 190,
+              height: 190,
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
@@ -72,75 +79,110 @@ class AppHeader extends StatelessWidget {
             ),
           ),
           Positioned(
-            bottom: -30,
-            left: -20,
+            bottom: -46,
+            left: -28,
             child: Container(
-              width: 90,
-              height: 90,
+              width: 120,
+              height: 120,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  width: 14,
+                ),
               ),
             ),
           ),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              HeaderIconButton(
-                icon: Icons.menu_rounded,
-                tooltip: 'Menu',
-                onPressed: () => openShellDrawer(context),
-              ),
-              const SizedBox(width: 10),
-              _HeaderAvatar(
-                initial: userInitial,
-                hasOtherAccounts: hasOtherAccounts,
-                onTap: () => openShellDrawer(context),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      greeting,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontWeight: FontWeight.w400,
-                        letterSpacing: 0.3,
+              // Top bar: menu · date chip · actions · avatar.
+              Row(
+                children: [
+                  HeaderIconButton(
+                    icon: Icons.menu_rounded,
+                    tooltip: 'Menu',
+                    onPressed: () => openShellDrawer(context),
+                  ),
+                  if (showDate) ...[
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.16),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.calendar_today_rounded,
+                            size: 12,
+                            color: Colors.white.withValues(alpha: 0.9),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            DateFormat('EEE, MMM d').format(DateTime.now()),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      userName,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (showDate) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        DateFormat('EEEE, MMM d').format(DateTime.now()),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.65),
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.2,
-                        ),
-                      ),
-                    ],
                   ],
-                ),
+                  const Spacer(),
+                  for (final action in actions) ...[
+                    action,
+                    const SizedBox(width: 8),
+                  ],
+                  _HeaderAvatar(
+                    initial: userInitial,
+                    hasOtherAccounts: hasOtherAccounts,
+                    onTap: () => openShellDrawer(context),
+                  ),
+                ],
               ),
-              for (var i = 0; i < actions.length; i++) ...[
-                if (i > 0) const SizedBox(width: 8),
-                actions[i],
-              ],
+              const SizedBox(height: 18),
+              // Greeting block.
+              Row(
+                children: [
+                  Icon(
+                    greetingIcon,
+                    size: 15,
+                    color: Colors.white.withValues(alpha: 0.85),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$greeting,',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.85),
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              Text(
+                userName,
+                style: const TextStyle(
+                  fontSize: 26,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.5,
+                  height: 1.1,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ],
@@ -202,8 +244,8 @@ class _HeaderAvatar extends StatelessWidget {
         clipBehavior: Clip.none,
         children: [
           Container(
-            width: 52,
-            height: 52,
+            width: 44,
+            height: 44,
             padding: const EdgeInsets.all(2),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
@@ -222,7 +264,7 @@ class _HeaderAvatar extends StatelessWidget {
                 initial,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
