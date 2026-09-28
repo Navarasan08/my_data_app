@@ -30,6 +30,7 @@ import 'package:my_data_app/src/medical/cubit/medical_cubit.dart';
 import 'package:my_data_app/src/medical/medical_page.dart';
 import 'package:my_data_app/src/money_owe/cubit/money_owe_cubit.dart';
 import 'package:my_data_app/src/money_owe/money_owe_page.dart';
+import 'package:my_data_app/src/monthly_stats/monthly_stats_page.dart';
 import 'package:my_data_app/src/notifications/cubit/notification_cubit.dart';
 import 'package:my_data_app/src/notifications/model/app_notification.dart';
 import 'package:my_data_app/src/notifications/notifications_page.dart';
@@ -94,6 +95,25 @@ Widget? buildFeaturePage(BuildContext context, String id) {
       BlocProvider.value(value: context.read<C>(), child: page);
 
   switch (id) {
+    case 'monthly_stats':
+      // The stats page tallies every finance module, and its rows push those
+      // modules' pages, so all of their cubits (plus the expense tracker's
+      // EventCubit) must be reachable from the pushed route's context.
+      return MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: context.read<HomeRecordCubit>()),
+          BlocProvider.value(value: context.read<EventCubit>()),
+          BlocProvider.value(value: context.read<BillCubit>()),
+          BlocProvider.value(value: context.read<LoanCubit>()),
+          BlocProvider.value(value: context.read<MoneyOweCubit>()),
+          BlocProvider.value(value: context.read<VehicleCubit>()),
+          BlocProvider.value(value: context.read<ChitCubit>()),
+          BlocProvider.value(value: context.read<InterestCubit>()),
+          // For the show/hide-items setting on the stats page.
+          BlocProvider.value(value: context.read<DashboardSettingsCubit>()),
+        ],
+        child: const MonthlyStatsPage(),
+      );
     case 'bills':
       return withCubit<BillCubit>(const BillsPage());
     case 'vehicles':

@@ -96,4 +96,34 @@ class ChecklistCubit extends Cubit<ChecklistState> {
     final matches = state.checklists.where((c) => c.id == groupId);
     return matches.isNotEmpty ? matches.first : null;
   }
+
+  // ── Tab buckets ─────────────────────────────────────────────────────────
+  // Completed: every item ticked. In progress: started (something ticked)
+  // or already due. Upcoming: untouched and not due yet. Each list falls in
+  // exactly one bucket.
+
+  /// Most urgent first.
+  List<ChecklistGroup> get inProgress =>
+      state.checklists
+          .where(
+            (c) =>
+                !c.isAllCompleted && (c.completedItems > 0 || c.daysLeft <= 0),
+          )
+          .toList()
+        ..sort((a, b) => a.daysLeft.compareTo(b.daysLeft));
+
+  /// Soonest due first.
+  List<ChecklistGroup> get upcoming =>
+      state.checklists
+          .where(
+            (c) =>
+                !c.isAllCompleted && c.completedItems == 0 && c.daysLeft > 0,
+          )
+          .toList()
+        ..sort((a, b) => a.targetDate.compareTo(b.targetDate));
+
+  /// Most recently due first.
+  List<ChecklistGroup> get completed =>
+      state.checklists.where((c) => c.isAllCompleted).toList()
+        ..sort((a, b) => b.targetDate.compareTo(a.targetDate));
 }

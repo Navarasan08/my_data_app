@@ -12,7 +12,7 @@ import 'package:my_data_app/src/shell/app_drawer.dart';
 import 'package:my_data_app/src/shell/feature_pages.dart';
 
 /// Top-level shell: a left drawer (profile, settings) and four bottom tabs —
-/// Quick Notes, a user-chosen module (Expense Tracker by default), the
+/// Quick Notes, a user-chosen module (Monthly Stats by default), the
 /// Dashboard, and Groups. Alerts live behind the bell on the Dashboard
 /// header. Which tab opens first is a setting.
 class MainShell extends StatefulWidget {

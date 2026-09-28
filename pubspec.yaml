@@ -34,6 +34,7 @@ dependencies:
   flutter_email_sender: ^7.0.0
   flutter_animate: ^4.5.0
   package_info_plus: ^8.0.0
+  google_fonts: ^8.2.1
 
 dev_dependencies:
   fake_cloud_firestore: ^4.3.0

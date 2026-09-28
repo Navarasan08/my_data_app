@@ -1,181 +1,93 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:my_data_app/src/checklist/model/checklist_model.dart';
+import 'package:my_data_app/src/checklist/checklist_detail_page.dart';
+import 'package:my_data_app/src/checklist/checklist_form_page.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_cubit.dart';
 import 'package:my_data_app/src/checklist/cubit/checklist_state.dart';
+import 'package:my_data_app/src/checklist/model/checklist_model.dart';
 
-// ─── Checklist List Page ─────────────────────────────────────────────────────
+// The module used to be one file; keep its public pages importable from here.
+export 'package:my_data_app/src/checklist/checklist_detail_page.dart';
+export 'package:my_data_app/src/checklist/checklist_form_page.dart';
 
+/// All checklists in three buckets — In Progress, Upcoming, Completed — with
+/// an overall progress hero on top. Everything about one list (items,
+/// editing, deleting) lives in [ChecklistDetailPage].
 class ChecklistListPage extends StatelessWidget {
-  const ChecklistListPage({Key? key}) : super(key: key);
+  const ChecklistListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<ChecklistCubit, ChecklistState>(
       builder: (context, state) {
         final cubit = context.read<ChecklistCubit>();
-        final checklists = state.checklists;
-        final completedCount = checklists.where((c) => c.isAllCompleted).length;
-        final inProgressCount = checklists.length - completedCount;
+        final inProgress = cubit.inProgress;
+        final upcoming = cubit.upcoming;
+        final completed = cubit.completed;
 
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Checklists'),
-            centerTitle: true,
-            elevation: 0,
-          ),
-          body: Column(
-            children: [
-              // Summary bar
-              Container(
-                padding: const EdgeInsets.all(16),
-                color: cs.surface,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Total',
-                        count: checklists.length,
-                        color: Colors.blue,
-                        icon: Icons.checklist_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'In Progress',
-                        count: inProgressCount,
-                        color: Colors.orange,
-                        icon: Icons.pending_actions_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SummaryCard(
-                        title: 'Done',
-                        count: completedCount,
-                        color: Colors.green,
-                        icon: Icons.task_alt_rounded,
-                      ),
-                    ),
-                  ],
+        return DefaultTabController(
+          length: 3,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('Checklists'),
+              centerTitle: true,
+              elevation: 0,
+            ),
+            body: Column(
+              children: [
+                _OverallProgressCard(checklists: state.checklists),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                  child: _PillTabBar(
+                    tabs: [
+                      ('In Progress', inProgress.length),
+                      ('Upcoming', upcoming.length),
+                      ('Completed', completed.length),
+                    ],
+                  ),
                 ),
-              ),
-
-              // List
-              Expanded(
-                child: checklists.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.checklist_rounded,
-                              size: 64,
-                              color: cs.outline,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'No checklists yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Tap + to create your first checklist',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: checklists.length,
-                        itemBuilder: (context, index) {
-                          final group = checklists[index];
-                          return _ChecklistGroupCard(
-                            group: group,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => BlocProvider.value(
-                                    value: cubit,
-                                    child: ChecklistDetailPage(
-                                      groupId: group.id,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                            onEdit: () async {
-                              final edited =
-                                  await Navigator.push<ChecklistGroup>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          AddChecklistGroupPage(group: group),
-                                    ),
-                                  );
-                              if (edited != null) {
-                                cubit.updateChecklist(edited);
-                              }
-                            },
-                            onDelete: () async {
-                              final confirmed = await showDialog<bool>(
-                                context: context,
-                                builder: (ctx) => AlertDialog(
-                                  title: const Text('Delete Checklist'),
-                                  content: Text(
-                                    'Are you sure you want to delete "${group.name}"? All items will also be deleted.',
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(ctx, false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(ctx, true),
-                                      style: TextButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                      ),
-                                      child: const Text('Delete'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirmed == true) {
-                                cubit.deleteChecklist(group.id);
-                              }
-                            },
-                          );
-                        },
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      _ChecklistTab(
+                        checklists: inProgress,
+                        emptyIcon: Icons.rocket_launch_rounded,
+                        emptyText: 'Nothing in progress',
+                        emptyHint: 'Lists you\'ve started or that are due '
+                            'show up here',
                       ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () async {
-              final newGroup = await Navigator.push<ChecklistGroup>(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const AddChecklistGroupPage(),
+                      _ChecklistTab(
+                        checklists: upcoming,
+                        emptyIcon: Icons.event_note_rounded,
+                        emptyText: 'Nothing coming up',
+                        emptyHint: 'Fresh lists with a future target date '
+                            'wait here',
+                      ),
+                      _ChecklistTab(
+                        checklists: completed,
+                        emptyIcon: Icons.emoji_events_rounded,
+                        emptyText: 'Nothing finished yet',
+                        emptyHint: 'Fully ticked-off lists land here',
+                      ),
+                    ],
+                  ),
                 ),
-              );
-              if (newGroup != null) {
-                cubit.addChecklist(newGroup);
-              }
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('New Checklist'),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton.extended(
+              onPressed: () async {
+                final newGroup = await Navigator.push<ChecklistGroup>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AddChecklistGroupPage(),
+                  ),
+                );
+                if (newGroup != null) cubit.addChecklist(newGroup);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('New Checklist'),
+            ),
           ),
         );
       },
@@ -183,102 +95,266 @@ class ChecklistListPage extends StatelessWidget {
   }
 }
 
-// ─── Summary Card ────────────────────────────────────────────────────────────
-
-class _SummaryCard extends StatelessWidget {
-  final String title;
-  final int count;
-  final Color color;
-  final IconData icon;
-
-  const _SummaryCard({
-    required this.title,
-    required this.count,
-    required this.color,
-    required this.icon,
-  });
+/// Gradient hero: how much of everything is done, plus item totals.
+class _OverallProgressCard extends StatelessWidget {
+  final List<ChecklistGroup> checklists;
+  const _OverallProgressCard({required this.checklists});
 
   @override
   Widget build(BuildContext context) {
+    final totalItems = checklists.fold(0, (s, c) => s + c.totalItems);
+    final doneItems = checklists.fold(0, (s, c) => s + c.completedItems);
+    final progress = totalItems == 0 ? 0.0 : doneItems / totalItems;
+    final dueSoon = checklists
+        .where((c) => !c.isAllCompleted && c.daysLeft >= 0 && c.daysLeft <= 7)
+        .length;
+    final overdue = checklists
+        .where((c) => !c.isAllCompleted && c.daysLeft < 0)
+        .length;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        gradient: LinearGradient(
+          colors: [Colors.teal.shade600, Colors.green.shade700],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, color: color, size: 22),
-          const SizedBox(height: 6),
-          Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
+          SizedBox(
+            width: 62,
+            height: 62,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CircularProgressIndicator(
+                  value: progress,
+                  strokeWidth: 6,
+                  backgroundColor: Colors.white24,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Colors.white,
+                  ),
+                ),
+                Center(
+                  child: Text(
+                    '${(progress * 100).round()}%',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(title, style: TextStyle(fontSize: 11, color: color)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$doneItems of $totalItems tasks done',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  overdue > 0
+                      ? '$overdue overdue · $dueSoon due this week'
+                      : dueSoon > 0
+                      ? '$dueSoon due this week'
+                      : 'All on track',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ─── Checklist Group Card ────────────────────────────────────────────────────
+/// Segmented pill tab bar with per-tab counts.
+class _PillTabBar extends StatelessWidget {
+  final List<(String, int)> tabs;
+  const _PillTabBar({required this.tabs});
 
-class _ChecklistGroupCard extends StatelessWidget {
-  final ChecklistGroup group;
-  final VoidCallback onTap;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: TabBar(
+        labelColor: cs.primary,
+        unselectedLabelColor: cs.onSurfaceVariant,
+        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        indicator: BoxDecoration(
+          color: cs.surface,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        tabs: [
+          for (final (label, count) in tabs)
+            Tab(height: 42, text: '$label ($count)'),
+        ],
+      ),
+    );
+  }
+}
 
-  const _ChecklistGroupCard({
-    required this.group,
-    required this.onTap,
-    required this.onEdit,
-    required this.onDelete,
+class _ChecklistTab extends StatelessWidget {
+  final List<ChecklistGroup> checklists;
+  final IconData emptyIcon;
+  final String emptyText;
+  final String emptyHint;
+
+  const _ChecklistTab({
+    required this.checklists,
+    required this.emptyIcon,
+    required this.emptyText,
+    required this.emptyHint,
   });
 
-  Color _statusColor() {
-    if (group.isAllCompleted) return Colors.green;
-    if (group.daysLeft < 0) return Colors.red;
-    if (group.daysLeft <= 7) return Colors.orange;
-    return Colors.teal;
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    if (checklists.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(emptyIcon, size: 56, color: cs.outlineVariant),
+              const SizedBox(height: 14),
+              Text(
+                emptyText,
+                style: TextStyle(fontSize: 16, color: cs.onSurfaceVariant),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                emptyHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: cs.outline),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 88),
+      itemCount: checklists.length,
+      itemBuilder: (context, i) => _ChecklistCard(group: checklists[i]),
+    );
   }
+}
 
-  String _progressText() {
-    final itemsText = '${group.completedItems}/${group.totalItems} items';
-    if (group.isAllCompleted) return '$itemsText  ·  Completed';
-    if (group.daysLeft < 0)
-      return '$itemsText  ·  ${-group.daysLeft} days overdue';
-    if (group.daysLeft == 0) return '$itemsText  ·  Due today';
-    if (group.daysLeft == 1) return '$itemsText  ·  1 day left';
-    return '$itemsText  ·  ${group.daysLeft} days left';
+class _ChecklistCard extends StatelessWidget {
+  final ChecklistGroup group;
+  const _ChecklistCard({required this.group});
+
+  (Color, String) _dueChip() {
+    if (group.isAllCompleted) return (Colors.green, 'Done');
+    final d = group.daysLeft;
+    if (d < 0) return (Colors.red, '${-d}d overdue');
+    if (d == 0) return (Colors.red, 'Due today');
+    if (d == 1) return (Colors.orange, 'Tomorrow');
+    if (d <= 7) return (Colors.orange, '$d days left');
+    return (Colors.blueGrey, DateFormat('d MMM').format(group.targetDate));
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final statusColor = _statusColor();
+    final cubit = context.read<ChecklistCubit>();
+    final (chipColor, chipText) = _dueChip();
+    final ringColor = group.isAllCompleted
+        ? Colors.green
+        : group.daysLeft < 0
+        ? Colors.red
+        : Colors.teal;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: statusColor.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(10),
-        border: Border(left: BorderSide(color: statusColor, width: 3)),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: cubit,
+              child: ChecklistDetailPage(groupId: group.id),
+            ),
+          ),
+        ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
           child: Row(
             children: [
-              Icon(Icons.checklist_rounded, size: 20, color: statusColor),
-              const SizedBox(width: 10),
+              SizedBox(
+                width: 46,
+                height: 46,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: group.progress,
+                      strokeWidth: 4.5,
+                      backgroundColor: cs.surfaceContainerHighest,
+                      valueColor: AlwaysStoppedAnimation<Color>(ringColor),
+                    ),
+                    Center(
+                      child: group.isAllCompleted
+                          ? Icon(
+                              Icons.check_rounded,
+                              size: 20,
+                              color: ringColor,
+                            )
+                          : Text(
+                              '${(group.progress * 100).round()}%',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: ringColor,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,569 +364,110 @@ class _ChecklistGroupCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
-                      _progressText(),
+                      '${group.completedItems}/${group.totalItems} tasks'
+                      '${(group.description?.isNotEmpty ?? false) ? ' · ${group.description}' : ''}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: cs.onSurfaceVariant,
                       ),
                     ),
-                    if (group.totalItems > 0) ...[
-                      const SizedBox(height: 4),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(2),
-                        child: LinearProgressIndicator(
-                          value: group.progress,
-                          minHeight: 3,
-                          backgroundColor: cs.surfaceContainerHighest,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            statusColor,
-                          ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: chipColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        chipText,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: chipColor,
                         ),
                       ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: onDelete,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 16,
-                    color: Colors.red[300],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Checklist Detail Page ───────────────────────────────────────────────────
-
-class ChecklistDetailPage extends StatelessWidget {
-  final String groupId;
-
-  const ChecklistDetailPage({Key? key, required this.groupId})
-    : super(key: key);
-
-  Color _daysLeftColor(ChecklistGroup group) {
-    if (group.isAllCompleted) return Colors.green;
-    if (group.daysLeft < 0) return Colors.red;
-    if (group.daysLeft <= 3) return Colors.orange;
-    return Colors.blue;
-  }
-
-  String _daysLeftText(ChecklistGroup group) {
-    if (group.isAllCompleted) return 'Completed';
-    if (group.daysLeft < 0) return '${-group.daysLeft} days overdue';
-    if (group.daysLeft == 0) return 'Due today';
-    if (group.daysLeft == 1) return '1 day left';
-    return '${group.daysLeft} days left';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return BlocBuilder<ChecklistCubit, ChecklistState>(
-      builder: (context, state) {
-        final cubit = context.read<ChecklistCubit>();
-        final group = cubit.getChecklistById(groupId);
-
-        if (group == null) {
-          return Scaffold(
-            appBar: AppBar(),
-            body: const Center(child: Text('Checklist not found')),
-          );
-        }
-
-        final color = _daysLeftColor(group);
-        final uncompleted = group.items.where((i) => !i.isCompleted).toList();
-        final completed = group.items.where((i) => i.isCompleted).toList();
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(group.name),
-            centerTitle: true,
-            elevation: 0,
-          ),
-          body: Column(
-            children: [
-              // Header card
-              Container(
-                width: double.infinity,
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      color.withValues(alpha: 0.15),
-                      color.withValues(alpha: 0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: color.withValues(alpha: 0.2)),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _daysLeftText(group),
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Target: ${DateFormat('MMM d, yyyy').format(group.targetDate)}',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: color.withValues(alpha: 0.15),
-                          ),
-                          child: Center(
-                            child: Text(
-                              '${(group.progress * 100).toInt()}%',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: LinearProgressIndicator(
-                        value: group.progress,
-                        minHeight: 8,
-                        backgroundColor: cs.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${group.completedItems} of ${group.totalItems} completed',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: cs.onSurface,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
               ),
-
-              if (group.description != null && group.description!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      group.description!,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: cs.onSurfaceVariant,
-                      ),
+              PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert_rounded,
+                  size: 20,
+                  color: cs.onSurfaceVariant,
+                ),
+                onSelected: (action) async {
+                  switch (action) {
+                    case 'edit':
+                      final edited = await Navigator.push<ChecklistGroup>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AddChecklistGroupPage(group: group),
+                        ),
+                      );
+                      if (edited != null) cubit.updateChecklist(edited);
+                    case 'delete':
+                      if (!context.mounted) return;
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Delete Checklist'),
+                          content: Text(
+                            'Delete "${group.name}" and all its items?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirmed == true) cubit.deleteChecklist(group.id);
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: ListTile(
+                      leading: Icon(Icons.edit_outlined),
+                      title: Text('Edit'),
+                      contentPadding: EdgeInsets.zero,
                     ),
                   ),
-                ),
-
-              // Items list
-              Expanded(
-                child: group.items.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_task_rounded,
-                              size: 48,
-                              color: cs.outline,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'No items yet',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Tap + to add items',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        children: [
-                          // Pending items
-                          if (uncompleted.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8, top: 4),
-                              child: Text(
-                                'To Do (${uncompleted.length})',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.onSurfaceVariant,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                            ...uncompleted.map(
-                              (item) => _ChecklistItemTile(
-                                item: item,
-                                onToggle: () =>
-                                    cubit.toggleItem(groupId, item.id),
-                                onDelete: () => _confirmDeleteItem(
-                                  context,
-                                  cubit,
-                                  groupId,
-                                  item,
-                                ),
-                              ),
-                            ),
-                          ],
-
-                          // Completed items
-                          if (completed.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: 8,
-                                top: 16,
-                              ),
-                              child: Text(
-                                'Completed (${completed.length})',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: cs.onSurfaceVariant,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ),
-                            ...completed.map(
-                              (item) => _ChecklistItemTile(
-                                item: item,
-                                onToggle: () =>
-                                    cubit.toggleItem(groupId, item.id),
-                                onDelete: () => _confirmDeleteItem(
-                                  context,
-                                  cubit,
-                                  groupId,
-                                  item,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: ListTile(
+                      leading: Icon(Icons.delete_outline, color: Colors.red),
+                      title: Text(
+                        'Delete',
+                        style: TextStyle(color: Colors.red),
                       ),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () async {
-              final title = await _showAddItemDialog(context);
-              if (title != null && title.isNotEmpty) {
-                cubit.addItem(
-                  groupId,
-                  ChecklistItem(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    title: title,
-                  ),
-                );
-              }
-            },
-            child: const Icon(Icons.add),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _confirmDeleteItem(
-    BuildContext context,
-    ChecklistCubit cubit,
-    String groupId,
-    ChecklistItem item,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: Text('Delete "${item.title}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      cubit.deleteItem(groupId, item.id);
-    }
-  }
-
-  Future<String?> _showAddItemDialog(BuildContext context) {
-    final controller = TextEditingController();
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Item'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'Item title',
-            border: OutlineInputBorder(),
-          ),
-          onSubmitted: (value) => Navigator.pop(ctx, value),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Checklist Item Tile ─────────────────────────────────────────────────────
-
-class _ChecklistItemTile extends StatelessWidget {
-  final ChecklistItem item;
-  final VoidCallback onToggle;
-  final VoidCallback onDelete;
-
-  const _ChecklistItemTile({
-    required this.item,
-    required this.onToggle,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      elevation: item.isCompleted ? 0 : 1,
-      color: item.isCompleted ? cs.surfaceContainerLow : cs.surface,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        leading: Checkbox(
-          value: item.isCompleted,
-          onChanged: (_) => onToggle(),
-          activeColor: Colors.green,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-        ),
-        title: Text(
-          item.title,
-          style: TextStyle(
-            fontSize: 15,
-            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
-            color: item.isCompleted ? cs.onSurfaceVariant : cs.onSurface,
-          ),
-        ),
-        subtitle: item.isCompleted && item.completedDate != null
-            ? Text(
-                'Done ${DateFormat('MMM d, yyyy').format(item.completedDate!)}',
-                style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-              )
-            : null,
-        trailing: IconButton(
-          icon: Icon(Icons.close_rounded, size: 18, color: cs.onSurfaceVariant),
-          onPressed: onDelete,
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Add / Edit Checklist Group Page ─────────────────────────────────────────
-
-class AddChecklistGroupPage extends StatefulWidget {
-  final ChecklistGroup? group;
-  const AddChecklistGroupPage({Key? key, this.group}) : super(key: key);
-
-  @override
-  State<AddChecklistGroupPage> createState() => _AddChecklistGroupPageState();
-}
-
-class _AddChecklistGroupPageState extends State<AddChecklistGroupPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  DateTime _targetDate = DateTime.now().add(const Duration(days: 7));
-
-  bool get _isEditing => widget.group != null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.group != null) {
-      _nameController.text = widget.group!.name;
-      _descriptionController.text = widget.group!.description ?? '';
-      _targetDate = widget.group!.targetDate;
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      final group = ChecklistGroup(
-        id:
-            widget.group?.id ??
-            DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text,
-        description: _descriptionController.text.isEmpty
-            ? null
-            : _descriptionController.text,
-        targetDate: _targetDate,
-        createdDate: widget.group?.createdDate ?? DateTime.now(),
-        items: widget.group?.items ?? [],
-      );
-      Navigator.pop(context, group);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Checklist' : 'New Checklist'),
-        centerTitle: true,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.checklist_rounded),
-              ),
-              validator: (value) =>
-                  value == null || value.isEmpty ? 'Please enter a name' : null,
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _descriptionController,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes_rounded),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: BorderSide(color: cs.outline),
-              ),
-              leading: const Icon(Icons.calendar_today_rounded),
-              title: const Text('Target Date'),
-              subtitle: Text(
-                DateFormat('EEEE, MMM d, yyyy').format(_targetDate),
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _targetDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2035),
-                );
-                if (date != null) {
-                  setState(() => _targetDate = date);
-                }
-              },
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: _save,
-              icon: Icon(_isEditing ? Icons.save_rounded : Icons.add_rounded),
-              label: Text(_isEditing ? 'Update Checklist' : 'Create Checklist'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-          ],
         ),
       ),
     );

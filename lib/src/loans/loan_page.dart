@@ -1,23 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:my_data_app/src/loans/model/loan_model.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
 import 'package:my_data_app/src/loans/cubit/loan_state.dart';
 import 'package:my_data_app/src/loans/loan_analysis_page.dart';
+import 'package:my_data_app/src/loans/loan_detail_page.dart';
+import 'package:my_data_app/src/loans/loan_form_page.dart';
+import 'package:my_data_app/src/loans/model/loan_model.dart';
+
+// The module used to be one file; keep its public pages importable from here.
+export 'package:my_data_app/src/loans/loan_detail_page.dart';
+export 'package:my_data_app/src/loans/loan_form_page.dart';
 
 String _fmt(double v) => NumberFormat('#,##,###', 'en_IN').format(v.round());
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. LoanListPage
-// ─────────────────────────────────────────────────────────────────────────────
-
+/// All loans: a summary header, Borrowed/Lent tabs, and a card per loan
+/// with progress and outstanding amount. Tapping a card opens
+/// [LoanDetailPage]; everything else (edit, payments, delete) lives there.
 class LoanListPage extends StatelessWidget {
-  const LoanListPage({Key? key}) : super(key: key);
+  const LoanListPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return BlocBuilder<LoanCubit, LoanState>(
       builder: (context, state) {
         final cubit = context.read<LoanCubit>();
@@ -46,52 +50,16 @@ class LoanListPage extends StatelessWidget {
                   ),
                 ),
               ],
-              bottom: const TabBar(
+              bottom: TabBar(
                 tabs: [
-                  Tab(text: 'Borrowed'),
-                  Tab(text: 'Lent'),
+                  Tab(text: 'Borrowed (${borrowed.length})'),
+                  Tab(text: 'Lent (${lent.length})'),
                 ],
               ),
             ),
             body: Column(
               children: [
-                // Summary bar
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  color: cs.surface,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _SummaryTile(
-                          label: 'Outstanding',
-                          value: '₹${_fmt(cubit.totalBorrowed)}',
-                          color: Colors.red,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _SummaryTile(
-                          label: 'Monthly EMI',
-                          value: '₹${_fmt(cubit.totalMonthlyEmi)}',
-                          color: Colors.orange,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _SummaryTile(
-                          label: 'Lent Out',
-                          value: '₹${_fmt(cubit.totalLent)}',
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                // Tab views
+                _SummaryHeader(cubit: cubit),
                 Expanded(
                   child: TabBarView(
                     children: [
@@ -106,11 +74,9 @@ class LoanListPage extends StatelessWidget {
               onPressed: () async {
                 final loan = await Navigator.push<Loan>(
                   context,
-                  MaterialPageRoute(builder: (context) => const AddLoanPage()),
+                  MaterialPageRoute(builder: (_) => const AddLoanPage()),
                 );
-                if (loan != null) {
-                  cubit.addLoan(loan);
-                }
+                if (loan != null) cubit.addLoan(loan);
               },
               icon: const Icon(Icons.add),
               label: const Text('Add Loan'),
@@ -122,50 +88,105 @@ class LoanListPage extends StatelessWidget {
   }
 }
 
-class _SummaryTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _SummaryTile({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+/// The gradient strip on top: outstanding debt, the month's EMI load and
+/// how much is lent out.
+class _SummaryHeader extends StatelessWidget {
+  final LoanCubit cubit;
+  const _SummaryHeader({required this.cubit});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        gradient: LinearGradient(
+          colors: [Colors.indigo.shade600, Colors.blueGrey.shade800],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(18),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: color.withValues(alpha: 0.8),
+          Expanded(
+            child: _HeaderStat(
+              label: 'Outstanding',
+              value: '₹${_fmt(cubit.totalBorrowed)}',
+              icon: Icons.trending_down_rounded,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: color,
+          _divider(),
+          Expanded(
+            child: _HeaderStat(
+              label: 'Monthly EMI',
+              value: '₹${_fmt(cubit.totalMonthlyEmi)}',
+              icon: Icons.calendar_month_rounded,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          ),
+          _divider(),
+          Expanded(
+            child: _HeaderStat(
+              label: 'Lent Out',
+              value: '₹${_fmt(cubit.totalLent)}',
+              icon: Icons.trending_up_rounded,
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _divider() => Container(
+    width: 1,
+    height: 36,
+    margin: const EdgeInsets.symmetric(horizontal: 12),
+    color: Colors.white24,
+  );
+}
+
+class _HeaderStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+
+  const _HeaderStat({
+    required this.label,
+    required this.value,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 13, color: Colors.white70),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
@@ -185,7 +206,7 @@ class _LoanListView extends StatelessWidget {
             Icon(
               Icons.account_balance_outlined,
               size: 64,
-              color: cs.onSurfaceVariant,
+              color: cs.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
@@ -197,13 +218,17 @@ class _LoanListView extends StatelessWidget {
       );
     }
 
+    // Open loans first, then closed; within each, biggest balance first.
+    final sorted = List<Loan>.from(loans)
+      ..sort((a, b) {
+        if (a.isClosed != b.isClosed) return a.isClosed ? 1 : -1;
+        return b.outstandingBalance.compareTo(a.outstandingBalance);
+      });
+
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: loans.length,
-      itemBuilder: (context, index) {
-        final loan = loans[index];
-        return _LoanCard(loan: loan);
-      },
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 88),
+      itemCount: sorted.length,
+      itemBuilder: (context, index) => _LoanCard(loan: sorted[index]),
     );
   }
 }
@@ -216,1829 +241,156 @@ class _LoanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final cubit = context.read<LoanCubit>();
-    final typeColor = loan.type.color;
+    final color = loan.type.color;
     final overdue = loan.overdueEmis;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cs.outlineVariant),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => BlocProvider.value(
-                value: cubit,
-                child: LoanDetailPage(loanId: loan.id),
-              ),
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => BlocProvider.value(
+              value: cubit,
+              child: LoanDetailPage(loanId: loan.id),
             ),
-          );
-        },
+          ),
+        ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
-          child: Row(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon circle
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: typeColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(loan.type.icon, size: 22, color: typeColor),
-              ),
-              const SizedBox(width: 10),
-              // Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      loan.name,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 2),
-                    if (loan.lenderOrBorrower != null &&
-                        loan.lenderOrBorrower!.isNotEmpty)
-                      Text(
-                        loan.direction == LoanDirection.borrowed
-                            ? 'From: ${loan.lenderOrBorrower}'
-                            : 'To: ${loan.lenderOrBorrower}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    const SizedBox(height: 2),
-                    Text(
-                      loan.type.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
+                    child: Icon(loan.type.icon, size: 22, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: loan.progressPercent,
-                              minHeight: 4,
-                              backgroundColor: cs.surfaceContainerHighest,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                typeColor,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 6),
                         Text(
-                          '${loan.paidEmiCount}/${loan.tenureMonths}',
-                          style: TextStyle(
-                            fontSize: 11,
+                          loan.name,
+                          style: const TextStyle(
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
-                            color: typeColor,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          [
+                            loan.type.label,
+                            if (loan.lenderOrBorrower?.isNotEmpty ?? false)
+                              loan.lenderOrBorrower!,
+                          ].join(' · '),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: cs.onSurfaceVariant,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Right column
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'EMI: ₹${_fmt(loan.emiAmount)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: cs.onSurfaceVariant,
-                    ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '₹${_fmt(loan.outstandingBalance)}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (overdue > 0) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '₹${_fmt(loan.outstandingBalance)}',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        '$overdue overdue',
+                      const SizedBox(height: 2),
+                      Text(
+                        'EMI ₹${_fmt(loan.emiAmount)}',
                         style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red[700],
+                          fontSize: 11,
+                          color: cs.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  InkWell(
-                    onTap: () async {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete Loan'),
-                          content: Text(
-                            'Are you sure you want to delete "${loan.name}"?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.red,
-                              ),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirmed == true) {
-                        cubit.deleteLoan(loan.id);
-                      }
-                    },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.delete_outline_rounded,
-                            size: 14,
-                            color: Colors.red[400],
-                          ),
-                          const SizedBox(width: 2),
-                          Text(
-                            'Delete',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.red[400],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. LoanDetailPage
-// ─────────────────────────────────────────────────────────────────────────────
-
-class LoanDetailPage extends StatefulWidget {
-  final String loanId;
-  const LoanDetailPage({Key? key, required this.loanId}) : super(key: key);
-
-  @override
-  State<LoanDetailPage> createState() => _LoanDetailPageState();
-}
-
-class _LoanDetailPageState extends State<LoanDetailPage> {
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return BlocBuilder<LoanCubit, LoanState>(
-      builder: (context, state) {
-        final cubit = context.read<LoanCubit>();
-        final loan = cubit.getLoanById(widget.loanId);
-
-        if (loan == null) {
-          return Scaffold(
-            appBar: AppBar(title: const Text('Loan')),
-            body: const Center(child: Text('Loan not found')),
-          );
-        }
-
-        // Newest first for both lists.
-        final emiHistory = List<Repayment>.from(loan.emiRepayments)
-          ..sort((a, b) => b.paidDate.compareTo(a.paidDate));
-        final partHistory = List<Repayment>.from(loan.partPayments)
-          ..sort((a, b) => b.paidDate.compareTo(a.paidDate));
-
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(loan.name),
-            centerTitle: true,
-            elevation: 0,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.analytics_rounded),
-                tooltip: 'Analysis',
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: cubit,
-                      child: const LoanAnalysisPage(),
-                    ),
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit_outlined),
-                onPressed: () async {
-                  final updated = await Navigator.push<Loan>(
-                    context,
-                    MaterialPageRoute(builder: (_) => AddLoanPage(loan: loan)),
-                  );
-                  if (updated != null) {
-                    cubit.updateLoan(updated);
-                  }
-                },
-              ),
-              if (!loan.isClosed)
-                IconButton(
-                  icon: const Icon(Icons.check_circle_outline),
-                  tooltip: 'Close Loan',
-                  onPressed: () async {
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (ctx) => AlertDialog(
-                        title: const Text('Close Loan'),
-                        content: const Text(
-                          'Mark this loan as closed? This cannot be undone.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx, true),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirmed == true) {
-                      cubit.closeLoan(loan.id);
-                    }
-                  },
-                ),
-            ],
-          ),
-          body: ListView(
-            padding: const EdgeInsets.all(12),
-            children: [
-              // Closed banner
-              if (loan.isClosed)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.green[300]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.check_circle_rounded,
-                        color: Colors.green[700],
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Loan Closed',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Overdue alert
-              if (loan.overdueEmis > 0 && !loan.isClosed)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.red[50],
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.red[200]!),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.warning_amber_rounded,
-                        color: Colors.red[700],
-                        size: 18,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${loan.overdueEmis} EMI(s) overdue',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red[800],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              // Dashboard
-              _buildDashboard(loan),
-
-              // Lender / Borrower
-              if (loan.lenderOrBorrower != null &&
-                  loan.lenderOrBorrower!.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        size: 18,
-                        color: cs.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        loan.direction == LoanDirection.borrowed
-                            ? 'Lender: ${loan.lenderOrBorrower}'
-                            : 'Borrower: ${loan.lenderOrBorrower}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Repayment history — split into EMI history and Part Payment tabs.
-              const SizedBox(height: 16),
-              _RepaymentTabs(
-                loan: loan,
-                emiHistory: emiHistory,
-                partHistory: partHistory,
-                onDelete: (r) =>
-                    _confirmDeleteRepayment(context, cubit, loan, r),
-              ),
-            ],
-          ),
-          floatingActionButton: loan.isClosed
-              ? null
-              : FloatingActionButton.extended(
-                  onPressed: () => _showPaymentOptions(context, cubit, loan),
-                  icon: const Icon(Icons.payment_rounded),
-                  label: const Text('Record Payment'),
-                ),
-        );
-      },
-    );
-  }
-
-  Future<void> _confirmDeleteRepayment(
-    BuildContext context,
-    LoanCubit cubit,
-    Loan loan,
-    Repayment r,
-  ) async {
-    final label = r.isPartPayment ? 'Part Payment' : 'EMI #${r.monthNumber}';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          r.isPartPayment ? 'Delete Part Payment' : 'Delete Repayment',
-        ),
-        content: Text('Delete $label of ₹${_fmt(r.amount)}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      cubit.deleteRepayment(loan.id, r.id);
-    }
-  }
-
-  void _showPaymentOptions(BuildContext context, LoanCubit cubit, Loan loan) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 20, 16, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.receipt_long_rounded,
-                    color: Colors.blue,
-                    size: 22,
-                  ),
-                ),
-                title: const Text(
-                  'Record EMI Payment',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: Text(
-                  'Month ${loan.paidEmiCount + 1} · ₹${_fmt(loan.emiAmount)}',
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final repayment = await Navigator.push<Repayment>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AddRepaymentPage(
-                        loanId: loan.id,
-                        nextMonthNumber: loan.paidEmiCount + 1,
-                        emiAmount: loan.emiAmount,
-                      ),
-                    ),
-                  );
-                  if (repayment != null) {
-                    cubit.addRepayment(loan.id, repayment);
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              ListTile(
-                leading: Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.savings_rounded,
-                    color: Colors.green,
-                    size: 22,
-                  ),
-                ),
-                title: const Text(
-                  'Part Payment / Prepayment',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                subtitle: const Text(
-                  'Lump sum towards principal to reduce outstanding',
-                ),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  final repayment = await Navigator.push<Repayment>(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => AddRepaymentPage(
-                        loanId: loan.id,
-                        nextMonthNumber: 0,
-                        emiAmount: 0,
-                        isPartPayment: true,
-                      ),
-                    ),
-                  );
-                  if (repayment != null) {
-                    if (!context.mounted) return;
-                    _showStrategyDialog(context, cubit, loan, repayment);
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _showStrategyDialog(
-    BuildContext context,
-    LoanCubit cubit,
-    Loan loan,
-    Repayment repayment,
-  ) {
-    final remainingPrincipal = loan.outstandingBalance - repayment.amount;
-    final remainingEmis = loan.remainingEmis;
-    final newEmi = Loan.calculateNewEmi(
-      remainingPrincipal.clamp(0, double.infinity),
-      loan.interestRate,
-      remainingEmis > 0 ? remainingEmis : 1,
-    );
-    final newTenure = Loan.calculateNewTenure(
-      remainingPrincipal.clamp(0, double.infinity),
-      loan.interestRate,
-      loan.emiAmount,
-    );
-
-    double? interestAmount;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        double? customEmi;
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              title: const Text('Part Payment Strategy'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              const SizedBox(height: 10),
+              Row(
                 children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: loan.progressPercent,
+                        minHeight: 5,
+                        backgroundColor: cs.surfaceContainerHighest,
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
-                    'Part Payment: ₹${_fmt(repayment.amount)}',
-                    style: const TextStyle(
-                      fontSize: 14,
+                    '${loan.paidEmiCount}/${loan.tenureMonths}',
+                    style: TextStyle(
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
+                      color: color,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'New Outstanding: ₹${_fmt(remainingPrincipal.clamp(0.0, double.infinity))}',
-                    style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 40,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Interest charged on part payment (optional)',
-                        hintStyle: const TextStyle(fontSize: 12),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 8,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        prefixIcon: const Icon(Icons.currency_rupee, size: 14),
-                        prefixIconConstraints: const BoxConstraints(
-                          minWidth: 30,
-                        ),
-                      ),
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(fontSize: 13),
-                      onChanged: (v) => interestAmount = double.tryParse(v),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Option 1: Reduce Tenure
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      cubit.addPartPayment(
-                        loan.id,
-                        repayment.copyWith(
-                          interestPortion: interestAmount ?? 0,
-                        ),
-                        PartPaymentStrategy.reduceTenure,
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blue[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.timelapse_rounded,
-                                size: 18,
-                                color: Colors.blue[700],
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Reduce Tenure',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.blue[800],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Keep EMI ₹${_fmt(loan.emiAmount)}, reduce to ~$newTenure months',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.blue[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  // Option 2: Reduce EMI
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      cubit.addPartPayment(
-                        loan.id,
-                        repayment.copyWith(
-                          interestPortion: interestAmount ?? 0,
-                        ),
-                        PartPaymentStrategy.reduceEmi,
-                        newEmi: customEmi,
-                      );
-                    },
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.green[200]!),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.trending_down_rounded,
-                                size: 18,
-                                color: Colors.green[700],
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Reduce EMI',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.green[800],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Keep tenure, new EMI: ₹${_fmt(newEmi)}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 40,
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Custom EMI (optional)',
-                                hintStyle: const TextStyle(fontSize: 12),
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 8,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                prefixIcon: const Icon(
-                                  Icons.currency_rupee,
-                                  size: 14,
-                                ),
-                                prefixIconConstraints: const BoxConstraints(
-                                  minWidth: 30,
-                                ),
-                              ),
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(fontSize: 13),
-                              onChanged: (v) => customEmi = double.tryParse(v),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  if (loan.isClosed) ...[
+                    const SizedBox(width: 8),
+                    _StatusChip(text: 'Closed', color: Colors.green),
+                  ] else if (overdue > 0) ...[
+                    const SizedBox(width: 8),
+                    _StatusChip(text: '$overdue overdue', color: Colors.red),
+                  ],
                 ],
               ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildDashboard(Loan loan) {
-    return Column(
-      children: [
-        // Row 1: Principal, Interest Rate, EMI
-        Row(
-          children: [
-            Expanded(
-              child: _DashTile(
-                label: 'Principal',
-                value: '₹${_fmt(loan.principalAmount)}',
-                icon: Icons.account_balance_wallet_outlined,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Interest Rate',
-                value: '${loan.interestRate.toStringAsFixed(2)}%',
-                icon: Icons.percent_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'EMI',
-                value: '₹${_fmt(loan.emiAmount)}',
-                icon: Icons.calendar_month_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Row 2: Total Paid, Outstanding, Progress
-        Row(
-          children: [
-            Expanded(
-              child: _DashTile(
-                label: 'Total Paid',
-                value: '₹${_fmt(loan.totalRepaid)}',
-                icon: Icons.check_circle_outline,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Outstanding',
-                value: '₹${_fmt(loan.outstandingBalance)}',
-                icon: Icons.pending_outlined,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Progress',
-                value: '${loan.paidEmiCount}/${loan.tenureMonths} EMIs',
-                icon: Icons.trending_up_rounded,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Row 3: Tenure, Start Date, Next EMI Date
-        Row(
-          children: [
-            Expanded(
-              child: _DashTile(
-                label: 'Tenure',
-                value: '${loan.tenureMonths} months',
-                icon: Icons.timelapse_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Start Date',
-                value: DateFormat('dd MMM yy').format(loan.startDate),
-                icon: Icons.event_rounded,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Next EMI',
-                value: loan.isClosed
-                    ? '--'
-                    : DateFormat('dd MMM yy').format(loan.nextEmiDate),
-                icon: Icons.event_available_rounded,
-              ),
-            ),
-          ],
-        ),
-        // Row 4: Part payments (if any)
-        if (loan.partPayments.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.green[200]!),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.savings_rounded, size: 18, color: Colors.green[700]),
-                const SizedBox(width: 8),
-                Text(
-                  'Part Payments: ',
-                  style: TextStyle(fontSize: 13, color: Colors.green[800]),
-                ),
-                Text(
-                  '₹${_fmt(loan.totalPartPayments)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green[800],
-                  ),
-                ),
-                Text(
-                  ' (${loan.partPayments.length} payments)',
-                  style: TextStyle(fontSize: 12, color: Colors.green[600]),
-                ),
-              ],
-            ),
+            ],
           ),
-        ],
-        const SizedBox(height: 8),
-        // Row 5: Interest Analysis
-        Row(
-          children: [
-            Expanded(
-              child: _DashTile(
-                label: 'Total Interest',
-                value: '₹${_fmt(loan.totalInterestOriginal)}',
-                icon: Icons.account_balance_outlined,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Interest Paid',
-                value: '₹${_fmt(loan.interestPaid)}',
-                icon: Icons.check_circle_outline,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _DashTile(
-                label: 'Interest Left',
-                value: '₹${_fmt(loan.interestRemaining)}',
-                icon: Icons.pending_outlined,
-              ),
-            ),
-          ],
         ),
-        // Row 6: Savings from part payments (if any)
-        if (loan.interestSaved > 0) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.teal[50],
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.teal[200]!),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.celebration_rounded,
-                  size: 18,
-                  color: Colors.teal[700],
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Interest Saved: ',
-                  style: TextStyle(fontSize: 13, color: Colors.teal[800]),
-                ),
-                Text(
-                  '₹${_fmt(loan.interestSaved)}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal[800],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }
 
-class _DashTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-
-  const _DashTile({
-    required this.label,
-    required this.value,
-    required this.icon,
-  });
+class _StatusChip extends StatelessWidget {
+  final String text;
+  final Color color;
+  const _StatusChip({required this.text, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: cs.surface,
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cs.outlineVariant),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 16, color: cs.onSurfaceVariant),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RepaymentTabs extends StatefulWidget {
-  final Loan loan;
-  final List<Repayment> emiHistory;
-  final List<Repayment> partHistory;
-  final Future<void> Function(Repayment) onDelete;
-
-  const _RepaymentTabs({
-    required this.loan,
-    required this.emiHistory,
-    required this.partHistory,
-    required this.onDelete,
-  });
-
-  @override
-  State<_RepaymentTabs> createState() => _RepaymentTabsState();
-}
-
-class _RepaymentTabsState extends State<_RepaymentTabs>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: cs.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: TabBar(
-            controller: _tabController,
-            labelColor: Theme.of(context).primaryColor,
-            unselectedLabelColor: cs.onSurfaceVariant,
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            indicator: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(10),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 4,
-                ),
-              ],
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            tabs: [
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.receipt_long_rounded, size: 14),
-                    const SizedBox(width: 6),
-                    const Text('EMI History'),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${widget.emiHistory.length})',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Tab(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.savings_rounded, size: 14),
-                    const SizedBox(width: 6),
-                    const Text('Part Payment'),
-                    const SizedBox(width: 4),
-                    Text(
-                      '(${widget.partHistory.length})',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: cs.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 360,
-          child: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildList(widget.emiHistory, 'No EMI repayments yet'),
-              _buildList(widget.partHistory, 'No part payments yet'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildList(List<Repayment> items, String emptyMsg) {
-    if (items.isEmpty) {
-      return Builder(
-        builder: (context) {
-          final cs = Theme.of(context).colorScheme;
-          return Center(
-            child: Text(emptyMsg, style: TextStyle(color: cs.onSurfaceVariant)),
-          );
-        },
-      );
-    }
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 4, bottom: 8),
-      itemCount: items.length,
-      itemBuilder: (ctx, i) => _RepaymentTile(
-        repayment: items[i],
-        onDelete: () => widget.onDelete(items[i]),
-      ),
-    );
-  }
-}
-
-class _RepaymentTile extends StatelessWidget {
-  final Repayment repayment;
-  final VoidCallback onDelete;
-
-  const _RepaymentTile({required this.repayment, required this.onDelete});
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Row(
-        children: [
-          // Badge
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: repayment.isPartPayment
-                  ? Colors.green[50]
-                  : Colors.blue[50],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: repayment.isPartPayment
-                ? Icon(
-                    Icons.savings_rounded,
-                    size: 18,
-                    color: Colors.green[600],
-                  )
-                : Text(
-                    '#${repayment.monthNumber}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue[700],
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '₹${_fmt(repayment.amount)}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  DateFormat('dd MMM yyyy').format(repayment.paidDate),
-                  style: TextStyle(fontSize: 12, color: cs.onSurfaceVariant),
-                ),
-                if (repayment.principalPortion != null ||
-                    repayment.interestPortion != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'P: ₹${_fmt(repayment.principalPortion ?? 0.0)}  '
-                    'I: ₹${_fmt(repayment.interestPortion ?? 0.0)}',
-                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-                  ),
-                ],
-                if (repayment.notes != null && repayment.notes!.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    repayment.notes!,
-                    style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-          InkWell(
-            onTap: onDelete,
-            borderRadius: BorderRadius.circular(6),
-            child: Container(
-              padding: const EdgeInsets.all(5),
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                Icons.delete_outline_rounded,
-                size: 16,
-                color: Colors.red[300],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. AddLoanPage
-// ─────────────────────────────────────────────────────────────────────────────
-
-class AddLoanPage extends StatefulWidget {
-  final Loan? loan;
-  const AddLoanPage({Key? key, this.loan}) : super(key: key);
-
-  @override
-  State<AddLoanPage> createState() => _AddLoanPageState();
-}
-
-class _AddLoanPageState extends State<AddLoanPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _principalController = TextEditingController();
-  final _rateController = TextEditingController();
-  final _tenureController = TextEditingController();
-  final _emiController = TextEditingController();
-  final _lenderController = TextEditingController();
-  final _accountController = TextEditingController();
-  final _notesController = TextEditingController();
-
-  LoanType _type = LoanType.personal;
-  LoanDirection _direction = LoanDirection.borrowed;
-  DateTime _startDate = DateTime.now();
-  bool _emiManuallyEdited = false;
-
-  bool get _isEditing => widget.loan != null;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.loan != null) {
-      final l = widget.loan!;
-      _nameController.text = l.name;
-      _principalController.text = l.principalAmount.toStringAsFixed(0);
-      _rateController.text = l.interestRate.toString();
-      _tenureController.text = l.tenureMonths.toString();
-      _emiController.text = l.emiAmount.toStringAsFixed(2);
-      _lenderController.text = l.lenderOrBorrower ?? '';
-      _accountController.text = l.accountNumber ?? '';
-      _notesController.text = l.notes ?? '';
-      _type = l.type;
-      _direction = l.direction;
-      _startDate = l.startDate;
-      _emiManuallyEdited = true;
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _principalController.dispose();
-    _rateController.dispose();
-    _tenureController.dispose();
-    _emiController.dispose();
-    _lenderController.dispose();
-    _accountController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _recalculateEmi() {
-    if (_emiManuallyEdited) return;
-    final p = double.tryParse(_principalController.text);
-    final r = double.tryParse(_rateController.text);
-    final t = int.tryParse(_tenureController.text);
-    if (p != null && r != null && t != null && t > 0) {
-      final emi = Loan.calculateEmi(p, r, t);
-      _emiController.text = emi.toStringAsFixed(2);
-    }
-  }
-
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final loan = Loan(
-      id: widget.loan?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: _nameController.text.trim(),
-      type: _type,
-      direction: _direction,
-      principalAmount: double.parse(_principalController.text),
-      interestRate: double.parse(_rateController.text),
-      tenureMonths: int.parse(_tenureController.text),
-      emiAmount: double.parse(_emiController.text),
-      startDate: _startDate,
-      lenderOrBorrower: _lenderController.text.trim().isEmpty
-          ? null
-          : _lenderController.text.trim(),
-      accountNumber: _accountController.text.trim().isEmpty
-          ? null
-          : _accountController.text.trim(),
-      notes: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
-      isClosed: widget.loan?.isClosed ?? false,
-      repayments: widget.loan?.repayments ?? [],
-    );
-
-    Navigator.pop(context, loan);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Loan' : 'Add Loan'),
-        elevation: 0,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Name
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Loan Name *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.label_outline),
-              ),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? 'Required' : null,
-            ),
-            const SizedBox(height: 16),
-
-            // Loan Type dropdown
-            DropdownButtonFormField<LoanType>(
-              initialValue: _type,
-              decoration: const InputDecoration(
-                labelText: 'Loan Type',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category_outlined),
-              ),
-              items: LoanType.values
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t.label)))
-                  .toList(),
-              onChanged: (v) {
-                if (v != null) setState(() => _type = v);
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Direction segmented button
-            const Text(
-              'Direction',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(height: 8),
-            SegmentedButton<LoanDirection>(
-              segments: const [
-                ButtonSegment(
-                  value: LoanDirection.borrowed,
-                  label: Text('Borrowed'),
-                  icon: Icon(Icons.arrow_downward_rounded),
-                ),
-                ButtonSegment(
-                  value: LoanDirection.lent,
-                  label: Text('Lent'),
-                  icon: Icon(Icons.arrow_upward_rounded),
-                ),
-              ],
-              selected: {_direction},
-              onSelectionChanged: (s) => setState(() => _direction = s.first),
-            ),
-            const SizedBox(height: 16),
-
-            // Principal
-            TextFormField(
-              controller: _principalController,
-              decoration: const InputDecoration(
-                labelText: 'Principal Amount *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.currency_rupee),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if (double.tryParse(v) == null) return 'Invalid number';
-                return null;
-              },
-              onChanged: (_) => _recalculateEmi(),
-            ),
-            const SizedBox(height: 16),
-
-            // Interest Rate
-            TextFormField(
-              controller: _rateController,
-              decoration: const InputDecoration(
-                labelText: 'Interest Rate (%) *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.percent),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if (double.tryParse(v) == null) return 'Invalid number';
-                return null;
-              },
-              onChanged: (_) => _recalculateEmi(),
-            ),
-            const SizedBox(height: 16),
-
-            // Tenure
-            TextFormField(
-              controller: _tenureController,
-              decoration: const InputDecoration(
-                labelText: 'Tenure (months) *',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.timelapse_rounded),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if (int.tryParse(v) == null) return 'Invalid number';
-                return null;
-              },
-              onChanged: (_) => _recalculateEmi(),
-            ),
-            const SizedBox(height: 16),
-
-            // EMI
-            TextFormField(
-              controller: _emiController,
-              decoration: InputDecoration(
-                labelText: 'EMI Amount',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.payment_rounded),
-                suffixIcon: _emiManuallyEdited
-                    ? IconButton(
-                        icon: const Icon(Icons.refresh),
-                        tooltip: 'Auto-calculate',
-                        onPressed: () {
-                          setState(() => _emiManuallyEdited = false);
-                          _recalculateEmi();
-                        },
-                      )
-                    : null,
-              ),
-              keyboardType: TextInputType.number,
-              onChanged: (_) => _emiManuallyEdited = true,
-            ),
-            const SizedBox(height: 16),
-
-            // Start Date
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Start Date'),
-              subtitle: Text(DateFormat('dd MMM yyyy').format(_startDate)),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _startDate,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2040),
-                );
-                if (date != null) setState(() => _startDate = date);
-              },
-            ),
-            const Divider(),
-
-            // Lender / Borrower
-            TextFormField(
-              controller: _lenderController,
-              decoration: InputDecoration(
-                labelText: _direction == LoanDirection.borrowed
-                    ? 'Lender Name'
-                    : 'Borrower Name',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.person_outline),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Account Number
-            TextFormField(
-              controller: _accountController,
-              decoration: const InputDecoration(
-                labelText: 'Account Number (optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.numbers),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Notes
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-
-            // Save
-            ElevatedButton(
-              onPressed: _save,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-              child: Text(
-                _isEditing ? 'Update Loan' : 'Save Loan',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// 4. AddRepaymentPage
-// ─────────────────────────────────────────────────────────────────────────────
-
-class AddRepaymentPage extends StatefulWidget {
-  final String loanId;
-  final int nextMonthNumber;
-  final double emiAmount;
-  final bool isPartPayment;
-
-  const AddRepaymentPage({
-    Key? key,
-    required this.loanId,
-    required this.nextMonthNumber,
-    this.emiAmount = 0,
-    this.isPartPayment = false,
-  }) : super(key: key);
-
-  @override
-  State<AddRepaymentPage> createState() => _AddRepaymentPageState();
-}
-
-class _AddRepaymentPageState extends State<AddRepaymentPage> {
-  final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _monthController;
-  late final TextEditingController _amountController;
-  final _principalController = TextEditingController();
-  final _interestController = TextEditingController();
-  final _notesController = TextEditingController();
-  DateTime _paidDate = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    _monthController = TextEditingController(
-      text: widget.isPartPayment ? '0' : widget.nextMonthNumber.toString(),
-    );
-    _amountController = TextEditingController(
-      text: widget.isPartPayment ? '' : widget.emiAmount.toStringAsFixed(2),
-    );
-  }
-
-  @override
-  void dispose() {
-    _monthController.dispose();
-    _amountController.dispose();
-    _principalController.dispose();
-    _interestController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
-
-    final amount = double.parse(_amountController.text);
-    final repayment = Repayment(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      monthNumber: widget.isPartPayment ? 0 : int.parse(_monthController.text),
-      amount: amount,
-      principalPortion: widget.isPartPayment
-          ? amount
-          : (_principalController.text.isNotEmpty
-                ? double.tryParse(_principalController.text)
-                : null),
-      interestPortion: widget.isPartPayment
-          ? 0
-          : (_interestController.text.isNotEmpty
-                ? double.tryParse(_interestController.text)
-                : null),
-      paidDate: _paidDate,
-      notes: _notesController.text.trim().isEmpty
-          ? (widget.isPartPayment ? 'Part payment' : null)
-          : _notesController.text.trim(),
-      isPartPayment: widget.isPartPayment,
-    );
-
-    Navigator.pop(context, repayment);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.isPartPayment ? 'Part Payment' : 'Record EMI Payment',
-        ),
-        elevation: 0,
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Info banner
-            if (widget.isPartPayment)
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.green[200]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.savings_rounded,
-                      color: Colors.green[700],
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        'Part payment reduces your outstanding principal directly',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.green[800],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Month number (EMI only)
-            if (!widget.isPartPayment) ...[
-              TextFormField(
-                controller: _monthController,
-                decoration: const InputDecoration(
-                  labelText: 'Month Number *',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.tag),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (int.tryParse(v) == null) return 'Invalid';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // Amount
-            TextFormField(
-              controller: _amountController,
-              decoration: InputDecoration(
-                labelText: widget.isPartPayment
-                    ? 'Part Payment Amount *'
-                    : 'EMI Amount *',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.currency_rupee),
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Required';
-                if (double.tryParse(v) == null) return 'Invalid';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Principal/Interest split (EMI only)
-            if (!widget.isPartPayment) ...[
-              TextFormField(
-                controller: _principalController,
-                decoration: const InputDecoration(
-                  labelText: 'Principal Portion (optional)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _interestController,
-                decoration: const InputDecoration(
-                  labelText: 'Interest Portion (optional)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.percent),
-                ),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-            ],
-
-            // Paid date
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Paid Date'),
-              subtitle: Text(DateFormat('dd MMM yyyy').format(_paidDate)),
-              onTap: () async {
-                final date = await showDatePicker(
-                  context: context,
-                  initialDate: _paidDate,
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2040),
-                );
-                if (date != null) setState(() => _paidDate = date);
-              },
-            ),
-            const Divider(),
-
-            // Notes
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 3,
-            ),
-            const SizedBox(height: 24),
-
-            ElevatedButton(
-              onPressed: _save,
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: widget.isPartPayment ? Colors.green : null,
-              ),
-              child: Text(
-                widget.isPartPayment
-                    ? 'Record Part Payment'
-                    : 'Record EMI Payment',
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ],
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+          color: color,
         ),
       ),
     );
