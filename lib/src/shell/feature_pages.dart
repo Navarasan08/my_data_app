@@ -109,6 +109,8 @@ Widget? buildFeaturePage(BuildContext context, String id) {
           BlocProvider.value(value: context.read<VehicleCubit>()),
           BlocProvider.value(value: context.read<ChitCubit>()),
           BlocProvider.value(value: context.read<InterestCubit>()),
+          // For the show/hide-items setting on the stats page.
+          BlocProvider.value(value: context.read<DashboardSettingsCubit>()),
         ],
         child: const MonthlyStatsPage(),
       );

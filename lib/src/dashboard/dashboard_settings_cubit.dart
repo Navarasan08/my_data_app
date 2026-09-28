@@ -64,11 +64,20 @@ class DashboardSettingsState {
   /// Which tab the app opens on.
   final ShellTab landingTab;
 
+  /// Monthly Stats ledger lines the user has switched off, by item id
+  /// ('salary', 'bills', …). Hidden lines are left out of the tally too.
+  final Set<String> hiddenMonthlyStatItems;
+
+  /// Whether Monthly Stats keeps lines with a zero amount on the board.
+  final bool showZeroMonthlyStatItems;
+
   const DashboardSettingsState({
     required this.features,
     this.isGridView = true,
     this.secondTabFeatureId = 'monthly_stats',
     this.landingTab = ShellTab.dashboard,
+    this.hiddenMonthlyStatItems = const {},
+    this.showZeroMonthlyStatItems = true,
   });
 
   FeatureItem? featureById(String id) {
@@ -87,11 +96,17 @@ class DashboardSettingsState {
     bool? isGridView,
     String? secondTabFeatureId,
     ShellTab? landingTab,
+    Set<String>? hiddenMonthlyStatItems,
+    bool? showZeroMonthlyStatItems,
   }) => DashboardSettingsState(
     features: features ?? this.features,
     isGridView: isGridView ?? this.isGridView,
     secondTabFeatureId: secondTabFeatureId ?? this.secondTabFeatureId,
     landingTab: landingTab ?? this.landingTab,
+    hiddenMonthlyStatItems:
+        hiddenMonthlyStatItems ?? this.hiddenMonthlyStatItems,
+    showZeroMonthlyStatItems:
+        showZeroMonthlyStatItems ?? this.showZeroMonthlyStatItems,
   );
 }
 
@@ -302,8 +317,32 @@ class DashboardSettingsCubit extends Cubit<DashboardSettingsState> {
         landingTab: data['landingTab'] == null
             ? state.landingTab
             : ShellTab.fromName(data['landingTab'] as String?),
+        hiddenMonthlyStatItems: data['hiddenMonthlyStatItems'] == null
+            ? state.hiddenMonthlyStatItems
+            : (data['hiddenMonthlyStatItems'] as List<dynamic>)
+                  .cast<String>()
+                  .toSet(),
+        showZeroMonthlyStatItems:
+            data['showZeroMonthlyStatItems'] as bool? ??
+            state.showZeroMonthlyStatItems,
       ),
     );
+  }
+
+  void toggleMonthlyStatItem(String id) {
+    final hidden = Set<String>.from(state.hiddenMonthlyStatItems);
+    if (!hidden.remove(id)) hidden.add(id);
+    emit(state.copyWith(hiddenMonthlyStatItems: hidden));
+    _settingsDoc.set({
+      'hiddenMonthlyStatItems': hidden.toList(),
+    }, SetOptions(merge: true));
+  }
+
+  void setShowZeroMonthlyStatItems(bool value) {
+    emit(state.copyWith(showZeroMonthlyStatItems: value));
+    _settingsDoc.set({
+      'showZeroMonthlyStatItems': value,
+    }, SetOptions(merge: true));
   }
 
   void setSecondTab(String featureId) {

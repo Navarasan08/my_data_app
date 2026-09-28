@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:my_data_app/src/chits/cubit/chit_cubit.dart';
+import 'package:my_data_app/src/dashboard/dashboard_settings_cubit.dart';
 import 'package:my_data_app/src/home/cubit/home_record_cubit.dart';
 import 'package:my_data_app/src/interest/cubit/interest_cubit.dart';
 import 'package:my_data_app/src/loans/cubit/loan_cubit.dart';
@@ -51,6 +52,72 @@ class _MonthlyStatsPageState extends State<MonthlyStatsPage> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => page));
   }
 
+  /// Bottom sheet with a switch per ledger line. Toggles persist through
+  /// [DashboardSettingsCubit] and sync across devices.
+  void _showItemSettings(BuildContext context, MonthlySummary summary) {
+    final settingsCubit = context.read<DashboardSettingsCubit>();
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _board,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => BlocProvider.value(
+        value: settingsCubit,
+        child: BlocBuilder<DashboardSettingsCubit, DashboardSettingsState>(
+          builder: (context, settings) {
+            final hidden = settings.hiddenMonthlyStatItems;
+            return SafeArea(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 16),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    child: Text(
+                      'Items on the board',
+                      style: _chalkStyle(19, bold: true),
+                    ),
+                  ),
+                  SwitchListTile(
+                    value: settings.showZeroMonthlyStatItems,
+                    onChanged: settingsCubit.setShowZeroMonthlyStatItems,
+                    title: Text('Show items at 0', style: _chalkStyle(16)),
+                    subtitle: Text(
+                      'Keep lines with nothing this month on the board',
+                      style: _chalkStyle(12, color: _chalkDim),
+                    ),
+                    activeTrackColor: _chalkGreen,
+                    inactiveTrackColor: Colors.white12,
+                    dense: true,
+                  ),
+                  const Divider(color: Colors.white12, height: 16),
+                  for (final item in summary.items)
+                    SwitchListTile(
+                      value: !hidden.contains(item.id),
+                      onChanged: (_) =>
+                          settingsCubit.toggleMonthlyStatItem(item.id),
+                      title: Text(
+                        item.label,
+                        style: _chalkStyle(16),
+                      ),
+                      subtitle: Text(
+                        item.isIncome ? 'Income' : 'Outgoing',
+                        style: _chalkStyle(12, color: _chalkDim),
+                      ),
+                      activeTrackColor: _chalkGreen,
+                      inactiveTrackColor: Colors.white12,
+                      dense: true,
+                    ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeCubit = context.watch<HomeRecordCubit>();
@@ -77,13 +144,23 @@ class _MonthlyStatsPageState extends State<MonthlyStatsPage> {
     String money(double v) =>
         homeState.currency.format(v, decimals: v % 1 == 0 ? 0 : 2);
 
-    // Every item stays on the board, biggest first; absent ones read 0.
-    final incomeRows = summary.incomeItems.toList()
+    // Enabled items show biggest first. Lines switched off in settings are
+    // left out of the tally too; zero-amount lines can optionally be hidden
+    // (they never affect the tally either way).
+    final boardSettings = context.watch<DashboardSettingsCubit>().state;
+    final hidden = boardSettings.hiddenMonthlyStatItems;
+    final showZero = boardSettings.showZeroMonthlyStatItems;
+    bool visible(MonthlyStatItem i) =>
+        !hidden.contains(i.id) && (showZero || i.amount != 0);
+    final incomeRows = summary.incomeItems.where(visible).toList()
       ..sort((a, b) => b.amount.compareTo(a.amount));
-    final outgoingRows = summary.outgoingItems.toList()
+    final outgoingRows = summary.outgoingItems.where(visible).toList()
       ..sort((a, b) => b.amount.compareTo(a.amount));
 
-    final positive = summary.balance >= 0;
+    final totalIncome = incomeRows.fold(0.0, (s, i) => s + i.amount);
+    final totalOutgoing = outgoingRows.fold(0.0, (s, i) => s + i.amount);
+    final balance = totalIncome - totalOutgoing;
+    final positive = balance >= 0;
 
     return Scaffold(
       backgroundColor: _board,
@@ -112,15 +189,22 @@ class _MonthlyStatsPageState extends State<MonthlyStatsPage> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune_rounded, color: _chalk),
+            tooltip: 'Choose items',
+            onPressed: () => _showItemSettings(context, summary),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
         children: [
-          _RatioBar(income: summary.totalIncome, expense: summary.totalOutgoing),
+          _RatioBar(income: totalIncome, expense: totalOutgoing),
           const SizedBox(height: 18),
           _LedgerLine(
             label: 'Income',
-            amount: money(summary.totalIncome),
+            amount: money(totalIncome),
             amountColor: _chalkGreen,
             heading: true,
             onTap: () => _openFeature(context, 'home'),
@@ -136,7 +220,7 @@ class _MonthlyStatsPageState extends State<MonthlyStatsPage> {
           const SizedBox(height: 14),
           _LedgerLine(
             label: 'Expense',
-            amount: money(summary.totalOutgoing),
+            amount: money(totalOutgoing),
             amountColor: _chalkRed,
             heading: true,
             onTap: () => _openFeature(context, 'home'),
@@ -154,7 +238,7 @@ class _MonthlyStatsPageState extends State<MonthlyStatsPage> {
           const SizedBox(height: 14),
           _LedgerLine(
             label: 'Balance',
-            amount: '${positive ? '+' : '−'}${money(summary.balance.abs())}',
+            amount: '${positive ? '+' : '−'}${money(balance.abs())}',
             amountColor: positive ? _chalkBlue : _chalkRed,
             heading: true,
           ),
